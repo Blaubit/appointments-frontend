@@ -27,11 +27,3 @@ Una aplicación web construida con **Next.js** para gestionar citas de manera ef
 - [Vercel](https://vercel.com/) – Hosting y despliegue
 
 ---
-
-## 🧑‍💻 Instalación y ejecución local
-
-1. Clona el repositorio:
-   ```bash
-   git clone https://github.com/tuusuario/citas-app.git
-   cd citas-app
-   ```
