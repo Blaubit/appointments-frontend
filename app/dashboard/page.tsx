@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useTheme } from "next-themes"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Calendar,
   Clock,
@@ -14,8 +14,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Moon,
-  Sun,
   Stethoscope,
   MapPin,
   Phone,
@@ -24,9 +22,9 @@ import {
   AlertCircle,
   XCircle,
 } from "lucide-react"
+import Link from "next/link"
 
 export default function DashboardPage() {
-  const { theme, setTheme } = useTheme()
   const [userType] = useState<"professional" | "client">("professional") // This would come from auth context
 
   // Mock data - in real app this would come from API
@@ -104,7 +102,9 @@ export default function DashboardPage() {
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
                   <Calendar className="h-6 w-6 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">CitasFácil</h1>
+                <Link href="/">
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">CitasFácil</h1>
+                </Link>
               </div>
             </div>
 
@@ -114,10 +114,7 @@ export default function DashboardPage() {
                 <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
               </Button>
 
-              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              </Button>
+              <ThemeToggle variant="ghost" />
 
               <div className="flex items-center space-x-3">
                 <Avatar>
@@ -241,9 +238,12 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-6 text-center">
-                  <Button variant="outline" className="w-full">
-                    Ver Todas las Citas
-                  </Button>
+                  <Link href="appointments">
+                    <Button variant="outline" className="w-full">
+                      Ver Todas las Citas
+                    </Button>
+                  </Link>
+                  
                 </div>
               </CardContent>
             </Card>
@@ -269,9 +269,12 @@ export default function DashboardPage() {
                   <Stethoscope className="h-4 w-4 mr-2" />
                   Servicios
                 </Button>
+                
                 <Button className="w-full justify-start" variant="outline">
+                  <a href="/reports">
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Reportes
+                  </a>
                 </Button>
               </CardContent>
             </Card>
