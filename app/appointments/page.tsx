@@ -291,10 +291,12 @@ export default function AppointmentsPage() {
                   <Download className="h-4 w-4 mr-2" />
                   Exportar
                 </Button>
-                <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Cita
-                </Button>
+                <Link href="/appointments/new">
+                    <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nueva Cita
+                    </Button>
+                </Link>
               </div>
             </div>
           </CardHeader>
@@ -387,10 +389,12 @@ export default function AppointmentsPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   No hay citas que coincidan con los filtros seleccionados.
                 </p>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Crear Nueva Cita
-                </Button>
+                <Link href="/appointments/new">
+                    <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear Nueva Cita
+                    </Button>
+                </Link>
               </CardContent>
             </Card>
           ) : (

@@ -11,7 +11,6 @@ import {
   Users,
   TrendingUp,
   Plus,
-  Bell,
   Settings,
   LogOut,
   Stethoscope,
@@ -109,10 +108,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-              </Button>
 
               <ThemeToggle variant="ghost" />
 
@@ -126,11 +121,11 @@ export default function DashboardPage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Médico General</p>
                 </div>
               </div>
-
-              <Button variant="ghost" size="icon">
-                <Settings className="h-5 w-5" />
-              </Button>
-
+              <Link href="/settings">
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </Link>
               <Button variant="ghost" size="icon">
                 <LogOut className="h-5 w-5" />
               </Button>
@@ -176,10 +171,12 @@ export default function DashboardPage() {
                   <CardTitle>Próximas Citas</CardTitle>
                   <CardDescription>Tus citas programadas para hoy y mañana</CardDescription>
                 </div>
-                <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Cita
-                </Button>
+                <Link href="/appointments/new">
+                  <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nueva Cita
+                  </Button>
+                </Link>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -257,19 +254,22 @@ export default function DashboardPage() {
                 <CardTitle>Acciones Rápidas</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Ver Calendario
-                </Button>
+                <Link href = "/calendar">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Ver Calendario
+                  </Button>
+                </Link>
                 <Button className="w-full justify-start" variant="outline">
                   <Users className="h-4 w-4 mr-2" />
                   Gestionar Clientes
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Stethoscope className="h-4 w-4 mr-2" />
-                  Servicios
-                </Button>
-                
+                <Link href="services">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Stethoscope className="h-4 w-4 mr-2" />
+                    Servicios
+                  </Button>
+                </Link>
                 <Button className="w-full justify-start" variant="outline">
                   <a href="/reports">
                   <TrendingUp className="h-4 w-4 mr-2" />
