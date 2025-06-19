@@ -56,7 +56,7 @@ interface HeaderProps {
 }
 
 export function Header({
-  title = "CitasFácil",
+  title = "Planit",
   subtitle,
   showBackButton = false,
   backButtonText = "Dashboard",
