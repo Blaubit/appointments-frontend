@@ -138,24 +138,6 @@ export default function LoginPage() {
                 <span className="bg-background px-2 text-muted-foreground">Acceso rápido</span>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              <Button variant="outline" className="h-12 justify-start">
-                <Stethoscope className="mr-3 h-4 w-4 text-blue-600" />
-                <div className="text-left">
-                  <div className="font-medium">Soy Profesional</div>
-                  <div className="text-xs text-muted-foreground">Médico, dentista, peluquero, etc.</div>
-                </div>
-              </Button>
-              <Button variant="outline" className="h-12 justify-start">
-                <Clock className="mr-3 h-4 w-4 text-green-600" />
-                <div className="text-left">
-                  <div className="font-medium">Soy Cliente</div>
-                  <div className="text-xs text-muted-foreground">Quiero reservar una cita</div>
-                </div>
-              </Button>
-            </div>
-
             <div className="text-center text-sm text-muted-foreground">
               ¿No tienes cuenta?{" "}
               <Link href="/register">
