@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { Separator } from "@/components/ui/separator"
 import {
   AlertDialog,
@@ -31,9 +30,6 @@ import {
   Shield,
   Palette,
   Download,
-  Settings,
-  LogOut,
-  ArrowLeft,
   Camera,
   Eye,
   EyeOff,
@@ -43,6 +39,7 @@ import {
   Monitor,
 } from "lucide-react"
 import Link from "next/link"
+import { Header } from "@/components/header"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
@@ -218,45 +215,23 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
-                  <Settings className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Configuración</h1>
-              </div>
-            </div>
+       <Header
+        title="Configuración"
+        showBackButton={true}
+        backButtonText="Dashboard"
+        backButtonHref="/dashboard"
+        user={{
+          name: "Dr. Roberto Silva",
+          email: "roberto.silva@email.com",
+          role: "Médico General",
+          avatar: "/placeholder.svg?height=32&width=32",
+          initials: "DR",
+        }}
+        notifications={{
+          count: 3,
+        }}
+      />
 
-            <div className="flex items-center space-x-4">
-              <ThemeToggle variant="ghost" />
-
-              <div className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>DR</AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Dr. Roberto Silva</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Médico General</p>
-                </div>
-              </div>
-
-              <Button variant="ghost" size="icon">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">

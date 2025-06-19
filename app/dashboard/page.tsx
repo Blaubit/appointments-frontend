@@ -4,15 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Calendar,
   Clock,
   Users,
   TrendingUp,
   Plus,
-  Settings,
-  LogOut,
   Stethoscope,
   MapPin,
   Phone,
@@ -22,6 +19,7 @@ import {
   XCircle,
 } from "lucide-react"
 import Link from "next/link"
+import { Header } from "@/components/header"
 
 export default function DashboardPage() {
   const [userType] = useState<"professional" | "client">("professional") // This would come from auth context
@@ -93,47 +91,20 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
-                  <Calendar className="h-6 w-6 text-white" />
-                </div>
-                <Link href="/">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">Planit</h1>
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-
-              <ThemeToggle variant="ghost" />
-
-              <div className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>DR</AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Dr. Roberto Silva</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Médico General</p>
-                </div>
-              </div>
-              <Link href="/settings">
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Button variant="ghost" size="icon">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+      <Header
+        title="Dashboard"
+        subtitle="Panel de Control"
+        user={{
+          name: "Dr. Roberto Silva",
+          email: "roberto.silva@email.com",
+          role: "Médico General",
+          avatar: "/placeholder.svg?height=32&width=32",
+          initials: "DR",
+        }}
+        notifications={{
+          count: 3,
+        }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
