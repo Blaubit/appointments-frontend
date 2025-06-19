@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CitasFácil - Sistema de Gestión de Citas",
+  title: "Planit - Sistema de Gestión de Citas",
   description: "Plataforma profesional para gestionar citas médicas, peluquerías y servicios",
 }
 

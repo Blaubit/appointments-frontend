@@ -102,7 +102,7 @@ export default function DashboardPage() {
                   <Calendar className="h-6 w-6 text-white" />
                 </div>
                 <Link href="/">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">CitasFácil</h1>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">Planit</h1>
                 </Link>
               </div>
             </div>

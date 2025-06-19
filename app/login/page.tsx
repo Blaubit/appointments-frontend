@@ -45,7 +45,7 @@ export default function LoginPage() {
               </div>
             </div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              CitasFácil
+              Planit
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground">
               Gestiona tus citas de forma inteligente
