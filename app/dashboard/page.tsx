@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
+  Bot,
   Calendar,
   Clock,
   Users,
@@ -226,27 +227,36 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link href = "/calendar">
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button className="w-full justify-start my-1" variant="outline">
                     <Calendar className="h-4 w-4 mr-2" />
                     Ver Calendario
                   </Button>
                 </Link>
-                <Button className="w-full justify-start" variant="outline">
-                  <Users className="h-4 w-4 mr-2" />
-                  Gestionar Clientes
-                </Button>
+                <Link href="">
+                  <Button className="w-full justify-start my-1" variant="outline">
+                    <Users className="h-4 w-4 mr-2" />
+                    Gestionar Clientes
+                  </Button>
+                </Link>
                 <Link href="services">
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button className="w-full justify-start my-1" variant="outline">
                     <Stethoscope className="h-4 w-4 mr-2" />
                     Servicios
                   </Button>
                 </Link>
-                <Button className="w-full justify-start" variant="outline">
-                  <a href="/reports">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Reportes
-                  </a>
-                </Button>
+                <Link href="/reports">
+                  <Button className="w-full justify-start my-1" variant="outline">
+                    <TrendingUp className="h-4 w-4 mr-2"/>
+                    Reportes
+                  </Button>
+                </Link>
+                <Link href="/bot">
+                  <Button className="w-full justify-start my-1" variant="outline">
+                    <Bot className="h-4 w-4 mr-2" />
+                    Bot
+                  </Button>
+                </Link>
+                
               </CardContent>
             </Card>
 
@@ -275,29 +285,6 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-sm font-medium">Horario</p>
                     <p className="text-xs text-gray-500">Lun-Vie: 8:00-18:00</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Actividad Reciente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Cita confirmada con María González</p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Nuevo cliente registrado</p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Recordatorio enviado a Carlos R.</p>
                   </div>
                 </div>
               </CardContent>
