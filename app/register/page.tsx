@@ -246,7 +246,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                CitasFácil
+                Planit
               </CardTitle>
               <CardDescription className="text-lg text-muted-foreground mt-2">
                 Únete a miles de profesionales que ya optimizaron su gestión de citas
@@ -577,7 +577,7 @@ export default function RegisterPage() {
                     <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-40 overflow-y-auto">
                       <h4 className="font-medium mb-2">Términos de Servicio</h4>
                       <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                        <p>Al usar CitasFácil, aceptas:</p>
+                        <p>Al usar Planit, aceptas:</p>
                         <ul className="list-disc list-inside space-y-1">
                           <li>Proporcionar información veraz y actualizada</li>
                           <li>Usar la plataforma de manera responsable</li>
@@ -660,7 +660,7 @@ export default function RegisterPage() {
                     <div>
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white">¡Cuenta Creada Exitosamente!</h3>
                       <p className="text-gray-600 dark:text-gray-400 mt-2">
-                        Bienvenido a CitasFácil, {formData.firstName}
+                        Bienvenido a Planit, {formData.firstName}
                       </p>
                     </div>
                   </div>
