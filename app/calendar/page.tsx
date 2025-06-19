@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Dialog,
   DialogContent,
@@ -34,10 +33,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Bell,
-  Settings,
-  LogOut,
-  ArrowLeft,
   Search,
   Edit,
   Trash2,
@@ -49,6 +44,7 @@ import {
   XCircle,
 } from "lucide-react"
 import Link from "next/link"
+import { Header } from "@/components/header"
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -411,54 +407,22 @@ export default function CalendarPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
-                  <CalendarIcon className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Calendario</h1>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-              </Button>
-
-              <ThemeToggle variant="ghost" />
-
-              <div className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                  <AvatarFallback>DR</AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Dr. Roberto Silva</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Médico General</p>
-                </div>
-              </div>
-
-              <Button variant="ghost" size="icon">
-                <Settings className="h-5 w-5" />
-              </Button>
-
-              <Button variant="ghost" size="icon">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        title="Calendario"
+        showBackButton={true}
+        backButtonText="Dashboard"
+        backButtonHref="/dashboard"
+        user={{
+          name: "Dr. Roberto Silva",
+          email: "roberto.silva@email.com",
+          role: "Médico General",
+          avatar: "/placeholder.svg?height=32&width=32",
+          initials: "DR",
+        }}
+        notifications={{
+          count: 3,
+        }}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Calendar Controls */}
