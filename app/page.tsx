@@ -160,7 +160,7 @@ export default function LandingPage() {
               </Link>
               <Link href="/register">
                 <Button size="sm" className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                  Registrarse Gratis
+                  Registrarse
                 </Button>
               </Link>
             </div>
@@ -206,7 +206,7 @@ export default function LandingPage() {
                 </Link>
                 <Link href="/register" className="w-full">
                   <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                    Registrarse Gratis
+                    Registrarse
                   </Button>
                 </Link>
               </div>
@@ -309,7 +309,7 @@ export default function LandingPage() {
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Planes que se adaptan a tu negocio
             </h2>
-            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300">Comienza gratis y escala según crezcas</p>
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300">Comienza y escala según crezcas</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
@@ -365,7 +365,7 @@ export default function LandingPage() {
                 variant="outline"
                 className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-blue-600 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4"
               >
-                Hablar con Ventas
+                Contacta con Soporte
               </Button>
             </Link>
           </div>
@@ -462,7 +462,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm sm:text-base">
-            <p>&copy; 2024 Planit. Todos los derechos reservados.</p>
+            <p>&copy; 2025 Planit. Desarrollado por Blaubit.</p>
           </div>
         </div>
       </footer>
