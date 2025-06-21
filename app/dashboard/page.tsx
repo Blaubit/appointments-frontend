@@ -29,7 +29,11 @@ export default function DashboardPage() {
   const upcomingAppointments = [
     {
       id: 1,
-      clientName: "María González",
+      client:{
+        Name:"Maria Gonzales",
+        phone:"+50212345678",
+        mail:"mail@mail.com"
+      },
       service: "Consulta General",
       time: "09:00",
       date: "Hoy",
@@ -38,7 +42,11 @@ export default function DashboardPage() {
     },
     {
       id: 2,
-      clientName: "Carlos Rodríguez",
+      client:{ 
+        Name:"Carlos Rodríguez",
+        phone:"+50212345678",
+        mail:"mail@mail.com"
+      },
       service: "Limpieza Dental",
       time: "10:30",
       date: "Hoy",
@@ -47,7 +55,23 @@ export default function DashboardPage() {
     },
     {
       id: 3,
-      clientName: "Ana Martínez",
+      client:{ 
+        Name:"Ana Peraz",
+        phone:"+50212345678",
+        mail:"mail@mail.com"
+      },
+      service: "Corte y Peinado",
+      time: "14:00",
+      date: "Mañana",
+      status: "confirmed",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },{
+      id: 4,
+      client:{ 
+        Name:"Ana Peraz",
+        phone:"+50212345678",
+        mail:"mail@mail.com"
+      },
       service: "Corte y Peinado",
       time: "14:00",
       date: "Mañana",
@@ -57,10 +81,10 @@ export default function DashboardPage() {
   ]
 
   const stats = [
-    { title: "Citas Hoy", value: "8", icon: Calendar, color: "text-blue-600" },
-    { title: "Clientes Atendidos", value: "156", icon: Users, color: "text-green-600" },
-    { title: "Ingresos del Mes", value: "$12,450", icon: TrendingUp, color: "text-purple-600" },
-    { title: "Tiempo Promedio", value: "45min", icon: Clock, color: "text-orange-600" },
+    { title: "Citas Hoy", value: "8", icon: Calendar, color: "text-blue-600", ref:"appointments" },
+    { title: "Clientes Atendidos", value: "156", icon: Users, color: "text-green-600", ref:"clients"},
+    { title: "Ingresos del Mes", value: "$12,450", icon: TrendingUp, color: "text-purple-600",ref:"reports" },
+    { title: "Tiempo Promedio", value: "45min", icon: Clock, color: "text-orange-600",ref:"#"},
   ]
 
   const getStatusColor = (status: string) => {
@@ -119,6 +143,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow">
+              <Link href={stat.ref}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -130,6 +155,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </CardContent>
+              </Link>
             </Card>
           ))}
         </div>
@@ -141,7 +167,7 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Próximas Citas</CardTitle>
-                  <CardDescription>Tus citas programadas para hoy y mañana</CardDescription>
+                  <CardDescription>Tus citas programadas</CardDescription>
                 </div>
                 <Link href="/appointments/new">
                   <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
@@ -160,7 +186,7 @@ export default function DashboardPage() {
                       <Avatar>
                         <AvatarImage src={appointment.avatar || "/placeholder.svg"} />
                         <AvatarFallback>
-                          {appointment.clientName
+                          {appointment.client.Name
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
@@ -170,7 +196,7 @@ export default function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {appointment.clientName}
+                            {appointment.client.Name}
                           </p>
                           <Badge className={getStatusColor(appointment.status)}>
                             <div className="flex items-center space-x-1">
@@ -195,12 +221,16 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex space-x-2">
+                        <Link href={`tel:${appointment.client.phone}`}>
                         <Button variant="outline" size="sm">
                           <Phone className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Mail className="h-4 w-4" />
-                        </Button>
+                        </Link>
+                        <Link href={`mailto:${appointment.client.mail}`}>
+                          <Button variant="outline" size="sm">
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   ))}
@@ -232,7 +262,7 @@ export default function DashboardPage() {
                     Ver Calendario
                   </Button>
                 </Link>
-                <Link href="">
+                <Link href="clients">
                   <Button className="w-full justify-start my-1" variant="outline">
                     <Users className="h-4 w-4 mr-2" />
                     Gestionar Clientes
@@ -262,10 +292,11 @@ export default function DashboardPage() {
 
             {/* Profile Info */}
             <Card>
+              <Link href="settings">
               <CardHeader>
                 <CardTitle>Información del Consultorio</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-4 w-4 text-gray-500" />
                   <div>
@@ -288,6 +319,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </CardContent>
+              </Link>
             </Card>
           </div>
         </div>

@@ -224,18 +224,6 @@ export function Header({
                     Configuración
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/billing" className="flex items-center">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Facturación
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/security" className="flex items-center">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Seguridad
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/help" className="flex items-center">
