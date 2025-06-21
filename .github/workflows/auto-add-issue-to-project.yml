@@ -1,0 +1,27 @@
+name: Add Issue to Appointments Project v2
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issue to Appointments project
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PROJECT_AUTOMATION_TOKEN }}
+          script: |
+            const projectId = "PVT_kwDODOilnc4A8BUu";
+            const issueId = context.payload.issue.node_id;
+            const query = `
+              mutation($projectId:ID!, $contentId:ID!) {
+                addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+                  item { id }
+                }
+              }
+            `;
+            const variables = { projectId, contentId: issueId };
+            const result = await github.graphql(query, variables);
+            core.info(`✅ Frontend Issue added to project, project item ID: ${result.addProjectV2ItemById.item.id}`);
