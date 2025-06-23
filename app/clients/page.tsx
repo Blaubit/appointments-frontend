@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -238,187 +239,230 @@ export default function ClientsPage() {
   ]
 
   return (
+ <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <Header
+        title="Clientes"
+        showBackButton={true}
+        backButtonText="Dashboard"
+        backButtonHref="/dashboard"
+      />
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div className="space-y-6">
-  <Header
-    title="Clientes"
-    showBackButton={true}
-    backButtonText="Dashboard"
-    backButtonHref="/dashboard"
-  />
+      
 
-  {/* Estadísticas */}
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
-        <Users className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{mockStats.totalClients}</div>
-        <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
-      </CardContent>
-    </Card>
-    
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
-        <User className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{mockStats.activeClients}</div>
-        <p className="text-xs text-muted-foreground">91% del total</p>
-      </CardContent>
-    </Card>
-    
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Nuevos Este Mes</CardTitle>
-        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{mockStats.newThisMonth}</div>
-        <p className="text-xs text-muted-foreground">+5 esta semana</p>
-      </CardContent>
-    </Card>
-    
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Valoración Promedio</CardTitle>
-        <Star className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{mockStats.averageRating}</div>
-        <p className="text-xs text-muted-foreground">⭐ Excelente servicio</p>
-      </CardContent>
-    </Card>
-  </div>
-
-  {/* Sección principal de gestión */}
-  <Card>
-    <CardHeader className="space-y-4">
-      {/* Título y botones de acción principales */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <CardTitle>Gestión de Clientes</CardTitle>
-          <CardDescription>Administra todos los clientes de tu negocio</CardDescription>
-        </div>
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clientes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.totalClients}</div>
+            <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
+          </CardContent>
+        </Card>
         
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-          
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Cliente
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
-                <DialogDescription>
-                  Completa la información del cliente para agregarlo al sistema.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="grid grid-cols-2 gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre completo</Label>
-                  <Input id="name" placeholder="Ej: María González" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="maria@email.com" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" placeholder="+34 612 345 678" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="birthDate">Fecha de nacimiento</Label>
-                  <Input id="birthDate" type="date" />
-                </div>
-                
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="address">Dirección</Label>
-                  <Input id="address" placeholder="Calle Mayor 123, Madrid" />
-                </div>
-                
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="notes">Notas</Label>
-                  <Textarea id="notes" placeholder="Información adicional sobre el cliente..." />
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={() => setIsAddDialogOpen(false)}>
-                  Guardar Cliente
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Clientes Activos</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.activeClients}</div>
+            <p className="text-xs text-muted-foreground">91% del total</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Nuevos Este Mes</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.newThisMonth}</div>
+            <p className="text-xs text-muted-foreground">+5 esta semana</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Valoración Promedio</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.averageRating}</div>
+            <p className="text-xs text-muted-foreground">⭐ Excelente servicio</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Filtros y búsqueda */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between pt-4 border-t">
-        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar clientes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
+      {/* Sección principal de gestión */}
+      <Card className="mb-8">
+        <CardHeader>
+          {/* Título y botones de acción principales */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+            <div>
+              <CardTitle>Gestión de Clientes</CardTitle>
+              <CardDescription>Administra todos los clientes de tu negocio</CardDescription>
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+              
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nuevo Cliente
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
+                    <DialogDescription>
+                      Completa la información del cliente para agregarlo al sistema.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="name" className="text-right">Nombre completo *</Label>
+                      <Input 
+                        id="name" 
+                        placeholder="Ej: María González" 
+                        className="col-span-3"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="email" className="text-right">Email *</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="maria@email.com" 
+                        className="col-span-3"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="phone" className="text-right">Teléfono *</Label>
+                      <Input 
+                        id="phone" 
+                        placeholder="+34 612 345 678" 
+                        className="col-span-3"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="birthDate" className="text-right">Fecha de nacimiento</Label>
+                      <Input 
+                        id="birthDate" 
+                        type="date" 
+                        className="col-span-3"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="address" className="text-right">Dirección</Label>
+                      <Input 
+                        id="address" 
+                        placeholder="Calle Mayor 123, Madrid" 
+                        className="col-span-3"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-start gap-4">
+                      <Label htmlFor="notes" className="text-right">Notas</Label>
+                      <Textarea 
+                        id="notes" 
+                        placeholder="Información adicional sobre el cliente..." 
+                        className="col-span-3"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={() => setIsAddDialogOpen(false)}>
+                      Guardar Cliente
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {/* Filtros y búsqueda */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar clientes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="w-full md:w-48">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="active">Activos</SelectItem>
+                  <SelectItem value="inactive">Inactivos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* View Mode Toggle */}
+            <ViewToggle />
+          </div>
+
+          {/* Results count */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Mostrando {filteredClients.length} de {mockStats.totalClients} clientes
+            </p>
           </div>
           
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="active">Activos</SelectItem>
-              <SelectItem value="inactive">Inactivos</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <ViewToggle />
-      </div>
-    </CardHeader>
-    
-    <CardContent className="pt-0">
-      <DataView
-        data={filteredClients}
-        fields={clientFields}
-        actions={clientActions}
-        viewMode={viewMode}
-        emptyState={{
-          icon: <Users className="h-12 w-12 text-gray-400" />,
-          title: "No se encontraron clientes",
-          description: "No hay clientes que coincidan con los filtros seleccionados.",
-          action: (
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Primer Cliente
-            </Button>
-          ),
-        }}
-      />
-    </CardContent>
-  </Card>
+          <DataView
+            data={filteredClients}
+            fields={clientFields}
+            actions={clientActions}
+            viewMode={viewMode}
+            emptyState={{
+              icon: <Users className="h-12 w-12 text-gray-400" />,
+              title: "No se encontraron clientes",
+              description: "No hay clientes que coincidan con los filtros seleccionados.",
+              action: (
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar Primer Cliente
+                </Button>
+              ),
+            }}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  </div>
 </div>
   )
 }
