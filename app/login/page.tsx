@@ -167,6 +167,8 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center text-xs text-muted-foreground">
           <p>Al continuar, aceptas nuestros</p>
+          <Link href="/policies">
+          
           <div className="flex justify-center space-x-4 mt-1">
             <Button variant="link" className="p-0 h-auto text-xs text-muted-foreground hover:text-blue-600">
               Términos de Servicio
@@ -176,6 +178,7 @@ export default function LoginPage() {
               Política de Privacidad
             </Button>
           </div>
+          </Link>
         </div>
       </div>
     </div>
