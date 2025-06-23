@@ -5,8 +5,6 @@ import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
@@ -18,17 +16,12 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
 import { DataView, useDataView } from "@/components/data-view"
 import {
   Search,
   Plus,
   Filter,
   Download,
-  MoreHorizontal,
-  Phone,
-  Mail,
-  Calendar,
   User,
   Users,
   TrendingUp,
@@ -38,7 +31,6 @@ import {
   Eye,
   MessageSquare,
 } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 // Datos de ejemplo para clientes
 const mockClients = [
@@ -142,383 +134,291 @@ export default function ClientsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-      case "inactive":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "active":
-        return "Activo"
-      case "inactive":
-        return "Inactivo"
-      default:
-        return status
-    }
-  }
-
-  // Componente de tarjeta para cada cliente
-  const ClientCard = (client: any) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={client.avatar || "/placeholder.svg"} alt={client.name} />
-              <AvatarFallback>
-                {client.name
-                  .split(" ")
-                  .map((n: string) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-base">{client.name}</CardTitle>
-              <CardDescription className="text-sm">{client.totalAppointments} citas</CardDescription>
-            </div>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Eye className="h-4 w-4 mr-2" />
-                Ver detalles
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Contactar
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Badge className={getStatusColor(client.status)}>{getStatusText(client.status)}</Badge>
-          <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm font-medium">{client.rating}</span>
-          </div>
-        </div>
-
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Mail className="h-3 w-3" />
-            <span className="truncate">{client.email}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Phone className="h-3 w-3" />
-            <span>{client.phone}</span>
-          </div>
-          {client.nextAppointment && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3" />
-              <span>Próxima: {new Date(client.nextAppointment).toLocaleDateString()}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-1">
-          {client.tags.map((tag: string) => (
-            <Badge key={tag} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-
-        <Separator />
-
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Total gastado:</span>
-          <span className="font-medium">€{client.totalSpent}</span>
-        </div>
-      </CardContent>
-    </Card>
-  )
-
-  // Definición de columnas para la tabla
-  const columns = [
+  // Configuración de campos para el DataView
+  const clientFields = [
+    {
+      key: "avatar",
+      label: "Avatar",
+      type: "avatar" as const,
+      showInTable: false,
+      avatarConfig: {
+        nameKey: "name",
+        imageKey: "avatar",
+      },
+    },
     {
       key: "name",
       label: "Cliente",
+      type: "text" as const,
+      primary: true,
       sortable: true,
-      render: (client: any) => (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={client.avatar || "/placeholder.svg"} alt={client.name} />
-            <AvatarFallback className="text-xs">
-              {client.name
-                .split(" ")
-                .map((n: string) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="font-medium">{client.name}</div>
-            <div className="text-sm text-muted-foreground">
-              Cliente desde {new Date(client.joinDate).toLocaleDateString()}
-            </div>
-          </div>
-        </div>
-      ),
     },
     {
-      key: "contact",
-      label: "Contacto",
-      render: (client: any) => (
-        <div className="space-y-1">
-          <div className="text-sm">{client.email}</div>
-          <div className="text-sm text-muted-foreground">{client.phone}</div>
-        </div>
-      ),
+      key: "email",
+      label: "Email",
+      type: "email" as const,
+      secondary: true,
+    },
+    {
+      key: "phone",
+      label: "Teléfono",
+      type: "phone" as const,
     },
     {
       key: "status",
       label: "Estado",
+      type: "badge" as const,
       sortable: true,
-      render: (client: any) => <Badge className={getStatusColor(client.status)}>{getStatusText(client.status)}</Badge>,
+      badgeConfig: {
+        colors: {
+          active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+          inactive: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+        },
+        labels: {
+          active: "Activo",
+          inactive: "Inactivo",
+        },
+      },
     },
     {
       key: "totalAppointments",
       label: "Citas",
+      type: "number" as const,
       sortable: true,
-      render: (client: any) => (
-        <div className="text-sm">
-          <div>{client.totalAppointments} total</div>
-          {client.nextAppointment && (
-            <div className="text-muted-foreground">
-              Próxima: {new Date(client.nextAppointment).toLocaleDateString()}
-            </div>
-          )}
-        </div>
-      ),
     },
     {
       key: "totalSpent",
-      label: "Total",
+      label: "Total Gastado",
+      type: "currency" as const,
       sortable: true,
-      render: (client: any) => <div className="font-medium">€{client.totalSpent}</div>,
     },
     {
       key: "rating",
       label: "Valoración",
+      type: "rating" as const,
       sortable: true,
-      render: (client: any) => (
-        <div className="flex items-center gap-1">
-          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-          <span className="text-sm">{client.rating}</span>
-        </div>
-      ),
     },
     {
-      key: "actions",
-      label: "Acciones",
-      render: (client: any) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Eye className="h-4 w-4 mr-2" />
-              Ver detalles
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Contactar
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Eliminar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      key: "nextAppointment",
+      label: "Próxima Cita",
+      type: "date" as const,
+      showInCard: false,
+    },
+    {
+      key: "tags",
+      label: "Etiquetas",
+      type: "tags" as const,
+      showInTable: false,
+    },
+  ]
+
+  // Configuración de acciones
+  const clientActions = [
+    {
+      label: "Ver detalles",
+      icon: Eye,
+      onClick: (client: any) => console.log("Ver detalles", client),
+    },
+    {
+      label: "Editar",
+      icon: Edit,
+      onClick: (client: any) => console.log("Editar", client),
+    },
+    {
+      label: "Contactar",
+      icon: MessageSquare,
+      onClick: (client: any) => console.log("Contactar", client),
+    },
+    {
+      label: "Eliminar",
+      icon: Trash2,
+      onClick: (client: any) => console.log("Eliminar", client),
+      variant: "destructive" as const,
     },
   ]
 
   return (
     <div className="space-y-6">
-      <Header
-        title="Clientes"
-        subtitle="Gestiona tu base de clientes"
-        showBackButton={true}
-        backButtonText="Dashboard"
-        backButtonHref="/dashboard"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Cliente
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
-                  <DialogDescription>Completa la información del cliente para agregarlo al sistema.</DialogDescription>
-                </DialogHeader>
-                <div className="grid grid-cols-2 gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nombre completo</Label>
-                    <Input id="name" placeholder="Ej: María González" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="maria@email.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono</Label>
-                    <Input id="phone" placeholder="+34 612 345 678" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="birthDate">Fecha de nacimiento</Label>
-                    <Input id="birthDate" type="date" />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label htmlFor="address">Dirección</Label>
-                    <Input id="address" placeholder="Calle Mayor 123, Madrid" />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label htmlFor="notes">Notas</Label>
-                    <Textarea id="notes" placeholder="Información adicional sobre el cliente..." />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={() => setIsAddDialogOpen(false)}>Guardar Cliente</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        }
-      />
+  <Header
+    title="Clientes"
+    showBackButton={true}
+    backButtonText="Dashboard"
+    backButtonHref="/dashboard"
+  />
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.totalClients}</div>
-            <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.activeClients}</div>
-            <p className="text-xs text-muted-foreground">91% del total</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Nuevos Este Mes</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.newThisMonth}</div>
-            <p className="text-xs text-muted-foreground">+5 esta semana</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valoración Promedio</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.averageRating}</div>
-            <p className="text-xs text-muted-foreground">⭐ Excelente servicio</p>
-          </CardContent>
-        </Card>
+  {/* Estadísticas */}
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
+        <Users className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{mockStats.totalClients}</div>
+        <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
+      </CardContent>
+    </Card>
+    
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
+        <User className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{mockStats.activeClients}</div>
+        <p className="text-xs text-muted-foreground">91% del total</p>
+      </CardContent>
+    </Card>
+    
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Nuevos Este Mes</CardTitle>
+        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{mockStats.newThisMonth}</div>
+        <p className="text-xs text-muted-foreground">+5 esta semana</p>
+      </CardContent>
+    </Card>
+    
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Valoración Promedio</CardTitle>
+        <Star className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{mockStats.averageRating}</div>
+        <p className="text-xs text-muted-foreground">⭐ Excelente servicio</p>
+      </CardContent>
+    </Card>
+  </div>
+
+  {/* Sección principal de gestión */}
+  <Card>
+    <CardHeader className="space-y-4">
+      {/* Título y botones de acción principales */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <CardTitle>Gestión de Clientes</CardTitle>
+          <CardDescription>Administra todos los clientes de tu negocio</CardDescription>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
+          
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Cliente
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
+                <DialogDescription>
+                  Completa la información del cliente para agregarlo al sistema.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nombre completo</Label>
+                  <Input id="name" placeholder="Ej: María González" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="maria@email.com" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Teléfono</Label>
+                  <Input id="phone" placeholder="+34 612 345 678" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="birthDate">Fecha de nacimiento</Label>
+                  <Input id="birthDate" type="date" />
+                </div>
+                
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="address">Dirección</Label>
+                  <Input id="address" placeholder="Calle Mayor 123, Madrid" />
+                </div>
+                
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="notes">Notas</Label>
+                  <Textarea id="notes" placeholder="Información adicional sobre el cliente..." />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={() => setIsAddDialogOpen(false)}>
+                  Guardar Cliente
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filtros y búsqueda */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-1 gap-2">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar clientes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="inactive">Inactivos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <ViewToggle />
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between pt-4 border-t">
+        <div className="flex flex-col sm:flex-row gap-3 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar clientes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        </CardHeader>
-        <CardContent>
-          <DataView
-            data={filteredClients}
-            viewMode={viewMode}
-            columns={columns}
-            cardComponent={ClientCard}
-            emptyState={{
-              icon: <Users className="h-12 w-12 text-gray-400" />,
-              title: "No se encontraron clientes",
-              description: "No hay clientes que coincidan con los filtros seleccionados.",
-              action: (
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar Primer Cliente
-                </Button>
-              ),
-            }}
-          />
-        </CardContent>
-      </Card>
-    </div>
+          
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px]">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="active">Activos</SelectItem>
+              <SelectItem value="inactive">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <ViewToggle />
+      </div>
+    </CardHeader>
+    
+    <CardContent className="pt-0">
+      <DataView
+        data={filteredClients}
+        fields={clientFields}
+        actions={clientActions}
+        viewMode={viewMode}
+        emptyState={{
+          icon: <Users className="h-12 w-12 text-gray-400" />,
+          title: "No se encontraron clientes",
+          description: "No hay clientes que coincidan con los filtros seleccionados.",
+          action: (
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar Primer Cliente
+            </Button>
+          ),
+        }}
+      />
+    </CardContent>
+  </Card>
+</div>
   )
 }
