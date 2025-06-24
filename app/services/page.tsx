@@ -1,15 +1,16 @@
 "use client"
 
-import type React from "react"
+import { Badge } from "@/components/ui/badge"
 
+import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DataView, useDataView } from "@/components/data-view"
 import {
   Dialog,
   DialogContent,
@@ -20,27 +21,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Calendar,
-  Clock,
   DollarSign,
   Search,
   Plus,
   Edit,
   Trash2,
-  MoreHorizontal,
   Eye,
   EyeOff,
-  Star,
-  Grid3X3,
-  List,
   Download,
   Stethoscope,
   Scissors,
@@ -49,18 +37,17 @@ import {
   Heart,
   Zap,
 } from "lucide-react"
-import Link from "next/link"
 import { Header } from "@/components/header"
 
 export default function ServicesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [viewMode, setViewMode] = useState("grid")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedService, setSelectedService] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { viewMode, ViewToggle } = useDataView("cards")
 
   // Form data for create/edit
   const [formData, setFormData] = useState({
@@ -319,6 +306,155 @@ export default function ServicesPage() {
     return categories.find((c) => c.id === categoryId)?.icon || Zap
   }
 
+  // Configuración de campos para DataView
+  const serviceFields = [
+    {
+      key: "name",
+      label: "Servicio",
+      type: "custom" as const,
+      primary: true,
+      sortable: true,
+      render: (value: any, service: any) => {
+        const IconComponent = getCategoryIcon(service.category)
+        return (
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-lg" style={{ backgroundColor: `${service.color}20`, color: service.color }}>
+              <IconComponent className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-medium">{service.name}</div>
+              <div className="text-sm text-muted-foreground">{getCategoryName(service.category)}</div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      key: "description",
+      label: "Descripción",
+      type: "custom" as const,
+      showInCard: false,
+      render: (value: any) => (
+        <div className="max-w-xs">
+          <p className="text-sm line-clamp-2">{value}</p>
+        </div>
+      ),
+    },
+    {
+      key: "category",
+      label: "Categoría",
+      type: "custom" as const,
+      showInTable: false,
+      render: (value: string) => {
+        const category = categories.find((c) => c.id === value)
+        if (!category) return <span>{value}</span>
+
+        return (
+          <Badge
+            className={`${category.color.replace("text-", "bg-").replace("-600", "-100")} ${category.color.replace("-600", "-800")}`}
+          >
+            {category.name}
+          </Badge>
+        )
+      },
+    },
+    {
+      key: "duration",
+      label: "Duración",
+      type: "duration" as const,
+      sortable: true,
+    },
+    {
+      key: "price",
+      label: "Precio",
+      type: "currency" as const,
+      sortable: true,
+    },
+    {
+      key: "totalAppointments",
+      label: "Citas",
+      type: "custom" as const,
+      sortable: true,
+      render: (value: any) => (
+        <div className="text-center">
+          <div className="font-medium">{value}</div>
+          <div className="text-xs text-muted-foreground">total</div>
+        </div>
+      ),
+    },
+    {
+      key: "totalRevenue",
+      label: "Ingresos",
+      type: "currency" as const,
+      sortable: true,
+      showInTable: false,
+    },
+    {
+      key: "averageRating",
+      label: "Rating",
+      type: "rating" as const,
+      sortable: true,
+    },
+    {
+      key: "isActive",
+      label: "Estado",
+      type: "badge" as const,
+      sortable: true,
+      badgeConfig: {
+        colors: {
+          true: "bg-green-100 text-green-800",
+          false: "bg-gray-100 text-gray-800",
+        },
+        labels: {
+          true: "Activo",
+          false: "Inactivo",
+        },
+      },
+      render: (value: boolean) => {
+        const isActive = value.toString()
+        return (
+          <Badge className={value ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+            {value ? "Activo" : "Inactivo"}
+          </Badge>
+        )
+      },
+    },
+    {
+      key: "lastUsed",
+      label: "Último uso",
+      type: "date" as const,
+      showInCard: true,
+      showInTable: false,
+    },
+  ]
+
+  // Configuración de acciones
+  const serviceActions = [
+    {
+      label: "Editar",
+      icon: Edit,
+      onClick: (service: any) => openEditDialog(service),
+    },
+    {
+      label: "Activar",
+      icon: Eye,
+      onClick: (service: any) => handleToggleStatus(service.id),
+      show: (service: any) => !service.isActive,
+    },
+    {
+      label: "Desactivar",
+      icon: EyeOff,
+      onClick: (service: any) => handleToggleStatus(service.id),
+      show: (service: any) => service.isActive,
+    },
+    {
+      label: "Eliminar",
+      icon: Trash2,
+      onClick: (service: any) => handleDeleteService(service.id),
+      variant: "destructive" as const,
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -540,24 +676,7 @@ export default function ServicesPage() {
               </div>
 
               {/* View Mode Toggle */}
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="rounded-r-none"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+              <ViewToggle />
             </div>
 
             {/* Results count */}
@@ -570,220 +689,23 @@ export default function ServicesPage() {
         </Card>
 
         {/* Services Grid/List */}
-        {filteredServices.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Zap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No se encontraron servicios</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                No hay servicios que coincidan con los filtros seleccionados.
-              </p>
+        <DataView
+          data={filteredServices}
+          fields={serviceFields}
+          actions={serviceActions}
+          viewMode={viewMode}
+          emptyState={{
+            icon: <Zap className="h-12 w-12 text-gray-400" />,
+            title: "No se encontraron servicios",
+            description: "No hay servicios que coincidan con los filtros seleccionados.",
+            action: (
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Crear Primer Servicio
               </Button>
-            </CardContent>
-          </Card>
-        ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredServices.map((service) => {
-              const IconComponent = getCategoryIcon(service.category)
-              return (
-                <Card key={service.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className="p-2 rounded-lg"
-                          style={{ backgroundColor: `${service.color}20`, color: service.color }}
-                        >
-                          <IconComponent className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{service.name}</CardTitle>
-                          <Badge variant="secondary" className="text-xs">
-                            {getCategoryName(service.category)}
-                          </Badge>
-                        </div>
-                      </div>
-                      <Badge variant={service.isActive ? "default" : "secondary"}>
-                        {service.isActive ? "Activo" : "Inactivo"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{service.description}</p>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-gray-500" />
-                        <span>{service.duration} min</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="h-4 w-4 text-gray-500" />
-                        <span>${service.price}</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 pt-2 border-t">
-                      <div className="text-center">
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {service.totalAppointments}
-                        </p>
-                        <p className="text-xs text-gray-500">Citas</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-semibold text-green-600">${service.totalRevenue.toLocaleString()}</p>
-                        <p className="text-xs text-gray-500">Ingresos</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center space-x-1">
-                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-semibold">{service.averageRating}</span>
-                        </div>
-                        <p className="text-xs text-gray-500">Rating</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-xs text-gray-500">Último uso: {service.lastUsed}</span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => openEditDialog(service)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleStatus(service.id)}>
-                            {service.isActive ? (
-                              <>
-                                <EyeOff className="h-4 w-4 mr-2" />
-                                Desactivar
-                              </>
-                            ) : (
-                              <>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Activar
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteService(service.id)}>
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredServices.map((service) => {
-              const IconComponent = getCategoryIcon(service.category)
-              return (
-                <Card key={service.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className="p-3 rounded-lg"
-                        style={{ backgroundColor: `${service.color}20`, color: service.color }}
-                      >
-                        <IconComponent className="h-6 w-6" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate">{service.name}</h3>
-                          <Badge variant={service.isActive ? "default" : "secondary"}>
-                            {service.isActive ? "Activo" : "Inactivo"}
-                          </Badge>
-                        </div>
-
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{service.description}</p>
-
-                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-500">Categoría:</span>
-                            <p className="font-medium">{getCategoryName(service.category)}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Duración:</span>
-                            <p className="font-medium">{service.duration} min</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Precio:</span>
-                            <p className="font-medium">${service.price}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Citas:</span>
-                            <p className="font-medium">{service.totalAppointments}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Ingresos:</span>
-                            <p className="font-medium text-green-600">${service.totalRevenue.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Rating:</span>
-                            <div className="flex items-center space-x-1">
-                              <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                              <span className="font-medium">{service.averageRating}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditDialog(service)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleToggleStatus(service.id)}>
-                              {service.isActive ? (
-                                <>
-                                  <EyeOff className="h-4 w-4 mr-2" />
-                                  Desactivar
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Activar
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteService(service.id)}>
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        )}
+            ),
+          }}
+        />
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
