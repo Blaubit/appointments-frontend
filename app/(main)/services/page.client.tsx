@@ -1,7 +1,5 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-
 import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -38,8 +36,44 @@ import {
   Zap,
 } from "lucide-react"
 import { Header } from "@/components/header"
+import { useRouter } from "next/navigation"
+import { Badge } from "@/components/ui/badge"
 
-export default function ServicesPage() {
+type Service = {
+  id: number
+  name: string
+  description: string
+  category: string
+  duration: number
+  price: number
+  color: string
+  isActive: boolean
+  totalAppointments: number
+  totalRevenue: number
+  averageRating: number
+  lastUsed: string
+}
+
+type Pagination = {
+  totalItems: number
+  totalPages: number
+  page: number
+}
+
+type Props = {
+  services: Service[]
+  pagination?: Pagination
+}
+
+export default function PageClient({
+  services,
+  pagination = {
+    totalItems: 1,
+    totalPages: 1,
+    page: 1,
+  },
+}: Props) {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -60,130 +94,6 @@ export default function ServicesPage() {
     isActive: true,
   })
 
-  // Mock data - in real app this would come from API
-  const services = [
-    {
-      id: 1,
-      name: "Consulta General",
-      description: "Consulta médica general para diagnóstico y seguimiento de pacientes",
-      category: "medical",
-      duration: 30,
-      price: 50,
-      color: "#3B82F6",
-      isActive: true,
-      totalAppointments: 156,
-      totalRevenue: 7800,
-      averageRating: 4.8,
-      lastUsed: "2024-01-15",
-      icon: Stethoscope,
-    },
-    {
-      id: 2,
-      name: "Limpieza Dental",
-      description: "Limpieza profesional y revisión dental completa",
-      category: "dental",
-      duration: 45,
-      price: 75,
-      color: "#10B981",
-      isActive: true,
-      totalAppointments: 89,
-      totalRevenue: 6675,
-      averageRating: 4.9,
-      lastUsed: "2024-01-14",
-      icon: Stethoscope,
-    },
-    {
-      id: 3,
-      name: "Corte y Peinado",
-      description: "Corte de cabello y peinado profesional para hombres y mujeres",
-      category: "beauty",
-      duration: 60,
-      price: 40,
-      color: "#F59E0B",
-      isActive: true,
-      totalAppointments: 234,
-      totalRevenue: 9360,
-      averageRating: 4.7,
-      lastUsed: "2024-01-15",
-      icon: Scissors,
-    },
-    {
-      id: 4,
-      name: "Terapia Física",
-      description: "Sesión de rehabilitación y terapia física especializada",
-      category: "therapy",
-      duration: 90,
-      price: 100,
-      color: "#8B5CF6",
-      isActive: true,
-      totalAppointments: 67,
-      totalRevenue: 6700,
-      averageRating: 4.9,
-      lastUsed: "2024-01-13",
-      icon: Heart,
-    },
-    {
-      id: 5,
-      name: "Consulta Especializada",
-      description: "Consulta con especialista para casos complejos",
-      category: "medical",
-      duration: 45,
-      price: 120,
-      color: "#EF4444",
-      isActive: true,
-      totalAppointments: 43,
-      totalRevenue: 5160,
-      averageRating: 4.8,
-      lastUsed: "2024-01-12",
-      icon: Stethoscope,
-    },
-    {
-      id: 6,
-      name: "Revisión Rutinaria",
-      description: "Chequeo médico rutinario y preventivo",
-      category: "medical",
-      duration: 30,
-      price: 60,
-      color: "#06B6D4",
-      isActive: false,
-      totalAppointments: 28,
-      totalRevenue: 1680,
-      averageRating: 4.6,
-      lastUsed: "2024-01-08",
-      icon: Stethoscope,
-    },
-    {
-      id: 7,
-      name: "Manicure y Pedicure",
-      description: "Cuidado completo de uñas de manos y pies",
-      category: "beauty",
-      duration: 75,
-      price: 35,
-      color: "#EC4899",
-      isActive: true,
-      totalAppointments: 145,
-      totalRevenue: 5075,
-      averageRating: 4.8,
-      lastUsed: "2024-01-14",
-      icon: Scissors,
-    },
-    {
-      id: 8,
-      name: "Reparación Express",
-      description: "Servicio rápido de reparación y mantenimiento",
-      category: "maintenance",
-      duration: 45,
-      price: 80,
-      color: "#F97316",
-      isActive: true,
-      totalAppointments: 92,
-      totalRevenue: 7360,
-      averageRating: 4.5,
-      lastUsed: "2024-01-15",
-      icon: Wrench,
-    },
-  ]
-
   const categories = [
     { id: "medical", name: "Médico", icon: Stethoscope, color: "text-blue-600" },
     { id: "dental", name: "Dental", icon: Stethoscope, color: "text-green-600" },
@@ -193,21 +103,7 @@ export default function ServicesPage() {
     { id: "education", name: "Educación", icon: GraduationCap, color: "text-indigo-600" },
   ]
 
-  // Filter services
-  const filteredServices = services.filter((service) => {
-    const matchesSearch =
-      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = categoryFilter === "all" || service.category === categoryFilter
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && service.isActive) ||
-      (statusFilter === "inactive" && !service.isActive)
-
-    return matchesSearch && matchesCategory && matchesStatus
-  })
-
-  // Stats
+  // Stats calculated from services
   const stats = [
     {
       title: "Total Servicios",
@@ -235,6 +131,56 @@ export default function ServicesPage() {
     },
   ]
 
+  // Client-side filtering for immediate feedback
+  const filteredServices = services.filter((service) => {
+    const matchesSearch =
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = categoryFilter === "all" || service.category === categoryFilter
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && service.isActive) ||
+      (statusFilter === "inactive" && !service.isActive)
+
+    return matchesSearch && matchesCategory && matchesStatus
+  })
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value)
+    const url = new URL(window.location.href)
+    const params = new URLSearchParams(url.search)
+    if (value) {
+      params.set("search", value)
+    } else {
+      params.delete("search")
+    }
+    router.push(`${url.pathname}?${params.toString()}`)
+  }
+
+  const handleCategoryFilter = (value: string) => {
+    setCategoryFilter(value)
+    const url = new URL(window.location.href)
+    const params = new URLSearchParams(url.search)
+    if (value !== "all") {
+      params.set("category", value)
+    } else {
+      params.delete("category")
+    }
+    router.push(`${url.pathname}?${params.toString()}`)
+  }
+
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value)
+    const url = new URL(window.location.href)
+    const params = new URLSearchParams(url.search)
+    if (value !== "all") {
+      params.set("status", value)
+    } else {
+      params.delete("status")
+    }
+    router.push(`${url.pathname}?${params.toString()}`)
+  }
+
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -246,6 +192,8 @@ export default function ServicesPage() {
     setIsLoading(false)
     setIsCreateDialogOpen(false)
     resetForm()
+    // In real app, would refresh data or optimistically update
+    router.refresh()
   }
 
   const handleEditService = async (e: React.FormEvent) => {
@@ -259,16 +207,19 @@ export default function ServicesPage() {
     setIsLoading(false)
     setIsEditDialogOpen(false)
     resetForm()
+    router.refresh()
   }
 
   const handleDeleteService = async (serviceId: number) => {
     if (confirm("¿Estás seguro de que quieres eliminar este servicio?")) {
       console.log("Deleting service:", serviceId)
+      router.refresh()
     }
   }
 
   const handleToggleStatus = async (serviceId: number) => {
     console.log("Toggling status for service:", serviceId)
+    router.refresh()
   }
 
   const resetForm = () => {
@@ -400,24 +351,11 @@ export default function ServicesPage() {
       label: "Estado",
       type: "badge" as const,
       sortable: true,
-      badgeConfig: {
-        colors: {
-          true: "bg-green-100 text-green-800",
-          false: "bg-gray-100 text-gray-800",
-        },
-        labels: {
-          true: "Activo",
-          false: "Inactivo",
-        },
-      },
-      render: (value: boolean) => {
-        const isActive = value.toString()
-        return (
-          <Badge className={value ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-            {value ? "Activo" : "Inactivo"}
-          </Badge>
-        )
-      },
+      render: (value: boolean) => (
+        <Badge className={value ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+          {value ? "Activo" : "Inactivo"}
+        </Badge>
+      ),
     },
     {
       key: "lastUsed",
@@ -635,7 +573,7 @@ export default function ServicesPage() {
                   <Input
                     placeholder="Buscar servicios..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -643,7 +581,7 @@ export default function ServicesPage() {
 
               {/* Category Filter */}
               <div className="w-full md:w-48">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <Select value={categoryFilter} onValueChange={handleCategoryFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Categoría" />
                   </SelectTrigger>
@@ -663,7 +601,7 @@ export default function ServicesPage() {
 
               {/* Status Filter */}
               <div className="w-full md:w-48">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={handleStatusFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Estado" />
                   </SelectTrigger>
