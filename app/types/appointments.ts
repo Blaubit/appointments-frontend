@@ -1,8 +1,7 @@
+import { Client } from "./clients"
 export interface Appointment {
   id: number
-  clientName: string
-  clientEmail: string
-  clientPhone: string
+  client:Client
   service: string
   time: string
   date: string
