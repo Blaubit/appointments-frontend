@@ -1,468 +1,370 @@
-"use client"
-
-import { useState } from "react"
 import { Header } from "@/components/header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { DataView, useDataView } from "@/components/data-view"
-import {
-  Search,
-  Plus,
-  Filter,
-  Download,
-  User,
-  Users,
-  TrendingUp,
-  Star,
-  Edit,
-  Trash2,
-  Eye,
-  MessageSquare,
-} from "lucide-react"
+import ClientsPageClient from "./page.client"
+import type { Client, ClientStats, Pagination } from "@/app/types"
 
-// Datos de ejemplo para clientes
-const mockClients = [
+// Mock data para clientes
+const mockClients: Client[] = [
   {
-    id: 1,
+    id: "1",
     name: "María González",
     email: "maria.gonzalez@email.com",
     phone: "+34 612 345 678",
-    avatar: "/placeholder.svg?height=40&width=40",
+    avatar: "/Avatar1.png?height=40&width=40",
     status: "active",
-    totalAppointments: 12,
-    lastAppointment: "2024-01-15",
-    nextAppointment: "2024-01-25",
-    totalSpent: 850,
-    rating: 4.8,
-    notes: "Cliente preferencial, siempre puntual",
-    address: "Calle Mayor 123, Madrid",
-    birthDate: "1985-03-15",
-    joinDate: "2023-06-10",
-    preferredServices: ["Corte", "Tinte"],
+    dateOfBirth: "1985-03-15",
+    gender: "female",
+    address: {
+      street: "Calle Mayor 123",
+      city: "Madrid",
+      state: "Madrid",
+      zipCode: "28001",
+      country: "España",
+    },
+    emergencyContact: {
+      name: "Carlos González",
+      phone: "+34 612 345 679",
+      relationship: "Esposo",
+    },
+    medicalHistory: ["Hipertensión", "Diabetes tipo 2"],
+    allergies: ["Penicilina", "Mariscos"],
+    medications: ["Metformina", "Enalapril"],
+    insuranceInfo: {
+      provider: "Sanitas",
+      policyNumber: "SAN123456",
+      groupNumber: "GRP001",
+    },
+    preferredLanguage: "es",
+    communicationPreferences: {
+      email: true,
+      sms: true,
+      whatsapp: true,
+      phone: false,
+    },
+    notes: "Cliente VIP, prefiere citas por la mañana",
     tags: ["VIP", "Frecuente"],
+    referralSource: "Recomendación médica",
+    totalAppointments: 15,
+    totalSpent: 1250.0,
+    rating: 5,
+    lastAppointment: "2024-01-15",
+    createdAt: "2023-06-01",
+    updatedAt: "2024-01-15",
   },
   {
-    id: 2,
+    id: "2",
     name: "Carlos Rodríguez",
     email: "carlos.rodriguez@email.com",
-    phone: "+34 687 654 321",
-    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+34 623 456 789",
+    avatar: "/Avatar1.png?height=40&width=40",
     status: "active",
-    totalAppointments: 8,
-    lastAppointment: "2024-01-10",
-    nextAppointment: null,
-    totalSpent: 420,
-    rating: 4.5,
-    notes: "Prefiere citas por la mañana",
-    address: "Avenida de la Paz 45, Barcelona",
-    birthDate: "1990-07-22",
-    joinDate: "2023-08-15",
-    preferredServices: ["Corte", "Barba"],
+    dateOfBirth: "1978-11-22",
+    gender: "male",
+    address: {
+      street: "Avenida de la Paz 45",
+      city: "Barcelona",
+      state: "Barcelona",
+      zipCode: "08001",
+      country: "España",
+    },
+    emergencyContact: {
+      name: "Ana Rodríguez",
+      phone: "+34 623 456 790",
+      relationship: "Esposa",
+    },
+    medicalHistory: ["Asma"],
+    allergies: ["Polen"],
+    medications: ["Salbutamol"],
+    insuranceInfo: {
+      provider: "Adeslas",
+      policyNumber: "ADE789012",
+      groupNumber: "GRP002",
+    },
+    preferredLanguage: "es",
+    communicationPreferences: {
+      email: true,
+      sms: false,
+      whatsapp: true,
+      phone: true,
+    },
+    notes: "Prefiere citas después de las 18:00",
     tags: ["Regular"],
+    referralSource: "Búsqueda online",
+    totalAppointments: 8,
+    totalSpent: 640.0,
+    rating: 4,
+    lastAppointment: "2024-01-10",
+    createdAt: "2023-08-15",
+    updatedAt: "2024-01-10",
   },
   {
-    id: 3,
-    name: "Ana Martín",
-    email: "ana.martin@email.com",
-    phone: "+34 654 987 321",
-    avatar: "/placeholder.svg?height=40&width=40",
+    id: "3",
+    name: "Ana Martínez",
+    email: "ana.martinez@email.com",
+    phone: "+34 634 567 890",
+    avatar: "/Avatar1.png?height=40&width=40",
     status: "inactive",
-    totalAppointments: 3,
-    lastAppointment: "2023-11-20",
-    nextAppointment: null,
-    totalSpent: 180,
-    rating: 4.2,
-    notes: "Cliente nueva, necesita seguimiento",
-    address: "Plaza del Sol 8, Valencia",
-    birthDate: "1992-12-03",
-    joinDate: "2023-10-05",
-    preferredServices: ["Manicura"],
+    dateOfBirth: "1992-07-08",
+    gender: "female",
+    address: {
+      street: "Plaza España 12",
+      city: "Valencia",
+      state: "Valencia",
+      zipCode: "46001",
+      country: "España",
+    },
+    emergencyContact: {
+      name: "Luis Martínez",
+      phone: "+34 634 567 891",
+      relationship: "Hermano",
+    },
+    medicalHistory: [],
+    allergies: ["Látex"],
+    medications: [],
+    insuranceInfo: {
+      provider: "DKV",
+      policyNumber: "DKV345678",
+      groupNumber: "GRP003",
+    },
+    preferredLanguage: "es",
+    communicationPreferences: {
+      email: true,
+      sms: true,
+      whatsapp: false,
+      phone: false,
+    },
+    notes: "Cliente nuevo, primera consulta pendiente",
     tags: ["Nuevo"],
+    referralSource: "Redes sociales",
+    totalAppointments: 2,
+    totalSpent: 160.0,
+    rating: 3,
+    lastAppointment: "2023-12-20",
+    createdAt: "2023-12-01",
+    updatedAt: "2023-12-20",
   },
   {
-    id: 4,
-    name: "David López",
-    email: "david.lopez@email.com",
-    phone: "+34 698 123 456",
-    avatar: "/placeholder.svg?height=40&width=40",
+    id: "4",
+    name: "Roberto Silva",
+    email: "roberto.silva@email.com",
+    phone: "+34 645 678 901",
+    avatar: "/Avatar1.png?height=40&width=40",
     status: "active",
-    totalAppointments: 15,
-    lastAppointment: "2024-01-18",
-    nextAppointment: "2024-01-28",
-    totalSpent: 1200,
-    rating: 5.0,
-    notes: "Cliente muy satisfecho, recomienda a otros",
-    address: "Calle de la Rosa 67, Sevilla",
-    birthDate: "1988-05-10",
-    joinDate: "2023-04-20",
-    preferredServices: ["Corte", "Tratamiento"],
-    tags: ["VIP", "Embajador"],
+    dateOfBirth: "1965-04-30",
+    gender: "male",
+    address: {
+      street: "Calle Serrano 89",
+      city: "Madrid",
+      state: "Madrid",
+      zipCode: "28006",
+      country: "España",
+    },
+    emergencyContact: {
+      name: "Carmen Silva",
+      phone: "+34 645 678 902",
+      relationship: "Esposa",
+    },
+    medicalHistory: ["Artritis", "Colesterol alto"],
+    allergies: [],
+    medications: ["Ibuprofeno", "Simvastatina"],
+    insuranceInfo: {
+      provider: "Mapfre",
+      policyNumber: "MAP901234",
+      groupNumber: "GRP004",
+    },
+    preferredLanguage: "es",
+    communicationPreferences: {
+      email: false,
+      sms: true,
+      whatsapp: false,
+      phone: true,
+    },
+    notes: "Cliente de larga duración, muy puntual",
+    tags: ["VIP", "Leal"],
+    referralSource: "Cliente existente",
+    totalAppointments: 25,
+    totalSpent: 2100.0,
+    rating: 5,
+    lastAppointment: "2024-01-12",
+    createdAt: "2022-03-15",
+    updatedAt: "2024-01-12",
+  },
+  {
+    id: "5",
+    name: "Laura Fernández",
+    email: "laura.fernandez@email.com",
+    phone: "+34 656 789 012",
+    avatar: "/Avatar1.png?height=40&width=40",
+    status: "blocked",
+    dateOfBirth: "1988-09-14",
+    gender: "female",
+    address: {
+      street: "Calle Alcalá 200",
+      city: "Madrid",
+      state: "Madrid",
+      zipCode: "28028",
+      country: "España",
+    },
+    emergencyContact: {
+      name: "Pedro Fernández",
+      phone: "+34 656 789 013",
+      relationship: "Padre",
+    },
+    medicalHistory: ["Migraña crónica"],
+    allergies: ["Aspirina"],
+    medications: ["Sumatriptán"],
+    insuranceInfo: {
+      provider: "Asisa",
+      policyNumber: "ASI567890",
+      groupNumber: "GRP005",
+    },
+    preferredLanguage: "es",
+    communicationPreferences: {
+      email: true,
+      sms: false,
+      whatsapp: true,
+      phone: false,
+    },
+    notes: "Cliente bloqueado por no-show repetidos",
+    tags: ["Problemático"],
+    referralSource: "Publicidad",
+    totalAppointments: 3,
+    totalSpent: 180.0,
+    rating: 2,
+    lastAppointment: "2023-11-05",
+    createdAt: "2023-10-01",
+    updatedAt: "2023-11-05",
+  },
+  {
+    id: "6",
+    name: "Javier López",
+    email: "javier.lopez@email.com",
+    phone: "+34 667 890 123",
+    avatar: "/Avatar1.png?height=40&width=40",
+    status: "active",
+    dateOfBirth: "1995-12-03",
+    gender: "male",
+    address: {
+      street: "Gran Vía 28",
+      city: "Bilbao",
+      state: "Vizcaya",
+      zipCode: "48001",
+      country: "España",
+    },
+    emergencyContact: {
+      name: "María López",
+      phone: "+34 667 890 124",
+      relationship: "Madre",
+    },
+    medicalHistory: [],
+    allergies: ["Frutos secos"],
+    medications: [],
+    insuranceInfo: {
+      provider: "Sanitas",
+      policyNumber: "SAN678901",
+      groupNumber: "GRP006",
+    },
+    preferredLanguage: "es",
+    communicationPreferences: {
+      email: true,
+      sms: true,
+      whatsapp: true,
+      phone: false,
+    },
+    notes: "Cliente joven, muy activo en redes sociales",
+    tags: ["Nuevo", "Joven"],
+    referralSource: "Instagram",
+    totalAppointments: 4,
+    totalSpent: 320.0,
+    rating: 4,
+    lastAppointment: "2024-01-08",
+    createdAt: "2023-11-15",
+    updatedAt: "2024-01-08",
   },
 ]
 
-const mockStats = {
-  totalClients: 156,
-  activeClients: 142,
-  newThisMonth: 23,
-  averageRating: 4.6,
+// Estadísticas calculadas
+const mockStats: ClientStats = {
+  totalClients: mockClients.length,
+  activeClients: mockClients.filter((c) => c.status === "active").length,
+  newThisMonth: mockClients.filter((c) => {
+    const createdDate = new Date(c.createdAt)
+    const now = new Date()
+    return createdDate.getMonth() === now.getMonth() && createdDate.getFullYear() === now.getFullYear()
+  }).length,
+  averageRating: mockClients.reduce((acc, c) => acc + c.rating, 0) / mockClients.length,
 }
 
-export default function ClientsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const { viewMode, ViewToggle } = useDataView("cards")
+const mockPagination: Pagination = {
+  page: 1,
+  itemsPerPage: 10,
+  totalItems: mockClients.length,
+  totalPages: Math.ceil(mockClients.length / 10),
+  hasNext: mockClients.length > 10,
+  hasPrev: false,
+}
 
-  const filteredClients = mockClients.filter((client) => {
-    const matchesSearch =
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.includes(searchTerm)
-    const matchesStatus = statusFilter === "all" || client.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+// Función para filtrar clientes (simulando server-side filtering)
+function getFilteredClients(searchParams: { [key: string]: string | string[] | undefined }) {
+  let filteredClients = [...mockClients]
 
-  // Configuración de campos para el DataView
-  const clientFields = [
-    {
-      key: "avatar",
-      label: "Avatar",
-      type: "avatar" as const,
-      showInTable: false,
-      avatarConfig: {
-        nameKey: "name",
-        imageKey: "avatar",
-      },
-    },
-    {
-      key: "name",
-      label: "Cliente",
-      type: "text" as const,
-      primary: true,
-      sortable: true,
-    },
-    {
-      key: "email",
-      label: "Email",
-      type: "email" as const,
-      secondary: true,
-    },
-    {
-      key: "phone",
-      label: "Teléfono",
-      type: "phone" as const,
-    },
-    {
-      key: "status",
-      label: "Estado",
-      type: "badge" as const,
-      sortable: true,
-      badgeConfig: {
-        colors: {
-          active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-          inactive: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
-        },
-        labels: {
-          active: "Activo",
-          inactive: "Inactivo",
-        },
-      },
-    },
-    {
-      key: "totalAppointments",
-      label: "Citas",
-      type: "number" as const,
-      sortable: true,
-    },
-    {
-      key: "totalSpent",
-      label: "Total Gastado",
-      type: "currency" as const,
-      sortable: true,
-    },
-    {
-      key: "rating",
-      label: "Valoración",
-      type: "rating" as const,
-      sortable: true,
-    },
-    {
-      key: "nextAppointment",
-      label: "Próxima Cita",
-      type: "date" as const,
-      showInCard: false,
-    },
-    {
-      key: "tags",
-      label: "Etiquetas",
-      type: "tags" as const,
-      showInTable: false,
-    },
-  ]
+  // Filtro por búsqueda
+  if (searchParams.search && typeof searchParams.search === "string") {
+    const search = searchParams.search.toLowerCase()
+    filteredClients = filteredClients.filter(
+      (client) =>
+        client.name.toLowerCase().includes(search) ||
+        client.email.toLowerCase().includes(search) ||
+        client.phone.includes(search),
+    )
+  }
 
-  // Configuración de acciones
-  const clientActions = [
-    {
-      label: "Ver detalles",
-      icon: Eye,
-      onClick: (client: any) => console.log("Ver detalles", client),
-    },
-    {
-      label: "Editar",
-      icon: Edit,
-      onClick: (client: any) => console.log("Editar", client),
-    },
-    {
-      label: "Contactar",
-      icon: MessageSquare,
-      onClick: (client: any) => console.log("Contactar", client),
-    },
-    {
-      label: "Eliminar",
-      icon: Trash2,
-      onClick: (client: any) => console.log("Eliminar", client),
-      variant: "destructive" as const,
-    },
-  ]
+  // Filtro por estado
+  if (searchParams.status && typeof searchParams.status === "string" && searchParams.status !== "all") {
+    filteredClients = filteredClients.filter((client) => client.status === searchParams.status)
+  }
+
+  // Filtro por etiquetas
+  if (searchParams.tags && typeof searchParams.tags === "string") {
+    const tags = searchParams.tags.split(",")
+    filteredClients = filteredClients.filter((client) => tags.some((tag) => client.tags?.includes(tag)))
+  }
+
+  return filteredClients
+}
+
+export default function ClientsPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  const filteredClients = getFilteredClients(searchParams)
+
+  // Recalcular estadísticas basadas en clientes filtrados
+  const stats: ClientStats = {
+    totalClients: filteredClients.length,
+    activeClients: filteredClients.filter((c) => c.status === "active").length,
+    newThisMonth: filteredClients.filter((c) => {
+      const createdDate = new Date(c.createdAt)
+      const now = new Date()
+      return createdDate.getMonth() === now.getMonth() && createdDate.getFullYear() === now.getFullYear()
+    }).length,
+    averageRating:
+      filteredClients.length > 0 ? filteredClients.reduce((acc, c) => acc + c.rating, 0) / filteredClients.length : 0,
+  }
 
   return (
- <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <Header
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header
         title="Clientes"
+        subtitle="Gestiona la información de tus clientes"
         showBackButton={true}
         backButtonText="Dashboard"
         backButtonHref="/dashboard"
       />
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div className="space-y-6">
-      
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.totalClients}</div>
-            <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Clientes Activos</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.activeClients}</div>
-            <p className="text-xs text-muted-foreground">91% del total</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Nuevos Este Mes</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.newThisMonth}</div>
-            <p className="text-xs text-muted-foreground">+5 esta semana</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Valoración Promedio</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{mockStats.averageRating}</div>
-            <p className="text-xs text-muted-foreground">⭐ Excelente servicio</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Sección principal de gestión */}
-      <Card className="mb-8">
-        <CardHeader>
-          {/* Título y botones de acción principales */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-            <div>
-              <CardTitle>Gestión de Clientes</CardTitle>
-              <CardDescription>Administra todos los clientes de tu negocio</CardDescription>
-            </div>
-            
-            <div className="flex space-x-2">
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
-              
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nuevo Cliente
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
-                    <DialogDescription>
-                      Completa la información del cliente para agregarlo al sistema.
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">Nombre completo *</Label>
-                      <Input 
-                        id="name" 
-                        placeholder="Ej: María González" 
-                        className="col-span-3"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="email" className="text-right">Email *</Label>
-                      <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="maria@email.com" 
-                        className="col-span-3"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="phone" className="text-right">Teléfono *</Label>
-                      <Input 
-                        id="phone" 
-                        placeholder="+34 612 345 678" 
-                        className="col-span-3"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="birthDate" className="text-right">Fecha de nacimiento</Label>
-                      <Input 
-                        id="birthDate" 
-                        type="date" 
-                        className="col-span-3"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="address" className="text-right">Dirección</Label>
-                      <Input 
-                        id="address" 
-                        placeholder="Calle Mayor 123, Madrid" 
-                        className="col-span-3"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-start gap-4">
-                      <Label htmlFor="notes" className="text-right">Notas</Label>
-                      <Textarea 
-                        id="notes" 
-                        placeholder="Información adicional sobre el cliente..." 
-                        className="col-span-3"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={() => setIsAddDialogOpen(false)}>
-                      Guardar Cliente
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          {/* Filtros y búsqueda */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar clientes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <div className="w-full md:w-48">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="inactive">Inactivos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* View Mode Toggle */}
-            <ViewToggle />
-          </div>
-
-          {/* Results count */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Mostrando {filteredClients.length} de {mockStats.totalClients} clientes
-            </p>
-          </div>
-          
-          <DataView
-            data={filteredClients}
-            fields={clientFields}
-            actions={clientActions}
-            viewMode={viewMode}
-            emptyState={{
-              icon: <Users className="h-12 w-12 text-gray-400" />,
-              title: "No se encontraron clientes",
-              description: "No hay clientes que coincidan con los filtros seleccionados.",
-              action: (
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar Primer Cliente
-                </Button>
-              ),
-            }}
-          />
-        </CardContent>
-      </Card>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <ClientsPageClient clients={filteredClients} stats={stats} pagination={mockPagination} />
+      </main>
     </div>
-  </div>
-</div>
   )
 }

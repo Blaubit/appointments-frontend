@@ -323,7 +323,7 @@ export default function ReportsPage() {
                 {topClients.map((client, index) => (
                   <div key={index} className="flex items-center space-x-4">
                     <Avatar>
-                      <AvatarImage src="/placeholder.svg?height=40&width=40" />
+                      <AvatarImage src="/Avatar1.png?height=40&width=40" />
                       <AvatarFallback>
                         {client.name
                           .split(" ")

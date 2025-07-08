@@ -46,7 +46,7 @@ export default function NewAppointmentPage() {
       phone: "+1 (555) 123-4567",
       lastVisit: "2024-01-10",
       totalAppointments: 12,
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 2,
@@ -55,7 +55,7 @@ export default function NewAppointmentPage() {
       phone: "+1 (555) 234-5678",
       lastVisit: "2024-01-08",
       totalAppointments: 8,
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 3,
@@ -64,7 +64,7 @@ export default function NewAppointmentPage() {
       phone: "+1 (555) 345-6789",
       lastVisit: "2024-01-05",
       totalAppointments: 15,
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
   ]
 

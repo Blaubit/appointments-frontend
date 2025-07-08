@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -38,14 +39,22 @@ import {
   Sun,
   Monitor,
 } from "lucide-react"
-import Link from "next/link"
 import { Header } from "@/components/header"
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("profile")
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get("tab")
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "profile")
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
+
+  // Update tab when URL changes
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [tabFromUrl])
 
   // Profile settings
   const [profileData, setProfileData] = useState({
@@ -215,7 +224,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-       <Header
+      <Header
         title="Configuración"
         showBackButton={true}
         backButtonText="Dashboard"
@@ -231,7 +240,6 @@ export default function SettingsPage() {
           count: 3,
         }}
       />
-
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
