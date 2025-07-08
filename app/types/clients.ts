@@ -1,11 +1,10 @@
 export interface Client {
-  id: number
-  firstName: string
-  lastName: string
+  id: string
   name: string // computed: firstName + lastName
   email: string
   phone: string
-  avatar: string
+  avatar?: string
+  status: "active" | "inactive" | "blocked"
   dateOfBirth?: string
   gender?: "male" | "female" | "other"
   address?: {
@@ -26,7 +25,7 @@ export interface Client {
   insuranceInfo?: {
     provider: string
     policyNumber: string
-    groupNumber?: string
+    groupNumber: string
   }
   preferredLanguage: string
   communicationPreferences: {
@@ -35,39 +34,28 @@ export interface Client {
     whatsapp: boolean
     phone: boolean
   }
-  totalAppointments: number
-  completedAppointments: number
-  cancelledAppointments: number
-  noShowAppointments: number
-  totalSpent: number
-  averageRating: number
-  lastAppointment?: string
-  nextAppointment?: string
-  status: "active" | "inactive" | "blocked"
   notes?: string
+  totalAppointments: number
+  totalSpent: number
+  rating: number
+  lastAppointment?: string
   createdAt: string
   updatedAt: string
   tags?: string[]
-  loyaltyPoints: number
+  loyaltyPoints?: number
   referralSource?: string
 }
 
 export interface ClientStats {
-  total: number
-  active: number
-  inactive: number
-  blocked: number
+  totalClients: number
+  activeClients: number
   newThisMonth: number
-  newThisWeek: number
   averageRating: number
-  totalRevenue: number
-  averageSpent: number
-  averageAppointments: number
 }
 
 export interface ClientFilters {
   search?: string
-  status?: "active" | "inactive" | "blocked"
+  status?: "all" | "active" | "inactive" | "blocked"
   gender?: "male" | "female" | "other"
   ageRange?: {
     min: number
@@ -83,6 +71,10 @@ export interface ClientFilters {
   }
   tags?: string[]
   communicationPreference?: string
+  dateRange?: {
+    from: string
+    to: string
+  }
 }
 
 export interface ClientFormData {
@@ -110,7 +102,7 @@ export interface ClientFormData {
   insuranceInfo?: {
     provider: string
     policyNumber: string
-    groupNumber?: string
+    groupNumber: string
   }
   preferredLanguage: string
   communicationPreferences: {

@@ -16,7 +16,7 @@ async function getUpcomingAppointments() {
       time: "09:00",
       date: "Hoy",
       status: "confirmed" as const,
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 2,
@@ -29,7 +29,7 @@ async function getUpcomingAppointments() {
       time: "10:30",
       date: "Hoy",
       status: "pending" as const,
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 3,
@@ -42,7 +42,7 @@ async function getUpcomingAppointments() {
       time: "14:00",
       date: "Mañana",
       status: "confirmed" as const,
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 4,
@@ -55,7 +55,7 @@ async function getUpcomingAppointments() {
       time: "16:00",
       date: "Mañana",
       status: "confirmed" as const,
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
   ];
 }

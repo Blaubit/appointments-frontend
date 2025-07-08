@@ -312,7 +312,7 @@ export default function DashboardClient({
 
             {/* Profile Info */}
             <Card>
-              <Link href="/settings">
+              <Link href="/settings?tab=business">
                 <CardHeader>
                   <CardTitle>Información del Consultorio</CardTitle>
                 </CardHeader>

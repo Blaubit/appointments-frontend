@@ -85,7 +85,7 @@ export default function CalendarPage() {
       duration: 30,
       status: "confirmed",
       notes: "Primera consulta, revisar historial médico",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 2,
@@ -99,7 +99,7 @@ export default function CalendarPage() {
       duration: 45,
       status: "pending",
       notes: "Paciente con sensibilidad dental",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 3,
@@ -113,7 +113,7 @@ export default function CalendarPage() {
       duration: 60,
       status: "confirmed",
       notes: "Corte bob y mechas",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 4,
@@ -127,7 +127,7 @@ export default function CalendarPage() {
       duration: 45,
       status: "cancelled",
       notes: "Cancelado por el paciente",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 5,
@@ -141,7 +141,7 @@ export default function CalendarPage() {
       duration: 90,
       status: "confirmed",
       notes: "Sesión de rehabilitación",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 6,
@@ -155,7 +155,7 @@ export default function CalendarPage() {
       duration: 30,
       status: "pending",
       notes: "Chequeo anual",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
   ]
 

@@ -23,7 +23,7 @@ export default async function Page({ searchParams }: Props) {
       status: "confirmed",
       duration: 30,
       notes: "Primera consulta, revisar historial médico",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 2,
@@ -37,7 +37,7 @@ export default async function Page({ searchParams }: Props) {
       status: "pending",
       duration: 45,
       notes: "Paciente con sensibilidad dental",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 3,
@@ -51,7 +51,7 @@ export default async function Page({ searchParams }: Props) {
       status: "confirmed",
       duration: 60,
       notes: "Corte bob y mechas",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 4,
@@ -65,7 +65,7 @@ export default async function Page({ searchParams }: Props) {
       status: "cancelled",
       duration: 45,
       notes: "Cancelado por el paciente",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 5,
@@ -79,7 +79,7 @@ export default async function Page({ searchParams }: Props) {
       status: "confirmed",
       duration: 90,
       notes: "Sesión de rehabilitación",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 6,
@@ -93,7 +93,7 @@ export default async function Page({ searchParams }: Props) {
       status: "pending",
       duration: 30,
       notes: "Chequeo anual",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 7,
@@ -107,7 +107,7 @@ export default async function Page({ searchParams }: Props) {
       status: "confirmed",
       duration: 75,
       notes: "Manicure francesa",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
     {
       id: 8,
@@ -121,7 +121,7 @@ export default async function Page({ searchParams }: Props) {
       status: "pending",
       duration: 45,
       notes: "Reparación urgente",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "/Avatar1.png?height=40&width=40",
     },
   ]
 

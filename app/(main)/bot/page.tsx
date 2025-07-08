@@ -225,7 +225,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       contact: {
         name: "María González",
         phone: "+1234567890",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/Avatar1.png?height=40&width=40",
       },
       lastMessage: "Gracias, mi cita está confirmada para mañana a las 10:00 AM",
       timestamp: "2024-01-15T14:30:00Z",
@@ -241,7 +241,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       contact: {
         name: "Carlos Rodríguez",
         phone: "+1234567891",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/Avatar1.png?height=40&width=40",
       },
       lastMessage: "¿Podrían confirmarme los horarios disponibles para la próxima semana?",
       timestamp: "2024-01-15T13:45:00Z",
@@ -256,7 +256,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       contact: {
         name: "Ana Martínez",
         phone: "+1234567892",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/Avatar1.png?height=40&width=40",
       },
       lastMessage: "Necesito cancelar mi cita del viernes",
       timestamp: "2024-01-15T12:20:00Z",
@@ -271,7 +271,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       contact: {
         name: "Luis Fernández",
         phone: "+1234567893",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/Avatar1.png?height=40&width=40",
       },
       lastMessage: "Hola, quisiera información sobre sus servicios",
       timestamp: "2024-01-15T11:10:00Z",
@@ -286,7 +286,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       contact: {
         name: "Carmen López",
         phone: "+1234567894",
-        avatar: "/placeholder.svg?height=40&width=40",
+        avatar: "/Avatar1.png?height=40&width=40",
       },
       lastMessage: "Perfecto, gracias por la ayuda",
       timestamp: "2024-01-15T10:55:00Z",
