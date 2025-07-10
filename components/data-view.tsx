@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Grid3X3, List, MoreHorizontal, Star, Calendar, Phone, Mail, Clock, DollarSign } from "lucide-react"
+import { DataViewAction, DataViewField } from "@/types"
 
 interface ViewToggleProps {
   value: "cards" | "table"
@@ -51,57 +52,10 @@ export function ViewToggle({ value, onValueChange, className = "" }: ViewToggleP
 }
 
 
-// Tipos de campos disponibles
-type FieldType =
-  | "text"
-  | "email"
-  | "phone"
-  | "date"
-  | "currency"
-  | "number"
-  | "badge"
-  | "avatar"
-  | "rating"
-  | "tags"
-  | "duration"
-  | "custom"
-
-interface Field {
-  key: string
-  label: string
-  type: FieldType
-  sortable?: boolean
-  primary?: boolean // Campo principal (título en tarjetas)
-  secondary?: boolean // Campo secundario (subtítulo en tarjetas)
-  showInCard?: boolean // Mostrar en vista de tarjetas
-  showInTable?: boolean // Mostrar en vista de tabla
-  render?: (value: any, item: any) => React.ReactNode // Renderizado personalizado
-  badgeConfig?: {
-    colors: Record<string, string>
-    labels?: Record<string, string>
-  }
-  avatarConfig?: {
-    nameKey?: string
-    imageKey?: string
-    fallbackKey?: string
-  }
-  tagsConfig?: {
-    colorMap?: Record<string, string>
-  }
-}
-
-interface Action {
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  onClick: (item: any) => void
-  variant?: "default" | "destructive"
-  show?: (item: any) => boolean
-}
-
 interface DataViewProps {
   data: any[]
-  fields: Field[]
-  actions?: Action[]
+  fields: DataViewField[]
+  actions?: DataViewAction[]
   viewMode: "cards" | "table"
   emptyState?: {
     icon?: React.ReactNode
@@ -140,7 +94,7 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
   })
 
   // Función para renderizar valores según el tipo
-  const renderFieldValue = (field: Field, value: any, item: any) => {
+  const renderFieldValue = (field: DataViewField, value: any, item: any) => {
     if (field.render) {
       return field.render(value, item)
     }

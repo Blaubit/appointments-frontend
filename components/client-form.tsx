@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Plus, X, User, Phone, MapPin, Heart, Shield, Languages, Bell } from "lucide-react"
-import type { Client, ClientFormData } from "@/app/types"
+import type { Client, ClientFormData } from "@/types"
 
 interface ClientFormProps {
   client?: Client // Si se pasa un cliente, está en modo edición

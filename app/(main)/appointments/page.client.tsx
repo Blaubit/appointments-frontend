@@ -24,7 +24,7 @@ import {
   Eye,
 } from "lucide-react"
 import { Header } from "@/components/header"
-import type { Appointment, AppointmentStats, Pagination, DataViewField, DataViewAction } from "@/app/types"
+import type { Appointment, AppointmentStats, Pagination, DataViewField, DataViewAction } from "@/types"
 
 type Props = {
   appointments: Appointment[]

@@ -59,7 +59,7 @@ import type {
   User,
   DataViewField,
   DataViewAction,
-} from "@/app/types"
+} from "@/types"
 
 type Props = {
   flows: BotFlow[]

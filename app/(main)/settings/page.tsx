@@ -4,14 +4,14 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { ProfileForm } from "@/components/profile-form"
+import { BusinessInfoForm } from "@/components/bussines-form"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,6 @@ import {
   Shield,
   Palette,
   Download,
-  Camera,
   Eye,
   EyeOff,
   Trash2,
@@ -56,30 +55,35 @@ export default function SettingsPage() {
     }
   }, [tabFromUrl])
 
+  const role = {
+    id: "1",
+    name: "Médico General",
+    description: "Especialista en atención primaria y medicina general.",
+  }
+  const company = {
+    id: "1",
+    name: "Consultorio Dr. Silvas",
+    companyType: "consultorio_medico",
+    address: "Av. Principal 123, Centro",
+    city: "Ciudad",
+    state: "Estado",
+    postalCode: "12345",
+    country: "México",
+    description: "Consultorio médico especializado en atención primaria y medicina general.",
+    createdAt: new Date(),
+  }
   // Profile settings
   const [profileData, setProfileData] = useState({
-    firstName: "Roberto",
-    lastName: "Silva",
+    fullName: "Roberto Silva",
     email: "roberto.silva@email.com",
+    role: role,
     phone: "+1 (555) 123-4567",
     specialization: "Médico General",
     license: "MD-12345",
     bio: "Médico general con más de 10 años de experiencia en atención primaria.",
-    avatar: "/placeholder.svg?height=100&width=100",
+    avatar: "/Avatar1.png",
   })
 
-  // Business settings
-  const [businessData, setBusinessData] = useState({
-    businessName: "Consultorio Dr. Silva",
-    businessType: "medical",
-    address: "Av. Principal 123, Centro",
-    city: "Ciudad",
-    state: "Estado",
-    zipCode: "12345",
-    country: "México",
-    website: "www.consultoriosilva.com",
-    description: "Consultorio médico especializado en atención primaria y medicina general.",
-  })
 
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
@@ -140,7 +144,7 @@ export default function SettingsPage() {
   const handleSaveBusiness = async () => {
     setIsLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Saving business:", businessData)
+    console.log("Saving business info:", company)
     setIsLoading(false)
   }
 
@@ -179,15 +183,6 @@ export default function SettingsPage() {
   const handleExportData = async () => {
     console.log("Exporting data...")
   }
-
-  const businessTypes = [
-    { value: "medical", label: "Consultorio Médico" },
-    { value: "dental", label: "Consultorio Dental" },
-    { value: "beauty", label: "Salón de Belleza" },
-    { value: "therapy", label: "Terapia Física" },
-    { value: "education", label: "Centro Educativo" },
-    { value: "other", label: "Otro" },
-  ]
 
   const timezones = [
     { value: "America/Mexico_City", label: "Ciudad de México (GMT-6)" },
@@ -272,222 +267,20 @@ export default function SettingsPage() {
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Información Personal</CardTitle>
-                <CardDescription>Actualiza tu información personal y profesional</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Avatar Section */}
-                <div className="flex items-center space-x-6">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={profileData.avatar || "/placeholder.svg"} />
-                    <AvatarFallback className="text-lg">
-                      {profileData.firstName[0]}
-                      {profileData.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-2">
-                    <Button variant="outline" size="sm">
-                      <Camera className="h-4 w-4 mr-2" />
-                      Cambiar Foto
-                    </Button>
-                    <p className="text-sm text-gray-500">JPG, PNG o GIF. Máximo 2MB.</p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Personal Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">Nombre *</Label>
-                    <Input
-                      id="firstName"
-                      value={profileData.firstName}
-                      onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Apellido *</Label>
-                    <Input
-                      id="lastName"
-                      value={profileData.lastName}
-                      onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono *</Label>
-                    <Input
-                      id="phone"
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="specialization">Especialización</Label>
-                    <Input
-                      id="specialization"
-                      value={profileData.specialization}
-                      onChange={(e) => setProfileData({ ...profileData, specialization: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="license">Número de Licencia</Label>
-                    <Input
-                      id="license"
-                      value={profileData.license}
-                      onChange={(e) => setProfileData({ ...profileData, license: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Biografía</Label>
-                  <Textarea
-                    id="bio"
-                    value={profileData.bio}
-                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                    placeholder="Describe tu experiencia y especialidades..."
-                    rows={4}
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveProfile} disabled={isLoading}>
-                    {isLoading ? "Guardando..." : "Guardar Cambios"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                <ProfileForm
+                  initialData={profileData}
+                  onSave={handleSaveProfile}
+                  isLoading={isLoading}
+                />
           </TabsContent>
 
           {/* Business Tab */}
           <TabsContent value="business" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Información del Negocio</CardTitle>
-                <CardDescription>Configura los detalles de tu consultorio o negocio</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="businessName">Nombre del Negocio *</Label>
-                    <Input
-                      id="businessName"
-                      value={businessData.businessName}
-                      onChange={(e) => setBusinessData({ ...businessData, businessName: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="businessType">Tipo de Negocio *</Label>
-                    <Select
-                      value={businessData.businessType}
-                      onValueChange={(value) => setBusinessData({ ...businessData, businessType: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {businessTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">Dirección</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2 space-y-2">
-                      <Label htmlFor="address">Dirección *</Label>
-                      <Input
-                        id="address"
-                        value={businessData.address}
-                        onChange={(e) => setBusinessData({ ...businessData, address: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="city">Ciudad *</Label>
-                      <Input
-                        id="city"
-                        value={businessData.city}
-                        onChange={(e) => setBusinessData({ ...businessData, city: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state">Estado *</Label>
-                      <Input
-                        id="state"
-                        value={businessData.state}
-                        onChange={(e) => setBusinessData({ ...businessData, state: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="zipCode">Código Postal</Label>
-                      <Input
-                        id="zipCode"
-                        value={businessData.zipCode}
-                        onChange={(e) => setBusinessData({ ...businessData, zipCode: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="country">País *</Label>
-                      <Input
-                        id="country"
-                        value={businessData.country}
-                        onChange={(e) => setBusinessData({ ...businessData, country: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Sitio Web</Label>
-                    <Input
-                      id="website"
-                      value={businessData.website}
-                      onChange={(e) => setBusinessData({ ...businessData, website: e.target.value })}
-                      placeholder="www.ejemplo.com"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descripción del Negocio</Label>
-                  <Textarea
-                    id="description"
-                    value={businessData.description}
-                    onChange={(e) => setBusinessData({ ...businessData, description: e.target.value })}
-                    placeholder="Describe tu negocio y servicios..."
-                    rows={4}
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveBusiness} disabled={isLoading}>
-                    {isLoading ? "Guardando..." : "Guardar Cambios"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <BusinessInfoForm
+              company={company}
+              onSave={handleSaveBusiness}
+              isLoading={isLoading}
+            />
           </TabsContent>
 
           {/* Notifications Tab */}

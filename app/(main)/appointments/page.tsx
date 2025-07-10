@@ -1,6 +1,6 @@
 import type { ReadonlyURLSearchParams } from "next/navigation"
 import PageClient from "./page.client"
-import type { Appointment, AppointmentStats, Pagination } from "@/app/types"
+import type { Appointment, AppointmentStats, Pagination } from "@/types"
 
 type Props = {
   searchParams: ReadonlyURLSearchParams

@@ -3,16 +3,10 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Avatar, AvatarFallback, AvatarImage, Input, Label,Textarea, Header} from "@/components"
 import { Clock, User, Save, UserPlus, Search, CheckCircle, DollarSign } from "lucide-react"
 import Link from "next/link"
-import { Header } from "@/components/header"
+
 
 export default function NewAppointmentPage() {
   const [selectedClient, setSelectedClient] = useState<any>(null)

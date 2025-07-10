@@ -7,21 +7,18 @@ import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Calendar,
-  Smartphone,
   Phone,
   Bell,
   BarChart3,
   Shield,
   Zap,
   CheckCircle,
-  Star,
   ArrowRight,
   Menu,
   X,
   Stethoscope,
   Scissors,
   Wrench,
-  GraduationCap,
 } from "lucide-react"
 import Link from "next/link"
 

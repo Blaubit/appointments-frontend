@@ -34,7 +34,7 @@ import {
   Grid3X3,
   List,
 } from "lucide-react"
-import type { Client, ClientStats, Pagination, ClientFormData } from "@/app/types"
+import type { Client, ClientStats, Pagination, ClientFormData } from "@/types"
 
 interface ClientsPageClientProps {
   clients: Client[]

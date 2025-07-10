@@ -1,14 +1,31 @@
 import type React from "react"
-export interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  avatar?: string
-  initials: string
-  permissions: string[]
-  lastLogin?: string
-  isActive: boolean
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+}
+export interface Company {
+  id: string;
+  name: string;
+  companyType: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  description?: string;
+  createdAt: Date;
+}
+
+export interface User{
+  id: string;
+  avatar?: string;
+  email: string;
+  fullName: string;
+  bio?: string;
+  createdAt: Date;
+  company:Company;
+  role: Role;
 }
 
 export interface Notification {
@@ -30,10 +47,27 @@ export interface Pagination {
   hasPrev: boolean
 }
 
+
+type FieldType =
+  | "text"
+  | "email"
+  | "phone"
+  | "date"
+  | "currency"
+  | "number"
+  | "badge"
+  | "avatar"
+  | "rating"
+  | "tags"
+  | "duration"
+  | "custom"
+  | string // Permite tipos personalizados
 export interface DataViewField {
   key: string
   label: string
-  type: "text" | "email" | "phone" | "date" | "number" | "boolean" | "badge" | "avatar" | "custom" | "duration"
+  type: FieldType
+
+  // Visualización
   sortable?: boolean
   filterable?: boolean
   searchable?: boolean
@@ -43,12 +77,28 @@ export interface DataViewField {
   showInCard?: boolean
   width?: string
   align?: "left" | "center" | "right"
+
+  // Render personalizado
   render?: (value: any, item: any) => React.ReactNode
+
+  // Configuraciones específicas
+  badgeConfig?: {
+    colors: Record<string, string>
+    labels?: Record<string, string>
+  }
+
   avatarConfig?: {
-    nameKey: string
-    imageKey: string
+    nameKey?: string
+    imageKey?: string
+    fallbackKey?: string
+  }
+
+  tagsConfig?: {
+    colorMap?: Record<string, string>
   }
 }
+
+
 
 export interface DataViewAction {
   label: string

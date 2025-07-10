@@ -1,6 +1,6 @@
 import type { ReadonlyURLSearchParams } from "next/navigation"
 import PageClient from "./page.client"
-import type { BotFlow, BotMessage, BotConversation, BotStats, BotConfig, User } from "@/app/types"
+import type { BotFlow, BotMessage, BotConversation, BotStats, BotConfig, User } from "@/types"
 
 type Props = {
   searchParams: ReadonlyURLSearchParams

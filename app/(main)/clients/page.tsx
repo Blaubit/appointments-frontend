@@ -1,6 +1,6 @@
 import { Header } from "@/components/header"
 import ClientsPageClient from "./page.client"
-import type { Client, ClientStats, Pagination } from "@/app/types"
+import type { Client, ClientStats, Pagination } from "@/types"
 
 // Mock data para clientes
 const mockClients: Client[] = [
