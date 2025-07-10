@@ -25,6 +25,7 @@ import {
   CreditCard,
   Shield,
   ChevronDown,
+  Menu,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -56,7 +57,7 @@ interface HeaderProps {
 }
 
 export function Header({
-  title = "Planit",
+  title = "CitasFácil",
   subtitle,
   showBackButton = false,
   backButtonText = "Dashboard",
@@ -73,6 +74,7 @@ export function Header({
   className = "",
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   const defaultNotifications = [
     {
@@ -105,34 +107,38 @@ export function Header({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left Section */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
             {/* Back Button */}
             {showBackButton && (
               <Link href={backButtonHref}>
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">{backButtonText}</span>
+                <Button variant="ghost" size="sm" className="flex-shrink-0">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">{backButtonText}</span>
                 </Button>
               </Link>
             )}
 
             {/* Logo and Title */}
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
-                <Calendar className="h-6 w-6 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              <div className="p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex-shrink-0">
+                <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
-                {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">{title}</h1>
+                {subtitle && (
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate hidden sm:block">
+                    {subtitle}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Center Section - Actions */}
-          {actions && <div className="hidden md:flex items-center space-x-4">{actions}</div>}
+          {/* Right Section - Desktop */}
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Center Section - Actions */}
+            {actions && <div className="flex items-center space-x-4">{actions}</div>}
 
-          {/* Right Section */}
-          <div className="flex items-center space-x-4">
             {/* Notifications */}
             <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
               <DropdownMenuTrigger asChild>
@@ -197,7 +203,7 @@ export function Header({
                     <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
                     <AvatarFallback>{user.initials}</AvatarFallback>
                   </Avatar>
-                  <div className="hidden md:block text-left">
+                  <div className="text-left">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
                   </div>
@@ -213,7 +219,7 @@ export function Header({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="settings?tab=profile" className="flex items-center">
+                  <Link href="/profile" className="flex items-center">
                     <User className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </Link>
@@ -222,6 +228,155 @@ export function Header({
                   <Link href="/settings" className="flex items-center">
                     <Settings className="h-4 w-4 mr-2" />
                     Configuración
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/billing" className="flex items-center">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Facturación
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/security" className="flex items-center">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Seguridad
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/help" className="flex items-center">
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    Ayuda y Soporte
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/login" className="flex items-center text-red-600 hover:text-red-700">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Cerrar Sesión
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Right Section - Mobile */}
+          <div className="flex md:hidden items-center space-x-2">
+            {/* Notifications - Mobile */}
+            <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {notifications.count > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {notifications.count > 9 ? "9+" : notifications.count}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
+                <DropdownMenuLabel className="flex items-center justify-between">
+                  <span>Notificaciones</span>
+                  {notifications.count > 0 && (
+                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                      {notifications.count} nuevas
+                    </span>
+                  )}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="max-h-60 overflow-y-auto">
+                  {notificationItems.length > 0 ? (
+                    notificationItems.map((notification) => (
+                      <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3 cursor-pointer">
+                        <div className="flex items-start justify-between w-full">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                          </div>
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2 flex-shrink-0" />
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">
+                      <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No hay notificaciones</p>
+                    </div>
+                  )}
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-center text-blue-600 hover:text-blue-700">
+                  Ver todas las notificaciones
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Mobile Menu */}
+            <DropdownMenu open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {/* User Info */}
+                <DropdownMenuLabel>
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                      <AvatarFallback>{user.initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col space-y-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.role}</p>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {/* Theme Toggle */}
+                <DropdownMenuItem asChild>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Tema
+                    </span>
+                    <ThemeToggle variant="ghost" size="sm" />
+                  </div>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {/* Navigation Items */}
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="flex items-center">
+                    <User className="h-4 w-4 mr-2" />
+                    Mi Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="flex items-center">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configuración
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/billing" className="flex items-center">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Facturación
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/security" className="flex items-center">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Seguridad
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -245,7 +400,9 @@ export function Header({
 
         {/* Mobile Actions */}
         {actions && (
-          <div className="md:hidden pb-4 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">{actions}</div>
+          <div className="md:hidden pb-4 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+            <div className="flex flex-wrap gap-2">{actions}</div>
+          </div>
         )}
       </div>
     </header>
