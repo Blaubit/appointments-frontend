@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,28 +10,55 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Plus, X, User, Phone, MapPin, Heart, Shield, Languages, Bell } from "lucide-react"
-import type { Client, ClientFormData } from "@/types"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+  Plus,
+  X,
+  User,
+  Phone,
+  MapPin,
+  Heart,
+  Shield,
+  Languages,
+  Bell,
+} from "lucide-react";
+import type { Client, ClientFormData } from "@/types";
 
 interface ClientFormProps {
-  client?: Client // Si se pasa un cliente, está en modo edición
-  trigger?: React.ReactNode // Elemento que abre el dialog
-  onSubmit?: (data: ClientFormData) => void
-  onCancel?: () => void
+  client?: Client; // Si se pasa un cliente, está en modo edición
+  trigger?: React.ReactNode; // Elemento que abre el dialog
+  onSubmit?: (data: ClientFormData) => void;
+  onCancel?: () => void;
 }
 
-export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormProps) {
-  const [open, setOpen] = useState(false)
+export function ClientForm({
+  client,
+  trigger,
+  onSubmit,
+  onCancel,
+}: ClientFormProps) {
+  const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<ClientFormData>({
     firstName: "",
     lastName: "",
@@ -69,19 +96,19 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
     notes: "",
     tags: [],
     referralSource: "",
-  })
+  });
 
-  const [newTag, setNewTag] = useState("")
-  const [newMedicalHistory, setNewMedicalHistory] = useState("")
-  const [newAllergy, setNewAllergy] = useState("")
-  const [newMedication, setNewMedication] = useState("")
+  const [newTag, setNewTag] = useState("");
+  const [newMedicalHistory, setNewMedicalHistory] = useState("");
+  const [newAllergy, setNewAllergy] = useState("");
+  const [newMedication, setNewMedication] = useState("");
 
-  const isEditMode = !!client
+  const isEditMode = !!client;
 
   // Llenar el formulario con datos del cliente si está en modo edición
   useEffect(() => {
     if (client) {
-      const names = client.name.split(" ")
+      const names = client.name.split(" ");
       setFormData({
         firstName: names[0] || "",
         lastName: names.slice(1).join(" ") || "",
@@ -114,14 +141,14 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
         notes: client.notes || "",
         tags: client.tags || [],
         referralSource: client.referralSource || "",
-      })
+      });
     }
-  }, [client])
+  }, [client]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit?.(formData)
-    setOpen(false)
+    e.preventDefault();
+    onSubmit?.(formData);
+    setOpen(false);
 
     // Reset form if not in edit mode
     if (!isEditMode) {
@@ -162,77 +189,86 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
         notes: "",
         tags: [],
         referralSource: "",
-      })
+      });
     }
-  }
+  };
 
   const addTag = () => {
     if (newTag.trim() && !formData.tags?.includes(newTag.trim())) {
-      setFormData((prev:any) => ({
+      setFormData((prev: any) => ({
         ...prev,
         tags: [...(prev.tags || []), newTag.trim()],
-      }))
-      setNewTag("")
+      }));
+      setNewTag("");
     }
-  }
+  };
 
   const removeTag = (tagToRemove: string) => {
-    setFormData((prev:any) => ({
+    setFormData((prev: any) => ({
       ...prev,
-      tags: prev.tags?.filter((tag:any) => tag !== tagToRemove) || [],
-    }))
-  }
+      tags: prev.tags?.filter((tag: any) => tag !== tagToRemove) || [],
+    }));
+  };
 
   const addMedicalHistory = () => {
-    if (newMedicalHistory.trim() && !formData.medicalHistory?.includes(newMedicalHistory.trim())) {
-      setFormData((prev:any) => ({
+    if (
+      newMedicalHistory.trim() &&
+      !formData.medicalHistory?.includes(newMedicalHistory.trim())
+    ) {
+      setFormData((prev: any) => ({
         ...prev,
-        medicalHistory: [...(prev.medicalHistory || []), newMedicalHistory.trim()],
-      }))
-      setNewMedicalHistory("")
+        medicalHistory: [
+          ...(prev.medicalHistory || []),
+          newMedicalHistory.trim(),
+        ],
+      }));
+      setNewMedicalHistory("");
     }
-  }
+  };
 
   const removeMedicalHistory = (item: string) => {
-    setFormData((prev:any) => ({
+    setFormData((prev: any) => ({
       ...prev,
-      medicalHistory: prev.medicalHistory?.filter((h:any) => h !== item) || [],
-    }))
-  }
+      medicalHistory: prev.medicalHistory?.filter((h: any) => h !== item) || [],
+    }));
+  };
 
   const addAllergy = () => {
     if (newAllergy.trim() && !formData.allergies?.includes(newAllergy.trim())) {
-      setFormData((prev:any) => ({
+      setFormData((prev: any) => ({
         ...prev,
         allergies: [...(prev.allergies || []), newAllergy.trim()],
-      }))
-      setNewAllergy("")
+      }));
+      setNewAllergy("");
     }
-  }
+  };
 
   const removeAllergy = (allergy: string) => {
-    setFormData((prev:any) => ({
+    setFormData((prev: any) => ({
       ...prev,
-      allergies: prev.allergies?.filter((a:any) => a !== allergy) || [],
-    }))
-  }
+      allergies: prev.allergies?.filter((a: any) => a !== allergy) || [],
+    }));
+  };
 
   const addMedication = () => {
-    if (newMedication.trim() && !formData.medications?.includes(newMedication.trim())) {
-      setFormData((prev:any) => ({
+    if (
+      newMedication.trim() &&
+      !formData.medications?.includes(newMedication.trim())
+    ) {
+      setFormData((prev: any) => ({
         ...prev,
         medications: [...(prev.medications || []), newMedication.trim()],
-      }))
-      setNewMedication("")
+      }));
+      setNewMedication("");
     }
-  }
+  };
 
   const removeMedication = (medication: string) => {
-    setFormData((prev:any) => ({
+    setFormData((prev: any) => ({
       ...prev,
-      medications: prev.medications?.filter((m:any) => m !== medication) || [],
-    }))
-  }
+      medications: prev.medications?.filter((m: any) => m !== medication) || [],
+    }));
+  };
 
   const defaultTrigger = (
     <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer">
@@ -240,13 +276,17 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
         <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <Plus className="h-6 w-6 text-primary" />
         </div>
-        <CardTitle className="text-lg">{isEditMode ? "Editar Cliente" : "Nuevo Cliente"}</CardTitle>
+        <CardTitle className="text-lg">
+          {isEditMode ? "Editar Cliente" : "Nuevo Cliente"}
+        </CardTitle>
         <CardDescription>
-          {isEditMode ? "Actualizar información del cliente" : "Agregar un nuevo cliente al sistema"}
+          {isEditMode
+            ? "Actualizar información del cliente"
+            : "Agregar un nuevo cliente al sistema"}
         </CardDescription>
       </CardHeader>
     </Card>
-  )
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -280,7 +320,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                   <Input
                     id="firstName"
                     value={formData.firstName}
-                    onChange={(e) => setFormData((prev:any) => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        firstName: e.target.value,
+                      }))
+                    }
                     required
                   />
                 </div>
@@ -289,7 +334,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                   <Input
                     id="lastName"
                     value={formData.lastName}
-                    onChange={(e) => setFormData((prev:any) => ({ ...prev, lastName: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        lastName: e.target.value,
+                      }))
+                    }
                     required
                   />
                 </div>
@@ -302,7 +352,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData((prev:any) => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     required
                   />
                 </div>
@@ -311,7 +366,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => setFormData((prev:any) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
                     required
                   />
                 </div>
@@ -324,7 +384,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="dateOfBirth"
                     type="date"
                     value={formData.dateOfBirth}
-                    onChange={(e) => setFormData((prev:any) => ({ ...prev, dateOfBirth: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        dateOfBirth: e.target.value,
+                      }))
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -332,7 +397,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                   <Select
                     value={formData.gender}
                     onValueChange={(value: "male" | "female" | "other") =>
-                      setFormData((prev:any) => ({ ...prev, gender: value }))
+                      setFormData((prev: any) => ({ ...prev, gender: value }))
                     }
                   >
                     <SelectTrigger>
@@ -364,7 +429,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                   id="street"
                   value={formData.address?.street || ""}
                   onChange={(e) =>
-                    setFormData((prev:any) => ({
+                    setFormData((prev: any) => ({
                       ...prev,
                       address: { ...prev.address!, street: e.target.value },
                     }))
@@ -378,7 +443,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="city"
                     value={formData.address?.city || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
                         address: { ...prev.address!, city: e.target.value },
                       }))
@@ -391,7 +456,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="state"
                     value={formData.address?.state || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
                         address: { ...prev.address!, state: e.target.value },
                       }))
@@ -404,7 +469,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="zipCode"
                     value={formData.address?.zipCode || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
                         address: { ...prev.address!, zipCode: e.target.value },
                       }))
@@ -431,9 +496,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="emergencyName"
                     value={formData.emergencyContact?.name || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
-                        emergencyContact: { ...prev.emergencyContact!, name: e.target.value },
+                        emergencyContact: {
+                          ...prev.emergencyContact!,
+                          name: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -444,9 +512,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="emergencyPhone"
                     value={formData.emergencyContact?.phone || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
-                        emergencyContact: { ...prev.emergencyContact!, phone: e.target.value },
+                        emergencyContact: {
+                          ...prev.emergencyContact!,
+                          phone: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -457,9 +528,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="relationship"
                     value={formData.emergencyContact?.relationship || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
-                        emergencyContact: { ...prev.emergencyContact!, relationship: e.target.value },
+                        emergencyContact: {
+                          ...prev.emergencyContact!,
+                          relationship: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -485,7 +559,10 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     placeholder="Agregar condición médica"
                     value={newMedicalHistory}
                     onChange={(e) => setNewMedicalHistory(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addMedicalHistory())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" &&
+                      (e.preventDefault(), addMedicalHistory())
+                    }
                   />
                   <Button type="button" onClick={addMedicalHistory} size="sm">
                     <Plus className="h-4 w-4" />
@@ -493,9 +570,16 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.medicalHistory?.map((item) => (
-                    <Badge key={item} variant="secondary" className="flex items-center gap-1">
+                    <Badge
+                      key={item}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
                       {item}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeMedicalHistory(item)} />
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => removeMedicalHistory(item)}
+                      />
                     </Badge>
                   ))}
                 </div>
@@ -509,7 +593,9 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     placeholder="Agregar alergia"
                     value={newAllergy}
                     onChange={(e) => setNewAllergy(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addAllergy())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addAllergy())
+                    }
                   />
                   <Button type="button" onClick={addAllergy} size="sm">
                     <Plus className="h-4 w-4" />
@@ -517,9 +603,16 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.allergies?.map((allergy) => (
-                    <Badge key={allergy} variant="destructive" className="flex items-center gap-1">
+                    <Badge
+                      key={allergy}
+                      variant="destructive"
+                      className="flex items-center gap-1"
+                    >
                       {allergy}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeAllergy(allergy)} />
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => removeAllergy(allergy)}
+                      />
                     </Badge>
                   ))}
                 </div>
@@ -533,7 +626,9 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     placeholder="Agregar medicamento"
                     value={newMedication}
                     onChange={(e) => setNewMedication(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addMedication())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addMedication())
+                    }
                   />
                   <Button type="button" onClick={addMedication} size="sm">
                     <Plus className="h-4 w-4" />
@@ -541,9 +636,16 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.medications?.map((medication) => (
-                    <Badge key={medication} variant="outline" className="flex items-center gap-1">
+                    <Badge
+                      key={medication}
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
                       {medication}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeMedication(medication)} />
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => removeMedication(medication)}
+                      />
                     </Badge>
                   ))}
                 </div>
@@ -567,9 +669,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="provider"
                     value={formData.insuranceInfo?.provider || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
-                        insuranceInfo: { ...prev.insuranceInfo!, provider: e.target.value },
+                        insuranceInfo: {
+                          ...prev.insuranceInfo!,
+                          provider: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -580,9 +685,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="policyNumber"
                     value={formData.insuranceInfo?.policyNumber || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
-                        insuranceInfo: { ...prev.insuranceInfo!, policyNumber: e.target.value },
+                        insuranceInfo: {
+                          ...prev.insuranceInfo!,
+                          policyNumber: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -593,9 +701,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     id="groupNumber"
                     value={formData.insuranceInfo?.groupNumber || ""}
                     onChange={(e) =>
-                      setFormData((prev:any) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
-                        insuranceInfo: { ...prev.insuranceInfo!, groupNumber: e.target.value },
+                        insuranceInfo: {
+                          ...prev.insuranceInfo!,
+                          groupNumber: e.target.value,
+                        },
                       }))
                     }
                   />
@@ -617,7 +728,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                 <Label htmlFor="preferredLanguage">Idioma Preferido</Label>
                 <Select
                   value={formData.preferredLanguage}
-                  onValueChange={(value) => setFormData((prev:any) => ({ ...prev, preferredLanguage: value }))}
+                  onValueChange={(value) =>
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      preferredLanguage: value,
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -642,7 +758,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                       id="email"
                       checked={formData.communicationPreferences.email}
                       onCheckedChange={(checked) =>
-                        setFormData((prev:any) => ({
+                        setFormData((prev: any) => ({
                           ...prev,
                           communicationPreferences: {
                             ...prev.communicationPreferences,
@@ -658,7 +774,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                       id="sms"
                       checked={formData.communicationPreferences.sms}
                       onCheckedChange={(checked) =>
-                        setFormData((prev:any) => ({
+                        setFormData((prev: any) => ({
                           ...prev,
                           communicationPreferences: {
                             ...prev.communicationPreferences,
@@ -674,7 +790,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                       id="whatsapp"
                       checked={formData.communicationPreferences.whatsapp}
                       onCheckedChange={(checked) =>
-                        setFormData((prev:any) => ({
+                        setFormData((prev: any) => ({
                           ...prev,
                           communicationPreferences: {
                             ...prev.communicationPreferences,
@@ -690,7 +806,7 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                       id="phone"
                       checked={formData.communicationPreferences.phone}
                       onCheckedChange={(checked) =>
-                        setFormData((prev:any) => ({
+                        setFormData((prev: any) => ({
                           ...prev,
                           communicationPreferences: {
                             ...prev.communicationPreferences,
@@ -719,17 +835,22 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                     placeholder="Agregar etiqueta"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addTag())
+                    }
                   />
                   <Button type="button" onClick={addTag} size="sm">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {formData.tags?.map((tag:any) => (
+                  {formData.tags?.map((tag: any) => (
                     <Badge key={tag} className="flex items-center gap-1">
                       {tag}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeTag(tag)} />
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => removeTag(tag)}
+                      />
                     </Badge>
                   ))}
                 </div>
@@ -740,7 +861,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                 <Input
                   id="referralSource"
                   value={formData.referralSource}
-                  onChange={(e) => setFormData((prev:any) => ({ ...prev, referralSource: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      referralSource: e.target.value,
+                    }))
+                  }
                   placeholder="¿Cómo nos conoció?"
                 />
               </div>
@@ -750,7 +876,12 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
                 <Textarea
                   id="notes"
                   value={formData.notes}
-                  onChange={(e) => setFormData((prev:any) => ({ ...prev, notes: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
                   placeholder="Notas adicionales sobre el cliente..."
                   rows={3}
                 />
@@ -765,16 +896,18 @@ export function ClientForm({ client, trigger, onSubmit, onCancel }: ClientFormPr
               type="button"
               variant="outline"
               onClick={() => {
-                setOpen(false)
-                onCancel?.()
+                setOpen(false);
+                onCancel?.();
               }}
             >
               Cancelar
             </Button>
-            <Button type="submit">{isEditMode ? "Actualizar Cliente" : "Crear Cliente"}</Button>
+            <Button type="submit">
+              {isEditMode ? "Actualizar Cliente" : "Crear Cliente"}
+            </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

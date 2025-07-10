@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Calendar,
   Phone,
@@ -19,11 +25,11 @@ import {
   Stethoscope,
   Scissors,
   Wrench,
-} from "lucide-react"
-import Link from "next/link"
+} from "lucide-react";
+import Link from "next/link";
 
 export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const features = [
     {
@@ -40,24 +46,28 @@ export default function LandingPage() {
     {
       icon: Bell,
       title: "Recordatorios Automáticos",
-      description: "Reduce las ausencias con recordatorios por SMS y email enviados automáticamente.",
+      description:
+        "Reduce las ausencias con recordatorios por SMS y email enviados automáticamente.",
     },
     {
       icon: BarChart3,
       title: "Reportes Detallados",
-      description: "Analiza tu negocio con estadísticas de citas, ingresos y rendimiento mensual.",
+      description:
+        "Analiza tu negocio con estadísticas de citas, ingresos y rendimiento mensual.",
     },
     {
       icon: Shield,
       title: "Datos Seguros",
-      description: "Toda la información está protegida con encriptación de nivel bancario.",
+      description:
+        "Toda la información está protegida con encriptación de nivel bancario.",
     },
     {
       icon: Zap,
       title: "Configuración Rápida",
-      description: "Comienza en menos de 5 minutos. Sin instalaciones complicadas ni configuraciones técnicas.",
+      description:
+        "Comienza en menos de 5 minutos. Sin instalaciones complicadas ni configuraciones técnicas.",
     },
-  ]
+  ];
 
   const services = [
     {
@@ -73,9 +83,10 @@ export default function LandingPage() {
     {
       icon: Wrench,
       name: "Talleres y Servicios",
-      color: "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300",
+      color:
+        "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300",
     },
-  ]
+  ];
 
   const plans = [
     {
@@ -83,7 +94,12 @@ export default function LandingPage() {
       price: "$29",
       period: "/mes",
       description: "Perfecto para profesionales independientes",
-      features: ["Hasta 100 citas/mes", "Recordatorios por email", "Calendario básico", "Soporte por email"],
+      features: [
+        "Hasta 100 citas/mes",
+        "Recordatorios por email",
+        "Calendario básico",
+        "Soporte por email",
+      ],
       popular: false,
     },
     {
@@ -114,7 +130,7 @@ export default function LandingPage() {
       ],
       popular: false,
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -153,10 +169,15 @@ export default function LandingPage() {
               </a>
               <ThemeToggle />
               <Link href="/login">
-                <Button variant="outline" size="sm">Iniciar Sesión</Button>
+                <Button variant="outline" size="sm">
+                  Iniciar Sesión
+                </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm" className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                >
                   Registrarse
                 </Button>
               </Link>
@@ -165,8 +186,16 @@ export default function LandingPage() {
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center space-x-2">
               <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </Button>
             </div>
           </div>
@@ -174,22 +203,22 @@ export default function LandingPage() {
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="md:hidden py-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
-              <a 
-                href="#features" 
+              <a
+                href="#features"
                 className="block text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 py-2 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Características
               </a>
-              <a 
-                href="#services" 
+              <a
+                href="#services"
                 className="block text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 py-2 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Servicios
               </a>
-              <a 
-                href="#pricing" 
+              <a
+                href="#pricing"
                 className="block text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 py-2 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -226,8 +255,9 @@ export default function LandingPage() {
               </span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed">
-              La plataforma todo-en-uno para profesionales que quieren optimizar su tiempo, reducir ausencias y hacer
-              crecer su negocio. Sin complicaciones técnicas.
+              La plataforma todo-en-uno para profesionales que quieren optimizar
+              su tiempo, reducir ausencias y hacer crecer su negocio. Sin
+              complicaciones técnicas.
             </p>
             <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center max-w-md sm:max-w-none mx-auto">
               <Link href="/register" className="w-full sm:w-auto">
@@ -245,24 +275,32 @@ export default function LandingPage() {
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-12 sm:py-16 lg:py-20 bg-gray-50 dark:bg-gray-800">
+      <section
+        id="services"
+        className="py-12 sm:py-16 lg:py-20 bg-gray-50 dark:bg-gray-800"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Perfecto para cualquier tipo de servicio
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Miles de profesionales ya confían en Planit para gestionar sus citas
+              Miles de profesionales ya confían en Planit para gestionar sus
+              citas
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {services.map((service, index) => (
               <div key={index} className="text-center">
-                <div className={`inline-flex p-4 rounded-full ${service.color} mb-4`}>
+                <div
+                  className={`inline-flex p-4 rounded-full ${service.color} mb-4`}
+                >
                   <service.icon className="h-6 w-6 sm:h-8 sm:w-8" />
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{service.name}</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+                  {service.name}
+                </h3>
               </div>
             ))}
           </div>
@@ -277,21 +315,29 @@ export default function LandingPage() {
               Todo lo que necesitas en una sola plataforma
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Herramientas poderosas diseñadas para hacer tu trabajo más fácil y eficiente
+              Herramientas poderosas diseñadas para hacer tu trabajo más fácil y
+              eficiente
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow h-full">
+              <Card
+                key={index}
+                className="hover:shadow-lg transition-shadow h-full"
+              >
                 <CardHeader className="pb-4">
                   <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg w-fit mb-4">
                     <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
-                  <CardTitle className="text-lg sm:text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl">
+                    {feature.title}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <CardDescription className="text-sm sm:text-base leading-relaxed">{feature.description}</CardDescription>
+                  <CardDescription className="text-sm sm:text-base leading-relaxed">
+                    {feature.description}
+                  </CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -300,13 +346,18 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-12 sm:py-16 lg:py-20 bg-gray-50 dark:bg-gray-800">
+      <section
+        id="pricing"
+        className="py-12 sm:py-16 lg:py-20 bg-gray-50 dark:bg-gray-800"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Planes que se adaptan a tu negocio
             </h2>
-            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300">Comienza y escala según crezcas</p>
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300">
+              Comienza y escala según crezcas
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
@@ -321,23 +372,32 @@ export default function LandingPage() {
                   </Badge>
                 )}
                 <CardHeader className="text-center pb-4">
-                  <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
+                  <CardTitle className="text-xl sm:text-2xl">
+                    {plan.name}
+                  </CardTitle>
                   <div className="mt-4">
-                    <span className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
-                    <span className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">{plan.period}</span>
+                    <span className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+                      {plan.price}
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
+                      {plan.period}
+                    </span>
                   </div>
-                  <CardDescription className="mt-2 text-sm sm:text-base">{plan.description}</CardDescription>
+                  <CardDescription className="mt-2 text-sm sm:text-base">
+                    {plan.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col h-full">
                   <ul className="space-y-3 mb-6 flex-grow">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start">
                         <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">{feature}</span>
+                        <span className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+                          {feature}
+                        </span>
                       </li>
                     ))}
                   </ul>
-                  
                 </CardContent>
               </Card>
             ))}
@@ -348,15 +408,20 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-blue-500 to-indigo-500">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">¿Listo para transformar tu negocio?</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
+            ¿Listo para transformar tu negocio?
+          </h2>
           <p className="text-lg sm:text-xl text-blue-100 mb-6 sm:mb-8">
-            Únete a miles de profesionales que ya optimizaron su gestión de citas
+            Únete a miles de profesionales que ya optimizaron su gestión de
+            citas
           </p>
-          
+
           <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center max-w-md sm:max-w-none mx-auto">
-            <Link  href="https://wa.me/50232470635?text=Hola%20quiero%20más%20información"
-                  target="_blank"
-                  rel="noopener noreferrer">
+            <Link
+              href="https://wa.me/50232470635?text=Hola%20quiero%20más%20información"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Button
                 size="lg"
                 variant="outline"
@@ -380,10 +445,14 @@ export default function LandingPage() {
                 </div>
                 <span className="text-lg sm:text-xl font-bold">Planit</span>
               </div>
-              <p className="text-gray-400 text-sm sm:text-base">La plataforma líder en gestión de citas para profesionales.</p>
+              <p className="text-gray-400 text-sm sm:text-base">
+                La plataforma líder en gestión de citas para profesionales.
+              </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-4 text-sm sm:text-base">Producto</h3>
+              <h3 className="font-semibold mb-4 text-sm sm:text-base">
+                Producto
+              </h3>
               <ul className="space-y-2 text-gray-400 text-sm sm:text-base">
                 <li>
                   <a href="#" className="hover:text-white transition-colors">
@@ -408,7 +477,9 @@ export default function LandingPage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4 text-sm sm:text-base">Soporte</h3>
+              <h3 className="font-semibold mb-4 text-sm sm:text-base">
+                Soporte
+              </h3>
               <ul className="space-y-2 text-gray-400 text-sm sm:text-base">
                 <li>
                   <a href="#" className="hover:text-white transition-colors">
@@ -433,7 +504,9 @@ export default function LandingPage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4 text-sm sm:text-base">Empresa</h3>
+              <h3 className="font-semibold mb-4 text-sm sm:text-base">
+                Empresa
+              </h3>
               <ul className="space-y-2 text-gray-400 text-sm sm:text-base">
                 <li>
                   <a href="#" className="hover:text-white transition-colors">
@@ -464,5 +537,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

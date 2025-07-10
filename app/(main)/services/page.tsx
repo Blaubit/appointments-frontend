@@ -1,19 +1,18 @@
-import type { ReadonlyURLSearchParams } from "next/navigation"
-import PageClient from "./page.client"
+import type { ReadonlyURLSearchParams } from "next/navigation";
+import PageClient from "./page.client";
 
 type Props = {
-  searchParams: ReadonlyURLSearchParams
-}
+  searchParams: ReadonlyURLSearchParams;
+};
 
 export default async function Page({ searchParams }: Props) {
-
-
   // Mock data - in real app this would come from database
   const allServices = [
     {
       id: 1,
       name: "Consulta General",
-      description: "Consulta médica general para diagnóstico y seguimiento de pacientes",
+      description:
+        "Consulta médica general para diagnóstico y seguimiento de pacientes",
       category: "medical",
       duration: 30,
       price: 50,
@@ -41,7 +40,8 @@ export default async function Page({ searchParams }: Props) {
     {
       id: 3,
       name: "Corte y Peinado",
-      description: "Corte de cabello y peinado profesional para hombres y mujeres",
+      description:
+        "Corte de cabello y peinado profesional para hombres y mujeres",
       category: "beauty",
       duration: 60,
       price: 40,
@@ -122,14 +122,14 @@ export default async function Page({ searchParams }: Props) {
       averageRating: 4.5,
       lastUsed: "2024-01-15",
     },
-  ]
+  ];
 
   // Apply filters based on search params
-  const searchTerm =  ""
-  const categoryFilter =  "all"
-  const statusFilter = "all"
+  const searchTerm = "";
+  const categoryFilter = "all";
+  const statusFilter = "all";
 
-  let filteredServices = allServices
+  let filteredServices = allServices;
 
   //if (searchTerm) {
   //  filteredServices = filteredServices.filter(
@@ -140,20 +140,22 @@ export default async function Page({ searchParams }: Props) {
   //}
 
   if (categoryFilter !== "all") {
-    filteredServices = filteredServices.filter((service) => service.category === categoryFilter)
+    filteredServices = filteredServices.filter(
+      (service) => service.category === categoryFilter,
+    );
   }
 
   if (statusFilter !== "all") {
     filteredServices = filteredServices.filter((service) =>
       statusFilter === "active" ? service.isActive : !service.isActive,
-    )
+    );
   }
 
   const pagination = {
     totalItems: filteredServices.length,
     totalPages: Math.ceil(filteredServices.length / 10),
-    page: Number.parseInt( "1"),
-  }
+    page: Number.parseInt("1"),
+  };
 
-  return <PageClient services={filteredServices} pagination={pagination} />
+  return <PageClient services={filteredServices} pagination={pagination} />;
 }

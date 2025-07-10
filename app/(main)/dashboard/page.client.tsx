@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -139,16 +145,17 @@ export default function DashboardClient({
         user={user}
         notifications={notifications}
       />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            ¡Buen día, {user.name.split(' ')[1]}! 👋
+            ¡Buen día, {user.name.split(" ")[1]}! 👋
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Tienes {upcomingAppointments.filter(apt => apt.date === "Hoy").length} citas programadas para hoy. 
-            Aquí tienes un resumen de tu jornada.
+            Tienes{" "}
+            {upcomingAppointments.filter((apt) => apt.date === "Hoy").length}{" "}
+            citas programadas para hoy. Aquí tienes un resumen de tu jornada.
           </p>
         </div>
 
@@ -169,7 +176,9 @@ export default function DashboardClient({
                           {stat.value}
                         </p>
                       </div>
-                      <div className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 ${stat.color} flex-shrink-0`}>
+                      <div
+                        className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 ${stat.color} flex-shrink-0`}
+                      >
                         <IconComponent className="h-4 w-4 sm:h-6 sm:w-6" />
                       </div>
                     </div>
@@ -186,8 +195,12 @@ export default function DashboardClient({
             <Card>
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
                 <div>
-                  <CardTitle className="text-lg sm:text-xl">Próximas Citas</CardTitle>
-                  <CardDescription className="text-sm">Tus citas programadas</CardDescription>
+                  <CardTitle className="text-lg sm:text-xl">
+                    Próximas Citas
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    Tus citas programadas
+                  </CardDescription>
                 </div>
                 <Link href="/appointments/new">
                   <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 w-full sm:w-auto text-sm">
@@ -206,10 +219,11 @@ export default function DashboardClient({
                       {/* Avatar and main info */}
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                          <AvatarImage src={appointment.avatar || "/placeholder.svg"} />
+                          <AvatarImage
+                            src={appointment.avatar || "/placeholder.svg"}
+                          />
                           <AvatarFallback className="text-xs sm:text-sm">
-                            {appointment.client.Name
-                              .split(" ")
+                            {appointment.client.Name.split(" ")
                               .map((n) => n[0])
                               .join("")}
                           </AvatarFallback>
@@ -220,7 +234,9 @@ export default function DashboardClient({
                             <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate pr-2">
                               {appointment.client.Name}
                             </p>
-                            <Badge className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}>
+                            <Badge
+                              className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
+                            >
                               <div className="flex items-center space-x-1">
                                 {getStatusIcon(appointment.status)}
                                 <span className="capitalize hidden sm:inline">
@@ -248,13 +264,21 @@ export default function DashboardClient({
                       {/* Action buttons */}
                       <div className="flex space-x-2 sm:flex-shrink-0">
                         <Link href={`tel:${appointment.client.phone}`}>
-                          <Button variant="outline" size="sm" className="text-xs">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                          >
                             <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="ml-1 sm:hidden">Llamar</span>
                           </Button>
                         </Link>
                         <Link href={`mailto:${appointment.client.mail}`}>
-                          <Button variant="outline" size="sm" className="text-xs">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                          >
                             <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="ml-1 sm:hidden">Email</span>
                           </Button>
@@ -280,35 +304,52 @@ export default function DashboardClient({
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Acciones Rápidas</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">
+                  Acciones Rápidas
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 sm:space-y-3">
                 <Link href="/calendar">
-                  <Button className="w-full justify-start text-sm my-1" variant="outline">
+                  <Button
+                    className="w-full justify-start text-sm my-1"
+                    variant="outline"
+                  >
                     <Calendar className="h-4 w-4 mr-2" />
                     Ver Calendario
                   </Button>
                 </Link>
                 <Link href="/clients">
-                  <Button className="w-full justify-start text-sm my-1" variant="outline">
+                  <Button
+                    className="w-full justify-start text-sm my-1"
+                    variant="outline"
+                  >
                     <Users className="h-4 w-4 mr-2" />
                     Gestionar Clientes
                   </Button>
                 </Link>
                 <Link href="/services">
-                  <Button className="w-full justify-start text-sm my-1" variant="outline">
+                  <Button
+                    className="w-full justify-start text-sm my-1"
+                    variant="outline"
+                  >
                     <Stethoscope className="h-4 w-4 mr-2" />
                     Servicios
                   </Button>
                 </Link>
                 <Link href="/reports">
-                  <Button className="w-full justify-start text-sm my-1" variant="outline">
+                  <Button
+                    className="w-full justify-start text-sm my-1"
+                    variant="outline"
+                  >
                     <TrendingUp className="h-4 w-4 mr-2" />
                     Reportes
                   </Button>
                 </Link>
                 <Link href="/bot">
-                  <Button className="w-full justify-start text-sm my-1" variant="outline">
+                  <Button
+                    className="w-full justify-start text-sm my-1"
+                    variant="outline"
+                  >
                     <Bot className="h-4 w-4 mr-2" />
                     Bot
                   </Button>
@@ -320,28 +361,36 @@ export default function DashboardClient({
             <Card>
               <Link href="/settings?tab=business">
                 <CardHeader>
-                  <CardTitle className="text-lg sm:text-xl my-2">Información del Consultorio</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl my-2">
+                    Información del Consultorio
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 sm:space-y-6">
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Dirección</p>
-                      <p className="text-xs text-gray-500 break-words">{clinicInfo.address}</p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo.address}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Teléfono</p>
-                      <p className="text-xs text-gray-500 break-words">{clinicInfo.phone}</p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo.phone}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Clock className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Horario</p>
-                      <p className="text-xs text-gray-500 break-words">{clinicInfo.schedule}</p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo.schedule}
+                      </p>
                     </div>
                   </div>
                 </CardContent>

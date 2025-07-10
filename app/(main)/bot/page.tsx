@@ -1,10 +1,17 @@
-import type { ReadonlyURLSearchParams } from "next/navigation"
-import PageClient from "./page.client"
-import type { BotFlow, BotMessage, BotConversation, BotStats, BotConfig, User } from "@/types"
+import type { ReadonlyURLSearchParams } from "next/navigation";
+import PageClient from "./page.client";
+import type {
+  BotFlow,
+  BotMessage,
+  BotConversation,
+  BotStats,
+  BotConfig,
+  User,
+} from "@/types";
 
 type Props = {
-  searchParams: ReadonlyURLSearchParams
-}
+  searchParams: ReadonlyURLSearchParams;
+};
 
 export default async function WhatsAppBotPage({ searchParams }: Props) {
   //const params = new URLSearchParams(searchParams)
@@ -96,14 +103,15 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       isDefault: false,
       priority: 5,
     },
-  ]
+  ];
 
   const allMessages: BotMessage[] = [
     {
       id: "msg-1",
       name: "Saludo Inicial",
       title: "Bienvenida al Sistema",
-      content: "¡Hola {{nombre}}! 👋 Bienvenido a nuestro sistema de citas. ¿En qué puedo ayudarte hoy?",
+      content:
+        "¡Hola {{nombre}}! 👋 Bienvenido a nuestro sistema de citas. ¿En qué puedo ayudarte hoy?",
       type: "text",
       variables: ["nombre"],
       category: "greeting",
@@ -147,7 +155,8 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       id: "msg-4",
       name: "Cancelación de Cita",
       title: "Proceso de Cancelación",
-      content: "Entiendo que necesitas cancelar tu cita. ¿Podrías confirmarme tu número de cita o la fecha programada?",
+      content:
+        "Entiendo que necesitas cancelar tu cita. ¿Podrías confirmarme tu número de cita o la fecha programada?",
       type: "text",
       variables: [],
       category: "appointment",
@@ -217,7 +226,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       isActive: false,
       language: "es",
     },
-  ]
+  ];
 
   const allConversations: BotConversation[] = [
     {
@@ -227,7 +236,8 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
         phone: "+1234567890",
         avatar: "/Avatar1.png?height=40&width=40",
       },
-      lastMessage: "Gracias, mi cita está confirmada para mañana a las 10:00 AM",
+      lastMessage:
+        "Gracias, mi cita está confirmada para mañana a las 10:00 AM",
       timestamp: "2024-01-15T14:30:00Z",
       status: "completed",
       flow: "Agendar Cita",
@@ -243,7 +253,8 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
         phone: "+1234567891",
         avatar: "/Avatar1.png?height=40&width=40",
       },
-      lastMessage: "¿Podrían confirmarme los horarios disponibles para la próxima semana?",
+      lastMessage:
+        "¿Podrían confirmarme los horarios disponibles para la próxima semana?",
       timestamp: "2024-01-15T13:45:00Z",
       status: "in_progress",
       flow: "Información General",
@@ -297,7 +308,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       duration: 300,
       satisfaction: 4,
     },
-  ]
+  ];
 
   const stats: BotStats = {
     totalMessages: 1247,
@@ -317,7 +328,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
     satisfactionScore: 4.6,
     completedConversations: 234,
     abandonedConversations: 45,
-  }
+  };
 
   const botConfig: BotConfig = {
     id: "bot-1",
@@ -327,7 +338,8 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
     qrCode:
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
     autoReply: true,
-    welcomeMessage: "¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?",
+    welcomeMessage:
+      "¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?",
     workingHours: {
       enabled: true,
       start: "08:00",
@@ -341,7 +353,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
     language: "es",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-15T10:00:00Z",
-  }
+  };
 
   const user: User = {
     id: "user-1",
@@ -353,16 +365,16 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
     permissions: ["read", "write", "admin"],
     lastLogin: "2024-01-15T08:00:00Z",
     isActive: true,
-  }
+  };
 
   // Apply server-side filters based on search params
-  const searchTerm = ""
-  const statusFilter =  "all"
-  const categoryFilter =  "all"
+  const searchTerm = "";
+  const statusFilter = "all";
+  const categoryFilter = "all";
 
-  let filteredFlows = allFlows
-  let filteredMessages = allMessages
-  let filteredConversations = allConversations
+  let filteredFlows = allFlows;
+  let filteredMessages = allMessages;
+  let filteredConversations = allConversations;
 
   // Server-side search filtering for flows
   if (searchTerm) {
@@ -370,28 +382,34 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       (flow) =>
         flow.name.toLowerCase().includes(searchTerm) ||
         flow.description.toLowerCase().includes(searchTerm),
-    )
+    );
     filteredMessages = filteredMessages.filter(
       (message) =>
         message.name.toLowerCase().includes(searchTerm) ||
         message.content.toLowerCase().includes(searchTerm),
-    )
+    );
     filteredConversations = filteredConversations.filter(
       (conversation) =>
         conversation.contact.name.toLowerCase().includes(searchTerm) ||
         conversation.lastMessage.toLowerCase().includes(searchTerm),
-    )
+    );
   }
 
   // Server-side status filtering for flows
   if (statusFilter !== "all") {
-    filteredFlows = filteredFlows.filter((flow) => flow.status === statusFilter)
+    filteredFlows = filteredFlows.filter(
+      (flow) => flow.status === statusFilter,
+    );
   }
 
   // Server-side category filtering for flows
   if (categoryFilter !== "all") {
-    filteredFlows = filteredFlows.filter((flow) => flow.category === categoryFilter)
-    filteredMessages = filteredMessages.filter((message) => message.category === categoryFilter)
+    filteredFlows = filteredFlows.filter(
+      (flow) => flow.category === categoryFilter,
+    );
+    filteredMessages = filteredMessages.filter(
+      (message) => message.category === categoryFilter,
+    );
   }
 
   return (
@@ -403,5 +421,5 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
       botConfig={botConfig}
       user={user}
     />
-  )
+  );
 }

@@ -1,17 +1,29 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
-import { ProfileForm } from "@/components/profile-form"
-import { BusinessInfoForm } from "@/components/bussines-form"
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { ProfileForm } from "@/components/profile-form";
+import { BusinessInfoForm } from "@/components/bussines-form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import {
   User,
   Building2,
@@ -37,29 +49,29 @@ import {
   Moon,
   Sun,
   Monitor,
-} from "lucide-react"
-import { Header } from "@/components/header"
+} from "lucide-react";
+import { Header } from "@/components/header";
 
 export default function SettingsPage() {
-  const searchParams = useSearchParams()
-  const tabFromUrl = searchParams.get("tab")
-  const [activeTab, setActiveTab] = useState(tabFromUrl || "profile")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "profile");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // Update tab when URL changes
   useEffect(() => {
     if (tabFromUrl) {
-      setActiveTab(tabFromUrl)
+      setActiveTab(tabFromUrl);
     }
-  }, [tabFromUrl])
+  }, [tabFromUrl]);
 
   const role = {
     id: "1",
     name: "Médico General",
     description: "Especialista en atención primaria y medicina general.",
-  }
+  };
   const company = {
     id: "1",
     name: "Consultorio Dr. Silvas",
@@ -69,9 +81,10 @@ export default function SettingsPage() {
     state: "Estado",
     postalCode: "12345",
     country: "México",
-    description: "Consultorio médico especializado en atención primaria y medicina general.",
+    description:
+      "Consultorio médico especializado en atención primaria y medicina general.",
     createdAt: new Date(),
-  }
+  };
   // Profile settings
   const [profileData, setProfileData] = useState({
     fullName: "Roberto Silva",
@@ -82,8 +95,7 @@ export default function SettingsPage() {
     license: "MD-12345",
     bio: "Médico general con más de 10 años de experiencia en atención primaria.",
     avatar: "/Avatar1.png",
-  })
-
+  });
 
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
@@ -96,7 +108,7 @@ export default function SettingsPage() {
     dailyReports: false,
     weeklyReports: true,
     marketingEmails: false,
-  })
+  });
 
   // Schedule settings
   const [scheduleSettings, setScheduleSettings] = useState({
@@ -113,7 +125,7 @@ export default function SettingsPage() {
     appointmentDuration: 30,
     bufferTime: 15,
     maxAdvanceBooking: 30,
-  })
+  });
 
   // Security settings
   const [securityData, setSecurityData] = useState({
@@ -123,7 +135,7 @@ export default function SettingsPage() {
     twoFactorEnabled: false,
     loginAlerts: true,
     sessionTimeout: 60,
-  })
+  });
 
   // Appearance settings
   const [appearanceSettings, setAppearanceSettings] = useState({
@@ -132,57 +144,57 @@ export default function SettingsPage() {
     dateFormat: "DD/MM/YYYY",
     timeFormat: "24h",
     currency: "MXN",
-  })
+  });
 
   const handleSaveProfile = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Saving profile:", profileData)
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Saving profile:", profileData);
+    setIsLoading(false);
+  };
 
   const handleSaveBusiness = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Saving business info:", company)
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Saving business info:", company);
+    setIsLoading(false);
+  };
 
   const handleSaveNotifications = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Saving notifications:", notificationSettings)
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Saving notifications:", notificationSettings);
+    setIsLoading(false);
+  };
 
   const handleSaveSchedule = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Saving schedule:", scheduleSettings)
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Saving schedule:", scheduleSettings);
+    setIsLoading(false);
+  };
 
   const handleSaveSecurity = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Saving security:", securityData)
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Saving security:", securityData);
+    setIsLoading(false);
+  };
 
   const handleSaveAppearance = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Saving appearance:", appearanceSettings)
-    setIsLoading(false)
-  }
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Saving appearance:", appearanceSettings);
+    setIsLoading(false);
+  };
 
   const handleDeleteAccount = async () => {
-    console.log("Deleting account...")
-  }
+    console.log("Deleting account...");
+  };
 
   const handleExportData = async () => {
-    console.log("Exporting data...")
-  }
+    console.log("Exporting data...");
+  };
 
   const timezones = [
     { value: "America/Mexico_City", label: "Ciudad de México (GMT-6)" },
@@ -190,21 +202,21 @@ export default function SettingsPage() {
     { value: "America/Tijuana", label: "Tijuana (GMT-8)" },
     { value: "America/New_York", label: "Nueva York (GMT-5)" },
     { value: "America/Los_Angeles", label: "Los Ángeles (GMT-8)" },
-  ]
+  ];
 
   const languages = [
     { value: "es", label: "Español" },
     { value: "en", label: "English" },
     { value: "fr", label: "Français" },
     { value: "pt", label: "Português" },
-  ]
+  ];
 
   const currencies = [
     { value: "MXN", label: "Peso Mexicano (MXN)" },
     { value: "USD", label: "Dólar Americano (USD)" },
     { value: "EUR", label: "Euro (EUR)" },
     { value: "CAD", label: "Dólar Canadiense (CAD)" },
-  ]
+  ];
 
   const dayNames = {
     monday: "Lunes",
@@ -214,7 +226,7 @@ export default function SettingsPage() {
     friday: "Viernes",
     saturday: "Sábado",
     sunday: "Domingo",
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -237,29 +249,51 @@ export default function SettingsPage() {
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-8"
+        >
           <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="profile"
+              className="flex items-center space-x-2"
+            >
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Perfil</span>
             </TabsTrigger>
-            <TabsTrigger value="business" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="business"
+              className="flex items-center space-x-2"
+            >
               <Building2 className="h-4 w-4" />
               <span className="hidden sm:inline">Negocio</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="notifications"
+              className="flex items-center space-x-2"
+            >
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notificaciones</span>
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="schedule"
+              className="flex items-center space-x-2"
+            >
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Horarios</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="security"
+              className="flex items-center space-x-2"
+            >
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Seguridad</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="appearance"
+              className="flex items-center space-x-2"
+            >
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Apariencia</span>
             </TabsTrigger>
@@ -267,11 +301,11 @@ export default function SettingsPage() {
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
-                <ProfileForm
-                  initialData={profileData}
-                  onSave={handleSaveProfile}
-                  isLoading={isLoading}
-                />
+            <ProfileForm
+              initialData={profileData}
+              onSave={handleSaveProfile}
+              isLoading={isLoading}
+            />
           </TabsContent>
 
           {/* Business Tab */}
@@ -288,7 +322,9 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Configuración de Notificaciones</CardTitle>
-                <CardDescription>Personaliza cómo y cuándo recibir notificaciones</CardDescription>
+                <CardDescription>
+                  Personaliza cómo y cuándo recibir notificaciones
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -297,36 +333,51 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Notificaciones por Email</Label>
-                        <p className="text-sm text-gray-500">Recibir notificaciones en tu correo electrónico</p>
+                        <p className="text-sm text-gray-500">
+                          Recibir notificaciones en tu correo electrónico
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.emailNotifications}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, emailNotifications: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            emailNotifications: checked,
+                          })
                         }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Notificaciones por SMS</Label>
-                        <p className="text-sm text-gray-500">Recibir notificaciones por mensaje de texto</p>
+                        <p className="text-sm text-gray-500">
+                          Recibir notificaciones por mensaje de texto
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.smsNotifications}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, smsNotifications: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            smsNotifications: checked,
+                          })
                         }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Notificaciones Push</Label>
-                        <p className="text-sm text-gray-500">Recibir notificaciones en el navegador</p>
+                        <p className="text-sm text-gray-500">
+                          Recibir notificaciones en el navegador
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.pushNotifications}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, pushNotifications: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            pushNotifications: checked,
+                          })
                         }
                       />
                     </div>
@@ -341,36 +392,51 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Recordatorios de Citas</Label>
-                        <p className="text-sm text-gray-500">Recordatorios automáticos antes de las citas</p>
+                        <p className="text-sm text-gray-500">
+                          Recordatorios automáticos antes de las citas
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.appointmentReminders}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, appointmentReminders: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            appointmentReminders: checked,
+                          })
                         }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Confirmaciones de Citas</Label>
-                        <p className="text-sm text-gray-500">Notificaciones cuando se confirman citas</p>
+                        <p className="text-sm text-gray-500">
+                          Notificaciones cuando se confirman citas
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.appointmentConfirmations}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, appointmentConfirmations: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            appointmentConfirmations: checked,
+                          })
                         }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Alertas de Cancelación</Label>
-                        <p className="text-sm text-gray-500">Notificaciones cuando se cancelan citas</p>
+                        <p className="text-sm text-gray-500">
+                          Notificaciones cuando se cancelan citas
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.cancellationAlerts}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, cancellationAlerts: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            cancellationAlerts: checked,
+                          })
                         }
                       />
                     </div>
@@ -385,36 +451,51 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Reportes Diarios</Label>
-                        <p className="text-sm text-gray-500">Resumen diario de actividad</p>
+                        <p className="text-sm text-gray-500">
+                          Resumen diario de actividad
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.dailyReports}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, dailyReports: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            dailyReports: checked,
+                          })
                         }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Reportes Semanales</Label>
-                        <p className="text-sm text-gray-500">Resumen semanal de estadísticas</p>
+                        <p className="text-sm text-gray-500">
+                          Resumen semanal de estadísticas
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.weeklyReports}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, weeklyReports: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            weeklyReports: checked,
+                          })
                         }
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Emails de Marketing</Label>
-                        <p className="text-sm text-gray-500">Noticias y actualizaciones del producto</p>
+                        <p className="text-sm text-gray-500">
+                          Noticias y actualizaciones del producto
+                        </p>
                       </div>
                       <Switch
                         checked={notificationSettings.marketingEmails}
                         onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, marketingEmails: checked })
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            marketingEmails: checked,
+                          })
                         }
                       />
                     </div>
@@ -422,7 +503,10 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSaveNotifications} disabled={isLoading}>
+                  <Button
+                    onClick={handleSaveNotifications}
+                    disabled={isLoading}
+                  >
                     {isLoading ? "Guardando..." : "Guardar Cambios"}
                   </Button>
                 </div>
@@ -435,7 +519,9 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Configuración de Horarios</CardTitle>
-                <CardDescription>Define tus horarios de trabajo y disponibilidad</CardDescription>
+                <CardDescription>
+                  Define tus horarios de trabajo y disponibilidad
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -443,7 +529,12 @@ export default function SettingsPage() {
                     <Label htmlFor="timezone">Zona Horaria</Label>
                     <Select
                       value={scheduleSettings.timezone}
-                      onValueChange={(value) => setScheduleSettings({ ...scheduleSettings, timezone: value })}
+                      onValueChange={(value) =>
+                        setScheduleSettings({
+                          ...scheduleSettings,
+                          timezone: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -458,7 +549,9 @@ export default function SettingsPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="appointmentDuration">Duración por Defecto (minutos)</Label>
+                    <Label htmlFor="appointmentDuration">
+                      Duración por Defecto (minutos)
+                    </Label>
                     <Input
                       id="appointmentDuration"
                       type="number"
@@ -472,24 +565,34 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bufferTime">Tiempo de Descanso (minutos)</Label>
+                    <Label htmlFor="bufferTime">
+                      Tiempo de Descanso (minutos)
+                    </Label>
                     <Input
                       id="bufferTime"
                       type="number"
                       value={scheduleSettings.bufferTime}
                       onChange={(e) =>
-                        setScheduleSettings({ ...scheduleSettings, bufferTime: Number.parseInt(e.target.value) })
+                        setScheduleSettings({
+                          ...scheduleSettings,
+                          bufferTime: Number.parseInt(e.target.value),
+                        })
                       }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="maxAdvanceBooking">Reserva Máxima Anticipada (días)</Label>
+                    <Label htmlFor="maxAdvanceBooking">
+                      Reserva Máxima Anticipada (días)
+                    </Label>
                     <Input
                       id="maxAdvanceBooking"
                       type="number"
                       value={scheduleSettings.maxAdvanceBooking}
                       onChange={(e) =>
-                        setScheduleSettings({ ...scheduleSettings, maxAdvanceBooking: Number.parseInt(e.target.value) })
+                        setScheduleSettings({
+                          ...scheduleSettings,
+                          maxAdvanceBooking: Number.parseInt(e.target.value),
+                        })
                       }
                     />
                   </div>
@@ -500,58 +603,65 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <h4 className="font-medium">Horarios de Trabajo</h4>
                   <div className="space-y-4">
-                    {Object.entries(scheduleSettings.workingDays).map(([day, settings]) => (
-                      <div key={day} className="flex items-center space-x-4">
-                        <div className="w-24">
-                          <Switch
-                            checked={settings.enabled}
-                            onCheckedChange={(checked) =>
-                              setScheduleSettings({
-                                ...scheduleSettings,
-                                workingDays: {
-                                  ...scheduleSettings.workingDays,
-                                  [day]: { ...settings, enabled: checked },
-                                },
-                              })
-                            }
-                          />
+                    {Object.entries(scheduleSettings.workingDays).map(
+                      ([day, settings]) => (
+                        <div key={day} className="flex items-center space-x-4">
+                          <div className="w-24">
+                            <Switch
+                              checked={settings.enabled}
+                              onCheckedChange={(checked) =>
+                                setScheduleSettings({
+                                  ...scheduleSettings,
+                                  workingDays: {
+                                    ...scheduleSettings.workingDays,
+                                    [day]: { ...settings, enabled: checked },
+                                  },
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="w-20 text-sm font-medium">
+                            {dayNames[day as keyof typeof dayNames]}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="time"
+                              value={settings.start}
+                              onChange={(e) =>
+                                setScheduleSettings({
+                                  ...scheduleSettings,
+                                  workingDays: {
+                                    ...scheduleSettings.workingDays,
+                                    [day]: {
+                                      ...settings,
+                                      start: e.target.value,
+                                    },
+                                  },
+                                })
+                              }
+                              disabled={!settings.enabled}
+                              className="w-32"
+                            />
+                            <span className="text-gray-500">a</span>
+                            <Input
+                              type="time"
+                              value={settings.end}
+                              onChange={(e) =>
+                                setScheduleSettings({
+                                  ...scheduleSettings,
+                                  workingDays: {
+                                    ...scheduleSettings.workingDays,
+                                    [day]: { ...settings, end: e.target.value },
+                                  },
+                                })
+                              }
+                              disabled={!settings.enabled}
+                              className="w-32"
+                            />
+                          </div>
                         </div>
-                        <div className="w-20 text-sm font-medium">{dayNames[day as keyof typeof dayNames]}</div>
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            type="time"
-                            value={settings.start}
-                            onChange={(e) =>
-                              setScheduleSettings({
-                                ...scheduleSettings,
-                                workingDays: {
-                                  ...scheduleSettings.workingDays,
-                                  [day]: { ...settings, start: e.target.value },
-                                },
-                              })
-                            }
-                            disabled={!settings.enabled}
-                            className="w-32"
-                          />
-                          <span className="text-gray-500">a</span>
-                          <Input
-                            type="time"
-                            value={settings.end}
-                            onChange={(e) =>
-                              setScheduleSettings({
-                                ...scheduleSettings,
-                                workingDays: {
-                                  ...scheduleSettings.workingDays,
-                                  [day]: { ...settings, end: e.target.value },
-                                },
-                              })
-                            }
-                            disabled={!settings.enabled}
-                            className="w-32"
-                          />
-                        </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -569,7 +679,9 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Seguridad de la Cuenta</CardTitle>
-                <CardDescription>Gestiona la seguridad y privacidad de tu cuenta</CardDescription>
+                <CardDescription>
+                  Gestiona la seguridad y privacidad de tu cuenta
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -582,7 +694,12 @@ export default function SettingsPage() {
                           id="currentPassword"
                           type={showPassword ? "text" : "password"}
                           value={securityData.currentPassword}
-                          onChange={(e) => setSecurityData({ ...securityData, currentPassword: e.target.value })}
+                          onChange={(e) =>
+                            setSecurityData({
+                              ...securityData,
+                              currentPassword: e.target.value,
+                            })
+                          }
                         />
                         <Button
                           type="button"
@@ -591,7 +708,11 @@ export default function SettingsPage() {
                           className="absolute right-0 top-0 h-full px-3"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -602,7 +723,12 @@ export default function SettingsPage() {
                           id="newPassword"
                           type={showNewPassword ? "text" : "password"}
                           value={securityData.newPassword}
-                          onChange={(e) => setSecurityData({ ...securityData, newPassword: e.target.value })}
+                          onChange={(e) =>
+                            setSecurityData({
+                              ...securityData,
+                              newPassword: e.target.value,
+                            })
+                          }
                         />
                         <Button
                           type="button"
@@ -611,17 +737,28 @@ export default function SettingsPage() {
                           className="absolute right-0 top-0 h-full px-3"
                           onClick={() => setShowNewPassword(!showNewPassword)}
                         >
-                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showNewPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
+                      <Label htmlFor="confirmPassword">
+                        Confirmar Nueva Contraseña
+                      </Label>
                       <Input
                         id="confirmPassword"
                         type="password"
                         value={securityData.confirmPassword}
-                        onChange={(e) => setSecurityData({ ...securityData, confirmPassword: e.target.value })}
+                        onChange={(e) =>
+                          setSecurityData({
+                            ...securityData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -634,11 +771,18 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Habilitar 2FA</Label>
-                      <p className="text-sm text-gray-500">Agrega una capa extra de seguridad a tu cuenta</p>
+                      <p className="text-sm text-gray-500">
+                        Agrega una capa extra de seguridad a tu cuenta
+                      </p>
                     </div>
                     <Switch
                       checked={securityData.twoFactorEnabled}
-                      onCheckedChange={(checked) => setSecurityData({ ...securityData, twoFactorEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setSecurityData({
+                          ...securityData,
+                          twoFactorEnabled: checked,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -651,21 +795,33 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Alertas de Inicio de Sesión</Label>
-                        <p className="text-sm text-gray-500">Recibir notificaciones de nuevos inicios de sesión</p>
+                        <p className="text-sm text-gray-500">
+                          Recibir notificaciones de nuevos inicios de sesión
+                        </p>
                       </div>
                       <Switch
                         checked={securityData.loginAlerts}
-                        onCheckedChange={(checked) => setSecurityData({ ...securityData, loginAlerts: checked })}
+                        onCheckedChange={(checked) =>
+                          setSecurityData({
+                            ...securityData,
+                            loginAlerts: checked,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sessionTimeout">Tiempo de Sesión (minutos)</Label>
+                      <Label htmlFor="sessionTimeout">
+                        Tiempo de Sesión (minutos)
+                      </Label>
                       <Input
                         id="sessionTimeout"
                         type="number"
                         value={securityData.sessionTimeout}
                         onChange={(e) =>
-                          setSecurityData({ ...securityData, sessionTimeout: Number.parseInt(e.target.value) })
+                          setSecurityData({
+                            ...securityData,
+                            sessionTimeout: Number.parseInt(e.target.value),
+                          })
                         }
                         className="w-32"
                       />
@@ -684,13 +840,19 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-red-600">Zona de Peligro</CardTitle>
-                <CardDescription>Acciones irreversibles para tu cuenta</CardDescription>
+                <CardDescription>
+                  Acciones irreversibles para tu cuenta
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
                   <div>
-                    <h4 className="font-medium text-red-600">Eliminar Cuenta</h4>
-                    <p className="text-sm text-gray-500">Esta acción no se puede deshacer</p>
+                    <h4 className="font-medium text-red-600">
+                      Eliminar Cuenta
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Esta acción no se puede deshacer
+                    </p>
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -703,13 +865,17 @@ export default function SettingsPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta acción eliminará permanentemente tu cuenta y todos los datos asociados. Esta acción no se
-                          puede deshacer.
+                          Esta acción eliminará permanentemente tu cuenta y
+                          todos los datos asociados. Esta acción no se puede
+                          deshacer.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAccount} className="bg-red-600 hover:bg-red-700">
+                        <AlertDialogAction
+                          onClick={handleDeleteAccount}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
                           Eliminar Cuenta
                         </AlertDialogAction>
                       </AlertDialogFooter>
@@ -725,7 +891,9 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Apariencia y Localización</CardTitle>
-                <CardDescription>Personaliza la apariencia y configuración regional</CardDescription>
+                <CardDescription>
+                  Personaliza la apariencia y configuración regional
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -733,9 +901,16 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-3 gap-4">
                     <div
                       className={`p-4 border rounded-lg cursor-pointer ${
-                        appearanceSettings.theme === "light" ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                        appearanceSettings.theme === "light"
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200"
                       }`}
-                      onClick={() => setAppearanceSettings({ ...appearanceSettings, theme: "light" })}
+                      onClick={() =>
+                        setAppearanceSettings({
+                          ...appearanceSettings,
+                          theme: "light",
+                        })
+                      }
                     >
                       <div className="flex items-center space-x-2">
                         <Sun className="h-4 w-4" />
@@ -744,9 +919,16 @@ export default function SettingsPage() {
                     </div>
                     <div
                       className={`p-4 border rounded-lg cursor-pointer ${
-                        appearanceSettings.theme === "dark" ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                        appearanceSettings.theme === "dark"
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200"
                       }`}
-                      onClick={() => setAppearanceSettings({ ...appearanceSettings, theme: "dark" })}
+                      onClick={() =>
+                        setAppearanceSettings({
+                          ...appearanceSettings,
+                          theme: "dark",
+                        })
+                      }
                     >
                       <div className="flex items-center space-x-2">
                         <Moon className="h-4 w-4" />
@@ -755,9 +937,16 @@ export default function SettingsPage() {
                     </div>
                     <div
                       className={`p-4 border rounded-lg cursor-pointer ${
-                        appearanceSettings.theme === "system" ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                        appearanceSettings.theme === "system"
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200"
                       }`}
-                      onClick={() => setAppearanceSettings({ ...appearanceSettings, theme: "system" })}
+                      onClick={() =>
+                        setAppearanceSettings({
+                          ...appearanceSettings,
+                          theme: "system",
+                        })
+                      }
                     >
                       <div className="flex items-center space-x-2">
                         <Monitor className="h-4 w-4" />
@@ -774,7 +963,12 @@ export default function SettingsPage() {
                     <Label htmlFor="language">Idioma</Label>
                     <Select
                       value={appearanceSettings.language}
-                      onValueChange={(value) => setAppearanceSettings({ ...appearanceSettings, language: value })}
+                      onValueChange={(value) =>
+                        setAppearanceSettings({
+                          ...appearanceSettings,
+                          language: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -792,14 +986,22 @@ export default function SettingsPage() {
                     <Label htmlFor="currency">Moneda</Label>
                     <Select
                       value={appearanceSettings.currency}
-                      onValueChange={(value) => setAppearanceSettings({ ...appearanceSettings, currency: value })}
+                      onValueChange={(value) =>
+                        setAppearanceSettings({
+                          ...appearanceSettings,
+                          currency: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {currencies.map((currency) => (
-                          <SelectItem key={currency.value} value={currency.value}>
+                          <SelectItem
+                            key={currency.value}
+                            value={currency.value}
+                          >
                             {currency.label}
                           </SelectItem>
                         ))}
@@ -810,7 +1012,12 @@ export default function SettingsPage() {
                     <Label htmlFor="dateFormat">Formato de Fecha</Label>
                     <Select
                       value={appearanceSettings.dateFormat}
-                      onValueChange={(value) => setAppearanceSettings({ ...appearanceSettings, dateFormat: value })}
+                      onValueChange={(value) =>
+                        setAppearanceSettings({
+                          ...appearanceSettings,
+                          dateFormat: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -826,7 +1033,12 @@ export default function SettingsPage() {
                     <Label htmlFor="timeFormat">Formato de Hora</Label>
                     <Select
                       value={appearanceSettings.timeFormat}
-                      onValueChange={(value) => setAppearanceSettings({ ...appearanceSettings, timeFormat: value })}
+                      onValueChange={(value) =>
+                        setAppearanceSettings({
+                          ...appearanceSettings,
+                          timeFormat: value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -846,7 +1058,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h5 className="font-medium">Descargar Datos</h5>
-                      <p className="text-sm text-gray-500">Exporta todos tus datos en formato JSON</p>
+                      <p className="text-sm text-gray-500">
+                        Exporta todos tus datos en formato JSON
+                      </p>
                     </div>
                     <Button variant="outline" onClick={handleExportData}>
                       <Download className="h-4 w-4 mr-2" />
@@ -866,5 +1080,5 @@ export default function SettingsPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

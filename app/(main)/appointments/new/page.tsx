@@ -1,21 +1,42 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Avatar, AvatarFallback, AvatarImage, Input, Label,Textarea, Header} from "@/components"
-import { Clock, User, Save, UserPlus, Search, CheckCircle, DollarSign } from "lucide-react"
-import Link from "next/link"
-
+import { useState } from "react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Input,
+  Label,
+  Textarea,
+  Header,
+} from "@/components";
+import {
+  Clock,
+  User,
+  Save,
+  UserPlus,
+  Search,
+  CheckCircle,
+  DollarSign,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function NewAppointmentPage() {
-  const [selectedClient, setSelectedClient] = useState<any>(null)
-  const [selectedService, setSelectedService] = useState("")
-  const [selectedDate, setSelectedDate] = useState("")
-  const [selectedTime, setSelectedTime] = useState("")
-  const [clientSearch, setClientSearch] = useState("")
-  const [showNewClientForm, setShowNewClientForm] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedService, setSelectedService] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [showNewClientForm, setShowNewClientForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -29,7 +50,7 @@ export default function NewAppointmentPage() {
     price: "",
     notes: "",
     status: "pending",
-  })
+  });
 
   // Mock data - in real app this would come from API
   const existingClients = [
@@ -60,7 +81,7 @@ export default function NewAppointmentPage() {
       totalAppointments: 15,
       avatar: "/Avatar1.png?height=40&width=40",
     },
-  ]
+  ];
 
   const services = [
     { id: 1, name: "Consulta General", duration: "30 min", price: 50 },
@@ -69,7 +90,7 @@ export default function NewAppointmentPage() {
     { id: 4, name: "Terapia Física", duration: "90 min", price: 100 },
     { id: 5, name: "Consulta Especializada", duration: "45 min", price: 120 },
     { id: 6, name: "Revisión Rutinaria", duration: "30 min", price: 60 },
-  ]
+  ];
 
   const availableTimes = [
     "08:00",
@@ -88,65 +109,67 @@ export default function NewAppointmentPage() {
     "16:30",
     "17:00",
     "17:30",
-  ]
+  ];
 
   const filteredClients = existingClients.filter((client) =>
     client.name.toLowerCase().includes(clientSearch.toLowerCase()),
-  )
+  );
 
-  const selectedServiceData = services.find((s) => s.id.toString() === selectedService)
+  const selectedServiceData = services.find(
+    (s) => s.id.toString() === selectedService,
+  );
 
   const handleClientSelect = (client: any) => {
-    setSelectedClient(client)
+    setSelectedClient(client);
     setFormData({
       ...formData,
       clientName: client.name,
       clientEmail: client.email,
       clientPhone: client.phone,
-    })
-    setShowNewClientForm(false)
-  }
+    });
+    setShowNewClientForm(false);
+  };
 
   const handleServiceSelect = (serviceId: string) => {
-    setSelectedService(serviceId)
-    const service = services.find((s) => s.id.toString() === serviceId)
+    setSelectedService(serviceId);
+    const service = services.find((s) => s.id.toString() === serviceId);
     if (service) {
       setFormData({
         ...formData,
         service: service.name,
         duration: service.duration,
         price: service.price.toString(),
-      })
+      });
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    console.log("New appointment:", formData)
-    setIsLoading(false)
+    console.log("New appointment:", formData);
+    setIsLoading(false);
 
     // Redirect to appointments list or show success message
-  }
+  };
 
   const generateCalendarDays = () => {
-    const today = new Date()
-    const days = []
+    const today = new Date();
+    const days = [];
 
     for (let i = 0; i < 30; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      days.push(date)
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      days.push(date);
     }
 
-    return days
-  }
+    return days;
+  };
 
-  const calendarDays = generateCalendarDays()
+  const calendarDays = generateCalendarDays();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -176,7 +199,9 @@ export default function NewAppointmentPage() {
                 <User className="h-5 w-5" />
                 <span>Seleccionar Cliente</span>
               </CardTitle>
-              <CardDescription>Busca un cliente existente o crea uno nuevo</CardDescription>
+              <CardDescription>
+                Busca un cliente existente o crea uno nuevo
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {!selectedClient && !showNewClientForm && (
@@ -211,7 +236,9 @@ export default function NewAppointmentPage() {
                           onClick={() => handleClientSelect(client)}
                         >
                           <Avatar>
-                            <AvatarImage src={client.avatar || "/placeholder.svg"} />
+                            <AvatarImage
+                              src={client.avatar || "/placeholder.svg"}
+                            />
                             <AvatarFallback>
                               {client.name
                                 .split(" ")
@@ -220,16 +247,23 @@ export default function NewAppointmentPage() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-white">{client.name}</p>
-                            <p className="text-sm text-gray-500">{client.email}</p>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {client.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {client.email}
+                            </p>
                             <p className="text-xs text-gray-400">
-                              {client.totalAppointments} citas • Última visita: {client.lastVisit}
+                              {client.totalAppointments} citas • Última visita:{" "}
+                              {client.lastVisit}
                             </p>
                           </div>
                         </div>
                       ))}
                       {filteredClients.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">No se encontraron clientes</p>
+                        <p className="text-center text-gray-500 py-4">
+                          No se encontraron clientes
+                        </p>
                       )}
                     </div>
                   )}
@@ -239,7 +273,9 @@ export default function NewAppointmentPage() {
               {selectedClient && (
                 <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <Avatar>
-                    <AvatarImage src={selectedClient.avatar || "/placeholder.svg"} />
+                    <AvatarImage
+                      src={selectedClient.avatar || "/placeholder.svg"}
+                    />
                     <AvatarFallback>
                       {selectedClient.name
                         .split(" ")
@@ -248,9 +284,15 @@ export default function NewAppointmentPage() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white">{selectedClient.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{selectedClient.email}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{selectedClient.phone}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedClient.name}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedClient.email}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedClient.phone}
+                    </p>
                   </div>
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <Button
@@ -258,8 +300,13 @@ export default function NewAppointmentPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setSelectedClient(null)
-                      setFormData({ ...formData, clientName: "", clientEmail: "", clientPhone: "" })
+                      setSelectedClient(null);
+                      setFormData({
+                        ...formData,
+                        clientName: "",
+                        clientEmail: "",
+                        clientPhone: "",
+                      });
                     }}
                   >
                     Cambiar
@@ -269,14 +316,21 @@ export default function NewAppointmentPage() {
 
               {showNewClientForm && (
                 <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                  <h4 className="font-medium text-gray-900 dark:text-white">Nuevo Cliente</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    Nuevo Cliente
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="clientName">Nombre completo *</Label>
                       <Input
                         id="clientName"
                         value={formData.clientName}
-                        onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            clientName: e.target.value,
+                          })
+                        }
                         placeholder="Nombre del cliente"
                         required
                       />
@@ -286,7 +340,12 @@ export default function NewAppointmentPage() {
                       <Input
                         id="clientPhone"
                         value={formData.clientPhone}
-                        onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            clientPhone: e.target.value,
+                          })
+                        }
                         placeholder="+1 (555) 123-4567"
                         required
                       />
@@ -298,7 +357,12 @@ export default function NewAppointmentPage() {
                       id="clientEmail"
                       type="email"
                       value={formData.clientEmail}
-                      onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          clientEmail: e.target.value,
+                        })
+                      }
                       placeholder="cliente@email.com"
                     />
                   </div>
@@ -307,8 +371,13 @@ export default function NewAppointmentPage() {
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        setShowNewClientForm(false)
-                        setFormData({ ...formData, clientName: "", clientEmail: "", clientPhone: "" })
+                        setShowNewClientForm(false);
+                        setFormData({
+                          ...formData,
+                          clientName: "",
+                          clientEmail: "",
+                          clientPhone: "",
+                        });
                       }}
                     >
                       Cancelar
@@ -326,7 +395,9 @@ export default function NewAppointmentPage() {
                 <Clock className="h-5 w-5" />
                 <span>Servicio</span>
               </CardTitle>
-              <CardDescription>Selecciona el tipo de servicio para la cita</CardDescription>
+              <CardDescription>
+                Selecciona el tipo de servicio para la cita
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -341,8 +412,12 @@ export default function NewAppointmentPage() {
                     onClick={() => handleServiceSelect(service.id.toString())}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 dark:text-white">{service.name}</h4>
-                      {selectedService === service.id.toString() && <CheckCircle className="h-5 w-5 text-blue-600" />}
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        {service.name}
+                      </h4>
+                      {selectedService === service.id.toString() && (
+                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                      )}
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                       <span className="flex items-center">
@@ -366,21 +441,29 @@ export default function NewAppointmentPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Fecha</CardTitle>
-                <CardDescription>Selecciona la fecha para la cita</CardDescription>
+                <CardDescription>
+                  Selecciona la fecha para la cita
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-7 gap-2 mb-4">
-                  {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day) => (
-                    <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
-                      {day}
-                    </div>
-                  ))}
+                  {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map(
+                    (day) => (
+                      <div
+                        key={day}
+                        className="text-center text-sm font-medium text-gray-500 py-2"
+                      >
+                        {day}
+                      </div>
+                    ),
+                  )}
                 </div>
                 <div className="grid grid-cols-7 gap-2">
                   {calendarDays.slice(0, 21).map((date, index) => {
-                    const dateStr = date.toISOString().split("T")[0]
-                    const isSelected = selectedDate === dateStr
-                    const isToday = date.toDateString() === new Date().toDateString()
+                    const dateStr = date.toISOString().split("T")[0];
+                    const isSelected = selectedDate === dateStr;
+                    const isToday =
+                      date.toDateString() === new Date().toDateString();
 
                     return (
                       <button
@@ -394,13 +477,13 @@ export default function NewAppointmentPage() {
                               : "hover:bg-gray-100 dark:hover:bg-gray-800"
                         }`}
                         onClick={() => {
-                          setSelectedDate(dateStr)
-                          setFormData({ ...formData, date: dateStr })
+                          setSelectedDate(dateStr);
+                          setFormData({ ...formData, date: dateStr });
                         }}
                       >
                         {date.getDate()}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </CardContent>
@@ -410,12 +493,14 @@ export default function NewAppointmentPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Horario</CardTitle>
-                <CardDescription>Selecciona la hora para la cita</CardDescription>
+                <CardDescription>
+                  Selecciona la hora para la cita
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-2">
                   {availableTimes.map((time) => {
-                    const isSelected = selectedTime === time
+                    const isSelected = selectedTime === time;
                     return (
                       <button
                         key={time}
@@ -426,13 +511,13 @@ export default function NewAppointmentPage() {
                             : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
                         }`}
                         onClick={() => {
-                          setSelectedTime(time)
-                          setFormData({ ...formData, time })
+                          setSelectedTime(time);
+                          setFormData({ ...formData, time });
                         }}
                       >
                         {time}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </CardContent>
@@ -443,7 +528,9 @@ export default function NewAppointmentPage() {
           <Card>
             <CardHeader>
               <CardTitle>Información Adicional</CardTitle>
-              <CardDescription>Notas y detalles especiales para la cita</CardDescription>
+              <CardDescription>
+                Notas y detalles especiales para la cita
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -451,7 +538,9 @@ export default function NewAppointmentPage() {
                 <Textarea
                   id="notes"
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
                   placeholder="Información adicional, instrucciones especiales, etc."
                   rows={3}
                 />
@@ -459,7 +548,9 @@ export default function NewAppointmentPage() {
 
               {selectedServiceData && (
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Resumen del Servicio</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                    Resumen del Servicio
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="text-gray-500">Servicio:</span>
@@ -467,11 +558,15 @@ export default function NewAppointmentPage() {
                     </div>
                     <div>
                       <span className="text-gray-500">Duración:</span>
-                      <p className="font-medium">{selectedServiceData.duration}</p>
+                      <p className="font-medium">
+                        {selectedServiceData.duration}
+                      </p>
                     </div>
                     <div>
                       <span className="text-gray-500">Precio:</span>
-                      <p className="font-medium">${selectedServiceData.price}</p>
+                      <p className="font-medium">
+                        ${selectedServiceData.price}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -488,7 +583,13 @@ export default function NewAppointmentPage() {
             </Link>
             <Button
               type="submit"
-              disabled={isLoading || !formData.clientName || !selectedService || !selectedDate || !selectedTime}
+              disabled={
+                isLoading ||
+                !formData.clientName ||
+                !selectedService ||
+                !selectedDate ||
+                !selectedTime
+              }
               className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
             >
               {isLoading ? (
@@ -507,5 +608,5 @@ export default function NewAppointmentPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }

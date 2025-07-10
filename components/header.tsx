@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Calendar,
   Bell,
@@ -26,34 +26,34 @@ import {
   Shield,
   ChevronDown,
   Menu,
-} from "lucide-react"
-import Link from "next/link"
+} from "lucide-react";
+import Link from "next/link";
 
 interface HeaderProps {
-  title?: string
-  subtitle?: string
-  showBackButton?: boolean
-  backButtonText?: string
-  backButtonHref?: string
+  title?: string;
+  subtitle?: string;
+  showBackButton?: boolean;
+  backButtonText?: string;
+  backButtonHref?: string;
   user?: {
-    name: string
-    email: string
-    role: string
-    avatar?: string
-    initials?: string
-  }
+    name: string;
+    email: string;
+    role: string;
+    avatar?: string;
+    initials?: string;
+  };
   notifications?: {
-    count: number
+    count: number;
     items?: Array<{
-      id: string
-      title: string
-      message: string
-      time: string
-      read: boolean
-    }>
-  }
-  actions?: React.ReactNode
-  className?: string
+      id: string;
+      title: string;
+      message: string;
+      time: string;
+      read: boolean;
+    }>;
+  };
+  actions?: React.ReactNode;
+  className?: string;
 }
 
 export function Header({
@@ -73,8 +73,8 @@ export function Header({
   actions,
   className = "",
 }: HeaderProps) {
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const defaultNotifications = [
     {
@@ -98,12 +98,14 @@ export function Header({
       time: "Hace 1 hora",
       read: true,
     },
-  ]
+  ];
 
-  const notificationItems = notifications.items || defaultNotifications
+  const notificationItems = notifications.items || defaultNotifications;
 
   return (
-    <header className={`bg-white dark:bg-gray-800 shadow-sm border-b ${className}`}>
+    <header
+      className={`bg-white dark:bg-gray-800 shadow-sm border-b ${className}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left Section */}
@@ -113,7 +115,9 @@ export function Header({
               <Link href={backButtonHref}>
                 <Button variant="ghost" size="sm" className="flex-shrink-0">
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-2">{backButtonText}</span>
+                  <span className="hidden sm:inline ml-2">
+                    {backButtonText}
+                  </span>
                 </Button>
               </Link>
             )}
@@ -124,7 +128,9 @@ export function Header({
                 <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">{title}</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
+                  {title}
+                </h1>
                 {subtitle && (
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate hidden sm:block">
                     {subtitle}
@@ -137,10 +143,15 @@ export function Header({
           {/* Right Section - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Center Section - Actions */}
-            {actions && <div className="flex items-center space-x-4">{actions}</div>}
+            {actions && (
+              <div className="flex items-center space-x-4">{actions}</div>
+            )}
 
             {/* Notifications */}
-            <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+            <DropdownMenu
+              open={showNotifications}
+              onOpenChange={setShowNotifications}
+            >
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
@@ -164,14 +175,25 @@ export function Header({
                 <div className="max-h-80 overflow-y-auto">
                   {notificationItems.length > 0 ? (
                     notificationItems.map((notification) => (
-                      <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-4 cursor-pointer">
+                      <DropdownMenuItem
+                        key={notification.id}
+                        className="flex flex-col items-start p-4 cursor-pointer"
+                      >
                         <div className="flex items-start justify-between w-full">
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{notification.title}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
-                            <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2">
+                              {notification.time}
+                            </p>
                           </div>
-                          {!notification.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2" />}
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2" />
+                          )}
                         </div>
                       </DropdownMenuItem>
                     ))
@@ -200,12 +222,19 @@ export function Header({
                   className="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                    <AvatarImage
+                      src={user.avatar || "/placeholder.svg"}
+                      alt={user.name}
+                    />
                     <AvatarFallback>{user.initials}</AvatarFallback>
                   </Avatar>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {user.role}
+                    </p>
                   </div>
                   <ChevronDown className="h-4 w-4 text-gray-500" />
                 </Button>
@@ -251,7 +280,10 @@ export function Header({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/login" className="flex items-center text-red-600 hover:text-red-700">
+                  <Link
+                    href="/login"
+                    className="flex items-center text-red-600 hover:text-red-700"
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Cerrar Sesión
                   </Link>
@@ -263,7 +295,10 @@ export function Header({
           {/* Right Section - Mobile */}
           <div className="flex md:hidden items-center space-x-2">
             {/* Notifications - Mobile */}
-            <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+            <DropdownMenu
+              open={showNotifications}
+              onOpenChange={setShowNotifications}
+            >
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
@@ -274,7 +309,10 @@ export function Header({
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
+              <DropdownMenuContent
+                align="end"
+                className="w-80 max-w-[calc(100vw-2rem)]"
+              >
                 <DropdownMenuLabel className="flex items-center justify-between">
                   <span>Notificaciones</span>
                   {notifications.count > 0 && (
@@ -287,7 +325,10 @@ export function Header({
                 <div className="max-h-60 overflow-y-auto">
                   {notificationItems.length > 0 ? (
                     notificationItems.map((notification) => (
-                      <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3 cursor-pointer">
+                      <DropdownMenuItem
+                        key={notification.id}
+                        className="flex flex-col items-start p-3 cursor-pointer"
+                      >
                         <div className="flex items-start justify-between w-full">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -296,7 +337,9 @@ export function Header({
                             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                            <p className="text-xs text-gray-500 mt-2">
+                              {notification.time}
+                            </p>
                           </div>
                           {!notification.read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2 flex-shrink-0" />
@@ -319,7 +362,10 @@ export function Header({
             </DropdownMenu>
 
             {/* Mobile Menu */}
-            <DropdownMenu open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+            <DropdownMenu
+              open={showMobileMenu}
+              onOpenChange={setShowMobileMenu}
+            >
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Menu className="h-5 w-5" />
@@ -330,12 +376,19 @@ export function Header({
                 <DropdownMenuLabel>
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                      <AvatarImage
+                        src={user.avatar || "/placeholder.svg"}
+                        alt={user.name}
+                      />
                       <AvatarFallback>{user.initials}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col space-y-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{user.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.role}</p>
+                      <p className="text-sm font-medium truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {user.role}
+                      </p>
                     </div>
                   </div>
                 </DropdownMenuLabel>
@@ -388,7 +441,10 @@ export function Header({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/login" className="flex items-center text-red-600 hover:text-red-700">
+                  <Link
+                    href="/login"
+                    className="flex items-center text-red-600 hover:text-red-700"
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Cerrar Sesión
                   </Link>
@@ -406,5 +462,5 @@ export function Header({
         )}
       </div>
     </header>
-  )
+  );
 }
