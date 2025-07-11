@@ -1,20 +1,32 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +34,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { DataView, useDataView } from "@/components/data-view"
+} from "@/components/ui/dialog";
+import { DataView, useDataView } from "@/components/data-view";
 import {
   MessageSquare,
   Bot,
@@ -48,8 +60,8 @@ import {
   BarChart3,
   MessageCircle,
   Calendar,
-} from "lucide-react"
-import { Header } from "@/components/header"
+} from "lucide-react";
+import { Header } from "@/components/header";
 import type {
   BotFlow,
   BotMessage,
@@ -59,29 +71,38 @@ import type {
   User,
   DataViewField,
   DataViewAction,
-} from "@/app/types"
+} from "@/types";
 
 type Props = {
-  flows: BotFlow[]
-  messages: BotMessage[]
-  conversations: BotConversation[]
-  stats: BotStats
-  botConfig: BotConfig
-  user: User
-}
+  flows: BotFlow[];
+  messages: BotMessage[];
+  conversations: BotConversation[];
+  stats: BotStats;
+  botConfig: BotConfig;
+  user: User;
+};
 
-export default function WhatsAppBotClient({ flows, messages, conversations, stats, botConfig, user }: Props) {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("overview")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("all")
-  const [showFlowDialog, setShowFlowDialog] = useState(false)
-  const [showMessageDialog, setShowMessageDialog] = useState(false)
-  const [selectedFlow, setSelectedFlow] = useState<BotFlow | null>(null)
-  const [selectedMessage, setSelectedMessage] = useState<BotMessage | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const { viewMode, ViewToggle } = useDataView("cards")
+export default function WhatsAppBotClient({
+  flows,
+  messages,
+  conversations,
+  stats,
+  botConfig,
+  user,
+}: Props) {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [showFlowDialog, setShowFlowDialog] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [selectedFlow, setSelectedFlow] = useState<BotFlow | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<BotMessage | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const { viewMode, ViewToggle } = useDataView("cards");
 
   // Form data for flows
   const [flowFormData, setFlowFormData] = useState({
@@ -91,7 +112,7 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
     category: "general" as const,
     messages: [] as string[],
     priority: 1,
-  })
+  });
 
   // Form data for messages
   const [messageFormData, setMessageFormData] = useState({
@@ -102,7 +123,7 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
     category: "greeting" as const,
     variables: [] as string[],
     language: "es",
-  })
+  });
 
   // Bot configuration state
   const [configData, setConfigData] = useState({
@@ -113,83 +134,85 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
     workingHoursStart: botConfig.workingHours.start,
     workingHoursEnd: botConfig.workingHours.end,
     outOfHoursMessage: botConfig.outOfHoursMessage,
-  })
+  });
 
   // Client-side filtering for immediate UI feedback
   const clientFilteredFlows = flows.filter((flow) => {
     const matchesSearch =
       flow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      flow.description.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
-  })
+      flow.description.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
 
   const clientFilteredMessages = messages.filter((message) => {
     const matchesSearch =
       message.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.content.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
-  })
+      message.content.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
 
   const clientFilteredConversations = conversations.filter((conversation) => {
     const matchesSearch =
-      conversation.contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conversation.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
-  })
+      conversation.contact.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      conversation.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
 
   // Handle search with URL update for server-side filtering
   const handleSearch = (value: string) => {
-    setSearchTerm(value)
-    const url = new URL(window.location.href)
-    const params = new URLSearchParams(url.search)
+    setSearchTerm(value);
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
 
     if (value) {
-      params.set("search", value)
+      params.set("search", value);
     } else {
-      params.delete("search")
+      params.delete("search");
     }
 
-    router.push(`${url.pathname}?${params.toString()}`)
-  }
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
 
   // Handle status filter with URL update
   const handleStatusFilter = (value: string) => {
-    setStatusFilter(value)
-    const url = new URL(window.location.href)
-    const params = new URLSearchParams(url.search)
+    setStatusFilter(value);
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
 
     if (value !== "all") {
-      params.set("status", value)
+      params.set("status", value);
     } else {
-      params.delete("status")
+      params.delete("status");
     }
 
-    router.push(`${url.pathname}?${params.toString()}`)
-  }
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
 
   // Handle category filter with URL update
   const handleCategoryFilter = (value: string) => {
-    setCategoryFilter(value)
-    const url = new URL(window.location.href)
-    const params = new URLSearchParams(url.search)
+    setCategoryFilter(value);
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
 
     if (value !== "all") {
-      params.set("category", value)
+      params.set("category", value);
     } else {
-      params.delete("category")
+      params.delete("category");
     }
 
-    router.push(`${url.pathname}?${params.toString()}`)
-  }
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
 
   // Flow action handlers
   const handleTestFlow = (flow: BotFlow) => {
-    console.log("Test flow:", flow)
+    console.log("Test flow:", flow);
     // TODO: Implement flow testing
-  }
+  };
 
   const handleEditFlow = (flow: BotFlow) => {
-    setSelectedFlow(flow)
+    setSelectedFlow(flow);
     setFlowFormData({
       name: flow.name,
       description: flow.description,
@@ -197,22 +220,22 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       category: flow.category,
       messages: flow.messages,
       priority: flow.priority,
-    })
-    setShowFlowDialog(true)
-  }
+    });
+    setShowFlowDialog(true);
+  };
 
   const handleDuplicateFlow = (flow: BotFlow) => {
-    console.log("Duplicate flow:", flow)
+    console.log("Duplicate flow:", flow);
     // TODO: Implement flow duplication
-  }
+  };
 
   const handleDeleteFlow = (flow: BotFlow) => {
-    console.log("Delete flow:", flow)
+    console.log("Delete flow:", flow);
     // TODO: Show confirmation dialog and call API
-  }
+  };
 
   const handleCreateFlow = () => {
-    setSelectedFlow(null)
+    setSelectedFlow(null);
     setFlowFormData({
       name: "",
       description: "",
@@ -220,13 +243,13 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       category: "general",
       messages: [],
       priority: 1,
-    })
-    setShowFlowDialog(true)
-  }
+    });
+    setShowFlowDialog(true);
+  };
 
   // Message action handlers
   const handleEditMessage = (message: BotMessage) => {
-    setSelectedMessage(message)
+    setSelectedMessage(message);
     setMessageFormData({
       name: message.name,
       title: message.title,
@@ -235,17 +258,17 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       category: message.category,
       variables: message.variables,
       language: message.language,
-    })
-    setShowMessageDialog(true)
-  }
+    });
+    setShowMessageDialog(true);
+  };
 
   const handleDeleteMessage = (message: BotMessage) => {
-    console.log("Delete message:", message)
+    console.log("Delete message:", message);
     // TODO: Show confirmation dialog and call API
-  }
+  };
 
   const handleCreateMessage = () => {
-    setSelectedMessage(null)
+    setSelectedMessage(null);
     setMessageFormData({
       name: "",
       title: "",
@@ -254,41 +277,44 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       category: "greeting",
       variables: [],
       language: "es",
-    })
-    setShowMessageDialog(true)
-  }
+    });
+    setShowMessageDialog(true);
+  };
 
   // Form submission handlers
   const handleFlowSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log(selectedFlow ? "Update flow:" : "Create flow:", flowFormData)
-    setIsLoading(false)
-    setShowFlowDialog(false)
-  }
+    console.log(selectedFlow ? "Update flow:" : "Create flow:", flowFormData);
+    setIsLoading(false);
+    setShowFlowDialog(false);
+  };
 
   const handleMessageSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log(selectedMessage ? "Update message:" : "Create message:", messageFormData)
-    setIsLoading(false)
-    setShowMessageDialog(false)
-  }
+    console.log(
+      selectedMessage ? "Update message:" : "Create message:",
+      messageFormData,
+    );
+    setIsLoading(false);
+    setShowMessageDialog(false);
+  };
 
   const handleConfigSave = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log("Save config:", configData)
-    setIsLoading(false)
-  }
+    console.log("Save config:", configData);
+    setIsLoading(false);
+  };
 
   // DataView field configurations
   const flowFields: DataViewField[] = [
@@ -324,13 +350,19 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       render: (value: string) => {
         const categoryConfig = {
           appointment: { color: "bg-blue-100 text-blue-800", label: "Citas" },
-          information: { color: "bg-green-100 text-green-800", label: "Información" },
+          information: {
+            color: "bg-green-100 text-green-800",
+            label: "Información",
+          },
           support: { color: "bg-purple-100 text-purple-800", label: "Soporte" },
-          cancellation: { color: "bg-red-100 text-red-800", label: "Cancelación" },
+          cancellation: {
+            color: "bg-red-100 text-red-800",
+            label: "Cancelación",
+          },
           general: { color: "bg-gray-100 text-gray-800", label: "General" },
-        }
-        const config = categoryConfig[value as keyof typeof categoryConfig]
-        return <Badge className={config.color}>{config.label}</Badge>
+        };
+        const config = categoryConfig[value as keyof typeof categoryConfig];
+        return <Badge className={config.color}>{config.label}</Badge>;
       },
     },
     {
@@ -340,18 +372,30 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       sortable: true,
       render: (value: string) => {
         const statusConfig = {
-          active: { color: "bg-green-100 text-green-800", icon: CheckCircle, label: "Activo" },
-          draft: { color: "bg-yellow-100 text-yellow-800", icon: AlertCircle, label: "Borrador" },
-          inactive: { color: "bg-red-100 text-red-800", icon: XCircle, label: "Inactivo" },
-        }
-        const config = statusConfig[value as keyof typeof statusConfig]
-        const Icon = config.icon
+          active: {
+            color: "bg-green-100 text-green-800",
+            icon: CheckCircle,
+            label: "Activo",
+          },
+          draft: {
+            color: "bg-yellow-100 text-yellow-800",
+            icon: AlertCircle,
+            label: "Borrador",
+          },
+          inactive: {
+            color: "bg-red-100 text-red-800",
+            icon: XCircle,
+            label: "Inactivo",
+          },
+        };
+        const config = statusConfig[value as keyof typeof statusConfig];
+        const Icon = config.icon;
         return (
           <Badge className={config.color}>
             <Icon className="h-3 w-3 mr-1" />
             {config.label}
           </Badge>
-        )
+        );
       },
     },
     {
@@ -372,7 +416,7 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       type: "number",
       sortable: true,
     },
-  ]
+  ];
 
   const flowActions: DataViewAction[] = [
     {
@@ -396,7 +440,7 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       onClick: handleDeleteFlow,
       variant: "destructive",
     },
-  ]
+  ];
 
   const messageFields: DataViewField[] = [
     {
@@ -419,7 +463,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       type: "custom",
       render: (value: string) => (
         <div className="max-w-xs">
-          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{value}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+            {value}
+          </p>
         </div>
       ),
     },
@@ -431,13 +477,19 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       render: (value: string) => {
         const typeConfig = {
           text: { color: "bg-blue-100 text-blue-800", label: "Texto" },
-          interactive: { color: "bg-purple-100 text-purple-800", label: "Interactivo" },
-          confirmation: { color: "bg-green-100 text-green-800", label: "Confirmación" },
+          interactive: {
+            color: "bg-purple-100 text-purple-800",
+            label: "Interactivo",
+          },
+          confirmation: {
+            color: "bg-green-100 text-green-800",
+            label: "Confirmación",
+          },
           success: { color: "bg-emerald-100 text-emerald-800", label: "Éxito" },
           error: { color: "bg-red-100 text-red-800", label: "Error" },
-        }
-        const config = typeConfig[value as keyof typeof typeConfig]
-        return <Badge className={config.color}>{config.label}</Badge>
+        };
+        const config = typeConfig[value as keyof typeof typeConfig];
+        return <Badge className={config.color}>{config.label}</Badge>;
       },
     },
     {
@@ -449,12 +501,15 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
         const categoryConfig = {
           greeting: { color: "bg-yellow-100 text-yellow-800", label: "Saludo" },
           appointment: { color: "bg-blue-100 text-blue-800", label: "Citas" },
-          information: { color: "bg-green-100 text-green-800", label: "Información" },
+          information: {
+            color: "bg-green-100 text-green-800",
+            label: "Información",
+          },
           support: { color: "bg-purple-100 text-purple-800", label: "Soporte" },
           farewell: { color: "bg-gray-100 text-gray-800", label: "Despedida" },
-        }
-        const config = categoryConfig[value as keyof typeof categoryConfig]
-        return <Badge className={config.color}>{config.label}</Badge>
+        };
+        const config = categoryConfig[value as keyof typeof categoryConfig];
+        return <Badge className={config.color}>{config.label}</Badge>;
       },
     },
     {
@@ -473,7 +528,7 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
           </div>
         ) : null,
     },
-  ]
+  ];
 
   const messageActions: DataViewAction[] = [
     {
@@ -487,71 +542,73 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       onClick: handleDeleteMessage,
       variant: "destructive",
     },
-  ]
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case "in_progress":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
       case "waiting":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       case "abandoned":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-3 w-3" />
+        return <CheckCircle className="h-3 w-3" />;
       case "in_progress":
-        return <Clock className="h-3 w-3" />
+        return <Clock className="h-3 w-3" />;
       case "waiting":
-        return <AlertCircle className="h-3 w-3" />
+        return <AlertCircle className="h-3 w-3" />;
       case "abandoned":
-        return <XCircle className="h-3 w-3" />
+        return <XCircle className="h-3 w-3" />;
       default:
-        return <Clock className="h-3 w-3" />
+        return <Clock className="h-3 w-3" />;
     }
-  }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "completed":
-        return "Completado"
+        return "Completado";
       case "in_progress":
-        return "En progreso"
+        return "En progreso";
       case "waiting":
-        return "Esperando"
+        return "Esperando";
       case "abandoned":
-        return "Abandonado"
+        return "Abandonado";
       default:
-        return "Desconocido"
+        return "Desconocido";
     }
-  }
+  };
 
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+    );
 
     if (diffInHours < 1) {
-      return "Hace unos minutos"
+      return "Hace unos minutos";
     } else if (diffInHours < 24) {
-      return `Hace ${diffInHours} horas`
+      return `Hace ${diffInHours} horas`;
     } else {
       return date.toLocaleDateString("es-ES", {
         day: "numeric",
         month: "short",
         hour: "2-digit",
         minute: "2-digit",
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -568,9 +625,16 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-8"
+        >
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="overview"
+              className="flex items-center space-x-2"
+            >
               <BarChart3 className="h-4 w-4" />
               <span>Resumen</span>
             </TabsTrigger>
@@ -578,15 +642,24 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               <Zap className="h-4 w-4" />
               <span>Flujos</span>
             </TabsTrigger>
-            <TabsTrigger value="messages" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="messages"
+              className="flex items-center space-x-2"
+            >
               <MessageCircle className="h-4 w-4" />
               <span>Mensajes</span>
             </TabsTrigger>
-            <TabsTrigger value="conversations" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="conversations"
+              className="flex items-center space-x-2"
+            >
               <Users className="h-4 w-4" />
               <span>Conversaciones</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="settings"
+              className="flex items-center space-x-2"
+            >
               <Settings className="h-4 w-4" />
               <span>Configuración</span>
             </TabsTrigger>
@@ -603,20 +676,30 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                       <Bot className="h-5 w-5" />
                       <span>Estado del Bot</span>
                     </CardTitle>
-                    <CardDescription>Información general del asistente de WhatsApp</CardDescription>
+                    <CardDescription>
+                      Información general del asistente de WhatsApp
+                    </CardDescription>
                   </div>
                   <Badge
                     className={
-                      botConfig.status === "connected" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      botConfig.status === "connected"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
                     }
                   >
                     <div className="flex items-center space-x-1">
                       <div
                         className={`w-2 h-2 rounded-full ${
-                          botConfig.status === "connected" ? "bg-green-500" : "bg-red-500"
+                          botConfig.status === "connected"
+                            ? "bg-green-500"
+                            : "bg-red-500"
                         }`}
                       />
-                      <span>{botConfig.status === "connected" ? "Conectado" : "Desconectado"}</span>
+                      <span>
+                        {botConfig.status === "connected"
+                          ? "Conectado"
+                          : "Desconectado"}
+                      </span>
                     </div>
                   </Badge>
                 </div>
@@ -624,19 +707,27 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nombre del Bot</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Nombre del Bot
+                    </p>
                     <p className="text-lg font-semibold">{botConfig.name}</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Número de Teléfono</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Número de Teléfono
+                    </p>
                     <p className="text-lg font-semibold flex items-center">
                       <Phone className="h-4 w-4 mr-2" />
                       {botConfig.phoneNumber}
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Respuesta Automática</p>
-                    <p className="text-lg font-semibold">{botConfig.autoReply ? "Activada" : "Desactivada"}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Respuesta Automática
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {botConfig.autoReply ? "Activada" : "Desactivada"}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -648,9 +739,15 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Mensajes Totales</p>
-                      <p className="text-2xl font-bold text-blue-600">{stats.totalMessages.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500">+{stats.monthlyGrowth}% este mes</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Mensajes Totales
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {stats.totalMessages.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        +{stats.monthlyGrowth}% este mes
+                      </p>
                     </div>
                     <MessageSquare className="h-8 w-8 text-blue-600" />
                   </div>
@@ -661,8 +758,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Chats Activos</p>
-                      <p className="text-2xl font-bold text-green-600">{stats.activeChats}</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Chats Activos
+                      </p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {stats.activeChats}
+                      </p>
                       <p className="text-xs text-gray-500">En tiempo real</p>
                     </div>
                     <Users className="h-8 w-8 text-green-600" />
@@ -674,9 +775,15 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Citas Agendadas</p>
-                      <p className="text-2xl font-bold text-purple-600">{stats.appointmentsBooked}</p>
-                      <p className="text-xs text-gray-500">{stats.appointmentsThisMonth} este mes</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Citas Agendadas
+                      </p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {stats.appointmentsBooked}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {stats.appointmentsThisMonth} este mes
+                      </p>
                     </div>
                     <Calendar className="h-8 w-8 text-purple-600" />
                   </div>
@@ -687,9 +794,15 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tasa de Respuesta</p>
-                      <p className="text-2xl font-bold text-orange-600">{stats.responseRate}%</p>
-                      <p className="text-xs text-gray-500">Promedio: {stats.averageResponseTime}</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Tasa de Respuesta
+                      </p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        {stats.responseRate}%
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Promedio: {stats.averageResponseTime}
+                      </p>
                     </div>
                     <TrendingUp className="h-8 w-8 text-orange-600" />
                   </div>
@@ -701,14 +814,23 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
             <Card>
               <CardHeader>
                 <CardTitle>Conversaciones Recientes</CardTitle>
-                <CardDescription>Últimas interacciones con usuarios</CardDescription>
+                <CardDescription>
+                  Últimas interacciones con usuarios
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {conversations.slice(0, 5).map((conversation) => (
-                    <div key={conversation.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                    <div
+                      key={conversation.id}
+                      className="flex items-center space-x-4 p-4 border rounded-lg"
+                    >
                       <Avatar>
-                        <AvatarImage src={conversation.contact.avatar || "/placeholder.svg"} />
+                        <AvatarImage
+                          src={
+                            conversation.contact.avatar || "/placeholder.svg"
+                          }
+                        />
                         <AvatarFallback>
                           {conversation.contact.name
                             .split(" ")
@@ -721,14 +843,18 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                           <p className="font-medium text-gray-900 dark:text-white truncate">
                             {conversation.contact.name}
                           </p>
-                          <Badge className={getStatusColor(conversation.status)}>
+                          <Badge
+                            className={getStatusColor(conversation.status)}
+                          >
                             <div className="flex items-center space-x-1">
                               {getStatusIcon(conversation.status)}
                               <span>{getStatusText(conversation.status)}</span>
                             </div>
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{conversation.lastMessage}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                          {conversation.lastMessage}
+                        </p>
                         <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                           <span>{formatTimestamp(conversation.timestamp)}</span>
                           <span>{conversation.flow}</span>
@@ -758,14 +884,18 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Tasa de Conversión</span>
-                      <span className="font-medium">{stats.conversionRate}%</span>
+                      <span className="font-medium">
+                        {stats.conversionRate}%
+                      </span>
                     </div>
                     <Progress value={stats.conversionRate} />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Satisfacción del Usuario</span>
-                      <span className="font-medium">{stats.satisfactionScore}/5</span>
+                      <span className="font-medium">
+                        {stats.satisfactionScore}/5
+                      </span>
                     </div>
                     <Progress value={(stats.satisfactionScore / 5) * 100} />
                   </div>
@@ -775,7 +905,8 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                       <span className="font-medium">
                         {Math.round(
                           (stats.completedConversations /
-                            (stats.completedConversations + stats.abandonedConversations)) *
+                            (stats.completedConversations +
+                              stats.abandonedConversations)) *
                             100,
                         )}
                         %
@@ -783,7 +914,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                     </div>
                     <Progress
                       value={
-                        (stats.completedConversations / (stats.completedConversations + stats.abandonedConversations)) *
+                        (stats.completedConversations /
+                          (stats.completedConversations +
+                            stats.abandonedConversations)) *
                         100
                       }
                     />
@@ -794,7 +927,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               <Card>
                 <CardHeader>
                   <CardTitle>Flujos Más Utilizados</CardTitle>
-                  <CardDescription>Flujos ordenados por popularidad</CardDescription>
+                  <CardDescription>
+                    Flujos ordenados por popularidad
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -802,14 +937,24 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                       .sort((a, b) => b.totalUses - a.totalUses)
                       .slice(0, 5)
                       .map((flow) => (
-                        <div key={flow.id} className="flex items-center justify-between">
+                        <div
+                          key={flow.id}
+                          className="flex items-center justify-between"
+                        >
                           <div className="flex-1">
                             <p className="font-medium text-sm">{flow.name}</p>
-                            <p className="text-xs text-gray-500">{flow.totalUses} usos</p>
+                            <p className="text-xs text-gray-500">
+                              {flow.totalUses} usos
+                            </p>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Progress value={flow.completionRate} className="w-16" />
-                            <span className="text-xs font-medium w-8">{flow.completionRate}%</span>
+                            <Progress
+                              value={flow.completionRate}
+                              className="w-16"
+                            />
+                            <span className="text-xs font-medium w-8">
+                              {flow.completionRate}%
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -826,7 +971,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                   <div>
                     <CardTitle>Flujos de Conversación</CardTitle>
-                    <CardDescription>Gestiona los flujos automatizados del bot</CardDescription>
+                    <CardDescription>
+                      Gestiona los flujos automatizados del bot
+                    </CardDescription>
                   </div>
                   <div className="flex space-x-2">
                     <Button variant="outline">
@@ -861,7 +1008,10 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
 
                   {/* Status Filter */}
                   <div className="w-full md:w-48">
-                    <Select value={statusFilter} onValueChange={handleStatusFilter}>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={handleStatusFilter}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Estado" />
                       </SelectTrigger>
@@ -876,16 +1026,23 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
 
                   {/* Category Filter */}
                   <div className="w-full md:w-48">
-                    <Select value={categoryFilter} onValueChange={handleCategoryFilter}>
+                    <Select
+                      value={categoryFilter}
+                      onValueChange={handleCategoryFilter}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Categoría" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todas las categorías</SelectItem>
+                        <SelectItem value="all">
+                          Todas las categorías
+                        </SelectItem>
                         <SelectItem value="appointment">Citas</SelectItem>
                         <SelectItem value="information">Información</SelectItem>
                         <SelectItem value="support">Soporte</SelectItem>
-                        <SelectItem value="cancellation">Cancelación</SelectItem>
+                        <SelectItem value="cancellation">
+                          Cancelación
+                        </SelectItem>
                         <SelectItem value="general">General</SelectItem>
                       </SelectContent>
                     </Select>
@@ -898,7 +1055,8 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 {/* Results count */}
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Mostrando {clientFilteredFlows.length} de {flows.length} flujos
+                    Mostrando {clientFilteredFlows.length} de {flows.length}{" "}
+                    flujos
                   </p>
                 </div>
               </CardContent>
@@ -913,7 +1071,8 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               emptyState={{
                 icon: <Zap className="h-12 w-12 text-gray-400" />,
                 title: "No se encontraron flujos",
-                description: "No hay flujos que coincidan con los filtros seleccionados.",
+                description:
+                  "No hay flujos que coincidan con los filtros seleccionados.",
                 action: (
                   <Button onClick={handleCreateFlow}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -931,7 +1090,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                   <div>
                     <CardTitle>Biblioteca de Mensajes</CardTitle>
-                    <CardDescription>Plantillas de mensajes reutilizables</CardDescription>
+                    <CardDescription>
+                      Plantillas de mensajes reutilizables
+                    </CardDescription>
                   </div>
                   <div className="flex space-x-2">
                     <Button variant="outline">
@@ -962,12 +1123,17 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
 
                   {/* Category Filter */}
                   <div className="w-full md:w-48">
-                    <Select value={categoryFilter} onValueChange={handleCategoryFilter}>
+                    <Select
+                      value={categoryFilter}
+                      onValueChange={handleCategoryFilter}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Categoría" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todas las categorías</SelectItem>
+                        <SelectItem value="all">
+                          Todas las categorías
+                        </SelectItem>
                         <SelectItem value="greeting">Saludo</SelectItem>
                         <SelectItem value="appointment">Citas</SelectItem>
                         <SelectItem value="information">Información</SelectItem>
@@ -984,7 +1150,8 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 {/* Results count */}
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Mostrando {clientFilteredMessages.length} de {messages.length} mensajes
+                    Mostrando {clientFilteredMessages.length} de{" "}
+                    {messages.length} mensajes
                   </p>
                 </div>
               </CardContent>
@@ -999,7 +1166,8 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               emptyState={{
                 icon: <MessageCircle className="h-12 w-12 text-gray-400" />,
                 title: "No se encontraron mensajes",
-                description: "No hay mensajes que coincidan con los filtros seleccionados.",
+                description:
+                  "No hay mensajes que coincidan con los filtros seleccionados.",
                 action: (
                   <Button onClick={handleCreateMessage}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -1015,7 +1183,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
             <Card>
               <CardHeader>
                 <CardTitle>Conversaciones</CardTitle>
-                <CardDescription>Historial de interacciones con usuarios</CardDescription>
+                <CardDescription>
+                  Historial de interacciones con usuarios
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -1038,18 +1208,29 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   {clientFilteredConversations.length === 0 ? (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No hay conversaciones</h3>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        No hay conversaciones
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-400">
-                        No se encontraron conversaciones que coincidan con los filtros.
+                        No se encontraron conversaciones que coincidan con los
+                        filtros.
                       </p>
                     </div>
                   ) : (
                     clientFilteredConversations.map((conversation) => (
-                      <Card key={conversation.id} className="hover:shadow-lg transition-shadow">
+                      <Card
+                        key={conversation.id}
+                        className="hover:shadow-lg transition-shadow"
+                      >
                         <CardContent className="p-6">
                           <div className="flex items-center space-x-4">
                             <Avatar className="h-12 w-12">
-                              <AvatarImage src={conversation.contact.avatar || "/placeholder.svg"} />
+                              <AvatarImage
+                                src={
+                                  conversation.contact.avatar ||
+                                  "/placeholder.svg"
+                                }
+                              />
                               <AvatarFallback>
                                 {conversation.contact.name
                                   .split(" ")
@@ -1063,10 +1244,16 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate">
                                   {conversation.contact.name}
                                 </h3>
-                                <Badge className={getStatusColor(conversation.status)}>
+                                <Badge
+                                  className={getStatusColor(
+                                    conversation.status,
+                                  )}
+                                >
                                   <div className="flex items-center space-x-1">
                                     {getStatusIcon(conversation.status)}
-                                    <span>{getStatusText(conversation.status)}</span>
+                                    <span>
+                                      {getStatusText(conversation.status)}
+                                    </span>
                                   </div>
                                 </Badge>
                               </div>
@@ -1078,7 +1265,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-500">
                                 <div className="flex items-center space-x-1">
                                   <Clock className="h-4 w-4" />
-                                  <span>{formatTimestamp(conversation.timestamp)}</span>
+                                  <span>
+                                    {formatTimestamp(conversation.timestamp)}
+                                  </span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <Zap className="h-4 w-4" />
@@ -1086,7 +1275,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <MessageSquare className="h-4 w-4" />
-                                  <span>{conversation.messagesCount} mensajes</span>
+                                  <span>
+                                    {conversation.messagesCount} mensajes
+                                  </span>
                                 </div>
                                 {conversation.satisfaction && (
                                   <div className="flex items-center space-x-1">
@@ -1098,7 +1289,8 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
 
                               {conversation.appointmentId && (
                                 <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
-                                  <strong>Cita vinculada:</strong> {conversation.appointmentId}
+                                  <strong>Cita vinculada:</strong>{" "}
+                                  {conversation.appointmentId}
                                 </div>
                               )}
                             </div>
@@ -1119,7 +1311,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               <Card>
                 <CardHeader>
                   <CardTitle>Configuración del Bot</CardTitle>
-                  <CardDescription>Ajustes generales del asistente</CardDescription>
+                  <CardDescription>
+                    Ajustes generales del asistente
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
@@ -1127,7 +1321,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                     <Input
                       id="botName"
                       value={configData.name}
-                      onChange={(e) => setConfigData({ ...configData, name: e.target.value })}
+                      onChange={(e) =>
+                        setConfigData({ ...configData, name: e.target.value })
+                      }
                       placeholder="Nombre del asistente"
                     />
                   </div>
@@ -1141,22 +1337,35 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                     </div>
                     <Switch
                       checked={configData.autoReply}
-                      onCheckedChange={(checked) => setConfigData({ ...configData, autoReply: checked })}
+                      onCheckedChange={(checked) =>
+                        setConfigData({ ...configData, autoReply: checked })
+                      }
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="welcomeMessage">Mensaje de Bienvenida</Label>
+                    <Label htmlFor="welcomeMessage">
+                      Mensaje de Bienvenida
+                    </Label>
                     <Textarea
                       id="welcomeMessage"
                       value={configData.welcomeMessage}
-                      onChange={(e) => setConfigData({ ...configData, welcomeMessage: e.target.value })}
+                      onChange={(e) =>
+                        setConfigData({
+                          ...configData,
+                          welcomeMessage: e.target.value,
+                        })
+                      }
                       placeholder="Mensaje que se envía al iniciar una conversación"
                       rows={3}
                     />
                   </div>
 
-                  <Button onClick={handleConfigSave} disabled={isLoading} className="w-full">
+                  <Button
+                    onClick={handleConfigSave}
+                    disabled={isLoading}
+                    className="w-full"
+                  >
                     {isLoading ? "Guardando..." : "Guardar Configuración"}
                   </Button>
                 </CardContent>
@@ -1166,7 +1375,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               <Card>
                 <CardHeader>
                   <CardTitle>Horarios de Atención</CardTitle>
-                  <CardDescription>Configura cuando el bot debe responder</CardDescription>
+                  <CardDescription>
+                    Configura cuando el bot debe responder
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -1178,7 +1389,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                     </div>
                     <Switch
                       checked={configData.workingHoursEnabled}
-                      onCheckedChange={(checked) => setConfigData({ ...configData, workingHoursEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setConfigData({
+                          ...configData,
+                          workingHoursEnabled: checked,
+                        })
+                      }
                     />
                   </div>
 
@@ -1191,7 +1407,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                             id="startTime"
                             type="time"
                             value={configData.workingHoursStart}
-                            onChange={(e) => setConfigData({ ...configData, workingHoursStart: e.target.value })}
+                            onChange={(e) =>
+                              setConfigData({
+                                ...configData,
+                                workingHoursStart: e.target.value,
+                              })
+                            }
                           />
                         </div>
                         <div className="space-y-2">
@@ -1200,17 +1421,29 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                             id="endTime"
                             type="time"
                             value={configData.workingHoursEnd}
-                            onChange={(e) => setConfigData({ ...configData, workingHoursEnd: e.target.value })}
+                            onChange={(e) =>
+                              setConfigData({
+                                ...configData,
+                                workingHoursEnd: e.target.value,
+                              })
+                            }
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="outOfHoursMessage">Mensaje Fuera de Horario</Label>
+                        <Label htmlFor="outOfHoursMessage">
+                          Mensaje Fuera de Horario
+                        </Label>
                         <Textarea
                           id="outOfHoursMessage"
                           value={configData.outOfHoursMessage}
-                          onChange={(e) => setConfigData({ ...configData, outOfHoursMessage: e.target.value })}
+                          onChange={(e) =>
+                            setConfigData({
+                              ...configData,
+                              outOfHoursMessage: e.target.value,
+                            })
+                          }
                           placeholder="Mensaje que se envía fuera del horario de atención"
                           rows={3}
                         />
@@ -1224,23 +1457,35 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               <Card>
                 <CardHeader>
                   <CardTitle>Estado de Conexión</CardTitle>
-                  <CardDescription>Información de la conexión con WhatsApp</CardDescription>
+                  <CardDescription>
+                    Información de la conexión con WhatsApp
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div
                         className={`w-3 h-3 rounded-full ${
-                          botConfig.status === "connected" ? "bg-green-500" : "bg-red-500"
+                          botConfig.status === "connected"
+                            ? "bg-green-500"
+                            : "bg-red-500"
                         }`}
                       />
                       <div>
-                        <p className="font-medium">{botConfig.status === "connected" ? "Conectado" : "Desconectado"}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{botConfig.phoneNumber}</p>
+                        <p className="font-medium">
+                          {botConfig.status === "connected"
+                            ? "Conectado"
+                            : "Desconectado"}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {botConfig.phoneNumber}
+                        </p>
                       </div>
                     </div>
                     <Button variant="outline" size="sm">
-                      {botConfig.status === "connected" ? "Desconectar" : "Reconectar"}
+                      {botConfig.status === "connected"
+                        ? "Desconectar"
+                        : "Reconectar"}
                     </Button>
                   </div>
 
@@ -1256,14 +1501,18 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                             alt="QR Code"
                             className="w-40 h-40"
                             onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.style.display = "none"
-                              target.nextElementSibling?.classList.remove("hidden")
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              target.nextElementSibling?.classList.remove(
+                                "hidden",
+                              );
                             }}
                           />
                           <div className="hidden text-center">
                             <Bot className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                            <p className="text-sm text-gray-500">Código QR no disponible</p>
+                            <p className="text-sm text-gray-500">
+                              Código QR no disponible
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1276,32 +1525,52 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
               <Card>
                 <CardHeader>
                   <CardTitle>Resumen de Analytics</CardTitle>
-                  <CardDescription>Métricas principales del bot</CardDescription>
+                  <CardDescription>
+                    Métricas principales del bot
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 border rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">{stats.totalFlows}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Flujos Totales</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {stats.totalFlows}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Flujos Totales
+                      </p>
                     </div>
                     <div className="text-center p-4 border rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{stats.activeFlows}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Flujos Activos</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {stats.activeFlows}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Flujos Activos
+                      </p>
                     </div>
                     <div className="text-center p-4 border rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">{stats.totalMessageTemplates}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Plantillas</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {stats.totalMessageTemplates}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Plantillas
+                      </p>
                     </div>
                     <div className="text-center p-4 border rounded-lg">
-                      <p className="text-2xl font-bold text-orange-600">{stats.satisfactionScore}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Satisfacción</p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        {stats.satisfactionScore}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Satisfacción
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span>Tasa de Conversión</span>
-                      <span className="font-medium">{stats.conversionRate}%</span>
+                      <span className="font-medium">
+                        {stats.conversionRate}%
+                      </span>
                     </div>
                     <Progress value={stats.conversionRate} />
                   </div>
@@ -1309,9 +1578,13 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span>Tiempo de Respuesta</span>
-                      <span className="font-medium">{stats.averageResponseTime}</span>
+                      <span className="font-medium">
+                        {stats.averageResponseTime}
+                      </span>
                     </div>
-                    <div className="text-xs text-gray-500">Promedio de respuesta del bot</div>
+                    <div className="text-xs text-gray-500">
+                      Promedio de respuesta del bot
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1324,9 +1597,13 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
           <DialogContent className="sm:max-w-[600px]">
             <form onSubmit={handleFlowSubmit}>
               <DialogHeader>
-                <DialogTitle>{selectedFlow ? "Editar Flujo" : "Nuevo Flujo"}</DialogTitle>
+                <DialogTitle>
+                  {selectedFlow ? "Editar Flujo" : "Nuevo Flujo"}
+                </DialogTitle>
                 <DialogDescription>
-                  {selectedFlow ? "Modifica la información del flujo" : "Crea un nuevo flujo de conversación"}
+                  {selectedFlow
+                    ? "Modifica la información del flujo"
+                    : "Crea un nuevo flujo de conversación"}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -1337,7 +1614,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <Input
                     id="flowName"
                     value={flowFormData.name}
-                    onChange={(e) => setFlowFormData({ ...flowFormData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFlowFormData({ ...flowFormData, name: e.target.value })
+                    }
                     className="col-span-3"
                     placeholder="Nombre del flujo"
                     required
@@ -1350,7 +1629,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <Input
                     id="flowTrigger"
                     value={flowFormData.trigger}
-                    onChange={(e) => setFlowFormData({ ...flowFormData, trigger: e.target.value })}
+                    onChange={(e) =>
+                      setFlowFormData({
+                        ...flowFormData,
+                        trigger: e.target.value,
+                      })
+                    }
                     className="col-span-3"
                     placeholder="Palabra clave que activa el flujo"
                     required
@@ -1362,7 +1646,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   </Label>
                   <Select
                     value={flowFormData.category}
-                    onValueChange={(value: any) => setFlowFormData({ ...flowFormData, category: value })}
+                    onValueChange={(value: any) =>
+                      setFlowFormData({ ...flowFormData, category: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Seleccionar categoría" />
@@ -1383,7 +1669,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <Textarea
                     id="flowDescription"
                     value={flowFormData.description}
-                    onChange={(e) => setFlowFormData({ ...flowFormData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFlowFormData({
+                        ...flowFormData,
+                        description: e.target.value,
+                      })
+                    }
                     className="col-span-3"
                     placeholder="Descripción del flujo..."
                     rows={3}
@@ -1391,11 +1682,19 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowFlowDialog(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowFlowDialog(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Guardando..." : selectedFlow ? "Guardar Cambios" : "Crear Flujo"}
+                  {isLoading
+                    ? "Guardando..."
+                    : selectedFlow
+                      ? "Guardar Cambios"
+                      : "Crear Flujo"}
                 </Button>
               </DialogFooter>
             </form>
@@ -1407,9 +1706,13 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
           <DialogContent className="sm:max-w-[600px]">
             <form onSubmit={handleMessageSubmit}>
               <DialogHeader>
-                <DialogTitle>{selectedMessage ? "Editar Mensaje" : "Nuevo Mensaje"}</DialogTitle>
+                <DialogTitle>
+                  {selectedMessage ? "Editar Mensaje" : "Nuevo Mensaje"}
+                </DialogTitle>
                 <DialogDescription>
-                  {selectedMessage ? "Modifica la plantilla de mensaje" : "Crea una nueva plantilla de mensaje"}
+                  {selectedMessage
+                    ? "Modifica la plantilla de mensaje"
+                    : "Crea una nueva plantilla de mensaje"}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -1420,7 +1723,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <Input
                     id="messageName"
                     value={messageFormData.name}
-                    onChange={(e) => setMessageFormData({ ...messageFormData, name: e.target.value })}
+                    onChange={(e) =>
+                      setMessageFormData({
+                        ...messageFormData,
+                        name: e.target.value,
+                      })
+                    }
                     className="col-span-3"
                     placeholder="Nombre del mensaje"
                     required
@@ -1433,7 +1741,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <Input
                     id="messageTitle"
                     value={messageFormData.title}
-                    onChange={(e) => setMessageFormData({ ...messageFormData, title: e.target.value })}
+                    onChange={(e) =>
+                      setMessageFormData({
+                        ...messageFormData,
+                        title: e.target.value,
+                      })
+                    }
                     className="col-span-3"
                     placeholder="Título del mensaje"
                   />
@@ -1444,7 +1757,9 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   </Label>
                   <Select
                     value={messageFormData.type}
-                    onValueChange={(value: any) => setMessageFormData({ ...messageFormData, type: value })}
+                    onValueChange={(value: any) =>
+                      setMessageFormData({ ...messageFormData, type: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Tipo de mensaje" />
@@ -1464,7 +1779,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   </Label>
                   <Select
                     value={messageFormData.category}
-                    onValueChange={(value: any) => setMessageFormData({ ...messageFormData, category: value })}
+                    onValueChange={(value: any) =>
+                      setMessageFormData({
+                        ...messageFormData,
+                        category: value,
+                      })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Categoría del mensaje" />
@@ -1485,7 +1805,12 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                   <Textarea
                     id="messageContent"
                     value={messageFormData.content}
-                    onChange={(e) => setMessageFormData({ ...messageFormData, content: e.target.value })}
+                    onChange={(e) =>
+                      setMessageFormData({
+                        ...messageFormData,
+                        content: e.target.value,
+                      })
+                    }
                     className="col-span-3"
                     placeholder="Contenido del mensaje... Usa {{variable}} para variables dinámicas"
                     rows={4}
@@ -1494,11 +1819,19 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowMessageDialog(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowMessageDialog(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Guardando..." : selectedMessage ? "Guardar Cambios" : "Crear Mensaje"}
+                  {isLoading
+                    ? "Guardando..."
+                    : selectedMessage
+                      ? "Guardar Cambios"
+                      : "Crear Mensaje"}
                 </Button>
               </DialogFooter>
             </form>
@@ -1506,5 +1839,5 @@ export default function WhatsAppBotClient({ flows, messages, conversations, stat
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

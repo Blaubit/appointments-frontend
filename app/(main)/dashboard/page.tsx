@@ -10,7 +10,7 @@ async function getUpcomingAppointments() {
       client: {
         Name: "Maria Gonzales",
         phone: "+50212345678",
-        mail: "mail@mail.com"
+        mail: "mail@mail.com",
       },
       service: "Consulta General",
       time: "09:00",
@@ -20,10 +20,10 @@ async function getUpcomingAppointments() {
     },
     {
       id: 2,
-      client: { 
+      client: {
         Name: "Carlos Rodríguez",
         phone: "+50212345678",
-        mail: "mail@mail.com"
+        mail: "mail@mail.com",
       },
       service: "Limpieza Dental",
       time: "10:30",
@@ -33,10 +33,10 @@ async function getUpcomingAppointments() {
     },
     {
       id: 3,
-      client: { 
+      client: {
         Name: "Ana Peraz",
         phone: "+50212345678",
-        mail: "mail@mail.com"
+        mail: "mail@mail.com",
       },
       service: "Corte y Peinado",
       time: "14:00",
@@ -46,10 +46,10 @@ async function getUpcomingAppointments() {
     },
     {
       id: 4,
-      client: { 
+      client: {
         Name: "Luis Martinez",
         phone: "+50212345678",
-        mail: "mail@mail.com"
+        mail: "mail@mail.com",
       },
       service: "Consulta de Control",
       time: "16:00",
@@ -63,10 +63,34 @@ async function getUpcomingAppointments() {
 async function getDashboardStats() {
   // Simular llamada a API/base de datos para obtener estadísticas
   return [
-    { title: "Citas Hoy", value: "8", icon: "Calendar", color: "text-blue-600", ref: "appointments" },
-    { title: "Clientes Atendidos", value: "156", icon: "Users", color: "text-green-600", ref: "clients"},
-    { title: "Ingresos del Mes", value: "$12,450", icon: "TrendingUp", color: "text-purple-600", ref: "reports" },
-    { title: "Tiempo Promedio", value: "45min", icon: "Clock", color: "text-orange-600", ref: "#"},
+    {
+      title: "Citas Hoy",
+      value: "8",
+      icon: "Calendar",
+      color: "text-blue-600",
+      ref: "appointments",
+    },
+    {
+      title: "Clientes Atendidos",
+      value: "156",
+      icon: "Users",
+      color: "text-green-600",
+      ref: "clients",
+    },
+    {
+      title: "Ingresos del Mes",
+      value: "$12,450",
+      icon: "TrendingUp",
+      color: "text-purple-600",
+      ref: "reports",
+    },
+    {
+      title: "Tiempo Promedio",
+      value: "45min",
+      icon: "Clock",
+      color: "text-orange-600",
+      ref: "#",
+    },
   ];
 }
 
@@ -86,7 +110,7 @@ async function getClinicInfo() {
   return {
     address: "Av. Principal 123, Centro",
     phone: "+1 (555) 123-4567",
-    schedule: "Lun-Vie: 8:00-18:00"
+    schedule: "Lun-Vie: 8:00-18:00",
   };
 }
 
@@ -101,7 +125,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       getUpcomingAppointments(),
       getDashboardStats(),
       getUserInfo(),
-      getClinicInfo()
+      getClinicInfo(),
     ]);
 
     const dashboardData = {
@@ -111,12 +135,11 @@ export default async function DashboardPage({ searchParams }: Props) {
       clinicInfo,
       userType: "professional" as const,
       notifications: {
-        count: 3
-      }
+        count: 3,
+      },
     };
 
     return <DashboardClient {...dashboardData} />;
-    
   } catch (error) {
     console.error("Error loading dashboard data:", error);
     throw new Error("Failed to load dashboard data");

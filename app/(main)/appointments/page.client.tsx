@@ -1,14 +1,26 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DataView, useDataView } from "@/components/data-view"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DataView, useDataView } from "@/components/data-view";
 import {
   Calendar,
   Search,
@@ -22,130 +34,136 @@ import {
   Trash2,
   Download,
   Eye,
-} from "lucide-react"
-import { Header } from "@/components/header"
-import type { Appointment, AppointmentStats, Pagination, DataViewField, DataViewAction } from "@/app/types"
+} from "lucide-react";
+import { Header } from "@/components/header";
+import type {
+  Appointment,
+  AppointmentStats,
+  Pagination,
+  DataViewField,
+  DataViewAction,
+} from "@/types";
 
 type Props = {
-  appointments: Appointment[]
-  stats: AppointmentStats
-  pagination: Pagination
-}
+  appointments: Appointment[];
+  stats: AppointmentStats;
+  pagination: Pagination;
+};
 
 export default function PageClient({ appointments, stats, pagination }: Props) {
-  const router = useRouter()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [dateFilter, setDateFilter] = useState("all")
-  const { viewMode, ViewToggle } = useDataView("cards")
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const { viewMode, ViewToggle } = useDataView("cards");
 
   // Client-side filtering for immediate UI feedback
   const clientFilteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
       appointment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.service.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
-  })
+      appointment.service.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
 
   // Handle search with URL update for server-side filtering
   const handleSearch = (value: string) => {
-    setSearchTerm(value)
-    const url = new URL(window.location.href)
-    const params = new URLSearchParams(url.search)
+    setSearchTerm(value);
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
 
     if (value) {
-      params.set("search", value)
+      params.set("search", value);
     } else {
-      params.delete("search")
+      params.delete("search");
     }
 
-    router.push(`${url.pathname}?${params.toString()}`)
-  }
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
 
   // Handle status filter with URL update
   const handleStatusFilter = (value: string) => {
-    setStatusFilter(value)
-    const url = new URL(window.location.href)
-    const params = new URLSearchParams(url.search)
+    setStatusFilter(value);
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
 
     if (value !== "all") {
-      params.set("status", value)
+      params.set("status", value);
     } else {
-      params.delete("status")
+      params.delete("status");
     }
 
-    router.push(`${url.pathname}?${params.toString()}`)
-  }
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
 
   // Handle date filter with URL update
   const handleDateFilter = (value: string) => {
-    setDateFilter(value)
-    const url = new URL(window.location.href)
-    const params = new URLSearchParams(url.search)
+    setDateFilter(value);
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
 
     if (value !== "all") {
-      params.set("date", value)
+      params.set("date", value);
     } else {
-      params.delete("date")
+      params.delete("date");
     }
 
-    router.push(`${url.pathname}?${params.toString()}`)
-  }
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
 
   // Action handlers - ready for backend integration
   const handleEditAppointment = (appointment: Appointment) => {
-    console.log("Edit appointment:", appointment)
+    console.log("Edit appointment:", appointment);
     // TODO: Open edit dialog or navigate to edit page
     // router.push(`/appointments/${appointment.id}/edit`)
-  }
+  };
 
   const handleConfirmAppointment = (appointment: Appointment) => {
-    console.log("Confirm appointment:", appointment)
+    console.log("Confirm appointment:", appointment);
     // TODO: Call API to confirm appointment
     // await confirmAppointment(appointment.id)
-  }
+  };
 
   const handleCancelAppointment = (appointment: Appointment) => {
-    console.log("Cancel appointment:", appointment)
+    console.log("Cancel appointment:", appointment);
     // TODO: Call API to cancel appointment
     // await cancelAppointment(appointment.id)
-  }
+  };
 
   const handleDeleteAppointment = (appointment: Appointment) => {
-    console.log("Delete appointment:", appointment)
+    console.log("Delete appointment:", appointment);
     // TODO: Show confirmation dialog and call API
     // if (confirm("¿Estás seguro?")) await deleteAppointment(appointment.id)
-  }
+  };
 
   const handleCallClient = (appointment: Appointment) => {
-    console.log("Call client:", appointment.clientPhone)
+    console.log("Call client:", appointment.clientPhone);
     // TODO: Integrate with phone system or open tel: link
     // window.open(`tel:${appointment.clientPhone}`)
-  }
+  };
 
   const handleEmailClient = (appointment: Appointment) => {
-    console.log("Email client:", appointment.clientEmail)
+    console.log("Email client:", appointment.clientEmail);
     // TODO: Open email client or send email via API
     // window.open(`mailto:${appointment.clientEmail}`)
-  }
+  };
 
   const handleViewAppointment = (appointment: Appointment) => {
-    console.log("View appointment:", appointment)
+    console.log("View appointment:", appointment);
     // TODO: Navigate to appointment details
     // router.push(`/appointments/${appointment.id}`)
-  }
+  };
 
   const handleCreateAppointment = () => {
-    console.log("Create new appointment")
+    console.log("Create new appointment");
     // TODO: Navigate to create appointment page
     // router.push("/appointments/new")
-  }
+  };
 
   const handleExportAppointments = () => {
-    console.log("Export appointments")
+    console.log("Export appointments");
     // TODO: Generate and download CSV/PDF export
     // await exportAppointments(appointments)
-  }
+  };
 
   // DataView field configuration
   const appointmentFields: DataViewField[] = [
@@ -204,12 +222,14 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
       render: (value: string) => {
         const statusConfig = {
           confirmed: {
-            color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+            color:
+              "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
             icon: <CheckCircle className="h-4 w-4" />,
             label: "Confirmada",
           },
           pending: {
-            color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+            color:
+              "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
             icon: <AlertCircle className="h-4 w-4" />,
             label: "Pendiente",
           },
@@ -218,9 +238,9 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
             icon: <XCircle className="h-4 w-4" />,
             label: "Cancelada",
           },
-        }
+        };
 
-        const config = statusConfig[value as keyof typeof statusConfig]
+        const config = statusConfig[value as keyof typeof statusConfig];
 
         return (
           <Badge className={config.color}>
@@ -229,7 +249,7 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
               <span>{config.label}</span>
             </div>
           </Badge>
-        )
+        );
       },
     },
     {
@@ -250,7 +270,7 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
           </div>
         ) : null,
     },
-  ]
+  ];
 
   // DataView actions configuration
   const appointmentActions: DataViewAction[] = [
@@ -293,14 +313,30 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
       onClick: handleDeleteAppointment,
       variant: "destructive",
     },
-  ]
+  ];
 
   const statsCards = [
-    { title: "Total Citas", value: stats.total.toString(), color: "text-blue-600" },
-    { title: "Confirmadas", value: stats.confirmed.toString(), color: "text-green-600" },
-    { title: "Pendientes", value: stats.pending.toString(), color: "text-yellow-600" },
-    { title: "Canceladas", value: stats.cancelled.toString(), color: "text-red-600" },
-  ]
+    {
+      title: "Total Citas",
+      value: stats.total.toString(),
+      color: "text-blue-600",
+    },
+    {
+      title: "Confirmadas",
+      value: stats.confirmed.toString(),
+      color: "text-green-600",
+    },
+    {
+      title: "Pendientes",
+      value: stats.pending.toString(),
+      color: "text-yellow-600",
+    },
+    {
+      title: "Canceladas",
+      value: stats.cancelled.toString(),
+      color: "text-red-600",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -330,8 +366,12 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</p>
-                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      {stat.title}
+                    </p>
+                    <p className={`text-2xl font-bold ${stat.color}`}>
+                      {stat.value}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -345,7 +385,9 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <div>
                 <CardTitle>Gestión de Citas</CardTitle>
-                <CardDescription>Administra todas tus citas programadas</CardDescription>
+                <CardDescription>
+                  Administra todas tus citas programadas
+                </CardDescription>
               </div>
               <div className="flex space-x-2">
                 <Button variant="outline" onClick={handleExportAppointments}>
@@ -418,7 +460,8 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
             {/* Results count */}
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Mostrando {clientFilteredAppointments.length} de {appointments.length} citas
+                Mostrando {clientFilteredAppointments.length} de{" "}
+                {appointments.length} citas
               </p>
             </div>
           </CardContent>
@@ -433,7 +476,8 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
           emptyState={{
             icon: <Calendar className="h-12 w-12 text-gray-400" />,
             title: "No se encontraron citas",
-            description: "No hay citas que coincidan con los filtros seleccionados.",
+            description:
+              "No hay citas que coincidan con los filtros seleccionados.",
             action: (
               <Button onClick={handleCreateAppointment}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -453,7 +497,10 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
               <Button variant="outline" disabled={pagination.page <= 1}>
                 Anterior
               </Button>
-              <Button variant="outline" disabled={pagination.page >= pagination.totalPages}>
+              <Button
+                variant="outline"
+                disabled={pagination.page >= pagination.totalPages}
+              >
                 Siguiente
               </Button>
             </div>
@@ -461,5 +508,5 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
         )}
       </div>
     </div>
-  )
+  );
 }

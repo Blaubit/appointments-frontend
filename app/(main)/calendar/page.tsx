@@ -1,16 +1,22 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +24,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +32,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   CalendarIcon,
   Clock,
@@ -42,21 +48,23 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
-} from "lucide-react"
-import Link from "next/link"
-import { Header } from "@/components/header"
+} from "lucide-react";
+import Link from "next/link";
+import { Header } from "@/components/header";
 
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [viewMode, setViewMode] = useState<"month" | "week" | "day" | "agenda">("month")
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [serviceFilter, setServiceFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [isLoading, setIsLoading] = useState(false)
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<"month" | "week" | "day" | "agenda">(
+    "month",
+  );
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Form data for create/edit appointment
   const [formData, setFormData] = useState({
@@ -69,7 +77,7 @@ export default function CalendarPage() {
     duration: 30,
     notes: "",
     status: "pending",
-  })
+  });
 
   // Mock data - in real app this would come from API
   const appointments = [
@@ -157,16 +165,20 @@ export default function CalendarPage() {
       notes: "Chequeo anual",
       avatar: "/Avatar1.png?height=40&width=40",
     },
-  ]
+  ];
 
   const services = [
     { id: "consulta-general", name: "Consulta General", color: "#3B82F6" },
     { id: "limpieza-dental", name: "Limpieza Dental", color: "#10B981" },
     { id: "corte-peinado", name: "Corte y Peinado", color: "#F59E0B" },
     { id: "terapia-fisica", name: "Terapia Física", color: "#8B5CF6" },
-    { id: "consulta-especializada", name: "Consulta Especializada", color: "#EF4444" },
+    {
+      id: "consulta-especializada",
+      name: "Consulta Especializada",
+      color: "#EF4444",
+    },
     { id: "revision-rutinaria", name: "Revisión Rutinaria", color: "#06B6D4" },
-  ]
+  ];
 
   const timeSlots = [
     "08:00",
@@ -190,124 +202,129 @@ export default function CalendarPage() {
     "17:00",
     "17:30",
     "18:00",
-  ]
+  ];
 
   // Filter appointments
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
       appointment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.service.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesService = serviceFilter === "all" || appointment.service === serviceFilter
-    const matchesStatus = statusFilter === "all" || appointment.status === statusFilter
+      appointment.service.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesService =
+      serviceFilter === "all" || appointment.service === serviceFilter;
+    const matchesStatus =
+      statusFilter === "all" || appointment.status === statusFilter;
 
-    return matchesSearch && matchesService && matchesStatus
-  })
+    return matchesSearch && matchesService && matchesStatus;
+  });
 
   // Get appointments for a specific date
   const getAppointmentsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split("T")[0]
-    return filteredAppointments.filter((apt) => apt.date === dateStr)
-  }
+    const dateStr = date.toISOString().split("T")[0];
+    return filteredAppointments.filter((apt) => apt.date === dateStr);
+  };
 
   // Navigation functions
   const navigateMonth = (direction: "prev" | "next") => {
-    const newDate = new Date(currentDate)
+    const newDate = new Date(currentDate);
     if (direction === "prev") {
-      newDate.setMonth(newDate.getMonth() - 1)
+      newDate.setMonth(newDate.getMonth() - 1);
     } else {
-      newDate.setMonth(newDate.getMonth() + 1)
+      newDate.setMonth(newDate.getMonth() + 1);
     }
-    setCurrentDate(newDate)
-  }
+    setCurrentDate(newDate);
+  };
 
   const navigateWeek = (direction: "prev" | "next") => {
-    const newDate = new Date(currentDate)
+    const newDate = new Date(currentDate);
     if (direction === "prev") {
-      newDate.setDate(newDate.getDate() - 7)
+      newDate.setDate(newDate.getDate() - 7);
     } else {
-      newDate.setDate(newDate.getDate() + 7)
+      newDate.setDate(newDate.getDate() + 7);
     }
-    setCurrentDate(newDate)
-  }
+    setCurrentDate(newDate);
+  };
 
   const navigateDay = (direction: "prev" | "next") => {
-    const newDate = new Date(currentDate)
+    const newDate = new Date(currentDate);
     if (direction === "prev") {
-      newDate.setDate(newDate.getDate() - 1)
+      newDate.setDate(newDate.getDate() - 1);
     } else {
-      newDate.setDate(newDate.getDate() + 1)
+      newDate.setDate(newDate.getDate() + 1);
     }
-    setCurrentDate(newDate)
-  }
+    setCurrentDate(newDate);
+  };
 
   const goToToday = () => {
-    setCurrentDate(new Date())
-  }
+    setCurrentDate(new Date());
+  };
 
   // Generate calendar days for month view
   const generateMonthDays = () => {
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    const startDate = new Date(firstDay)
-    startDate.setDate(startDate.getDate() - firstDay.getDay())
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
 
-    const days = []
-    const currentDateObj = new Date(startDate)
+    const days = [];
+    const currentDateObj = new Date(startDate);
 
     for (let i = 0; i < 42; i++) {
-      days.push(new Date(currentDateObj))
-      currentDateObj.setDate(currentDateObj.getDate() + 1)
+      days.push(new Date(currentDateObj));
+      currentDateObj.setDate(currentDateObj.getDate() + 1);
     }
 
-    return days
-  }
+    return days;
+  };
 
   // Generate week days
   const generateWeekDays = () => {
-    const startOfWeek = new Date(currentDate)
-    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay())
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
 
-    const days = []
+    const days = [];
     for (let i = 0; i < 7; i++) {
-      const day = new Date(startOfWeek)
-      day.setDate(startOfWeek.getDate() + i)
-      days.push(day)
+      const day = new Date(startOfWeek);
+      day.setDate(startOfWeek.getDate() + i);
+      days.push(day);
     }
 
-    return days
-  }
+    return days;
+  };
 
   const handleCreateAppointment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log("Creating appointment:", formData)
-    setIsLoading(false)
-    setIsCreateDialogOpen(false)
-    resetForm()
-  }
+    console.log("Creating appointment:", formData);
+    setIsLoading(false);
+    setIsCreateDialogOpen(false);
+    resetForm();
+  };
 
   const handleEditAppointment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log("Editing appointment:", { id: selectedAppointment?.id, ...formData })
-    setIsLoading(false)
-    setIsEditDialogOpen(false)
-    resetForm()
-  }
+    console.log("Editing appointment:", {
+      id: selectedAppointment?.id,
+      ...formData,
+    });
+    setIsLoading(false);
+    setIsEditDialogOpen(false);
+    resetForm();
+  };
 
   const handleDeleteAppointment = async (appointmentId: number) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta cita?")) {
-      console.log("Deleting appointment:", appointmentId)
+      console.log("Deleting appointment:", appointmentId);
     }
-  }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -320,19 +337,19 @@ export default function CalendarPage() {
       duration: 30,
       notes: "",
       status: "pending",
-    })
-    setSelectedAppointment(null)
-  }
+    });
+    setSelectedAppointment(null);
+  };
 
   const openCreateDialog = (date?: Date) => {
     if (date) {
-      setFormData({ ...formData, date: date.toISOString().split("T")[0] })
+      setFormData({ ...formData, date: date.toISOString().split("T")[0] });
     }
-    setIsCreateDialogOpen(true)
-  }
+    setIsCreateDialogOpen(true);
+  };
 
   const openEditDialog = (appointment: any) => {
-    setSelectedAppointment(appointment)
+    setSelectedAppointment(appointment);
     setFormData({
       clientName: appointment.clientName,
       clientEmail: appointment.clientEmail,
@@ -343,48 +360,48 @@ export default function CalendarPage() {
       duration: appointment.duration,
       notes: appointment.notes,
       status: appointment.status,
-    })
-    setIsEditDialogOpen(true)
-  }
+    });
+    setIsEditDialogOpen(true);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case "pending":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       case "cancelled":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "confirmed":
-        return <CheckCircle className="h-3 w-3" />
+        return <CheckCircle className="h-3 w-3" />;
       case "pending":
-        return <AlertCircle className="h-3 w-3" />
+        return <AlertCircle className="h-3 w-3" />;
       case "cancelled":
-        return <XCircle className="h-3 w-3" />
+        return <XCircle className="h-3 w-3" />;
       default:
-        return <Clock className="h-3 w-3" />
+        return <Clock className="h-3 w-3" />;
     }
-  }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "confirmed":
-        return "Confirmada"
+        return "Confirmada";
       case "pending":
-        return "Pendiente"
+        return "Pendiente";
       case "cancelled":
-        return "Cancelada"
+        return "Cancelada";
       default:
-        return "Desconocido"
+        return "Desconocido";
     }
-  }
+  };
 
   const monthNames = [
     "Enero",
@@ -399,10 +416,18 @@ export default function CalendarPage() {
     "Octubre",
     "Noviembre",
     "Diciembre",
-  ]
+  ];
 
-  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
-  const dayNamesLong = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const dayNamesLong = [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -435,9 +460,9 @@ export default function CalendarPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (viewMode === "month") navigateMonth("prev")
-                      else if (viewMode === "week") navigateWeek("prev")
-                      else if (viewMode === "day") navigateDay("prev")
+                      if (viewMode === "month") navigateMonth("prev");
+                      else if (viewMode === "week") navigateWeek("prev");
+                      else if (viewMode === "day") navigateDay("prev");
                     }}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -446,9 +471,9 @@ export default function CalendarPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (viewMode === "month") navigateMonth("next")
-                      else if (viewMode === "week") navigateWeek("next")
-                      else if (viewMode === "day") navigateDay("next")
+                      if (viewMode === "month") navigateMonth("next");
+                      else if (viewMode === "week") navigateWeek("next");
+                      else if (viewMode === "day") navigateDay("next");
                     }}
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -459,7 +484,8 @@ export default function CalendarPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {viewMode === "month" && `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+                    {viewMode === "month" &&
+                      `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
                     {viewMode === "week" &&
                       `Semana del ${currentDate.getDate()} de ${monthNames[currentDate.getMonth()]}`}
                     {viewMode === "day" &&
@@ -534,7 +560,10 @@ export default function CalendarPage() {
                     {services.map((service) => (
                       <SelectItem key={service.id} value={service.name}>
                         <div className="flex items-center space-x-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: service.color }} />
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: service.color }}
+                          />
                           <span>{service.name}</span>
                         </div>
                       </SelectItem>
@@ -568,7 +597,10 @@ export default function CalendarPage() {
               {/* Month Header */}
               <div className="grid grid-cols-7 gap-2 mb-4">
                 {dayNames.map((day) => (
-                  <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                  <div
+                    key={day}
+                    className="text-center text-sm font-medium text-gray-500 py-2"
+                  >
                     {day}
                   </div>
                 ))}
@@ -577,9 +609,11 @@ export default function CalendarPage() {
               {/* Month Grid */}
               <div className="grid grid-cols-7 gap-2">
                 {generateMonthDays().map((date, index) => {
-                  const isCurrentMonth = date.getMonth() === currentDate.getMonth()
-                  const isToday = date.toDateString() === new Date().toDateString()
-                  const dayAppointments = getAppointmentsForDate(date)
+                  const isCurrentMonth =
+                    date.getMonth() === currentDate.getMonth();
+                  const isToday =
+                    date.toDateString() === new Date().toDateString();
+                  const dayAppointments = getAppointmentsForDate(date);
 
                   return (
                     <div
@@ -591,7 +625,9 @@ export default function CalendarPage() {
                       } ${isToday ? "ring-2 ring-blue-500" : ""}`}
                       onClick={() => openCreateDialog(date)}
                     >
-                      <div className={`text-sm font-medium mb-2 ${isToday ? "text-blue-600" : ""}`}>
+                      <div
+                        className={`text-sm font-medium mb-2 ${isToday ? "text-blue-600" : ""}`}
+                      >
                         {date.getDate()}
                       </div>
                       <div className="space-y-1">
@@ -605,19 +641,21 @@ export default function CalendarPage() {
                               borderLeft: `3px solid ${appointment.serviceColor}`,
                             }}
                             onClick={(e) => {
-                              e.stopPropagation()
-                              openEditDialog(appointment)
+                              e.stopPropagation();
+                              openEditDialog(appointment);
                             }}
                           >
                             {appointment.time} - {appointment.clientName}
                           </div>
                         ))}
                         {dayAppointments.length > 3 && (
-                          <div className="text-xs text-gray-500">+{dayAppointments.length - 3} más</div>
+                          <div className="text-xs text-gray-500">
+                            +{dayAppointments.length - 3} más
+                          </div>
                         )}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </CardContent>
@@ -629,32 +667,51 @@ export default function CalendarPage() {
             <CardContent className="p-6">
               {/* Week Header */}
               <div className="grid grid-cols-8 gap-2 mb-4">
-                <div className="text-center text-sm font-medium text-gray-500 py-2">Hora</div>
+                <div className="text-center text-sm font-medium text-gray-500 py-2">
+                  Hora
+                </div>
                 {generateWeekDays().map((date, index) => {
-                  const isToday = date.toDateString() === new Date().toDateString()
+                  const isToday =
+                    date.toDateString() === new Date().toDateString();
                   return (
-                    <div key={index} className={`text-center py-2 ${isToday ? "text-blue-600 font-bold" : ""}`}>
-                      <div className="text-sm font-medium">{dayNames[date.getDay()]}</div>
+                    <div
+                      key={index}
+                      className={`text-center py-2 ${isToday ? "text-blue-600 font-bold" : ""}`}
+                    >
+                      <div className="text-sm font-medium">
+                        {dayNames[date.getDay()]}
+                      </div>
                       <div className="text-lg">{date.getDate()}</div>
                     </div>
-                  )
+                  );
                 })}
               </div>
 
               {/* Week Grid */}
               <div className="space-y-1">
                 {timeSlots.map((time) => (
-                  <div key={time} className="grid grid-cols-8 gap-2 min-h-[60px]">
-                    <div className="text-sm text-gray-500 py-2 text-right pr-2">{time}</div>
+                  <div
+                    key={time}
+                    className="grid grid-cols-8 gap-2 min-h-[60px]"
+                  >
+                    <div className="text-sm text-gray-500 py-2 text-right pr-2">
+                      {time}
+                    </div>
                     {generateWeekDays().map((date, dayIndex) => {
-                      const dayAppointments = getAppointmentsForDate(date).filter((apt) => apt.time === time)
+                      const dayAppointments = getAppointmentsForDate(
+                        date,
+                      ).filter((apt) => apt.time === time);
                       return (
                         <div
                           key={dayIndex}
                           className="border rounded p-1 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                           onClick={() => {
-                            setFormData({ ...formData, date: date.toISOString().split("T")[0], time })
-                            openCreateDialog(date)
+                            setFormData({
+                              ...formData,
+                              date: date.toISOString().split("T")[0],
+                              time,
+                            });
+                            openCreateDialog(date);
                           }}
                         >
                           {dayAppointments.map((appointment) => (
@@ -667,16 +724,20 @@ export default function CalendarPage() {
                                 borderLeft: `3px solid ${appointment.serviceColor}`,
                               }}
                               onClick={(e) => {
-                                e.stopPropagation()
-                                openEditDialog(appointment)
+                                e.stopPropagation();
+                                openEditDialog(appointment);
                               }}
                             >
-                              <div className="font-medium truncate">{appointment.clientName}</div>
-                              <div className="truncate">{appointment.service}</div>
+                              <div className="font-medium truncate">
+                                {appointment.clientName}
+                              </div>
+                              <div className="truncate">
+                                {appointment.service}
+                              </div>
                             </div>
                           ))}
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 ))}
@@ -690,15 +751,23 @@ export default function CalendarPage() {
             <CardContent className="p-6">
               <div className="space-y-1">
                 {timeSlots.map((time) => {
-                  const dayAppointments = getAppointmentsForDate(currentDate).filter((apt) => apt.time === time)
+                  const dayAppointments = getAppointmentsForDate(
+                    currentDate,
+                  ).filter((apt) => apt.time === time);
                   return (
                     <div key={time} className="flex min-h-[80px]">
-                      <div className="w-20 text-sm text-gray-500 py-2 text-right pr-4">{time}</div>
+                      <div className="w-20 text-sm text-gray-500 py-2 text-right pr-4">
+                        {time}
+                      </div>
                       <div
                         className="flex-1 border rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                         onClick={() => {
-                          setFormData({ ...formData, date: currentDate.toISOString().split("T")[0], time })
-                          openCreateDialog(currentDate)
+                          setFormData({
+                            ...formData,
+                            date: currentDate.toISOString().split("T")[0],
+                            time,
+                          });
+                          openCreateDialog(currentDate);
                         }}
                       >
                         {dayAppointments.map((appointment) => (
@@ -711,29 +780,43 @@ export default function CalendarPage() {
                               borderLeft: `4px solid ${appointment.serviceColor}`,
                             }}
                             onClick={(e) => {
-                              e.stopPropagation()
-                              openEditDialog(appointment)
+                              e.stopPropagation();
+                              openEditDialog(appointment);
                             }}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <div className="font-medium">{appointment.clientName}</div>
-                                <div className="text-sm">{appointment.service}</div>
-                                <div className="text-xs opacity-75">{appointment.duration} min</div>
+                                <div className="font-medium">
+                                  {appointment.clientName}
+                                </div>
+                                <div className="text-sm">
+                                  {appointment.service}
+                                </div>
+                                <div className="text-xs opacity-75">
+                                  {appointment.duration} min
+                                </div>
                               </div>
-                              <Badge className={getStatusColor(appointment.status)}>
+                              <Badge
+                                className={getStatusColor(appointment.status)}
+                              >
                                 <div className="flex items-center space-x-1">
                                   {getStatusIcon(appointment.status)}
-                                  <span>{getStatusText(appointment.status)}</span>
+                                  <span>
+                                    {getStatusText(appointment.status)}
+                                  </span>
                                 </div>
                               </Badge>
                             </div>
-                            {appointment.notes && <div className="text-xs mt-2 opacity-75">{appointment.notes}</div>}
+                            {appointment.notes && (
+                              <div className="text-xs mt-2 opacity-75">
+                                {appointment.notes}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </CardContent>
@@ -746,9 +829,12 @@ export default function CalendarPage() {
               <Card>
                 <CardContent className="p-12 text-center">
                   <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No hay citas programadas</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No hay citas programadas
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    No se encontraron citas que coincidan con los filtros seleccionados.
+                    No se encontraron citas que coincidan con los filtros
+                    seleccionados.
                   </p>
                   <Button onClick={() => openCreateDialog()}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -758,11 +844,16 @@ export default function CalendarPage() {
               </Card>
             ) : (
               filteredAppointments.map((appointment) => (
-                <Card key={appointment.id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={appointment.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={appointment.avatar || "/placeholder.svg"} />
+                        <AvatarImage
+                          src={appointment.avatar || "/placeholder.svg"}
+                        />
                         <AvatarFallback>
                           {appointment.clientName
                             .split(" ")
@@ -794,7 +885,9 @@ export default function CalendarPage() {
                           <div className="flex items-center space-x-2">
                             <div
                               className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: appointment.serviceColor }}
+                              style={{
+                                backgroundColor: appointment.serviceColor,
+                              }}
                             />
                             <span>
                               {appointment.service} ({appointment.duration} min)
@@ -820,7 +913,11 @@ export default function CalendarPage() {
                         <Button variant="outline" size="sm">
                           <Mail className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => openEditDialog(appointment)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(appointment)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
 
@@ -833,7 +930,9 @@ export default function CalendarPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openEditDialog(appointment)}>
+                            <DropdownMenuItem
+                              onClick={() => openEditDialog(appointment)}
+                            >
                               <Edit className="h-4 w-4 mr-2" />
                               Editar Cita
                             </DropdownMenuItem>
@@ -852,7 +951,9 @@ export default function CalendarPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600"
-                              onClick={() => handleDeleteAppointment(appointment.id)}
+                              onClick={() =>
+                                handleDeleteAppointment(appointment.id)
+                              }
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Eliminar
@@ -874,7 +975,9 @@ export default function CalendarPage() {
             <form onSubmit={handleCreateAppointment}>
               <DialogHeader>
                 <DialogTitle>Nueva Cita</DialogTitle>
-                <DialogDescription>Completa la información para crear una nueva cita</DialogDescription>
+                <DialogDescription>
+                  Completa la información para crear una nueva cita
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -884,7 +987,9 @@ export default function CalendarPage() {
                   <Input
                     id="clientName"
                     value={formData.clientName}
-                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clientName: e.target.value })
+                    }
                     className="col-span-3"
                     placeholder="Nombre del cliente"
                     required
@@ -897,7 +1002,9 @@ export default function CalendarPage() {
                   <Input
                     id="clientPhone"
                     value={formData.clientPhone}
-                    onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clientPhone: e.target.value })
+                    }
                     className="col-span-3"
                     placeholder="+1 (555) 123-4567"
                   />
@@ -908,7 +1015,9 @@ export default function CalendarPage() {
                   </Label>
                   <Select
                     value={formData.service}
-                    onValueChange={(value) => setFormData({ ...formData, service: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, service: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Seleccionar servicio" />
@@ -917,7 +1026,10 @@ export default function CalendarPage() {
                       {services.map((service) => (
                         <SelectItem key={service.id} value={service.name}>
                           <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: service.color }} />
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: service.color }}
+                            />
                             <span>{service.name}</span>
                           </div>
                         </SelectItem>
@@ -933,7 +1045,9 @@ export default function CalendarPage() {
                     id="date"
                     type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
                     className="col-span-3"
                     required
                   />
@@ -942,7 +1056,12 @@ export default function CalendarPage() {
                   <Label htmlFor="time" className="text-right">
                     Hora *
                   </Label>
-                  <Select value={formData.time} onValueChange={(value) => setFormData({ ...formData, time: value })}>
+                  <Select
+                    value={formData.time}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, time: value })
+                    }
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Seleccionar hora" />
                     </SelectTrigger>
@@ -963,7 +1082,12 @@ export default function CalendarPage() {
                     id="duration"
                     type="number"
                     value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: Number.parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        duration: Number.parseInt(e.target.value),
+                      })
+                    }
                     className="col-span-3"
                     placeholder="30"
                   />
@@ -975,7 +1099,9 @@ export default function CalendarPage() {
                   <Textarea
                     id="notes"
                     value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
                     className="col-span-3"
                     placeholder="Notas adicionales..."
                     rows={3}
@@ -983,7 +1109,11 @@ export default function CalendarPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isLoading}>
@@ -1000,7 +1130,9 @@ export default function CalendarPage() {
             <form onSubmit={handleEditAppointment}>
               <DialogHeader>
                 <DialogTitle>Editar Cita</DialogTitle>
-                <DialogDescription>Modifica la información de la cita</DialogDescription>
+                <DialogDescription>
+                  Modifica la información de la cita
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -1010,7 +1142,9 @@ export default function CalendarPage() {
                   <Input
                     id="edit-clientName"
                     value={formData.clientName}
-                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clientName: e.target.value })
+                    }
                     className="col-span-3"
                     required
                   />
@@ -1022,7 +1156,9 @@ export default function CalendarPage() {
                   <Input
                     id="edit-clientPhone"
                     value={formData.clientPhone}
-                    onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clientPhone: e.target.value })
+                    }
                     className="col-span-3"
                   />
                 </div>
@@ -1032,7 +1168,9 @@ export default function CalendarPage() {
                   </Label>
                   <Select
                     value={formData.service}
-                    onValueChange={(value) => setFormData({ ...formData, service: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, service: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue />
@@ -1041,7 +1179,10 @@ export default function CalendarPage() {
                       {services.map((service) => (
                         <SelectItem key={service.id} value={service.name}>
                           <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: service.color }} />
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: service.color }}
+                            />
                             <span>{service.name}</span>
                           </div>
                         </SelectItem>
@@ -1057,7 +1198,9 @@ export default function CalendarPage() {
                     id="edit-date"
                     type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
                     className="col-span-3"
                     required
                   />
@@ -1066,7 +1209,12 @@ export default function CalendarPage() {
                   <Label htmlFor="edit-time" className="text-right">
                     Hora *
                   </Label>
-                  <Select value={formData.time} onValueChange={(value) => setFormData({ ...formData, time: value })}>
+                  <Select
+                    value={formData.time}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, time: value })
+                    }
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue />
                     </SelectTrigger>
@@ -1085,7 +1233,9 @@ export default function CalendarPage() {
                   </Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, status: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue />
@@ -1105,7 +1255,12 @@ export default function CalendarPage() {
                     id="edit-duration"
                     type="number"
                     value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: Number.parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        duration: Number.parseInt(e.target.value),
+                      })
+                    }
                     className="col-span-3"
                   />
                 </div>
@@ -1116,14 +1271,20 @@ export default function CalendarPage() {
                   <Textarea
                     id="edit-notes"
                     value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
                     className="col-span-3"
                     rows={3}
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isLoading}>
@@ -1135,5 +1296,5 @@ export default function CalendarPage() {
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

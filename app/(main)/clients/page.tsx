@@ -1,6 +1,6 @@
-import { Header } from "@/components/header"
-import ClientsPageClient from "./page.client"
-import type { Client, ClientStats, Pagination } from "@/app/types"
+import { Header } from "@/components/header";
+import ClientsPageClient from "./page.client";
+import type { Client, ClientStats, Pagination } from "@/types";
 
 // Mock data para clientes
 const mockClients: Client[] = [
@@ -280,19 +280,23 @@ const mockClients: Client[] = [
     createdAt: "2023-11-15",
     updatedAt: "2024-01-08",
   },
-]
+];
 
 // Estadísticas calculadas
 const mockStats: ClientStats = {
   totalClients: mockClients.length,
   activeClients: mockClients.filter((c) => c.status === "active").length,
   newThisMonth: mockClients.filter((c) => {
-    const createdDate = new Date(c.createdAt)
-    const now = new Date()
-    return createdDate.getMonth() === now.getMonth() && createdDate.getFullYear() === now.getFullYear()
+    const createdDate = new Date(c.createdAt);
+    const now = new Date();
+    return (
+      createdDate.getMonth() === now.getMonth() &&
+      createdDate.getFullYear() === now.getFullYear()
+    );
   }).length,
-  averageRating: mockClients.reduce((acc, c) => acc + c.rating, 0) / mockClients.length,
-}
+  averageRating:
+    mockClients.reduce((acc, c) => acc + c.rating, 0) / mockClients.length,
+};
 
 const mockPagination: Pagination = {
   page: 1,
@@ -301,56 +305,72 @@ const mockPagination: Pagination = {
   totalPages: Math.ceil(mockClients.length / 10),
   hasNext: mockClients.length > 10,
   hasPrev: false,
-}
+};
 
 // Función para filtrar clientes (simulando server-side filtering)
-function getFilteredClients(searchParams: { [key: string]: string | string[] | undefined }) {
-  let filteredClients = [...mockClients]
+function getFilteredClients(searchParams: {
+  [key: string]: string | string[] | undefined;
+}) {
+  let filteredClients = [...mockClients];
 
   // Filtro por búsqueda
   if (searchParams.search && typeof searchParams.search === "string") {
-    const search = searchParams.search.toLowerCase()
+    const search = searchParams.search.toLowerCase();
     filteredClients = filteredClients.filter(
       (client) =>
         client.name.toLowerCase().includes(search) ||
         client.email.toLowerCase().includes(search) ||
         client.phone.includes(search),
-    )
+    );
   }
 
   // Filtro por estado
-  if (searchParams.status && typeof searchParams.status === "string" && searchParams.status !== "all") {
-    filteredClients = filteredClients.filter((client) => client.status === searchParams.status)
+  if (
+    searchParams.status &&
+    typeof searchParams.status === "string" &&
+    searchParams.status !== "all"
+  ) {
+    filteredClients = filteredClients.filter(
+      (client) => client.status === searchParams.status,
+    );
   }
 
   // Filtro por etiquetas
   if (searchParams.tags && typeof searchParams.tags === "string") {
-    const tags = searchParams.tags.split(",")
-    filteredClients = filteredClients.filter((client) => tags.some((tag) => client.tags?.includes(tag)))
+    const tags = searchParams.tags.split(",");
+    filteredClients = filteredClients.filter((client) =>
+      tags.some((tag) => client.tags?.includes(tag)),
+    );
   }
 
-  return filteredClients
+  return filteredClients;
 }
 
 export default function ClientsPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const filteredClients = getFilteredClients(searchParams)
+  const filteredClients = getFilteredClients(searchParams);
 
   // Recalcular estadísticas basadas en clientes filtrados
   const stats: ClientStats = {
     totalClients: filteredClients.length,
     activeClients: filteredClients.filter((c) => c.status === "active").length,
     newThisMonth: filteredClients.filter((c) => {
-      const createdDate = new Date(c.createdAt)
-      const now = new Date()
-      return createdDate.getMonth() === now.getMonth() && createdDate.getFullYear() === now.getFullYear()
+      const createdDate = new Date(c.createdAt);
+      const now = new Date();
+      return (
+        createdDate.getMonth() === now.getMonth() &&
+        createdDate.getFullYear() === now.getFullYear()
+      );
     }).length,
     averageRating:
-      filteredClients.length > 0 ? filteredClients.reduce((acc, c) => acc + c.rating, 0) / filteredClients.length : 0,
-  }
+      filteredClients.length > 0
+        ? filteredClients.reduce((acc, c) => acc + c.rating, 0) /
+          filteredClients.length
+        : 0,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -363,8 +383,12 @@ export default function ClientsPage({
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ClientsPageClient clients={filteredClients} stats={stats} pagination={mockPagination} />
+        <ClientsPageClient
+          clients={filteredClients}
+          stats={stats}
+          pagination={mockPagination}
+        />
       </main>
     </div>
-  )
+  );
 }

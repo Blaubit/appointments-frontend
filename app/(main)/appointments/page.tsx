@@ -1,10 +1,10 @@
-import type { ReadonlyURLSearchParams } from "next/navigation"
-import PageClient from "./page.client"
-import type { Appointment, AppointmentStats, Pagination } from "@/app/types"
+import type { ReadonlyURLSearchParams } from "next/navigation";
+import PageClient from "./page.client";
+import type { Appointment, AppointmentStats, Pagination } from "@/types";
 
 type Props = {
-  searchParams: ReadonlyURLSearchParams
-}
+  searchParams: ReadonlyURLSearchParams;
+};
 
 export default async function Page({ searchParams }: Props) {
   //const params = new URLSearchParams(searchParams)
@@ -123,14 +123,14 @@ export default async function Page({ searchParams }: Props) {
       notes: "Reparación urgente",
       avatar: "/Avatar1.png?height=40&width=40",
     },
-  ]
+  ];
 
   // Apply server-side filters based on search params
-  const searchTerm =""
-  const statusFilter = "all"
-  const dateFilter =  "all"
+  const searchTerm = "";
+  const statusFilter = "all";
+  const dateFilter = "all";
 
-  let filteredAppointments = allAppointments
+  let filteredAppointments = allAppointments;
 
   // Server-side search filtering
   if (searchTerm) {
@@ -138,24 +138,37 @@ export default async function Page({ searchParams }: Props) {
       (appointment) =>
         appointment.clientName.toLowerCase().includes(searchTerm) ||
         appointment.service.toLowerCase().includes(searchTerm),
-    )
+    );
   }
 
   // Server-side status filtering
   if (statusFilter !== "all") {
-    filteredAppointments = filteredAppointments.filter((appointment) => appointment.status === statusFilter)
+    filteredAppointments = filteredAppointments.filter(
+      (appointment) => appointment.status === statusFilter,
+    );
   }
 
   // Server-side date filtering
   if (dateFilter !== "all") {
     if (dateFilter === "today") {
-      filteredAppointments = filteredAppointments.filter((appointment) => appointment.dateFormatted === "Hoy")
+      filteredAppointments = filteredAppointments.filter(
+        (appointment) => appointment.dateFormatted === "Hoy",
+      );
     } else if (dateFilter === "tomorrow") {
-      filteredAppointments = filteredAppointments.filter((appointment) => appointment.dateFormatted === "Mañana")
+      filteredAppointments = filteredAppointments.filter(
+        (appointment) => appointment.dateFormatted === "Mañana",
+      );
     } else if (dateFilter === "week") {
       filteredAppointments = filteredAppointments.filter((appointment) =>
-        ["Hoy", "Mañana", "Pasado mañana", "Jueves", "Viernes", "Sábado"].includes(appointment.dateFormatted),
-      )
+        [
+          "Hoy",
+          "Mañana",
+          "Pasado mañana",
+          "Jueves",
+          "Viernes",
+          "Sábado",
+        ].includes(appointment.dateFormatted),
+      );
     }
   }
 
@@ -165,7 +178,7 @@ export default async function Page({ searchParams }: Props) {
     confirmed: allAppointments.filter((a) => a.status === "confirmed").length,
     pending: allAppointments.filter((a) => a.status === "pending").length,
     cancelled: allAppointments.filter((a) => a.status === "cancelled").length,
-  }
+  };
 
   // Pagination metadata
   const pagination: Pagination = {
@@ -175,8 +188,13 @@ export default async function Page({ searchParams }: Props) {
     itemsPerPage: 1,
     hasNext: false,
     hasPrev: false,
-    
-  }
+  };
 
-  return <PageClient appointments={filteredAppointments} stats={stats} pagination={pagination} />
+  return (
+    <PageClient
+      appointments={filteredAppointments}
+      stats={stats}
+      pagination={pagination}
+    />
+  );
 }
