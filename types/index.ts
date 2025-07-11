@@ -13,3 +13,5 @@ export type { Appointment, AppointmentStats } from "./appointments";
 export type { Service, ServiceStats } from "./services";
 export type { Client, ClientStats } from "./clients";
 export type { BotFlow, BotMessage, BotStats } from "./whatsapp-bot";
+export type { NotificationSettings, NotificationFormProps } from "./notifications";
+export type {WorkingDaySettings, ScheduleFormProps, ScheduleSettings, TimezoneOption } from "./schedule";

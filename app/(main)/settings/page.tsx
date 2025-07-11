@@ -51,6 +51,21 @@ import {
   Monitor,
 } from "lucide-react";
 import { Header } from "@/components/header";
+import NotificationForm from "@/components/notification-form";
+import type { NotificationSettings } from "@/types";
+import { ScheduleForm } from "@/components/schedule-form";
+
+const notificationSettings: NotificationSettings = {
+  emailNotifications: false,
+  smsNotifications: false,
+  pushNotifications: false,
+  appointmentReminders: false,
+  appointmentConfirmations: false,
+  cancellationAlerts: false,
+  dailyReports: false,
+  weeklyReports: false,
+  marketingEmails: false,
+};
 
 export default function SettingsPage() {
   const searchParams = useSearchParams();
@@ -97,18 +112,18 @@ export default function SettingsPage() {
     avatar: "/Avatar1.png",
   });
 
-  // Notification settings
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    smsNotifications: true,
-    pushNotifications: true,
-    appointmentReminders: true,
-    appointmentConfirmations: true,
-    cancellationAlerts: true,
+  const defaultNotificationSettings: NotificationSettings = {
+    emailNotifications: false,
+    smsNotifications: false,
+    pushNotifications: false,
+    appointmentReminders: false,
+    appointmentConfirmations: false,
+    cancellationAlerts: false,
     dailyReports: false,
-    weeklyReports: true,
+    weeklyReports: false,
     marketingEmails: false,
-  });
+  };
+  
 
   // Schedule settings
   const [scheduleSettings, setScheduleSettings] = useState({
@@ -319,359 +334,22 @@ export default function SettingsPage() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configuración de Notificaciones</CardTitle>
-                <CardDescription>
-                  Personaliza cómo y cuándo recibir notificaciones
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Canales de Notificación</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Notificaciones por Email</Label>
-                        <p className="text-sm text-gray-500">
-                          Recibir notificaciones en tu correo electrónico
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.emailNotifications}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            emailNotifications: checked,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Notificaciones por SMS</Label>
-                        <p className="text-sm text-gray-500">
-                          Recibir notificaciones por mensaje de texto
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.smsNotifications}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            smsNotifications: checked,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Notificaciones Push</Label>
-                        <p className="text-sm text-gray-500">
-                          Recibir notificaciones en el navegador
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.pushNotifications}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            pushNotifications: checked,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">Tipos de Notificación</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Recordatorios de Citas</Label>
-                        <p className="text-sm text-gray-500">
-                          Recordatorios automáticos antes de las citas
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.appointmentReminders}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            appointmentReminders: checked,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Confirmaciones de Citas</Label>
-                        <p className="text-sm text-gray-500">
-                          Notificaciones cuando se confirman citas
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.appointmentConfirmations}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            appointmentConfirmations: checked,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Alertas de Cancelación</Label>
-                        <p className="text-sm text-gray-500">
-                          Notificaciones cuando se cancelan citas
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.cancellationAlerts}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            cancellationAlerts: checked,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">Reportes</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Reportes Diarios</Label>
-                        <p className="text-sm text-gray-500">
-                          Resumen diario de actividad
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.dailyReports}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            dailyReports: checked,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Reportes Semanales</Label>
-                        <p className="text-sm text-gray-500">
-                          Resumen semanal de estadísticas
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.weeklyReports}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            weeklyReports: checked,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Emails de Marketing</Label>
-                        <p className="text-sm text-gray-500">
-                          Noticias y actualizaciones del producto
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.marketingEmails}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            marketingEmails: checked,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleSaveNotifications}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Guardando..." : "Guardar Cambios"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                <NotificationForm
+                  initialSettings={notificationSettings}
+                  onSave={handleSaveNotifications}
+                  isLoading={isLoading}
+                />
           </TabsContent>
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configuración de Horarios</CardTitle>
-                <CardDescription>
-                  Define tus horarios de trabajo y disponibilidad
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Zona Horaria</Label>
-                    <Select
-                      value={scheduleSettings.timezone}
-                      onValueChange={(value) =>
-                        setScheduleSettings({
-                          ...scheduleSettings,
-                          timezone: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timezones.map((tz) => (
-                          <SelectItem key={tz.value} value={tz.value}>
-                            {tz.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="appointmentDuration">
-                      Duración por Defecto (minutos)
-                    </Label>
-                    <Input
-                      id="appointmentDuration"
-                      type="number"
-                      value={scheduleSettings.appointmentDuration}
-                      onChange={(e) =>
-                        setScheduleSettings({
-                          ...scheduleSettings,
-                          appointmentDuration: Number.parseInt(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bufferTime">
-                      Tiempo de Descanso (minutos)
-                    </Label>
-                    <Input
-                      id="bufferTime"
-                      type="number"
-                      value={scheduleSettings.bufferTime}
-                      onChange={(e) =>
-                        setScheduleSettings({
-                          ...scheduleSettings,
-                          bufferTime: Number.parseInt(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="maxAdvanceBooking">
-                      Reserva Máxima Anticipada (días)
-                    </Label>
-                    <Input
-                      id="maxAdvanceBooking"
-                      type="number"
-                      value={scheduleSettings.maxAdvanceBooking}
-                      onChange={(e) =>
-                        setScheduleSettings({
-                          ...scheduleSettings,
-                          maxAdvanceBooking: Number.parseInt(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                </div>
 
-                <Separator />
+            <ScheduleForm
+              initialSettings={scheduleSettings}
+              onSave={handleSaveSchedule}
+              isLoading={isLoading}
+            />
 
-                <div className="space-y-4">
-                  <h4 className="font-medium">Horarios de Trabajo</h4>
-                  <div className="space-y-4">
-                    {Object.entries(scheduleSettings.workingDays).map(
-                      ([day, settings]) => (
-                        <div key={day} className="flex items-center space-x-4">
-                          <div className="w-24">
-                            <Switch
-                              checked={settings.enabled}
-                              onCheckedChange={(checked) =>
-                                setScheduleSettings({
-                                  ...scheduleSettings,
-                                  workingDays: {
-                                    ...scheduleSettings.workingDays,
-                                    [day]: { ...settings, enabled: checked },
-                                  },
-                                })
-                              }
-                            />
-                          </div>
-                          <div className="w-20 text-sm font-medium">
-                            {dayNames[day as keyof typeof dayNames]}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Input
-                              type="time"
-                              value={settings.start}
-                              onChange={(e) =>
-                                setScheduleSettings({
-                                  ...scheduleSettings,
-                                  workingDays: {
-                                    ...scheduleSettings.workingDays,
-                                    [day]: {
-                                      ...settings,
-                                      start: e.target.value,
-                                    },
-                                  },
-                                })
-                              }
-                              disabled={!settings.enabled}
-                              className="w-32"
-                            />
-                            <span className="text-gray-500">a</span>
-                            <Input
-                              type="time"
-                              value={settings.end}
-                              onChange={(e) =>
-                                setScheduleSettings({
-                                  ...scheduleSettings,
-                                  workingDays: {
-                                    ...scheduleSettings.workingDays,
-                                    [day]: { ...settings, end: e.target.value },
-                                  },
-                                })
-                              }
-                              disabled={!settings.enabled}
-                              className="w-32"
-                            />
-                          </div>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveSchedule} disabled={isLoading}>
-                    {isLoading ? "Guardando..." : "Guardar Cambios"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Security Tab */}
