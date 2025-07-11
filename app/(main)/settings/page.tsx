@@ -54,7 +54,7 @@ import { Header } from "@/components/header";
 import NotificationForm from "@/components/notification-form";
 import type { NotificationSettings } from "@/types";
 import { ScheduleForm } from "@/components/schedule-form";
-
+import { SecurityForm } from "@/components/security-form";
 const notificationSettings: NotificationSettings = {
   emailNotifications: false,
   smsNotifications: false,
@@ -66,6 +66,7 @@ const notificationSettings: NotificationSettings = {
   weeklyReports: false,
   marketingEmails: false,
 };
+import { AppearenceForm } from "@/components/appearence-form";
 
 export default function SettingsPage() {
   const searchParams = useSearchParams();
@@ -123,7 +124,6 @@ export default function SettingsPage() {
     weeklyReports: false,
     marketingEmails: false,
   };
-  
 
   // Schedule settings
   const [scheduleSettings, setScheduleSettings] = useState({
@@ -334,186 +334,29 @@ export default function SettingsPage() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
-                <NotificationForm
-                  initialSettings={notificationSettings}
-                  onSave={handleSaveNotifications}
-                  isLoading={isLoading}
-                />
+            <NotificationForm
+              initialSettings={notificationSettings}
+              onSave={handleSaveNotifications}
+              isLoading={isLoading}
+            />
           </TabsContent>
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
-
             <ScheduleForm
               initialSettings={scheduleSettings}
               onSave={handleSaveSchedule}
               isLoading={isLoading}
             />
-
           </TabsContent>
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Seguridad de la Cuenta</CardTitle>
-                <CardDescription>
-                  Gestiona la seguridad y privacidad de tu cuenta
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Cambiar Contraseña</h4>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="currentPassword">Contraseña Actual</Label>
-                      <div className="relative">
-                        <Input
-                          id="currentPassword"
-                          type={showPassword ? "text" : "password"}
-                          value={securityData.currentPassword}
-                          onChange={(e) =>
-                            setSecurityData({
-                              ...securityData,
-                              currentPassword: e.target.value,
-                            })
-                          }
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword">Nueva Contraseña</Label>
-                      <div className="relative">
-                        <Input
-                          id="newPassword"
-                          type={showNewPassword ? "text" : "password"}
-                          value={securityData.newPassword}
-                          onChange={(e) =>
-                            setSecurityData({
-                              ...securityData,
-                              newPassword: e.target.value,
-                            })
-                          }
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">
-                        Confirmar Nueva Contraseña
-                      </Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        value={securityData.confirmPassword}
-                        onChange={(e) =>
-                          setSecurityData({
-                            ...securityData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">Autenticación de Dos Factores</h4>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Habilitar 2FA</Label>
-                      <p className="text-sm text-gray-500">
-                        Agrega una capa extra de seguridad a tu cuenta
-                      </p>
-                    </div>
-                    <Switch
-                      checked={securityData.twoFactorEnabled}
-                      onCheckedChange={(checked) =>
-                        setSecurityData({
-                          ...securityData,
-                          twoFactorEnabled: checked,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">Configuración de Sesión</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Alertas de Inicio de Sesión</Label>
-                        <p className="text-sm text-gray-500">
-                          Recibir notificaciones de nuevos inicios de sesión
-                        </p>
-                      </div>
-                      <Switch
-                        checked={securityData.loginAlerts}
-                        onCheckedChange={(checked) =>
-                          setSecurityData({
-                            ...securityData,
-                            loginAlerts: checked,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="sessionTimeout">
-                        Tiempo de Sesión (minutos)
-                      </Label>
-                      <Input
-                        id="sessionTimeout"
-                        type="number"
-                        value={securityData.sessionTimeout}
-                        onChange={(e) =>
-                          setSecurityData({
-                            ...securityData,
-                            sessionTimeout: Number.parseInt(e.target.value),
-                          })
-                        }
-                        className="w-32"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveSecurity} disabled={isLoading}>
-                    {isLoading ? "Guardando..." : "Guardar Cambios"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <SecurityForm
+              initialData={securityData}
+              onSave={handleSaveSecurity}
+              isLoading={isLoading}
+            />
 
             <Card>
               <CardHeader>
@@ -566,194 +409,10 @@ export default function SettingsPage() {
 
           {/* Appearance Tab */}
           <TabsContent value="appearance" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Apariencia y Localización</CardTitle>
-                <CardDescription>
-                  Personaliza la apariencia y configuración regional
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Tema</h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer ${
-                        appearanceSettings.theme === "light"
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200"
-                      }`}
-                      onClick={() =>
-                        setAppearanceSettings({
-                          ...appearanceSettings,
-                          theme: "light",
-                        })
-                      }
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Sun className="h-4 w-4" />
-                        <span>Claro</span>
-                      </div>
-                    </div>
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer ${
-                        appearanceSettings.theme === "dark"
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200"
-                      }`}
-                      onClick={() =>
-                        setAppearanceSettings({
-                          ...appearanceSettings,
-                          theme: "dark",
-                        })
-                      }
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Moon className="h-4 w-4" />
-                        <span>Oscuro</span>
-                      </div>
-                    </div>
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer ${
-                        appearanceSettings.theme === "system"
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200"
-                      }`}
-                      onClick={() =>
-                        setAppearanceSettings({
-                          ...appearanceSettings,
-                          theme: "system",
-                        })
-                      }
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Monitor className="h-4 w-4" />
-                        <span>Sistema</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="language">Idioma</Label>
-                    <Select
-                      value={appearanceSettings.language}
-                      onValueChange={(value) =>
-                        setAppearanceSettings({
-                          ...appearanceSettings,
-                          language: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {languages.map((lang) => (
-                          <SelectItem key={lang.value} value={lang.value}>
-                            {lang.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="currency">Moneda</Label>
-                    <Select
-                      value={appearanceSettings.currency}
-                      onValueChange={(value) =>
-                        setAppearanceSettings({
-                          ...appearanceSettings,
-                          currency: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currencies.map((currency) => (
-                          <SelectItem
-                            key={currency.value}
-                            value={currency.value}
-                          >
-                            {currency.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dateFormat">Formato de Fecha</Label>
-                    <Select
-                      value={appearanceSettings.dateFormat}
-                      onValueChange={(value) =>
-                        setAppearanceSettings({
-                          ...appearanceSettings,
-                          dateFormat: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                        <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                        <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="timeFormat">Formato de Hora</Label>
-                    <Select
-                      value={appearanceSettings.timeFormat}
-                      onValueChange={(value) =>
-                        setAppearanceSettings({
-                          ...appearanceSettings,
-                          timeFormat: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="12h">12 horas (AM/PM)</SelectItem>
-                        <SelectItem value="24h">24 horas</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">Exportar Datos</h4>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h5 className="font-medium">Descargar Datos</h5>
-                      <p className="text-sm text-gray-500">
-                        Exporta todos tus datos en formato JSON
-                      </p>
-                    </div>
-                    <Button variant="outline" onClick={handleExportData}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Exportar
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveAppearance} disabled={isLoading}>
-                    {isLoading ? "Guardando..." : "Guardar Cambios"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <AppearenceForm
+              onSave={handleSaveAppearance}
+              onExport={handleExportData}
+            />
           </TabsContent>
         </Tabs>
       </div>

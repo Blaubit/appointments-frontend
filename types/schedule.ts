@@ -2,14 +2,14 @@
 export interface WorkingDaySettings {
   enabled: boolean;
   start: string; // formato HH:MM
-  end: string;   // formato HH:MM
+  end: string; // formato HH:MM
 }
 
 export interface ScheduleSettings {
   timezone: string;
   appointmentDuration: number; // en minutos
-  bufferTime: number;          // en minutos
-  maxAdvanceBooking: number;   // en días
+  bufferTime: number; // en minutos
+  maxAdvanceBooking: number; // en días
   workingDays: {
     monday: WorkingDaySettings;
     tuesday: WorkingDaySettings;

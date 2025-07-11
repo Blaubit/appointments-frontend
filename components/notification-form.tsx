@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { NotificationFormProps, NotificationSettings } from "@/types";
-
 
 // Configuración inicial por defecto
 const defaultNotificationSettings: NotificationSettings = {
@@ -20,25 +25,26 @@ const defaultNotificationSettings: NotificationSettings = {
   marketingEmails: false,
 };
 
-export default function NotificationForm({ 
+export default function NotificationForm({
   initialSettings = defaultNotificationSettings,
   onSave,
-  isLoading = false 
+  isLoading = false,
 }: NotificationFormProps) {
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(initialSettings);
+  const [notificationSettings, setNotificationSettings] =
+    useState<NotificationSettings>(initialSettings);
 
   const handleSaveNotifications = async () => {
     try {
       await onSave(notificationSettings);
     } catch (error) {
-      console.error('Error saving notifications:', error);
+      console.error("Error saving notifications:", error);
     }
   };
 
   const updateSetting = (key: keyof NotificationSettings, value: boolean) => {
-    setNotificationSettings(prev => ({
+    setNotificationSettings((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
   };
 
@@ -65,7 +71,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.emailNotifications}
                 onCheckedChange={(checked) =>
-                  updateSetting('emailNotifications', checked)
+                  updateSetting("emailNotifications", checked)
                 }
               />
             </div>
@@ -79,7 +85,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.smsNotifications}
                 onCheckedChange={(checked) =>
-                  updateSetting('smsNotifications', checked)
+                  updateSetting("smsNotifications", checked)
                 }
               />
             </div>
@@ -93,7 +99,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.pushNotifications}
                 onCheckedChange={(checked) =>
-                  updateSetting('pushNotifications', checked)
+                  updateSetting("pushNotifications", checked)
                 }
               />
             </div>
@@ -116,7 +122,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.appointmentReminders}
                 onCheckedChange={(checked) =>
-                  updateSetting('appointmentReminders', checked)
+                  updateSetting("appointmentReminders", checked)
                 }
               />
             </div>
@@ -130,7 +136,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.appointmentConfirmations}
                 onCheckedChange={(checked) =>
-                  updateSetting('appointmentConfirmations', checked)
+                  updateSetting("appointmentConfirmations", checked)
                 }
               />
             </div>
@@ -144,7 +150,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.cancellationAlerts}
                 onCheckedChange={(checked) =>
-                  updateSetting('cancellationAlerts', checked)
+                  updateSetting("cancellationAlerts", checked)
                 }
               />
             </div>
@@ -167,7 +173,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.dailyReports}
                 onCheckedChange={(checked) =>
-                  updateSetting('dailyReports', checked)
+                  updateSetting("dailyReports", checked)
                 }
               />
             </div>
@@ -181,7 +187,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.weeklyReports}
                 onCheckedChange={(checked) =>
-                  updateSetting('weeklyReports', checked)
+                  updateSetting("weeklyReports", checked)
                 }
               />
             </div>
@@ -195,7 +201,7 @@ export default function NotificationForm({
               <Switch
                 checked={notificationSettings.marketingEmails}
                 onCheckedChange={(checked) =>
-                  updateSetting('marketingEmails', checked)
+                  updateSetting("marketingEmails", checked)
                 }
               />
             </div>
@@ -203,10 +209,7 @@ export default function NotificationForm({
         </div>
 
         <div className="flex justify-end">
-          <Button
-            onClick={handleSaveNotifications}
-            disabled={isLoading}
-          >
+          <Button onClick={handleSaveNotifications} disabled={isLoading}>
             {isLoading ? "Guardando..." : "Guardar Cambios"}
           </Button>
         </div>

@@ -1,15 +1,29 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ScheduleFormProps, ScheduleSettings,TimezoneOption, WorkingDaySettings } from "@/types";
-
-
-
+import {
+  ScheduleFormProps,
+  ScheduleSettings,
+  TimezoneOption,
+  WorkingDaySettings,
+} from "@/types";
 
 // Configuración por defecto
 const defaultScheduleSettings: ScheduleSettings = {
@@ -62,56 +76,68 @@ const dayNames = {
 export function ScheduleForm({
   initialSettings = defaultScheduleSettings,
   onSave,
-  isLoading = false
+  isLoading = false,
 }: ScheduleFormProps) {
-  const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>(initialSettings);
+  const [scheduleSettings, setScheduleSettings] =
+    useState<ScheduleSettings>(initialSettings);
 
   const handleSaveSchedule = async () => {
     try {
       await onSave(scheduleSettings);
     } catch (error) {
-      console.error('Error saving schedule:', error);
+      console.error("Error saving schedule:", error);
     }
   };
 
-  const updateBasicSetting = (key: keyof Omit<ScheduleSettings, 'workingDays'>, value: string | number) => {
-    setScheduleSettings(prev => ({
+  const updateBasicSetting = (
+    key: keyof Omit<ScheduleSettings, "workingDays">,
+    value: string | number,
+  ) => {
+    setScheduleSettings((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
   };
 
-  const updateWorkingDay = (day: keyof ScheduleSettings['workingDays'], updates: Partial<WorkingDaySettings>) => {
-    setScheduleSettings(prev => ({
+  const updateWorkingDay = (
+    day: keyof ScheduleSettings["workingDays"],
+    updates: Partial<WorkingDaySettings>,
+  ) => {
+    setScheduleSettings((prev) => ({
       ...prev,
       workingDays: {
         ...prev.workingDays,
         [day]: {
           ...prev.workingDays[day],
-          ...updates
-        }
-      }
+          ...updates,
+        },
+      },
     }));
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Configuración de Horarios</CardTitle>
-        <CardDescription>
+    <Card className="w-full max-w-none">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg sm:text-xl">
+          Configuración de Horarios
+        </CardTitle>
+        <CardDescription className="text-sm">
           Define tus horarios de trabajo y disponibilidad
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Configuración básica */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="timezone">Zona Horaria</Label>
+              <Label htmlFor="timezone" className="text-sm font-medium">
+                Zona Horaria
+              </Label>
               <Select
                 value={scheduleSettings.timezone}
-                onValueChange={(value) => updateBasicSetting('timezone', value)}
+                onValueChange={(value) => updateBasicSetting("timezone", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -123,95 +149,179 @@ export function ScheduleForm({
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="appointmentDuration">
-                Duración por Defecto (minutos)
+              <Label
+                htmlFor="appointmentDuration"
+                className="text-sm font-medium"
+              >
+                Duración por Defecto (min)
               </Label>
               <Input
                 id="appointmentDuration"
                 type="number"
                 value={scheduleSettings.appointmentDuration}
                 onChange={(e) =>
-                  updateBasicSetting('appointmentDuration', parseInt(e.target.value))
+                  updateBasicSetting(
+                    "appointmentDuration",
+                    parseInt(e.target.value),
+                  )
                 }
+                className="w-full"
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="bufferTime">
-                Tiempo de Descanso (minutos)
+              <Label htmlFor="bufferTime" className="text-sm font-medium">
+                Tiempo de Descanso (min)
               </Label>
               <Input
                 id="bufferTime"
                 type="number"
                 value={scheduleSettings.bufferTime}
                 onChange={(e) =>
-                  updateBasicSetting('bufferTime', parseInt(e.target.value))
+                  updateBasicSetting("bufferTime", parseInt(e.target.value))
                 }
+                className="w-full"
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="maxAdvanceBooking">
-                Reserva Máxima Anticipada (días)
+              <Label
+                htmlFor="maxAdvanceBooking"
+                className="text-sm font-medium"
+              >
+                Reserva Máxima (días)
               </Label>
               <Input
                 id="maxAdvanceBooking"
                 type="number"
                 value={scheduleSettings.maxAdvanceBooking}
                 onChange={(e) =>
-                  updateBasicSetting('maxAdvanceBooking', parseInt(e.target.value))
+                  updateBasicSetting(
+                    "maxAdvanceBooking",
+                    parseInt(e.target.value),
+                  )
                 }
+                className="w-full"
               />
             </div>
           </div>
 
           <Separator />
 
+          {/* Horarios de trabajo */}
           <div className="space-y-4">
-            <h4 className="font-medium">Horarios de Trabajo</h4>
-            <div className="space-y-4">
+            <h4 className="font-medium text-base">Horarios de Trabajo</h4>
+            <div className="space-y-3">
               {Object.entries(scheduleSettings.workingDays).map(
                 ([day, settings]) => (
-                  <div key={day} className="flex items-center space-x-4">
-                    <div className="w-24">
-                      <Switch
-                        checked={settings.enabled}
-                        onCheckedChange={(checked) =>
-                          updateWorkingDay(day as keyof ScheduleSettings['workingDays'], { enabled: checked })
-                        }
-                      />
+                  <div key={day} className="space-y-3 sm:space-y-0">
+                    {/* Layout móvil: vertical */}
+                    <div className="flex flex-col space-y-3 sm:hidden">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Switch
+                            checked={settings.enabled}
+                            onCheckedChange={(checked) =>
+                              updateWorkingDay(
+                                day as keyof ScheduleSettings["workingDays"],
+                                { enabled: checked },
+                              )
+                            }
+                          />
+                          <span className="text-sm font-medium">
+                            {dayNames[day as keyof typeof dayNames]}
+                          </span>
+                        </div>
+                      </div>
+
+                      {settings.enabled && (
+                        <div className="flex items-center space-x-2 ml-8">
+                          <Input
+                            type="time"
+                            value={settings.start}
+                            onChange={(e) =>
+                              updateWorkingDay(
+                                day as keyof ScheduleSettings["workingDays"],
+                                { start: e.target.value },
+                              )
+                            }
+                            className="flex-1"
+                          />
+                          <span className="text-gray-500 text-sm">a</span>
+                          <Input
+                            type="time"
+                            value={settings.end}
+                            onChange={(e) =>
+                              updateWorkingDay(
+                                day as keyof ScheduleSettings["workingDays"],
+                                { end: e.target.value },
+                              )
+                            }
+                            className="flex-1"
+                          />
+                        </div>
+                      )}
                     </div>
-                    <div className="w-20 text-sm font-medium">
-                      {dayNames[day as keyof typeof dayNames]}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        type="time"
-                        value={settings.start}
-                        onChange={(e) =>
-                          updateWorkingDay(day as keyof ScheduleSettings['workingDays'], { start: e.target.value })
-                        }
-                        disabled={!settings.enabled}
-                        className="w-32"
-                      />
-                      <span className="text-gray-500">a</span>
-                      <Input
-                        type="time"
-                        value={settings.end}
-                        onChange={(e) =>
-                          updateWorkingDay(day as keyof ScheduleSettings['workingDays'], { end: e.target.value })
-                        }
-                        disabled={!settings.enabled}
-                        className="w-32"
-                      />
+
+                    {/* Layout desktop: horizontal */}
+                    <div className="hidden sm:flex sm:items-center sm:space-x-4">
+                      <div className="w-16 flex-shrink-0">
+                        <Switch
+                          checked={settings.enabled}
+                          onCheckedChange={(checked) =>
+                            updateWorkingDay(
+                              day as keyof ScheduleSettings["workingDays"],
+                              { enabled: checked },
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="w-20 text-sm font-medium flex-shrink-0">
+                        {dayNames[day as keyof typeof dayNames]}
+                      </div>
+                      <div className="flex items-center space-x-2 flex-1">
+                        <Input
+                          type="time"
+                          value={settings.start}
+                          onChange={(e) =>
+                            updateWorkingDay(
+                              day as keyof ScheduleSettings["workingDays"],
+                              { start: e.target.value },
+                            )
+                          }
+                          disabled={!settings.enabled}
+                          className="w-32"
+                        />
+                        <span className="text-gray-500">a</span>
+                        <Input
+                          type="time"
+                          value={settings.end}
+                          onChange={(e) =>
+                            updateWorkingDay(
+                              day as keyof ScheduleSettings["workingDays"],
+                              { end: e.target.value },
+                            )
+                          }
+                          disabled={!settings.enabled}
+                          className="w-32"
+                        />
+                      </div>
                     </div>
                   </div>
-                )
+                ),
               )}
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSaveSchedule} disabled={isLoading}>
+          {/* Botón de guardar */}
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={handleSaveSchedule}
+              disabled={isLoading}
+              className="w-full sm:w-auto"
+            >
               {isLoading ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>

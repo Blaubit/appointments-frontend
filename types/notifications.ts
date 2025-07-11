@@ -4,12 +4,12 @@ export interface NotificationSettings {
   emailNotifications: boolean;
   smsNotifications: boolean;
   pushNotifications: boolean;
-  
+
   // Tipos de Notificación
   appointmentReminders: boolean;
   appointmentConfirmations: boolean;
   cancellationAlerts: boolean;
-  
+
   // Reportes
   dailyReports: boolean;
   weeklyReports: boolean;
