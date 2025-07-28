@@ -195,7 +195,7 @@ export function DataView({
 
         return (
           <Avatar className="h-8 w-8">
-            <AvatarImage src={image || "/placeholder.svg"} alt={name} />
+            <AvatarImage src={image || "/Avatar1.png"} alt={name} />
             <AvatarFallback className="text-xs">{fallback}</AvatarFallback>
           </Avatar>
         );

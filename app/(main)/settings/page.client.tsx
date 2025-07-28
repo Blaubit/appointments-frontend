@@ -10,18 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { ProfileForm } from "@/components/profile-form";
 import { BusinessInfoForm } from "@/components/bussines-form";
 import {
@@ -42,19 +31,15 @@ import {
   Clock,
   Shield,
   Palette,
-  Download,
-  Eye,
-  EyeOff,
   Trash2,
-  Moon,
-  Sun,
-  Monitor,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import NotificationForm from "@/components/notification-form";
 import type { NotificationSettings } from "@/types";
 import { ScheduleForm } from "@/components/schedule-form";
 import { SecurityForm } from "@/components/security-form";
+import { AppearenceForm } from "@/components/appearence-form";
+
 const notificationSettings: NotificationSettings = {
   emailNotifications: false,
   smsNotifications: false,
@@ -66,15 +51,87 @@ const notificationSettings: NotificationSettings = {
   weeklyReports: false,
   marketingEmails: false,
 };
-import { AppearenceForm } from "@/components/appearence-form";
 
-export default function SettingsPage() {
+interface SettingsPageClientProps {
+  profileData: {
+    fullName: string;
+    email: string;
+    role: {
+      id: string;
+      name: string;
+      description: string;
+    };
+    phone: string;
+    specialization: string;
+    license: string;
+    bio: string;
+    avatar: string;
+  };
+  company: {
+    id: string;
+    name: string;
+    companyType: string;
+    address: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    description: string;
+    createdAt: Date;
+  };
+  scheduleSettings: {
+    timezone: string;
+    workingDays: {
+      monday: { enabled: boolean; start: string; end: string };
+      tuesday: { enabled: boolean; start: string; end: string };
+      wednesday: { enabled: boolean; start: string; end: string };
+      thursday: { enabled: boolean; start: string; end: string };
+      friday: { enabled: boolean; start: string; end: string };
+      saturday: { enabled: boolean; start: string; end: string };
+      sunday: { enabled: boolean; start: string; end: string };
+    };
+    appointmentDuration: number;
+    bufferTime: number;
+    maxAdvanceBooking: number;
+  };
+  securityData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    twoFactorEnabled: boolean;
+    loginAlerts: boolean;
+    sessionTimeout: number;
+  };
+  appearanceSettings: {
+    theme: string;
+    language: string;
+    dateFormat: string;
+    timeFormat: string;
+    currency: string;
+  };
+}
+
+export function SettingsPageClient({
+  profileData: initialProfileData,
+  company,
+  scheduleSettings: initialScheduleSettings,
+  securityData: initialSecurityData,
+  appearanceSettings: initialAppearanceSettings,
+}: SettingsPageClientProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "profile");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  // State management
+  const [profileData, setProfileData] = useState(initialProfileData);
+  const [scheduleSettings, setScheduleSettings] = useState(
+    initialScheduleSettings,
+  );
+  const [securityData, setSecurityData] = useState(initialSecurityData);
+  const [appearanceSettings, setAppearanceSettings] = useState(
+    initialAppearanceSettings,
+  );
 
   // Update tab when URL changes
   useEffect(() => {
@@ -83,84 +140,7 @@ export default function SettingsPage() {
     }
   }, [tabFromUrl]);
 
-  const role = {
-    id: "1",
-    name: "Médico General",
-    description: "Especialista en atención primaria y medicina general.",
-  };
-  const company = {
-    id: "1",
-    name: "Consultorio Dr. Silvas",
-    companyType: "consultorio_medico",
-    address: "Av. Principal 123, Centro",
-    city: "Ciudad",
-    state: "Estado",
-    postalCode: "12345",
-    country: "México",
-    description:
-      "Consultorio médico especializado en atención primaria y medicina general.",
-    createdAt: new Date(),
-  };
-  // Profile settings
-  const [profileData, setProfileData] = useState({
-    fullName: "Roberto Silva",
-    email: "roberto.silva@email.com",
-    role: role,
-    phone: "+1 (555) 123-4567",
-    specialization: "Médico General",
-    license: "MD-12345",
-    bio: "Médico general con más de 10 años de experiencia en atención primaria.",
-    avatar: "/Avatar1.png",
-  });
-
-  const defaultNotificationSettings: NotificationSettings = {
-    emailNotifications: false,
-    smsNotifications: false,
-    pushNotifications: false,
-    appointmentReminders: false,
-    appointmentConfirmations: false,
-    cancellationAlerts: false,
-    dailyReports: false,
-    weeklyReports: false,
-    marketingEmails: false,
-  };
-
-  // Schedule settings
-  const [scheduleSettings, setScheduleSettings] = useState({
-    timezone: "America/Mexico_City",
-    workingDays: {
-      monday: { enabled: true, start: "08:00", end: "18:00" },
-      tuesday: { enabled: true, start: "08:00", end: "18:00" },
-      wednesday: { enabled: true, start: "08:00", end: "18:00" },
-      thursday: { enabled: true, start: "08:00", end: "18:00" },
-      friday: { enabled: true, start: "08:00", end: "18:00" },
-      saturday: { enabled: false, start: "09:00", end: "14:00" },
-      sunday: { enabled: false, start: "09:00", end: "14:00" },
-    },
-    appointmentDuration: 30,
-    bufferTime: 15,
-    maxAdvanceBooking: 30,
-  });
-
-  // Security settings
-  const [securityData, setSecurityData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-    twoFactorEnabled: false,
-    loginAlerts: true,
-    sessionTimeout: 60,
-  });
-
-  // Appearance settings
-  const [appearanceSettings, setAppearanceSettings] = useState({
-    theme: "system",
-    language: "es",
-    dateFormat: "DD/MM/YYYY",
-    timeFormat: "24h",
-    currency: "MXN",
-  });
-
+  // Handler functions
   const handleSaveProfile = async () => {
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -209,38 +189,6 @@ export default function SettingsPage() {
 
   const handleExportData = async () => {
     console.log("Exporting data...");
-  };
-
-  const timezones = [
-    { value: "America/Mexico_City", label: "Ciudad de México (GMT-6)" },
-    { value: "America/Cancun", label: "Cancún (GMT-5)" },
-    { value: "America/Tijuana", label: "Tijuana (GMT-8)" },
-    { value: "America/New_York", label: "Nueva York (GMT-5)" },
-    { value: "America/Los_Angeles", label: "Los Ángeles (GMT-8)" },
-  ];
-
-  const languages = [
-    { value: "es", label: "Español" },
-    { value: "en", label: "English" },
-    { value: "fr", label: "Français" },
-    { value: "pt", label: "Português" },
-  ];
-
-  const currencies = [
-    { value: "MXN", label: "Peso Mexicano (MXN)" },
-    { value: "USD", label: "Dólar Americano (USD)" },
-    { value: "EUR", label: "Euro (EUR)" },
-    { value: "CAD", label: "Dólar Canadiense (CAD)" },
-  ];
-
-  const dayNames = {
-    monday: "Lunes",
-    tuesday: "Martes",
-    wednesday: "Miércoles",
-    thursday: "Jueves",
-    friday: "Viernes",
-    saturday: "Sábado",
-    sunday: "Domingo",
   };
 
   return (

@@ -220,7 +220,7 @@ export default function DashboardClient({
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                           <AvatarImage
-                            src={appointment.avatar || "/placeholder.svg"}
+                            src={appointment.avatar || "/Avatar1.png"}
                           />
                           <AvatarFallback className="text-xs sm:text-sm">
                             {appointment.client.Name.split(" ")

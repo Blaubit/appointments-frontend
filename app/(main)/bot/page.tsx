@@ -360,7 +360,7 @@ export default async function WhatsAppBotPage({ searchParams }: Props) {
     name: "Dr. Roberto Silva",
     email: "roberto.silva@email.com",
     role: "Médico General",
-    avatar: "/placeholder.svg?height=32&width=32",
+    avatar: "/Avatar1.png?height=32&width=32",
     initials: "DR",
     permissions: ["read", "write", "admin"],
     lastLogin: "2024-01-15T08:00:00Z",

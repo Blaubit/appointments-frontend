@@ -1,32 +1,5 @@
 import type React from "react";
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-}
-export interface Company {
-  id: string;
-  name: string;
-  companyType: string;
-  address: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  description?: string;
-  createdAt: Date;
-}
 
-export interface User {
-  id: string;
-  avatar?: string;
-  email: string;
-  fullName: string;
-  bio?: string;
-  createdAt: Date;
-  company: Company;
-  role: Role;
-}
 
 export interface Notification {
   id: string;
@@ -39,12 +12,14 @@ export interface Notification {
 }
 
 export interface Pagination {
-  page: number;
+  currentPage: number;
   totalPages: number;
   totalItems: number;
   itemsPerPage: number;
-  hasNext: boolean;
-  hasPrev: boolean;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage?: number;
+  previousPage?: number;
 }
 
 type FieldType =

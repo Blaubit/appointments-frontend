@@ -183,7 +183,7 @@ export default function NewAppointmentPage() {
           name: "Dr. Roberto Silva",
           email: "roberto.silva@email.com",
           role: "Médico General",
-          avatar: "/placeholder.svg?height=32&width=32",
+          avatar: "/Avatar1.png?height=32&width=32",
           initials: "DR",
         }}
         notifications={{
@@ -237,7 +237,7 @@ export default function NewAppointmentPage() {
                         >
                           <Avatar>
                             <AvatarImage
-                              src={client.avatar || "/placeholder.svg"}
+                              src={client.avatar || "/Avatar1.png"}
                             />
                             <AvatarFallback>
                               {client.name
@@ -274,7 +274,7 @@ export default function NewAppointmentPage() {
                 <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <Avatar>
                     <AvatarImage
-                      src={selectedClient.avatar || "/placeholder.svg"}
+                      src={selectedClient.avatar || "/Avatar1.png"}
                     />
                     <AvatarFallback>
                       {selectedClient.name

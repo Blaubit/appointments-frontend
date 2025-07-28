@@ -143,7 +143,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           {/* Avatar Section */}
           <div className="flex items-center space-x-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={profileData.avatar || "/placeholder.svg"} />
+              <AvatarImage src={profileData.avatar || "/Avatar1.png"} />
               <AvatarFallback className="text-lg">
                 {profileData.fullName
                   ? profileData.fullName
