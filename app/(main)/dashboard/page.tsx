@@ -1,112 +1,67 @@
 import { ReadonlyURLSearchParams } from "next/navigation";
 import DashboardClient from "./page.client";
+import { upcomingAppointments } from "@/actions/appointments/upcomingAppointments";
+import { getUser } from "@/actions/auth/getUser";
+import type { Appointment } from "@/types";
 
-// Mock functions - estas deberían ser reemplazadas por tus acciones reales
-async function getUpcomingAppointments() {
-  // Simular llamada a API/base de datos
-  return [
-    {
-      id: 1,
-      client: {
-        Name: "Maria Gonzales",
-        phone: "+50212345678",
-        mail: "mail@mail.com",
-      },
-      service: "Consulta General",
-      time: "09:00",
-      date: "Hoy",
-      status: "confirmed" as const,
-      avatar: "/Avatar1.png?height=40&width=40",
-    },
-    {
-      id: 2,
-      client: {
-        Name: "Carlos Rodríguez",
-        phone: "+50212345678",
-        mail: "mail@mail.com",
-      },
-      service: "Limpieza Dental",
-      time: "10:30",
-      date: "Hoy",
-      status: "pending" as const,
-      avatar: "/Avatar1.png?height=40&width=40",
-    },
-    {
-      id: 3,
-      client: {
-        Name: "Ana Peraz",
-        phone: "+50212345678",
-        mail: "mail@mail.com",
-      },
-      service: "Corte y Peinado",
-      time: "14:00",
-      date: "Mañana",
-      status: "confirmed" as const,
-      avatar: "/Avatar1.png?height=40&width=40",
-    },
-    {
-      id: 4,
-      client: {
-        Name: "Luis Martinez",
-        phone: "+50212345678",
-        mail: "mail@mail.com",
-      },
-      service: "Consulta de Control",
-      time: "16:00",
-      date: "Mañana",
-      status: "confirmed" as const,
-      avatar: "/Avatar1.png?height=40&width=40",
-    },
-  ];
-}
-
-async function getDashboardStats() {
-  // Simular llamada a API/base de datos para obtener estadísticas
+// Función para obtener estadísticas del dashboard basadas en las citas reales
+async function getDashboardStats(appointmentStats?: any) {
   return [
     {
       title: "Citas Hoy",
-      value: "8",
+      value: appointmentStats?.total?.toString() || "0",
       icon: "Calendar",
       color: "text-blue-600",
-      ref: "appointments",
+      ref: "/appointments",
     },
     {
-      title: "Clientes Atendidos",
-      value: "156",
+      title: "Confirmadas",
+      value: appointmentStats?.confirmed?.toString() || "0",
       icon: "Users",
       color: "text-green-600",
-      ref: "clients",
+      ref: "/appointments?status=confirmed",
     },
     {
-      title: "Ingresos del Mes",
-      value: "$12,450",
+      title: "Pendientes",
+      value: appointmentStats?.pending?.toString() || "0",
       icon: "TrendingUp",
-      color: "text-purple-600",
-      ref: "reports",
+      color: "text-yellow-600",
+      ref: "/appointments?status=pending",
     },
     {
-      title: "Tiempo Promedio",
-      value: "45min",
+      title: "Canceladas",
+      value: appointmentStats?.cancelled?.toString() || "0",
       icon: "Clock",
-      color: "text-orange-600",
-      ref: "#",
+      color: "text-red-600",
+      ref: "/appointments?status=cancelled",
     },
   ];
 }
 
 async function getUserInfo() {
-  // Simular obtener información del usuario autenticado
-  return {
-    name: "Dr. Roberto Silva",
-    email: "roberto.silva@email.com",
-    role: "Médico General",
-    avatar: "/Avatar1.png?height=32&width=32",
-    initials: "DR",
-  };
+  try {
+    const user = await getUser();
+    return {
+      name: user?.fullName || "Usuario",
+      email: user?.email || "email@ejemplo.com",
+      role: "Profesional",
+      avatar: user?.avatar || "/Avatar1.png",
+      initials: user?.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "US",
+    };
+  } catch (error) {
+    console.error("Error getting user info:", error);
+    return {
+      name: "Usuario",
+      email: "email@ejemplo.com",
+      role: "Profesional",
+      avatar: "/Avatar1.png",
+      initials: "US",
+    };
+  }
 }
 
 async function getClinicInfo() {
-  // Simular obtener información de la clínica
+  // Esta información probablemente debería venir de la API también
   return {
     address: "Av. Principal 123, Centro",
     phone: "+1 (555) 123-4567",
@@ -120,16 +75,55 @@ type Props = {
 
 export default async function DashboardPage({ searchParams }: Props) {
   try {
-    // Ejecutar todas las consultas en paralelo para mejor rendimiento
-    const [appointments, stats, user, clinicInfo] = await Promise.all([
-      getUpcomingAppointments(),
-      getDashboardStats(),
+    // Convertir ReadonlyURLSearchParams a URLSearchParams
+    const params = new URLSearchParams();
+    if (searchParams) {
+      
+    }
+
+    console.log("Dashboard - Getting upcoming appointments...");
+
+    // Obtener las citas próximas usando la función corregida
+    const appointmentsResponse = await upcomingAppointments({
+      searchParams: params
+    });
+
+    console.log("Dashboard - Appointments response:", appointmentsResponse);
+
+    // Verificar si la respuesta fue exitosa
+    if (appointmentsResponse.status !== 200 || !("data" in appointmentsResponse)) {
+      console.error("Error obteniendo citas:", appointmentsResponse);
+      
+      // En lugar de lanzar error, usar datos de fallback
+      const [stats, user, clinicInfo] = await Promise.all([
+        getDashboardStats(),
+        getUserInfo(),
+        getClinicInfo(),
+      ]);
+
+      const fallbackData = {
+        upcomingAppointments: [],
+        appointmentStats: { total: 0, confirmed: 0, pending: 0, cancelled: 0 },
+        stats,
+        user,
+        clinicInfo,
+        userType: "professional" as const,
+        notifications: { count: 0 },
+      };
+
+      return <DashboardClient {...fallbackData} />;
+    }
+
+    // Ejecutar el resto de consultas en paralelo
+    const [stats, user, clinicInfo] = await Promise.all([
+      getDashboardStats(appointmentsResponse.stats),
       getUserInfo(),
       getClinicInfo(),
     ]);
 
     const dashboardData = {
-      upcomingAppointments: appointments,
+      upcomingAppointments: appointmentsResponse.data,
+      appointmentStats: appointmentsResponse.stats || { total: 0, confirmed: 0, pending: 0, cancelled: 0 },
       stats,
       user,
       clinicInfo,
@@ -139,9 +133,32 @@ export default async function DashboardPage({ searchParams }: Props) {
       },
     };
 
+    console.log("Dashboard - Final data:", {
+      appointmentsCount: dashboardData.upcomingAppointments.length,
+      stats: dashboardData.appointmentStats
+    });
+
     return <DashboardClient {...dashboardData} />;
   } catch (error) {
     console.error("Error loading dashboard data:", error);
-    throw new Error("Failed to load dashboard data");
+    
+    // En caso de error, renderizar con datos de fallback
+    const [stats, user, clinicInfo] = await Promise.all([
+      getDashboardStats(),
+      getUserInfo(),
+      getClinicInfo(),
+    ]);
+
+    const fallbackData = {
+      upcomingAppointments: [],
+      appointmentStats: { total: 0, confirmed: 0, pending: 0, cancelled: 0 },
+      stats,
+      user,
+      clinicInfo,
+      userType: "professional" as const,
+      notifications: { count: 0 },
+    };
+
+    return <DashboardClient {...fallbackData} />;
   }
 }

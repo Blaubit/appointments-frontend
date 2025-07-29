@@ -27,24 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/header";
-
-type AppointmentStatus = "confirmed" | "pending" | "cancelled";
-
-type Client = {
-  Name: string;
-  phone: string;
-  mail: string;
-};
-
-type Appointment = {
-  id: number;
-  client: Client;
-  service: string;
-  time: string;
-  date: string;
-  status: AppointmentStatus;
-  avatar: string;
-};
+import type { Appointment, AppointmentStats } from "@/types";
 
 type Stat = {
   title: string;
@@ -70,6 +53,7 @@ type ClinicInfo = {
 
 type Props = {
   upcomingAppointments: Appointment[];
+  appointmentStats: AppointmentStats;
   stats: Stat[];
   user: User;
   clinicInfo: ClinicInfo;
@@ -81,10 +65,10 @@ type Props = {
 
 export default function DashboardClient({
   upcomingAppointments,
+  appointmentStats,
   stats,
   user,
   clinicInfo,
-  userType,
   notifications,
 }: Props) {
   const getIconComponent = (iconName: string) => {
@@ -97,7 +81,7 @@ export default function DashboardClient({
     return iconMap[iconName as keyof typeof iconMap] || Clock;
   };
 
-  const getStatusColor = (status: AppointmentStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
@@ -110,7 +94,7 @@ export default function DashboardClient({
     }
   };
 
-  const getStatusIcon = (status: AppointmentStatus) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "confirmed":
         return <CheckCircle className="h-3 w-3" />;
@@ -123,7 +107,7 @@ export default function DashboardClient({
     }
   };
 
-  const getStatusText = (status: AppointmentStatus) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case "confirmed":
         return "Confirmada";
@@ -136,13 +120,51 @@ export default function DashboardClient({
     }
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return "";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Hoy";
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return "Mañana";
+    } else {
+      // Formato dd/mm/aaaa
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+  };
+
+  const formatTime = (timeString: string) => {
+    // timeString viene como "14:00:00" o "14:00"
+    if (!timeString) return "00:00";
+    
+    // Tomar solo las primeras dos partes (horas y minutos)
+    const timeParts = timeString.split(':');
+    return `${timeParts[0]}:${timeParts[1]}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <Header
         title="Dashboard"
         subtitle="Panel de Control"
-        user={user}
         notifications={notifications}
       />
 
@@ -154,8 +176,8 @@ export default function DashboardClient({
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Tienes{" "}
-            {upcomingAppointments.filter((apt) => apt.date === "Hoy").length}{" "}
-            citas programadas para hoy. Aquí tienes un resumen de tu jornada.
+            {appointmentStats.total}{" "}
+            {appointmentStats.total === 1 ? 'cita programada' : 'citas programadas'} para hoy. Aquí tienes un resumen de tu jornada.
           </p>
         </div>
 
@@ -220,19 +242,18 @@ export default function DashboardClient({
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                           <AvatarImage
-                            src={appointment.avatar || "/Avatar1.png"}
+                            src={appointment.client.avatar || "/Avatar1.png"}
+                            alt={appointment.client.fullName}
                           />
                           <AvatarFallback className="text-xs sm:text-sm">
-                            {appointment.client.Name.split(" ")
-                              .map((n) => n[0])
-                              .join("")}
+                            {getInitials(appointment.client.fullName)}
                           </AvatarFallback>
                         </Avatar>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-1">
                             <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate pr-2">
-                              {appointment.client.Name}
+                              {appointment.client.fullName}
                             </p>
                             <Badge
                               className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
@@ -246,16 +267,16 @@ export default function DashboardClient({
                             </Badge>
                           </div>
                           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {appointment.service}
+                            {appointment.service.name}
                           </p>
                           <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
                             <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                               <Clock className="h-3 w-3 mr-1" />
-                              {appointment.time}
+                              {formatTime(appointment.startTime)}
                             </span>
                             <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                               <Calendar className="h-3 w-3 mr-1" />
-                              {appointment.date}
+                              {formatDate(appointment.appointmentDate.toLocaleString())}
                             </span>
                           </div>
                         </div>
@@ -273,7 +294,7 @@ export default function DashboardClient({
                             <span className="ml-1 sm:hidden">Llamar</span>
                           </Button>
                         </Link>
-                        <Link href={`mailto:${appointment.client.mail}`}>
+                        <Link href={`mailto:${appointment.client.email}`}>
                           <Button
                             variant="outline"
                             size="sm"
