@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Calendar,
   Search,
@@ -27,9 +28,15 @@ import {
   MoreHorizontal,
   Grid3X3,
   List,
+  Clock,
+  MapPin,
+  User,
+  FileText,
+  Star,
 } from "lucide-react"
 import { Header } from "@/components/header"
 import type { Appointment, AppointmentStats, Pagination } from "@/types"
+import { redirect } from "next/navigation"
 
 type Props = {
   appointments: Appointment[]
@@ -43,12 +50,14 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
   const [statusFilter, setStatusFilter] = useState("all")
   const [dateFilter, setDateFilter] = useState("all")
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards")
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
 
   // Client-side filtering for immediate UI feedback
   const clientFilteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
-      appointment.client.fullName ||
-      appointment.service
+      appointment.client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.service.name.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
   })
 
@@ -66,7 +75,7 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
 
     router.push(`${url.pathname}?${params.toString()}`)
   }
-
+  
   // Handle status filter with URL update
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value)
@@ -124,26 +133,23 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
 
   const handleCallClient = (appointment: Appointment) => {
     console.log("Call client:", appointment.client.phone)
-    // TODO: Integrate with phone system or open tel: link
-    // window.open(`tel:${appointment.client.phone}`)
+    window.open(`tel:${appointment.client.phone}`)
   }
 
   const handleEmailClient = (appointment: Appointment) => {
     console.log("Email client:", appointment.client.email)
-    // TODO: Open email client or send email via API
-    // window.open(`mailto:${appointment.client.email}`)
+    window.open(`mailto:${appointment.client.email}`)
   }
 
   const handleViewAppointment = (appointment: Appointment) => {
-    console.log("View appointment:", appointment)
-    // TODO: Navigate to appointment details
-    // router.push(`/appointments/${appointment.id}`)
+    setSelectedAppointment(appointment)
+    setShowDetailsDialog(true)
   }
 
   const handleCreateAppointment = () => {
     console.log("Create new appointment")
-    // TODO: Navigate to create appointment page
-    // router.push("/appointments/new")
+    redirect("/appointments/new")
+    
   }
 
   const handleExportAppointments = () => {
@@ -156,18 +162,33 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
     const statusConfig = {
       confirmed: {
         color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-        icon: <CheckCircle className="h-4 w-4" />,
+        icon: <CheckCircle className="h-3 w-3" />,
         label: "Confirmada",
       },
       pending: {
         color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-        icon: <AlertCircle className="h-4 w-4" />,
+        icon: <AlertCircle className="h-3 w-3" />,
         label: "Pendiente",
       },
       cancelled: {
         color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-        icon: <XCircle className="h-4 w-4" />,
+        icon: <XCircle className="h-3 w-3" />,
         label: "Cancelada",
+      },
+      completed: {
+        color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+        icon: <CheckCircle className="h-3 w-3" />,
+        label: "Completada",
+      },
+      no_show: {
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+        icon: <AlertCircle className="h-3 w-3" />,
+        label: "No Asistió",
+      },
+      scheduled: {
+        color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+        icon: <Calendar className="h-3 w-3" />,
+        label: "Programada",
       },
     }
 
@@ -176,8 +197,8 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
       return (
         <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
           <div className="flex items-center space-x-1">
-            <AlertCircle className="h-4 w-4" />
-            <span>Desconocido</span>
+            <AlertCircle className="h-3 w-3" />
+            <span className="text-xs">Desconocido</span>
           </div>
         </Badge>
       )
@@ -186,14 +207,39 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
       <Badge className={config.color}>
         <div className="flex items-center space-x-1">
           {config.icon}
-          <span>{config.label}</span>
+          <span className="text-xs">{config.label}</span>
         </div>
       </Badge>
     )
   }
 
+  const getPaymentStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: {
+        color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+        label: "Pendiente",
+      },
+      paid: {
+        color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+        label: "Pagado",
+      },
+      refunded: {
+        color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+        label: "Reembolsado",
+      },
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
+
+    return (
+      <Badge variant="outline" className={config.color}>
+        <span className="text-xs">{config.label}</span>
+      </Badge>
+    )
+  }
+
   const getInitials = (name: string) => {
-    if (!name) return "";
+    if (!name) return ""
 
     return name
       .split(" ")
@@ -203,12 +249,41 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
       .slice(0, 2)
   }
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: "GTQ",
+    }).format(amount)
+  }
+
+  const formatDateTime = (date: string, time: string) => {
+    const dateObj = new Date(`${date}T${time}`)
+    return dateObj.toLocaleString("es-ES", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   const statsCards = [
     { title: "Total Citas", value: stats.total.toString(), color: "text-blue-600" },
     { title: "Confirmadas", value: stats.confirmed.toString(), color: "text-green-600" },
     { title: "Pendientes", value: stats.pending.toString(), color: "text-yellow-600" },
     { title: "Canceladas", value: stats.cancelled.toString(), color: "text-red-600" },
   ]
+
+  // Format time
+  const formatTime = (timeString: string) => {
+    // timeString viene como "14:00:00" o "14:00"
+    if (!timeString) return "00:00"
+    
+    // Tomar solo las primeras dos partes (horas y minutos)
+    const timeParts = timeString.split(':')
+    return `${timeParts[0]}:${timeParts[1]}`
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -293,6 +368,9 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
                     <SelectItem value="confirmed">Confirmadas</SelectItem>
                     <SelectItem value="pending">Pendientes</SelectItem>
                     <SelectItem value="cancelled">Canceladas</SelectItem>
+                    <SelectItem value="completed">Completadas</SelectItem>
+                    <SelectItem value="no_show">No Asistió</SelectItem>
+                    <SelectItem value="scheduled">Programadas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -423,7 +501,7 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Hora:</span>
-                      <span className="text-sm font-medium">{appointment.startTime}</span>
+                      <span className="text-sm font-medium">{formatTime(appointment.startTime)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Duración:</span>
@@ -482,7 +560,7 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
                         </TableCell>
                         <TableCell>{appointment.service.name}</TableCell>
                         <TableCell>{new Date(appointment.appointmentDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{appointment.startTime}</TableCell>
+                        <TableCell>{formatTime(appointment.startTime)}</TableCell>
                         <TableCell>{appointment.service.durationMinutes} min</TableCell>
                         <TableCell>{getStatusBadge(appointment.status)}</TableCell>
                         <TableCell className="text-right">
@@ -573,7 +651,255 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
           </div>
         )}
       </div>
+
+      {/* Appointment Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Detalles de la Cita
+            </DialogTitle>
+            <DialogDescription>Información completa de la cita programada</DialogDescription>
+          </DialogHeader>
+
+          {selectedAppointment && (
+            <div className="space-y-6">
+              {/* Client Information */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <User className="h-4 w-4" />
+                    Información del Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage
+                        src={selectedAppointment.client.avatar || "/Avatar1.png"}
+                        alt={selectedAppointment.client.fullName}
+                      />
+                      <AvatarFallback className="text-lg">{getInitials(selectedAppointment.client.fullName)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre</Label>
+                          <p className="text-sm font-medium">{selectedAppointment.client.fullName}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</Label>
+                          <p className="text-sm">{selectedAppointment.client.email}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Teléfono</Label>
+                          <p className="text-sm">{selectedAppointment.client.phone}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Estado</Label>
+                          <p className="text-sm">Activo</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button size="sm" variant="outline" onClick={() => handleCallClient(selectedAppointment)}>
+                          <Phone className="h-3 w-3 mr-1" />
+                          Llamar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEmailClient(selectedAppointment)}>
+                          <Mail className="h-3 w-3 mr-1" />
+                          Email
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Appointment Information */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Calendar className="h-4 w-4" />
+                    Información de la Cita
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Servicio</Label>
+                        <p className="text-sm font-medium">{selectedAppointment.service.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Servicio profesional de calidad</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha y Hora</Label>
+                        <p className="text-sm font-medium">
+                          {formatDateTime(selectedAppointment.appointmentDate.toLocaleString(), selectedAppointment.startTime)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Duración</Label>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <p className="text-sm">{selectedAppointment.service.durationMinutes} minutos</p>
+                        </div>
+                      </div>
+                      {selectedAppointment.company.address && (
+                        <div>
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Ubicación</Label>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            <p className="text-sm">{selectedAppointment.company.address}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Estado</Label>
+                        <div className="mt-1">{getStatusBadge(selectedAppointment.status)}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Precio</Label>
+                        <p className="text-sm font-medium">{formatCurrency(Number(selectedAppointment.service.price) || 0)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Estado de Pago</Label>
+                        <div className="mt-1">
+                          {getPaymentStatusBadge(selectedAppointment.status || "pending")}
+                        </div>
+                      </div>
+                      {selectedAppointment.professional.fullName && (
+                        <div>
+                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Doctor</Label>
+                          <p className="text-sm">{selectedAppointment.professional.fullName}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notes and Additional Information */}
+              {(selectedAppointment.notes) && (
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <FileText className="h-4 w-4" />
+                      Información Adicional
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {selectedAppointment.notes && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Notas</Label>
+                        <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{selectedAppointment.notes}</p>
+                        </div>
+                      </div>
+                    )}
+                    {/*selectedAppointment.rating && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Calificación</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${
+                                i < selectedAppointment.rating!
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-gray-300 dark:text-gray-600"
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
+                            {selectedAppointment.rating}/5
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {selectedAppointment.feedback && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Comentarios</Label>
+                        <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{selectedAppointment.feedback}</p>
+                        </div>
+                      </div>
+                    )*/}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Timestamps */}
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Clock className="h-4 w-4" />
+                    Historial
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Creada</Label>
+                      <p className="text-sm">{new Date(selectedAppointment.createdAt).toLocaleString("es-ES")}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Última Actualización
+                      </Label>
+                      <p className="text-sm">{new Date(selectedAppointment.createdAt).toLocaleString("es-ES")}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Recordatorio Enviado
+                      </Label>
+                      <p className="text-sm">{selectedAppointment? "Sí" : "No"}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button onClick={() => handleEditAppointment(selectedAppointment)} className="flex-1">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Cita
+                </Button>
+                {selectedAppointment.status === "pending" && (
+                  <Button
+                    onClick={() => handleConfirmAppointment(selectedAppointment)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Confirmar
+                  </Button>
+                )}
+                {selectedAppointment.status !== "cancelled" && (
+                  <Button
+                    onClick={() => handleCancelAppointment(selectedAppointment)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                )}
+                <Button
+                  onClick={() => handleDeleteAppointment(selectedAppointment)}
+                  variant="destructive"
+                  className="flex-1"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

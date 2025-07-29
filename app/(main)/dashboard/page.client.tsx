@@ -172,7 +172,7 @@ export default function DashboardClient({
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            ¡Buen día, {user.name.split(" ")[1]}! 👋
+            ¡Buen día, {user.name.split(" ")[0]}! 👋
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Tienes{" "}
