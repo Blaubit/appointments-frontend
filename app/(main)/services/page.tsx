@@ -1,6 +1,6 @@
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import PageClient from "./page.client";
-
+import findAll from "@/actions/services/findAll";
 type Props = {
   searchParams: ReadonlyURLSearchParams;
 };
@@ -125,10 +125,10 @@ export default async function Page({ searchParams }: Props) {
   ];
 
   // Apply filters based on search params
-  const searchTerm = "";
+  
   const categoryFilter = "all";
   const statusFilter = "all";
-
+  const services = await findAll();
   let filteredServices = allServices;
 
   //if (searchTerm) {
@@ -151,11 +151,7 @@ export default async function Page({ searchParams }: Props) {
     );
   }
 
-  const pagination = {
-    totalItems: filteredServices.length,
-    totalPages: Math.ceil(filteredServices.length / 10),
-    page: Number.parseInt("1"),
-  };
+  
 
-  return <PageClient services={filteredServices} pagination={pagination} />;
+  return <PageClient services={services.data} pagination={services.pagination} />;
 }

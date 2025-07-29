@@ -93,7 +93,7 @@ export function Header({
     fullName: "Invitado",
     email: "mail@mail.com",
     role: defaultRole,
-    avatar: "Professional1.png",
+    avatar: "/Professional1.png",
     bio: "Usuario invitado sin acceso completo",
     createdAt: "2023-01-01T00:00:00Z",
     company: defaultCompany,
@@ -253,7 +253,7 @@ export function Header({
                     <>
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={currentUser.avatar || "Professional1.png"}
+                          src={currentUser.avatar || "/Professional1.png"}
                           alt={currentUser.fullName || "Usuario"}
                         />
                         <AvatarFallback>{currentUser.fullName}</AvatarFallback>
@@ -415,7 +415,7 @@ export function Header({
                       <>
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={currentUser.avatar || "Professional1.png"}
+                            src={currentUser.avatar || "/Professional1.png"}
                             alt={currentUser.fullName || "Usuario"}
                           />
                           <AvatarFallback>{currentUser.fullName}</AvatarFallback>
