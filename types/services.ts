@@ -1,5 +1,5 @@
 import type React from "react";
-
+import { Company } from "./company";
 export type ServiceCategory =
   | "consultation"
   | "treatment"
@@ -9,25 +9,13 @@ export type ServiceCategory =
   | "wellness";
 
 export interface Service {
-  id: number;
+  id: string;
+  companyId: string;
   name: string;
-  description: string;
-  category: ServiceCategory;
-  duration: number;
-  price: number;
-  color: string;
-  isActive: boolean;
-  requiresPreparation: boolean;
-  maxAdvanceBooking: number;
-  minAdvanceBooking: number;
-  availableSlots: string[];
+  durationMinutes: number;
+  price: string;
   createdAt: string;
-  updatedAt: string;
-  icon?: string;
-  totalAppointments: number;
-  totalRevenue: number;
-  averageRating: number;
-  lastUsed: string;
+  company:Company;
 }
 
 export interface ServiceCategoryConfig {

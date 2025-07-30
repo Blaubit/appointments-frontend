@@ -1,51 +1,19 @@
 export interface Client {
   id: string;
-  name: string; // computed: firstName + lastName
+  fullName: string;
   email: string;
   phone: string;
-  avatar?: string;
   status: "active" | "inactive" | "blocked";
-  dateOfBirth?: string;
-  gender?: "male" | "female" | "other";
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  emergencyContact?: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  medicalHistory?: string[];
-  allergies?: string[];
-  medications?: string[];
-  insuranceInfo?: {
-    provider: string;
-    policyNumber: string;
-    groupNumber: string;
-  };
-  preferredLanguage: string;
-  communicationPreferences: {
-    email: boolean;
-    sms: boolean;
-    whatsapp: boolean;
-    phone: boolean;
-  };
-  notes?: string;
+  avatar?: string;
   totalAppointments: number;
   totalSpent: number;
   rating: number;
   lastAppointment?: string;
   createdAt: string;
-  updatedAt: string;
   tags?: string[];
-  loyaltyPoints?: number;
-  referralSource?: string;
+  notes?: string;
+  // ... otros campos que ya tengas
 }
-
 export interface ClientStats {
   totalClients: number;
   activeClients: number;
@@ -78,42 +46,15 @@ export interface ClientFilters {
 }
 
 export interface ClientFormData {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phone: string;
-  dateOfBirth?: string;
-  gender?: "male" | "female" | "other";
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  emergencyContact?: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  medicalHistory?: string[];
-  allergies?: string[];
-  medications?: string[];
-  insuranceInfo?: {
-    provider: string;
-    policyNumber: string;
-    groupNumber: string;
-  };
-  preferredLanguage: string;
-  communicationPreferences: {
-    email: boolean;
-    sms: boolean;
-    whatsapp: boolean;
-    phone: boolean;
-  };
-  notes?: string;
-  tags?: string[];
-  referralSource?: string;
+}
+export interface ClientEditFormData {
+  id?:string;
+  fullName: string;
+  email: string;
+  phone: string;
 }
 
 export interface ClientSummary {

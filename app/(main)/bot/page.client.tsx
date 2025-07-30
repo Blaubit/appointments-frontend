@@ -828,7 +828,7 @@ export default function WhatsAppBotClient({
                       <Avatar>
                         <AvatarImage
                           src={
-                            conversation.contact.avatar || "/placeholder.svg"
+                            conversation.contact.avatar || "/Avatar1.png"
                           }
                         />
                         <AvatarFallback>
@@ -1228,7 +1228,7 @@ export default function WhatsAppBotClient({
                               <AvatarImage
                                 src={
                                   conversation.contact.avatar ||
-                                  "/placeholder.svg"
+                                  "/Avatar1.png"
                                 }
                               />
                               <AvatarFallback>
@@ -1497,7 +1497,7 @@ export default function WhatsAppBotClient({
                       <div className="flex justify-center">
                         <div className="w-48 h-48 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                           <img
-                            src={botConfig.qrCode || "/placeholder.svg"}
+                            src={botConfig.qrCode || "/Avatar1.png"}
                             alt="QR Code"
                             className="w-40 h-40"
                             onError={(e) => {

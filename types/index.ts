@@ -8,7 +8,7 @@ export * from "./clients";
 export * from "./whatsapp-bot";
 
 // Re-export commonly used types for convenience
-export type { User, Notification, Pagination } from "./common";
+export type { Notification, Pagination } from "./common";
 export type { Appointment, AppointmentStats } from "./appointments";
 export type { Service, ServiceStats } from "./services";
 export type { Client, ClientStats } from "./clients";
@@ -30,3 +30,5 @@ export type {
   Currency,
   AppearanceSettingsProps,
 } from "./appearence";
+export type { User, Role } from "./user";
+export type { LoginResponse } from "./login";

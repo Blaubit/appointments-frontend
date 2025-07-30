@@ -1,16 +1,23 @@
-import { Client } from "./clients";
+import { Client } from "./clients";// Existing types with additions for backend data
+import { Company } from "./company";
+import { User } from "./user"; // Assuming User is defined in ./user
+import { Service } from "./services";
+
+
 export interface Appointment {
-  id: number;
-  client: Client;
-  service: string;
-  time: string;
-  date: string;
-  dateFormatted: string;
-  status: "confirmed" | "pending" | "cancelled";
-  duration: number;
-  notes: string;
-  avatar: string;
+  id: string;
+  appointmentDate: Date;
+  startTime: string;
+  endTime: string;
+  status: string; // e.g., "confirmed", "pending", "cancelled"
+  notes?: string;
+  createdAt: Date;
+  company:Company;
+  client: Client; // Client is defined in ./clients
+  professional: User; // User is defined in ./user
+  service: Service; // Service is defined in ./services
 }
+
 
 export interface AppointmentStats {
   total: number;
@@ -19,8 +26,11 @@ export interface AppointmentStats {
   cancelled: number;
 }
 
-export interface AppointmentFilters {
-  search: string;
-  status: string;
-  date: string;
+export interface Pagination {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }

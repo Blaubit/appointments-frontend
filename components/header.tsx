@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-
+import { logout } from "@/actions/auth/logout";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,14 +20,18 @@ import {
   Settings,
   LogOut,
   ArrowLeft,
-  User,
+  User as UserIcon,
   HelpCircle,
   CreditCard,
   Shield,
   ChevronDown,
   Menu,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useUser } from "@/hooks/useUser"; // Ajusta la ruta según tu estructura
+import { Role, User } from "@/types";
+import { Company } from "@/types/company";
 
 interface HeaderProps {
   title?: string;
@@ -35,13 +39,6 @@ interface HeaderProps {
   showBackButton?: boolean;
   backButtonText?: string;
   backButtonHref?: string;
-  user?: {
-    name: string;
-    email: string;
-    role: string;
-    avatar?: string;
-    initials?: string;
-  };
   notifications?: {
     count: number;
     items?: Array<{
@@ -62,20 +59,48 @@ export function Header({
   showBackButton = false,
   backButtonText = "Dashboard",
   backButtonHref = "/dashboard",
-  user = {
-    name: "Dr. Roberto Silva",
-    email: "roberto.silva@email.com",
-    role: "Médico General",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "DR",
-  },
   notifications = { count: 3 },
   actions,
   className = "",
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  
+  // Usar el hook para obtener el usuario
+  const { user, loading, error } = useUser();
+  // defatult company para usuario por defecto
+  const defaultCompany:Company = {
+    id: "default",
+    name: "CitasFácil",
+    company_type: "default",
+    address: "Calle Falsa 123",
+    city: "Ciudad",
+    state: "Estado",
+    postal_code: "12345",
+    country: "País",
+    description: "Empresa de citas por defecto",
+    createdAt: "2023-01-01T00:00:00Z",
+  }
+  // defaul role para el usuario por defecto
+  const defaultRole:Role = {
+    id: "default",
+    name: "Invitado",
+    description: "Acceso limitado",
+  };
+  // Usuario por defecto si no hay usuario autenticado
+  const defaultUser: User = {
+    id: "default",
+    fullName: "Invitado",
+    email: "mail@mail.com",
+    role: defaultRole,
+    avatar: "/Professional1.png",
+    bio: "Usuario invitado sin acceso completo",
+    createdAt: "2023-01-01T00:00:00Z",
+    company: defaultCompany,
+  };
 
+  const currentUser = user || defaultUser;
+  
   const defaultNotifications = [
     {
       id: "1",
@@ -220,36 +245,43 @@ export function Header({
                 <Button
                   variant="ghost"
                   className="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  disabled={loading}
                 >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={user.avatar || "/placeholder.svg"}
-                      alt={user.name}
-                    />
-                    <AvatarFallback>{user.initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {user.role}
-                    </p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={currentUser.avatar || "/Professional1.png"}
+                          alt={currentUser.fullName || "Usuario"}
+                        />
+                        <AvatarFallback>{currentUser.fullName}</AvatarFallback>
+                      </Avatar>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {currentUser.fullName}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {currentUser.role.name|| "Usuario"}
+                        </p>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                    </>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-sm font-medium">{currentUser.fullName}</p>
+                    <p className="text-xs text-gray-500">{currentUser.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="flex items-center">
-                    <User className="h-4 w-4 mr-2" />
+                    <UserIcon className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </Link>
                 </DropdownMenuItem>
@@ -279,7 +311,9 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild
+                 onClick={logout}
+                >
                   <Link
                     href="/login"
                     className="flex items-center text-red-600 hover:text-red-700"
@@ -375,21 +409,27 @@ export function Header({
                 {/* User Info */}
                 <DropdownMenuLabel>
                   <div className="flex items-center space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={user.avatar || "/placeholder.svg"}
-                        alt={user.name}
-                      />
-                      <AvatarFallback>{user.initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col space-y-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {user.role}
-                      </p>
-                    </div>
+                    {loading ? (
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    ) : (
+                      <>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage
+                            src={currentUser.avatar || "/Professional1.png"}
+                            alt={currentUser.fullName || "Usuario"}
+                          />
+                          <AvatarFallback>{currentUser.fullName}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col space-y-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {currentUser.fullName}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {currentUser.role.name}
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -410,7 +450,7 @@ export function Header({
                 {/* Navigation Items */}
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="flex items-center">
-                    <User className="h-4 w-4 mr-2" />
+                    <UserIcon className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </Link>
                 </DropdownMenuItem>

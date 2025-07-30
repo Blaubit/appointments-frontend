@@ -255,7 +255,7 @@ export default function SettingsPage() {
           name: "Dr. Roberto Silva",
           email: "roberto.silva@email.com",
           role: "Médico General",
-          avatar: "/placeholder.svg?height=32&width=32",
+          avatar: "/Avatar1.png?height=32&width=32",
           initials: "DR",
         }}
         notifications={{

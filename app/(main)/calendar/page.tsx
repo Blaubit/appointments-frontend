@@ -441,7 +441,7 @@ export default function CalendarPage() {
           name: "Dr. Roberto Silva",
           email: "roberto.silva@email.com",
           role: "Médico General",
-          avatar: "/placeholder.svg?height=32&width=32",
+          avatar: "/Avatar1.png?height=32&width=32",
           initials: "DR",
         }}
         notifications={{
@@ -852,7 +852,7 @@ export default function CalendarPage() {
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-12 w-12">
                         <AvatarImage
-                          src={appointment.avatar || "/placeholder.svg"}
+                          src={appointment.avatar || "/Avatar1.png"}
                         />
                         <AvatarFallback>
                           {appointment.clientName
