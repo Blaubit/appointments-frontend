@@ -1,14 +1,20 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,22 +22,37 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Grid3X3, List, MoreHorizontal, Star, Calendar, Phone, Mail, Clock, DollarSign } from "lucide-react"
+} from "@/components/ui/dropdown-menu";
+import {
+  Grid3X3,
+  List,
+  MoreHorizontal,
+  Star,
+  Calendar,
+  Phone,
+  Mail,
+  Clock,
+  DollarSign,
+} from "lucide-react";
+import { DataViewAction, DataViewField } from "@/types";
 
 interface ViewToggleProps {
-  value: "cards" | "table"
-  onValueChange: (value: "cards" | "table") => void
-  className?: string
+  value: "cards" | "table";
+  onValueChange: (value: "cards" | "table") => void;
+  className?: string;
 }
 
-export function ViewToggle({ value, onValueChange, className = "" }: ViewToggleProps) {
+export function ViewToggle({
+  value,
+  onValueChange,
+  className = "",
+}: ViewToggleProps) {
   return (
     <Tabs
       value={value}
       onValueChange={(val) => {
         if (val === "cards" || val === "table") {
-          onValueChange(val)
+          onValueChange(val);
         }
       }}
       className={`w-auto ${className}`}
@@ -47,107 +68,66 @@ export function ViewToggle({ value, onValueChange, className = "" }: ViewToggleP
         </TabsTrigger>
       </TabsList>
     </Tabs>
-  )
-}
-
-
-// Tipos de campos disponibles
-type FieldType =
-  | "text"
-  | "email"
-  | "phone"
-  | "date"
-  | "currency"
-  | "number"
-  | "badge"
-  | "avatar"
-  | "rating"
-  | "tags"
-  | "duration"
-  | "custom"
-
-interface Field {
-  key: string
-  label: string
-  type: FieldType
-  sortable?: boolean
-  primary?: boolean // Campo principal (título en tarjetas)
-  secondary?: boolean // Campo secundario (subtítulo en tarjetas)
-  showInCard?: boolean // Mostrar en vista de tarjetas
-  showInTable?: boolean // Mostrar en vista de tabla
-  render?: (value: any, item: any) => React.ReactNode // Renderizado personalizado
-  badgeConfig?: {
-    colors: Record<string, string>
-    labels?: Record<string, string>
-  }
-  avatarConfig?: {
-    nameKey?: string
-    imageKey?: string
-    fallbackKey?: string
-  }
-  tagsConfig?: {
-    colorMap?: Record<string, string>
-  }
-}
-
-interface Action {
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  onClick: (item: any) => void
-  variant?: "default" | "destructive"
-  show?: (item: any) => boolean
+  );
 }
 
 interface DataViewProps {
-  data: any[]
-  fields: Field[]
-  actions?: Action[]
-  viewMode: "cards" | "table"
+  data: any[];
+  fields: DataViewField[];
+  actions?: DataViewAction[];
+  viewMode: "cards" | "table";
   emptyState?: {
-    icon?: React.ReactNode
-    title: string
-    description: string
-    action?: React.ReactNode
-  }
-  className?: string
+    icon?: React.ReactNode;
+    title: string;
+    description: string;
+    action?: React.ReactNode;
+  };
+  className?: string;
 }
 
-export function DataView({ data, fields, actions = [], viewMode, emptyState, className = "" }: DataViewProps) {
-  const [sortColumn, setSortColumn] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+export function DataView({
+  data,
+  fields,
+  actions = [],
+  viewMode,
+  emptyState,
+  className = "",
+}: DataViewProps) {
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const handleSort = (fieldKey: string) => {
-    const field = fields.find((f) => f.key === fieldKey)
-    if (!field?.sortable) return
+    const field = fields.find((f) => f.key === fieldKey);
+    if (!field?.sortable) return;
 
     if (sortColumn === fieldKey) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      setSortColumn(fieldKey)
-      setSortDirection("asc")
+      setSortColumn(fieldKey);
+      setSortDirection("asc");
     }
-  }
+  };
 
   const sortedData = [...data].sort((a, b) => {
-    if (!sortColumn) return 0
+    if (!sortColumn) return 0;
 
-    const aValue = a[sortColumn]
-    const bValue = b[sortColumn]
+    const aValue = a[sortColumn];
+    const bValue = b[sortColumn];
 
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
-    return 0
-  })
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
 
   // Función para renderizar valores según el tipo
-  const renderFieldValue = (field: Field, value: any, item: any) => {
+  const renderFieldValue = (field: DataViewField, value: any, item: any) => {
     if (field.render) {
-      return field.render(value, item)
+      return field.render(value, item);
     }
 
     switch (field.type) {
       case "text":
-        return <span>{value}</span>
+        return <span>{value}</span>;
 
       case "email":
         return (
@@ -155,7 +135,7 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
             <Mail className="h-3 w-3 text-muted-foreground" />
             <span className="truncate">{value}</span>
           </div>
-        )
+        );
 
       case "phone":
         return (
@@ -163,7 +143,7 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
             <Phone className="h-3 w-3 text-muted-foreground" />
             <span>{value}</span>
           </div>
-        )
+        );
 
       case "date":
         return (
@@ -171,18 +151,20 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
             <Calendar className="h-3 w-3 text-muted-foreground" />
             <span>{value ? new Date(value).toLocaleDateString() : "-"}</span>
           </div>
-        )
+        );
 
       case "currency":
         return (
           <div className="flex items-center gap-1">
             <DollarSign className="h-3 w-3 text-muted-foreground" />
-            <span className="font-medium">${typeof value === "number" ? value.toLocaleString() : value}</span>
+            <span className="font-medium">
+              ${typeof value === "number" ? value.toLocaleString() : value}
+            </span>
           </div>
-        )
+        );
 
       case "number":
-        return <span className="font-medium">{value}</span>
+        return <span className="font-medium">{value}</span>;
 
       case "duration":
         return (
@@ -190,31 +172,33 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
             <Clock className="h-3 w-3 text-muted-foreground" />
             <span>{value} min</span>
           </div>
-        )
+        );
 
       case "badge":
-        const badgeColor = field.badgeConfig?.colors?.[value] || "bg-gray-100 text-gray-800"
-        const badgeLabel = field.badgeConfig?.labels?.[value] || value
-        return <Badge className={badgeColor}>{badgeLabel}</Badge>
+        const badgeColor =
+          field.badgeConfig?.colors?.[value] || "bg-gray-100 text-gray-800";
+        const badgeLabel = field.badgeConfig?.labels?.[value] || value;
+        return <Badge className={badgeColor}>{badgeLabel}</Badge>;
 
       case "avatar":
-        const config = field.avatarConfig || {}
-        const name = item[config.nameKey || "name"] || ""
-        const image = item[config.imageKey || "avatar"] || item[config.imageKey || "image"]
+        const config = field.avatarConfig || {};
+        const name = item[config.nameKey || "name"] || "";
+        const image =
+          item[config.imageKey || "avatar"] || item[config.imageKey || "image"];
         const fallback =
           item[config.fallbackKey || "initials"] ||
           name
             .split(" ")
             .map((n: string) => n[0])
             .join("")
-            .toUpperCase()
+            .toUpperCase();
 
         return (
           <Avatar className="h-8 w-8">
-            <AvatarImage src={image || "/placeholder.svg"} alt={name} />
+            <AvatarImage src={image || "/Avatar1.png"} alt={name} />
             <AvatarFallback className="text-xs">{fallback}</AvatarFallback>
           </Avatar>
-        )
+        );
 
       case "rating":
         return (
@@ -222,46 +206,63 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
             <span className="text-sm font-medium">{value}</span>
           </div>
-        )
+        );
 
       case "tags":
-        if (!Array.isArray(value)) return null
+        if (!Array.isArray(value)) return null;
         return (
           <div className="flex flex-wrap gap-1">
             {value.map((tag: string) => (
-              <Badge key={tag} variant="secondary" className={`text-xs ${field.tagsConfig?.colorMap?.[tag] || ""}`}>
+              <Badge
+                key={tag}
+                variant="secondary"
+                className={`text-xs ${field.tagsConfig?.colorMap?.[tag] || ""}`}
+              >
                 {tag}
               </Badge>
             ))}
           </div>
-        )
+        );
 
       default:
-        return <span>{value}</span>
+        return <span>{value}</span>;
     }
-  }
+  };
 
   if (data.length === 0 && emptyState) {
     return (
-      <div className={`flex flex-col items-center justify-center py-12 ${className}`}>
+      <div
+        className={`flex flex-col items-center justify-center py-12 ${className}`}
+      >
         {emptyState.icon && <div className="mb-4">{emptyState.icon}</div>}
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{emptyState.title}</h3>
-        <p className="text-gray-600 dark:text-gray-400 text-center mb-4 max-w-md">{emptyState.description}</p>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          {emptyState.title}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 text-center mb-4 max-w-md">
+          {emptyState.description}
+        </p>
         {emptyState.action && emptyState.action}
       </div>
-    )
+    );
   }
 
   if (viewMode === "cards") {
     return (
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}>
+      <div
+        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}
+      >
         {sortedData.map((item, index) => {
-          const primaryField = fields.find((f) => f.primary)
-          const secondaryField = fields.find((f) => f.secondary)
-          const cardFields = fields.filter((f) => f.showInCard !== false && !f.primary && !f.secondary)
+          const primaryField = fields.find((f) => f.primary);
+          const secondaryField = fields.find((f) => f.secondary);
+          const cardFields = fields.filter(
+            (f) => f.showInCard !== false && !f.primary && !f.secondary,
+          );
 
           return (
-            <Card key={item.id || index} className="hover:shadow-md transition-shadow">
+            <Card
+              key={item.id || index}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -278,12 +279,20 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
                     <div className="min-w-0 flex-1">
                       {primaryField && (
                         <CardTitle className="text-base truncate">
-                          {renderFieldValue(primaryField, item[primaryField.key], item)}
+                          {renderFieldValue(
+                            primaryField,
+                            item[primaryField.key],
+                            item,
+                          )}
                         </CardTitle>
                       )}
                       {secondaryField && (
                         <CardDescription className="text-sm">
-                          {renderFieldValue(secondaryField, item[secondaryField.key], item)}
+                          {renderFieldValue(
+                            secondaryField,
+                            item[secondaryField.key],
+                            item,
+                          )}
                         </CardDescription>
                       )}
                     </div>
@@ -301,17 +310,21 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {actions.map((action, actionIndex) => {
-                          if (action.show && !action.show(item)) return null
+                          if (action.show && !action.show(item)) return null;
                           return (
                             <DropdownMenuItem
                               key={actionIndex}
                               onClick={() => action.onClick(item)}
-                              className={action.variant === "destructive" ? "text-red-600" : ""}
+                              className={
+                                action.variant === "destructive"
+                                  ? "text-red-600"
+                                  : ""
+                              }
                             >
                               <action.icon className="h-4 w-4 mr-2" />
                               {action.label}
                             </DropdownMenuItem>
-                          )
+                          );
                         })}
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -323,9 +336,16 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
                 {/* Campos de la tarjeta */}
                 <div className="space-y-2 text-sm">
                   {cardFields.map((field) => (
-                    <div key={field.key} className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{field.label}:</span>
-                      <div className="font-medium">{renderFieldValue(field, item[field.key], item)}</div>
+                    <div
+                      key={field.key}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-muted-foreground">
+                        {field.label}:
+                      </span>
+                      <div className="font-medium">
+                        {renderFieldValue(field, item[field.key], item)}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -345,14 +365,14 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
                 )}
               </CardContent>
             </Card>
-          )
+          );
         })}
       </div>
-    )
+    );
   }
 
   // Vista de tabla
-  const tableFields = fields.filter((f) => f.showInTable !== false)
+  const tableFields = fields.filter((f) => f.showInTable !== false);
 
   return (
     <div className={`rounded-md border ${className}`}>
@@ -371,12 +391,18 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
                   <div className="flex items-center gap-2">
                     {field.label}
                     {field.sortable && sortColumn === field.key && (
-                      <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-xs">
+                        {sortDirection === "asc" ? "↑" : "↓"}
+                      </span>
                     )}
                   </div>
                 </th>
               ))}
-              {actions.length > 0 && <th className="h-12 px-4 text-left align-middle font-medium">Acciones</th>}
+              {actions.length > 0 && (
+                <th className="h-12 px-4 text-left align-middle font-medium">
+                  Acciones
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -389,7 +415,13 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
                         {renderFieldValue(field, item[field.key], item)}
                         <div>
                           <div className="font-medium">
-                            {item[fields.find((f) => f.primary && f.key !== field.key)?.key || "name"]}
+                            {
+                              item[
+                                fields.find(
+                                  (f) => f.primary && f.key !== field.key,
+                                )?.key || "name"
+                              ]
+                            }
                           </div>
                           {fields.find((f) => f.secondary) && (
                             <div className="text-sm text-muted-foreground">
@@ -415,17 +447,21 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {actions.map((action, actionIndex) => {
-                          if (action.show && !action.show(item)) return null
+                          if (action.show && !action.show(item)) return null;
                           return (
                             <DropdownMenuItem
                               key={actionIndex}
                               onClick={() => action.onClick(item)}
-                              className={action.variant === "destructive" ? "text-red-600" : ""}
+                              className={
+                                action.variant === "destructive"
+                                  ? "text-red-600"
+                                  : ""
+                              }
                             >
                               <action.icon className="h-4 w-4 mr-2" />
                               {action.label}
                             </DropdownMenuItem>
-                          )
+                          );
                         })}
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -437,12 +473,12 @@ export function DataView({ data, fields, actions = [], viewMode, emptyState, cla
         </table>
       </div>
     </div>
-  )
+  );
 }
 
 // Hook para manejar el estado de la vista
 export function useDataView(defaultView: "cards" | "table" = "cards") {
-  const [viewMode, setViewMode] = useState<"cards" | "table">(defaultView)
+  const [viewMode, setViewMode] = useState<"cards" | "table">(defaultView);
 
   return {
     viewMode,
@@ -450,5 +486,5 @@ export function useDataView(defaultView: "cards" | "table" = "cards") {
     ViewToggle: (props: Omit<ViewToggleProps, "value" | "onValueChange">) => (
       <ViewToggle {...props} value={viewMode} onValueChange={setViewMode} />
     ),
-  }
+  };
 }
