@@ -32,3 +32,4 @@ export type {
 } from "./appearence";
 export type { User, Role } from "./user";
 export type { LoginResponse } from "./login";
+export type { Company } from "./company";

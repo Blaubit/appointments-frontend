@@ -5,24 +5,21 @@ import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
-import { Appointment } from "@/types";
+import { User } from "@/types";
 
 type Props = {
   searchParams?: URLSearchParams;
 };
 
-export default async function findAll(
+export async function findAllProfessionals(
   props: Props = {},
-): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
+): Promise<SuccessReponse<User[]> | ErrorResponse | any> {
   try {
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
-    const UserId = User ? JSON.parse(User).companyId : null;
-    //const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${User}`;
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments?limit=6`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/users`;
     const parsedParams = parsePaginationParams(props.searchParams);
-    //console.log("url", url);
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
@@ -33,17 +30,18 @@ export default async function findAll(
         q: parsedParams.query,
       },
     });
-
     return {
-      data: response.data.data,
+      data: response.data.data.filter(
+        (user: User) => user.role.name === "profesional",
+      ),
       status: 200,
       statusText: response.statusText,
       meta: response.data.meta,
       stats: {
         total: response.data.meta.totalItems,
-        confirmed: 10,
-        pending: 5,
-        cancelled: 2,
+        active: 10,
+        total_income: 5,
+        total_Users: 2,
       },
     };
   } catch (error) {

@@ -827,9 +827,7 @@ export default function WhatsAppBotClient({
                     >
                       <Avatar>
                         <AvatarImage
-                          src={
-                            conversation.contact.avatar || "/Avatar1.png"
-                          }
+                          src={conversation.contact.avatar || "/Avatar1.png"}
                         />
                         <AvatarFallback>
                           {conversation.contact.name
@@ -1227,8 +1225,7 @@ export default function WhatsAppBotClient({
                             <Avatar className="h-12 w-12">
                               <AvatarImage
                                 src={
-                                  conversation.contact.avatar ||
-                                  "/Avatar1.png"
+                                  conversation.contact.avatar || "/Avatar1.png"
                                 }
                               />
                               <AvatarFallback>

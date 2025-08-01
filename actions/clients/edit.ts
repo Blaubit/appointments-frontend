@@ -18,7 +18,7 @@ export default async function edit({
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
-    
+
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -29,7 +29,7 @@ export default async function edit({
 
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/:${id}`;
     const session = cookieStore.get("session")?.value;
-    console.log("url", url)
+    console.log("url", url);
     // Validar que tenemos session
     if (!session) {
       return {
@@ -47,14 +47,14 @@ export default async function edit({
     const response = await axios.post<Client>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/Client");
-      
+
       return {
         data: response.data,
         status: response.status,
@@ -67,14 +67,13 @@ export default async function edit({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-
   } catch (error) {
     console.error("Error creating client:", error);
-    
+
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;
       const errorStatus = error.response?.status;
-      
+
       return {
         message: errorMessage,
         code: error.code,
