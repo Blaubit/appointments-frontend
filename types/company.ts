@@ -9,6 +9,6 @@ type Company = {
   country: string;
   description: string;
   createdAt: string;
-}
+};
 
 export type { Company };

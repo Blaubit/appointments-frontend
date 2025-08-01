@@ -7,7 +7,6 @@ import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { LoginResponse } from "@/types";
 
-
 export async function Login({
   email,
   password,
@@ -28,12 +27,12 @@ export async function Login({
       sameSite: "strict",
     });
     cookieStore.set({
-        name: "user",
-        value: JSON.stringify(response.data.data.user),
-        httpOnly: false,
-        path: "/",
-      });
-    
+      name: "user",
+      value: JSON.stringify(response.data.data.user),
+      httpOnly: false,
+      path: "/",
+    });
+
     return {
       data: "Logged in",
       status: 200,

@@ -1,18 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ClientForm } from "@/components/client-form"
-import create from "@/actions/clients/create"
-import edit from "@/actions/clients/edit"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ClientForm } from "@/components/client-form";
+import create from "@/actions/clients/create";
+import edit from "@/actions/clients/edit";
 import {
   Users,
   UserCheck,
@@ -32,81 +55,91 @@ import {
   List,
   Tag,
   StarIcon,
-} from "lucide-react"
-import type { Client, ClientStats, Pagination, ClientFormData, ClientEditFormData } from "@/types"
+} from "lucide-react";
+import type {
+  Client,
+  ClientStats,
+  Pagination,
+  ClientFormData,
+  ClientEditFormData,
+} from "@/types";
 
 interface ClientsPageClientProps {
-  clients: Client[]
-  stats: ClientStats
-  pagination: Pagination
+  clients: Client[];
+  stats: ClientStats;
+  pagination: Pagination;
 }
 
-export default function ClientsPageClient({ clients, stats, pagination }: ClientsPageClientProps) {
-  const [viewMode, setViewMode] = useState<"table" | "cards">("cards")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+export default function ClientsPageClient({
+  clients,
+  stats,
+  pagination,
+}: ClientsPageClientProps) {
+  const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   // Filtrar clientes en el cliente (filtrado adicional)
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
       client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.includes(searchTerm)
+      client.phone.includes(searchTerm);
 
-    const matchesStatus = statusFilter === "all" || client.status === statusFilter
+    const matchesStatus =
+      statusFilter === "all" || client.status === statusFilter;
 
-    return matchesSearch && matchesStatus
-  })
+    return matchesSearch && matchesStatus;
+  });
 
   // Solo necesitas actualizar estas funciones en tu page.client.tsx:
 
-const handleCreateClient = (data: ClientFormData) => {
-  console.log("Crear cliente:", data);
+  const handleCreateClient = (data: ClientFormData) => {
+    console.log("Crear cliente:", data);
 
-  // aquii se llama la funcion para crear 
-  create(data)
-    .then((response) => {
-      if (response.status === 201) {
-        console.log("Cliente creado exitosamente:", response.status);
-        // Aquí podrías actualizar el estado o hacer algo más
-      } else {
-        console.error("Error al crear cliente:", response.status);
-      }
-    })
-    .catch((error) => {
-      console.error("Error al crear cliente:", error);
-    });
+    // aquii se llama la funcion para crear
+    create(data)
+      .then((response) => {
+        if (response.status === 201) {
+          console.log("Cliente creado exitosamente:", response.status);
+          // Aquí podrías actualizar el estado o hacer algo más
+        } else {
+          console.error("Error al crear cliente:", response.status);
+        }
+      })
+      .catch((error) => {
+        console.error("Error al crear cliente:", error);
+      });
+  };
 
-};
+  const handleEditClient = (data: ClientFormData) => {
+    console.log("Editar cliente:", editingClient?.id, data);
+    // Los datos vienen en el mismo formato simplificado
+    const data2: ClientEditFormData = {
+      id: editingClient?.id,
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone,
+    };
 
-const handleEditClient = (data: ClientFormData) => {
-  console.log("Editar cliente:", editingClient?.id, data);
-  // Los datos vienen en el mismo formato simplificado
-  const data2:ClientEditFormData = {
-    id:editingClient?.id,
-    fullName:data.fullName,
-    email:data.email,
-    phone:data.phone
-  }
-
-
-  edit(data2).then((response) => {
-      if (response.status === 201) {
-        console.log("Cliente editado exitosamente:", response.status);
-        // Aquí podrías actualizar el estado o hacer algo más
-      } else {
-        console.error("Error al editar cliente:", response.status);
-      }
-    })
-    .catch((error) => {
-      console.error("Error al editar cliente:", error);
-    });
-  // Aquí iría la lógica para actualizar el cliente
-  // Ejemplo:
-  /*
+    edit(data2)
+      .then((response) => {
+        if (response.status === 201) {
+          console.log("Cliente editado exitosamente:", response.status);
+          // Aquí podrías actualizar el estado o hacer algo más
+        } else {
+          console.error("Error al editar cliente:", response.status);
+        }
+      })
+      .catch((error) => {
+        console.error("Error al editar cliente:", error);
+      });
+    // Aquí iría la lógica para actualizar el cliente
+    // Ejemplo:
+    /*
   const updatePayload = {
     fullName: data.fullName,
     email: data.email,
@@ -115,32 +148,32 @@ const handleEditClient = (data: ClientFormData) => {
   
   // await updateClient(editingClient.id, updatePayload);
   */
-  
-  setEditingClient(null);
-};
+
+    setEditingClient(null);
+  };
 
   const handleDeleteClient = (client: Client) => {
-    console.log("Eliminar cliente:", client.id)
+    console.log("Eliminar cliente:", client.id);
     // Aquí iría la lógica para eliminar el cliente
-  }
+  };
 
   const handleViewClient = (client: Client) => {
-    setSelectedClient(client)
-    setShowDetailsDialog(true)
-  }
+    setSelectedClient(client);
+    setShowDetailsDialog(true);
+  };
 
   const handleCallClient = (client: Client) => {
-    window.open(`tel:${client.phone}`, "_self")
-  }
+    window.open(`tel:${client.phone}`, "_self");
+  };
 
   const handleEmailClient = (client: Client) => {
-    window.open(`mailto:${client.email}`, "_self")
-  }
+    window.open(`mailto:${client.email}`, "_self");
+  };
 
   const handleScheduleAppointment = (client: Client) => {
-    console.log("Programar cita para:", client.id)
+    console.log("Programar cita para:", client.id);
     // Aquí iría la navegación para crear una nueva cita con este cliente
-  }
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -148,40 +181,56 @@ const handleEditClient = (data: ClientFormData) => {
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2)
-  }
+      .slice(0, 2);
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: "Activo", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-      inactive: { label: "Inactivo", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
-      blocked: { label: "Bloqueado", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
-    }
+      active: {
+        label: "Activo",
+        className:
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      },
+      inactive: {
+        label: "Inactivo",
+        className:
+          "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+      },
+      blocked: {
+        label: "Bloqueado",
+        className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+      },
+    };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.inactive
-    return <Badge className={config.className}>{config.label}</Badge>
-  }
+    const config =
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.inactive;
+    return <Badge className={config.className}>{config.label}</Badge>;
+  };
 
   const renderStars = (rating: number) => {
     return [...Array(5)].map((_, i) => (
-      <Star key={i} className={`h-4 w-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-    ))
-  }
+      <Star
+        key={i}
+        className={`h-4 w-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+      />
+    ));
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-ES", {
       style: "currency",
       currency: "EUR",
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -196,7 +245,6 @@ const handleEditClient = (data: ClientFormData) => {
               </Button>
             }
             onSubmit={handleCreateClient}
-            
           />
         </div>
 
@@ -225,31 +273,42 @@ const handleEditClient = (data: ClientFormData) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Clientes
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalClients}</div>
-            <p className="text-xs text-muted-foreground">+{stats.newThisMonth} este mes</p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeClients}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.totalClients > 0 ? Math.round((stats.activeClients / stats.totalClients) * 100) : 0}% del total
+              +{stats.newThisMonth} este mes
             </p>
           </CardContent>
         </Card>
 
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Nuevos este Mes</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Clientes Activos
+            </CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeClients}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.totalClients > 0
+                ? Math.round((stats.activeClients / stats.totalClients) * 100)
+                : 0}
+              % del total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="card-hover">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Nuevos este Mes
+            </CardTitle>
             <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -260,11 +319,15 @@ const handleEditClient = (data: ClientFormData) => {
 
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valoración Promedio</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Valoración Promedio
+            </CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</div>
+            <div className="text-2xl font-bold">
+              {stats.averageRating.toFixed(1)}
+            </div>
             <p className="text-xs text-muted-foreground">De 5.0 estrellas</p>
           </CardContent>
         </Card>
@@ -320,7 +383,8 @@ const handleEditClient = (data: ClientFormData) => {
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No hay clientes</h3>
               <p className="text-muted-foreground mb-4">
-                No se encontraron clientes que coincidan con los filtros aplicados.
+                No se encontraron clientes que coincidan con los filtros
+                aplicados.
               </p>
               <ClientForm
                 trigger={
@@ -329,23 +393,32 @@ const handleEditClient = (data: ClientFormData) => {
                     Agregar Primer Cliente
                   </Button>
                 }
-                
               />
             </div>
           ) : viewMode === "cards" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredClients.map((client) => (
-                <Card key={client.id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={client.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={client.avatar || "/placeholder.svg"} alt={client.fullName} />
-                          <AvatarFallback>{getInitials(client.fullName)}</AvatarFallback>
+                          <AvatarImage
+                            src={client.avatar || "/placeholder.svg"}
+                            alt={client.fullName}
+                          />
+                          <AvatarFallback>
+                            {getInitials(client.fullName)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
                           <h3 className="font-semibold">{client.fullName}</h3>
-                          <p className="text-sm text-muted-foreground">{client.email}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {client.email}
+                          </p>
                         </div>
                       </div>
                       <DropdownMenu>
@@ -355,28 +428,41 @@ const handleEditClient = (data: ClientFormData) => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewClient(client)}>
+                          <DropdownMenuItem
+                            onClick={() => handleViewClient(client)}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             Ver Detalles
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setEditingClient(client)}>
+                          <DropdownMenuItem
+                            onClick={() => setEditingClient(client)}
+                          >
                             <Edit className="h-4 w-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleCallClient(client)}>
+                          <DropdownMenuItem
+                            onClick={() => handleCallClient(client)}
+                          >
                             <Phone className="h-4 w-4 mr-2" />
                             Llamar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEmailClient(client)}>
+                          <DropdownMenuItem
+                            onClick={() => handleEmailClient(client)}
+                          >
                             <Mail className="h-4 w-4 mr-2" />
                             Enviar Email
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleScheduleAppointment(client)}>
+                          <DropdownMenuItem
+                            onClick={() => handleScheduleAppointment(client)}
+                          >
                             <Calendar className="h-4 w-4 mr-2" />
                             Programar Cita
                           </DropdownMenuItem>
                           {client.status !== "active" && (
-                            <DropdownMenuItem onClick={() => handleDeleteClient(client)} className="text-red-600">
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClient(client)}
+                              className="text-red-600"
+                            >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Eliminar
                             </DropdownMenuItem>
@@ -387,37 +473,59 @@ const handleEditClient = (data: ClientFormData) => {
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Estado:</span>
+                        <span className="text-sm text-muted-foreground">
+                          Estado:
+                        </span>
                         {getStatusBadge(client.status)}
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Teléfono:</span>
-                        <span className="text-sm font-medium">{client.phone}</span>
+                        <span className="text-sm text-muted-foreground">
+                          Teléfono:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {client.phone}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Citas:</span>
-                        <span className="text-sm font-medium">{client.totalAppointments}</span>
+                        <span className="text-sm text-muted-foreground">
+                          Citas:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {client.totalAppointments}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Total Gastado:</span>
-                        <span className="text-sm font-medium">{formatCurrency(client.totalSpent)}</span>
+                        <span className="text-sm text-muted-foreground">
+                          Total Gastado:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {formatCurrency(client.totalSpent)}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Valoración:</span>
+                        <span className="text-sm text-muted-foreground">
+                          Valoración:
+                        </span>
                         <div className="flex items-center space-x-1">
                           {renderStars(client.rating)}
-                          <span className="text-sm ml-1">({client.rating})</span>
+                          <span className="text-sm ml-1">
+                            ({client.rating})
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Última Cita:</span>
+                        <span className="text-sm text-muted-foreground">
+                          Última Cita:
+                        </span>
                         <span className="text-sm font-medium">
-                          {client.lastAppointment ? formatDate(client.lastAppointment) : "Nunca"}
+                          {client.lastAppointment
+                            ? formatDate(client.lastAppointment)
+                            : "Nunca"}
                         </span>
                       </div>
 
@@ -425,7 +533,11 @@ const handleEditClient = (data: ClientFormData) => {
                         <div className="pt-2">
                           <div className="flex flex-wrap gap-1">
                             {client.tags.map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="text-xs"
+                              >
                                 {tag}
                               </Badge>
                             ))}
@@ -458,20 +570,32 @@ const handleEditClient = (data: ClientFormData) => {
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={client.avatar || "/placeholder.svg"} alt={client.fullName} />
-                            <AvatarFallback className="text-xs">{getInitials(client.fullName)}</AvatarFallback>
+                            <AvatarImage
+                              src={client.avatar || "/placeholder.svg"}
+                              alt={client.fullName}
+                            />
+                            <AvatarFallback className="text-xs">
+                              {getInitials(client.fullName)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
                             <div className="font-medium">{client.fullName}</div>
                             {client.tags && client.tags.length > 0 && (
                               <div className="flex gap-1 mt-1">
                                 {client.tags.slice(0, 2).map((tag, index) => (
-                                  <Badge key={index} variant="secondary" className="text-xs">
+                                  <Badge
+                                    key={index}
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
                                     {tag}
                                   </Badge>
                                 ))}
                                 {client.tags.length > 2 && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
                                     +{client.tags.length - 2}
                                   </Badge>
                                 )}
@@ -483,27 +607,37 @@ const handleEditClient = (data: ClientFormData) => {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="text-sm">{client.email}</div>
-                          <div className="text-sm text-muted-foreground">{client.phone}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {client.phone}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(client.status)}</TableCell>
                       <TableCell>
                         <div className="text-center">
-                          <div className="font-medium">{client.totalAppointments}</div>
+                          <div className="font-medium">
+                            {client.totalAppointments}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{formatCurrency(client.totalSpent)}</div>
+                        <div className="font-medium">
+                          {formatCurrency(client.totalSpent)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
                           {renderStars(client.rating)}
-                          <span className="text-sm ml-1">({client.rating})</span>
+                          <span className="text-sm ml-1">
+                            ({client.rating})
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {client.lastAppointment ? formatDate(client.lastAppointment) : "Nunca"}
+                          {client.lastAppointment
+                            ? formatDate(client.lastAppointment)
+                            : "Nunca"}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -514,28 +648,41 @@ const handleEditClient = (data: ClientFormData) => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewClient(client)}>
+                            <DropdownMenuItem
+                              onClick={() => handleViewClient(client)}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
                               Ver Detalles
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setEditingClient(client)}>
+                            <DropdownMenuItem
+                              onClick={() => setEditingClient(client)}
+                            >
                               <Edit className="h-4 w-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCallClient(client)}>
+                            <DropdownMenuItem
+                              onClick={() => handleCallClient(client)}
+                            >
                               <Phone className="h-4 w-4 mr-2" />
                               Llamar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEmailClient(client)}>
+                            <DropdownMenuItem
+                              onClick={() => handleEmailClient(client)}
+                            >
                               <Mail className="h-4 w-4 mr-2" />
                               Enviar Email
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleScheduleAppointment(client)}>
+                            <DropdownMenuItem
+                              onClick={() => handleScheduleAppointment(client)}
+                            >
                               <Calendar className="h-4 w-4 mr-2" />
                               Programar Cita
                             </DropdownMenuItem>
                             {client.status !== "active" && (
-                              <DropdownMenuItem onClick={() => handleDeleteClient(client)} className="text-red-600">
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteClient(client)}
+                                className="text-red-600"
+                              >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Eliminar
                               </DropdownMenuItem>
@@ -575,37 +722,54 @@ const handleEditClient = (data: ClientFormData) => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={selectedClient.avatar || "/placeholder.svg"} alt={selectedClient.fullName} />
-                      <AvatarFallback className="text-lg">{getInitials(selectedClient.fullName)}</AvatarFallback>
+                      <AvatarImage
+                        src={selectedClient.avatar || "/placeholder.svg"}
+                        alt={selectedClient.fullName}
+                      />
+                      <AvatarFallback className="text-lg">
+                        {getInitials(selectedClient.fullName)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
-                      <p className="text-lg font-semibold">{selectedClient.fullName}</p>
+                      <p className="text-lg font-semibold">
+                        {selectedClient.fullName}
+                      </p>
                       {getStatusBadge(selectedClient.status)}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Email:</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Email:
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm">{selectedClient.email}</span>
-                        <Button size="sm" variant="ghost" onClick={() => handleEmailClient(selectedClient)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEmailClient(selectedClient)}
+                        >
                           <Mail className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Teléfono:</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Teléfono:
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm">{selectedClient.phone}</span>
-                        <Button size="sm" variant="ghost" onClick={() => handleCallClient(selectedClient)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCallClient(selectedClient)}
+                        >
                           <Phone className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-
-                   
                   </div>
 
                   {selectedClient.notes && (
@@ -633,43 +797,63 @@ const handleEditClient = (data: ClientFormData) => {
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                         {selectedClient.totalAppointments}
                       </div>
-                      <div className="text-sm text-muted-foreground">Total Citas</div>
+                      <div className="text-sm text-muted-foreground">
+                        Total Citas
+                      </div>
                     </div>
 
                     <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
                       <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                         {formatCurrency(selectedClient.totalSpent)}
                       </div>
-                      <div className="text-sm text-muted-foreground">Total Gastado</div>
+                      <div className="text-sm text-muted-foreground">
+                        Total Gastado
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Valoración:</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Valoración:
+                      </span>
                       <div className="flex items-center space-x-1">
                         {renderStars(selectedClient.rating)}
-                        <span className="text-sm ml-2 font-medium">{selectedClient.rating}/5</span>
+                        <span className="text-sm ml-2 font-medium">
+                          {selectedClient.rating}/5
+                        </span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Primera Cita:</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Primera Cita:
+                      </span>
                       <span className="text-sm">
-                        {selectedClient.createdAt ? formatDate(selectedClient.createdAt) : "N/A"}
+                        {selectedClient.createdAt
+                          ? formatDate(selectedClient.createdAt)
+                          : "N/A"}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Última Cita:</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Última Cita:
+                      </span>
                       <span className="text-sm">
-                        {selectedClient.lastAppointment ? formatDate(selectedClient.lastAppointment) : "Nunca"}
+                        {selectedClient.lastAppointment
+                          ? formatDate(selectedClient.lastAppointment)
+                          : "Nunca"}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Cliente desde:</span>
-                      <span className="text-sm">{formatDate(selectedClient.createdAt)}</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Cliente desde:
+                      </span>
+                      <span className="text-sm">
+                        {formatDate(selectedClient.createdAt)}
+                      </span>
                     </div>
                   </div>
 
@@ -697,13 +881,18 @@ const handleEditClient = (data: ClientFormData) => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      <Button onClick={() => setEditingClient(selectedClient)} className="flex-1 sm:flex-none">
+                      <Button
+                        onClick={() => setEditingClient(selectedClient)}
+                        className="flex-1 sm:flex-none"
+                      >
                         <Edit className="h-4 w-4 mr-2" />
                         Editar Cliente
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => handleScheduleAppointment(selectedClient)}
+                        onClick={() =>
+                          handleScheduleAppointment(selectedClient)
+                        }
                         className="flex-1 sm:flex-none"
                       >
                         <Calendar className="h-4 w-4 mr-2" />
@@ -754,5 +943,5 @@ const handleEditClient = (data: ClientFormData) => {
         />
       )}
     </div>
-  )
+  );
 }

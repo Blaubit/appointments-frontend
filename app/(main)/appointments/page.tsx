@@ -13,7 +13,7 @@ export default async function Page({ searchParams }: Props) {
     if (value !== undefined) {
       if (Array.isArray(value)) {
         // Si es un array, agregar cada valor
-        value.forEach(v => params.append(key, v));
+        value.forEach((v) => params.append(key, v));
       } else {
         params.set(key, value);
       }
@@ -21,7 +21,7 @@ export default async function Page({ searchParams }: Props) {
   });
 
   const response = await findAll({
-    searchParams: params
+    searchParams: params,
   });
   const user = await getUser();
   if (response.status !== 200 || !("data" in response)) {

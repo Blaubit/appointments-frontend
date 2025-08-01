@@ -24,102 +24,33 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
+  CalendarCheck,
+  UserRoundCheck,
+  BookX,
+  OctagonPause,
 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/header";
-import type { Appointment, AppointmentStats } from "@/types";
-
-type Stat = {
-  title: string;
-  value: string;
-  icon: string;
-  color: string;
-  ref: string;
-};
-
-type User = {
-  name: string;
-  email: string;
-  role: string;
-  avatar: string;
-  initials: string;
-};
-
-type ClinicInfo = {
-  address: string;
-  phone: string;
-  schedule: string;
-};
+import type { Appointment, AppointmentStats, User, Company } from "@/types";
+import {
+  getStatusColor,
+  getStatusIcon,
+  getStatusText,
+} from "@/utils/functions/appointmentStatus";
 
 type Props = {
   upcomingAppointments: Appointment[];
   appointmentStats: AppointmentStats;
-  stats: Stat[];
   user: User;
-  clinicInfo: ClinicInfo;
-  userType: "professional" | "client";
-  notifications: {
-    count: number;
-  };
+  clinicInfo: Company;
 };
 
 export default function DashboardClient({
   upcomingAppointments,
   appointmentStats,
-  stats,
   user,
   clinicInfo,
-  notifications,
 }: Props) {
-  const getIconComponent = (iconName: string) => {
-    const iconMap = {
-      Calendar,
-      Users,
-      TrendingUp,
-      Clock,
-    };
-    return iconMap[iconName as keyof typeof iconMap] || Clock;
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      case "cancelled":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return <CheckCircle className="h-3 w-3" />;
-      case "pending":
-        return <AlertCircle className="h-3 w-3" />;
-      case "cancelled":
-        return <XCircle className="h-3 w-3" />;
-      default:
-        return <Clock className="h-3 w-3" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "Confirmada";
-      case "pending":
-        return "Pendiente";
-      case "cancelled":
-        return "Cancelada";
-      default:
-        return "Desconocido";
-    }
-  };
-
   const getInitials = (name: string) => {
     if (!name) return "";
     return name
@@ -142,10 +73,10 @@ export default function DashboardClient({
       return "Mañana";
     } else {
       // Formato dd/mm/aaaa
-      return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+      return date.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
       });
     }
   };
@@ -153,62 +84,119 @@ export default function DashboardClient({
   const formatTime = (timeString: string) => {
     // timeString viene como "14:00:00" o "14:00"
     if (!timeString) return "00:00";
-    
+
     // Tomar solo las primeras dos partes (horas y minutos)
-    const timeParts = timeString.split(':');
+    const timeParts = timeString.split(":");
     return `${timeParts[0]}:${timeParts[1]}`;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <Header
-        title="Dashboard"
-        subtitle="Panel de Control"
-        notifications={notifications}
-      />
+      <Header title="Dashboard" subtitle="Panel de Control" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            ¡Buen día, {user.name.split(" ")[0]}! 👋
+            ¡Buen día, {user.fullName.split(" ")[0]}! 👋
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Tienes{" "}
-            {appointmentStats.total}{" "}
-            {appointmentStats.total === 1 ? 'cita programada' : 'citas programadas'} para hoy. Aquí tienes un resumen de tu jornada.
+            Tienes {appointmentStats.today_count}{" "}
+            {appointmentStats.today_count === 1
+              ? "cita programada"
+              : "citas programadas"}{" "}
+            para hoy. Aquí tienes un resumen de tu jornada.
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-          {stats.map((stat, index) => {
-            const IconComponent = getIconComponent(stat.icon);
-            return (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <Link href={stat.ref}>
-                  <CardContent className="p-3 sm:p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                          {stat.title}
-                        </p>
-                        <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                          {stat.value}
-                        </p>
-                      </div>
-                      <div
-                        className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 ${stat.color} flex-shrink-0`}
-                      >
-                        <IconComponent className="h-4 w-4 sm:h-6 sm:w-6" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Link>
-              </Card>
-            );
-          })}
+          <Card className="hover:shadow-lg transition-shadow">
+            <Link href="/appointments">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                      Citas Hoy
+                    </p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                      {appointmentStats.today_count}
+                    </p>
+                  </div>
+                  <div
+                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-blue-600 flex-shrink-0`}
+                  >
+                    <CalendarCheck className="h-4 w-4 sm:h-6 sm:w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <Link href="/appointments">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                      Confirmadas
+                    </p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                      {appointmentStats.confirmed_count}
+                    </p>
+                  </div>
+                  <div
+                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-green-600 flex-shrink-0`}
+                  >
+                    <UserRoundCheck className="h-4 w-4 sm:h-6 sm:w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <Link href="/appointments">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                      Pendientes
+                    </p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                      {appointmentStats.pending_count}
+                    </p>
+                  </div>
+                  <div
+                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-yellow-600 flex-shrink-0`}
+                  >
+                    <OctagonPause className="h-4 w-4 sm:h-6 sm:w-6 " />
+                  </div>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <Link href="/appointments">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                      Canceladas
+                    </p>
+                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                      {appointmentStats.cancelled_count}
+                    </p>
+                  </div>
+                  <div
+                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-red-600 flex-shrink-0`}
+                  >
+                    <BookX className="h-4 w-4 sm:h-6 sm:w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -276,7 +264,9 @@ export default function DashboardClient({
                             </span>
                             <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                               <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(appointment.appointmentDate.toLocaleString())}
+                              {formatDate(
+                                appointment.appointmentDate.toLocaleString(),
+                              )}
                             </span>
                           </div>
                         </div>
@@ -399,18 +389,18 @@ export default function DashboardClient({
                   <div className="flex items-start space-x-3">
                     <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium">Teléfono</p>
+                      <p className="text-sm font-medium">codigo postal</p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo.phone}
+                        {clinicInfo.postal_code}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Clock className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium">Horario</p>
+                      <p className="text-sm font-medium">ciudad</p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo.schedule}
+                        {clinicInfo.city}
                       </p>
                     </div>
                   </div>

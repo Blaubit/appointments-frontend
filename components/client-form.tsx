@@ -119,7 +119,7 @@ export function ClientForm({
     setOpen(false);
     onCancel?.();
     setErrors({});
-    
+
     // Reset form if not in edit mode
     if (!isEditMode) {
       setFormData({

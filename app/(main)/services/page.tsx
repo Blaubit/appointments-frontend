@@ -125,7 +125,7 @@ export default async function Page({ searchParams }: Props) {
   ];
 
   // Apply filters based on search params
-  
+
   const categoryFilter = "all";
   const statusFilter = "all";
   const services = await findAll();
@@ -151,7 +151,7 @@ export default async function Page({ searchParams }: Props) {
     );
   }
 
-  
-
-  return <PageClient services={services.data} pagination={services.pagination} />;
+  return (
+    <PageClient services={services.data} pagination={services.pagination} />
+  );
 }

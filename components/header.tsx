@@ -65,11 +65,11 @@ export function Header({
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  
+
   // Usar el hook para obtener el usuario
   const { user, loading, error } = useUser();
   // defatult company para usuario por defecto
-  const defaultCompany:Company = {
+  const defaultCompany: Company = {
     id: "default",
     name: "CitasFácil",
     company_type: "default",
@@ -80,9 +80,9 @@ export function Header({
     country: "País",
     description: "Empresa de citas por defecto",
     createdAt: "2023-01-01T00:00:00Z",
-  }
+  };
   // defaul role para el usuario por defecto
-  const defaultRole:Role = {
+  const defaultRole: Role = {
     id: "default",
     name: "Invitado",
     description: "Acceso limitado",
@@ -100,7 +100,7 @@ export function Header({
   };
 
   const currentUser = user || defaultUser;
-  
+
   const defaultNotifications = [
     {
       id: "1",
@@ -263,7 +263,7 @@ export function Header({
                           {currentUser.fullName}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {currentUser.role.name|| "Usuario"}
+                          {currentUser.role.name || "Usuario"}
                         </p>
                       </div>
                       <ChevronDown className="h-4 w-4 text-gray-500" />
@@ -274,7 +274,9 @@ export function Header({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{currentUser.fullName}</p>
+                    <p className="text-sm font-medium">
+                      {currentUser.fullName}
+                    </p>
                     <p className="text-xs text-gray-500">{currentUser.email}</p>
                   </div>
                 </DropdownMenuLabel>
@@ -311,9 +313,7 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild
-                 onClick={logout}
-                >
+                <DropdownMenuItem asChild onClick={logout}>
                   <Link
                     href="/login"
                     className="flex items-center text-red-600 hover:text-red-700"
@@ -418,7 +418,9 @@ export function Header({
                             src={currentUser.avatar || "/Professional1.png"}
                             alt={currentUser.fullName || "Usuario"}
                           />
-                          <AvatarFallback>{currentUser.fullName}</AvatarFallback>
+                          <AvatarFallback>
+                            {currentUser.fullName}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col space-y-1 min-w-0">
                           <p className="text-sm font-medium truncate">

@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('user')
+  const token = request.cookies.get("user");
 
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 // Proteger todas las rutas excepto `/` y `/login`
@@ -21,6 +21,6 @@ export const config = {
       - /appointments
       - /user/profile
     */
-    '/((?!login|$|favicon.ico|_next).*)',
+    "/((?!login|$|favicon.ico|_next).*)",
   ],
-}
+};

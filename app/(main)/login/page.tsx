@@ -20,14 +20,14 @@ async function handleServerLogin(formData: FormData) {
     const result = await Login({ email, password });
 
     // Verificar si la respuesta es exitosa
-    if ('data' in result && result.status === 200) {
+    if ("data" in result && result.status === 200) {
       // Login exitoso, redirigir al dashboard
       redirect("/dashboard");
-    } else if ('message' in result) {
+    } else if ("message" in result) {
       // Error en el login
-      return { 
+      return {
         error: result.message || "Error en el login",
-        status: result.status 
+        status: result.status,
       };
     }
   } catch (error) {

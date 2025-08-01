@@ -1,6 +1,5 @@
 import type React from "react";
 
-
 export interface Notification {
   id: string;
   title: string;

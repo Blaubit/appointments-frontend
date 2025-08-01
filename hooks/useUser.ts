@@ -14,7 +14,7 @@ export function useUser() {
         .split("; ")
         .find((row) => row.startsWith("user="))
         ?.split("=")[1];
-      
+
       if (cookie) {
         const decoded = decodeURIComponent(cookie);
         const parsedUser = JSON.parse(decoded);

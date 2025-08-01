@@ -12,10 +12,9 @@ type Props = {
 };
 
 export default async function findAll(
-  props: Props = {}
-): Promise<SuccessReponse<Appointment[]> | ErrorResponse|any> {
+  props: Props = {},
+): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
   try {
-    
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
@@ -30,9 +29,9 @@ export default async function findAll(
         ...parsedParams,
         query: undefined,
         q: parsedParams.query,
-      }
+      },
     });
-    
+
     return {
       data: response.data.data,
       status: 200,
@@ -40,7 +39,7 @@ export default async function findAll(
       meta: response.data.meta,
       stats: {
         total: response.data.meta.totalItems,
-        active:10,
+        active: 10,
         total_income: 5,
         total_appointments: 2,
       },

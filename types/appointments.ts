@@ -1,8 +1,7 @@
-import { Client } from "./clients";// Existing types with additions for backend data
+import { Client } from "./clients"; // Existing types with additions for backend data
 import { Company } from "./company";
 import { User } from "./user"; // Assuming User is defined in ./user
 import { Service } from "./services";
-
 
 export interface Appointment {
   id: string;
@@ -12,18 +11,18 @@ export interface Appointment {
   status: string; // e.g., "confirmed", "pending", "cancelled"
   notes?: string;
   createdAt: Date;
-  company:Company;
+  company: Company;
   client: Client; // Client is defined in ./clients
   professional: User; // User is defined in ./user
   service: Service; // Service is defined in ./services
 }
 
-
 export interface AppointmentStats {
-  total: number;
-  confirmed: number;
-  pending: number;
-  cancelled: number;
+  today_count: number;
+  twomorrow_count: number;
+  confirmed_count: number;
+  pending_count: number;
+  cancelled_count: number;
 }
 
 export interface Pagination {
