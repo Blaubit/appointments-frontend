@@ -31,7 +31,9 @@ export async function findAllProfessionals(
       },
     });
     return {
-      data: response.data.data,
+      data: response.data.data.filter(
+        (user: User) => user.role.name === "profesional",
+      ),
       status: 200,
       statusText: response.statusText,
       meta: response.data.meta,

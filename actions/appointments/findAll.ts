@@ -18,7 +18,9 @@ export default async function findAll(
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments`;
+    const UserId = User ? JSON.parse(User).companyId : null;
+    //const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${User}`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments?limit=6`;
     const parsedParams = parsePaginationParams(props.searchParams);
     //console.log("url", url);
     const response = await axios.get(url, {

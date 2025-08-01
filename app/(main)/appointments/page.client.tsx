@@ -60,25 +60,32 @@ import {
   List,
   Clock,
   MapPin,
-  User,
+  User as UserIcon,
   FileText,
   Star,
 } from "lucide-react";
 import { Header } from "@/components/header";
-import type { Appointment, AppointmentStats, Pagination } from "@/types";
+import type { Appointment, AppointmentStats, Pagination, User } from "@/types";
 import { redirect } from "next/navigation";
 import {
   getStatusColor,
   getStatusIcon,
   getStatusText,
 } from "@/utils/functions/appointmentStatus";
+import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 type Props = {
   appointments: Appointment[];
   stats: AppointmentStats;
   pagination: Pagination;
+  professionals?: User[];
 };
 
-export default function PageClient({ appointments, stats, pagination }: Props) {
+export default function PageClient({
+  appointments,
+  stats,
+  pagination,
+  professionals,
+}: Props) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -87,16 +94,85 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState("all");
+
+  // Helper function to check if date matches filter
+  const doesDateMatchFilter = (
+    appointmentDate: string | Date,
+    filter: string,
+  ) => {
+    if (filter === "all") return true;
+
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const appointmentDateObj = new Date(appointmentDate);
+
+    // Normalize dates to compare only the date part (not time)
+    const normalizeDate = (date: Date) => {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    };
+
+    const normalizedToday = normalizeDate(today);
+    const normalizedTomorrow = normalizeDate(tomorrow);
+    const normalizedAppointment = normalizeDate(appointmentDateObj);
+
+    switch (filter) {
+      case "today":
+        return normalizedAppointment.getTime() === normalizedToday.getTime();
+      case "tomorrow":
+        return normalizedAppointment.getTime() === normalizedTomorrow.getTime();
+      case "week":
+        const weekFromNow = new Date(today);
+        weekFromNow.setDate(today.getDate() + 7);
+        return appointmentDateObj >= today && appointmentDateObj <= weekFromNow;
+      default:
+        return true;
+    }
+  };
 
   // Client-side filtering for immediate UI feedback
   const clientFilteredAppointments = appointments.filter((appointment) => {
+    // Search filter
     const matchesSearch =
       appointment.client.fullName
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       appointment.service.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+
+    // Status filter
+    const matchesStatus =
+      statusFilter === "all" || appointment.status === statusFilter;
+
+    // Date filter
+    const matchesDate = doesDateMatchFilter(
+      appointment.appointmentDate,
+      dateFilter,
+    );
+
+    // Professional filter
+    const matchesProfessional =
+      selectedProfessionalId === "all" ||
+      appointment.professional?.id === selectedProfessionalId;
+
+    return matchesSearch && matchesStatus && matchesDate && matchesProfessional;
   });
+
+  const handleProfessionalFilter = (value: string) => {
+    setSelectedProfessionalId(value);
+    // Optionally update URL for server-side filtering
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+
+    if (value !== "all") {
+      params.set("professional", value);
+    } else {
+      params.delete("professional");
+    }
+
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
 
   // Handle search with URL update for server-side filtering
   const handleSearch = (value: string) => {
@@ -146,6 +222,7 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
   // Action handlers - ready for backend integration
   const handleEditAppointment = (appointment: Appointment) => {
     console.log("Edit appointment:", appointment);
+
     // TODO: Open edit dialog or navigate to edit page
     // router.push(`/appointments/${appointment.id}/edit`)
   };
@@ -180,12 +257,15 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
 
   const handleViewAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
-    setShowDetailsDialog(true);
   };
 
   const handleCreateAppointment = () => {
     console.log("Create new appointment");
     redirect("/appointments/new");
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedAppointment(null);
   };
 
   const handleExportAppointments = () => {
@@ -378,12 +458,15 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="confirmed">Confirmadas</SelectItem>
-                    <SelectItem value="pending">Pendientes</SelectItem>
-                    <SelectItem value="cancelled">Canceladas</SelectItem>
-                    <SelectItem value="completed">Completadas</SelectItem>
-                    <SelectItem value="no_show">No Asistió</SelectItem>
-                    <SelectItem value="scheduled">Programadas</SelectItem>
+                    <SelectItem value="confirmed">Confirmada</SelectItem>
+                    <SelectItem value="scheduled">Agendada</SelectItem>
+                    <SelectItem value="completed">Completada</SelectItem>
+                    <SelectItem value="in_progress">En progreso</SelectItem>
+                    <SelectItem value="cancelled">Cancelada</SelectItem>
+                    <SelectItem value="no_show">No asistió</SelectItem>
+                    <SelectItem value="expired">Expirada</SelectItem>
+                    <SelectItem value="rescheduled">Reagendada</SelectItem>
+                    <SelectItem value="waitlist">Lista de espera</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -424,8 +507,41 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
               </div>
             </div>
 
+            {/* Professional Filter */}
+            {professionals && (
+              <div className="mb-4">
+                <Select
+                  value={selectedProfessionalId}
+                  onValueChange={handleProfessionalFilter}
+                >
+                  <SelectTrigger className="w-full md:w-64">
+                    <SelectValue placeholder="Filtrar por profesional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los profesionales</SelectItem>
+                    {professionals.map((professional) => (
+                      <SelectItem key={professional.id} value={professional.id}>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage
+                              src={professional.avatar || "/Avatar1.png"}
+                              alt={professional.fullName}
+                            />
+                            <AvatarFallback>
+                              {getInitials(professional.fullName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{professional.fullName}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Results count */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 my-5">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Mostrando {clientFilteredAppointments.length} de{" "}
                 {appointments.length} citas
@@ -457,6 +573,7 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
               <Card
                 key={appointment.id}
                 className="hover:shadow-lg transition-shadow"
+                onClick={() => handleViewAppointment(appointment)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -758,340 +875,17 @@ export default function PageClient({ appointments, stats, pagination }: Props) {
       </div>
 
       {/* Appointment Details Dialog */}
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Detalles de la Cita
-            </DialogTitle>
-            <DialogDescription>
-              Información completa de la cita programada
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedAppointment && (
-            <div className="space-y-6">
-              {/* Client Information */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <User className="h-4 w-4" />
-                    Información del Cliente
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage
-                        src={
-                          selectedAppointment.client.avatar || "/Avatar1.png"
-                        }
-                        alt={selectedAppointment.client.fullName}
-                      />
-                      <AvatarFallback className="text-lg">
-                        {getInitials(selectedAppointment.client.fullName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Nombre
-                          </Label>
-                          <p className="text-sm font-medium">
-                            {selectedAppointment.client.fullName}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Email
-                          </Label>
-                          <p className="text-sm">
-                            {selectedAppointment.client.email}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Teléfono
-                          </Label>
-                          <p className="text-sm">
-                            {selectedAppointment.client.phone}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Estado
-                          </Label>
-                          <p className="text-sm">Activo</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCallClient(selectedAppointment)}
-                        >
-                          <Phone className="h-3 w-3 mr-1" />
-                          Llamar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEmailClient(selectedAppointment)}
-                        >
-                          <Mail className="h-3 w-3 mr-1" />
-                          Email
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Appointment Information */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Calendar className="h-4 w-4" />
-                    Información de la Cita
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Servicio
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {selectedAppointment.service.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Servicio profesional de calidad
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Fecha y Hora
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {formatDateTime(
-                            selectedAppointment.appointmentDate.toLocaleString(),
-                            selectedAppointment.startTime,
-                          )}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Duración
-                        </Label>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          <p className="text-sm">
-                            {selectedAppointment.service.durationMinutes}{" "}
-                            minutos
-                          </p>
-                        </div>
-                      </div>
-                      {selectedAppointment.company.address && (
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Ubicación
-                          </Label>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            <p className="text-sm">
-                              {selectedAppointment.company.address}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Estado
-                        </Label>
-                        <div className="mt-1">
-                          {getStatusBadge(selectedAppointment.status)}
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Precio
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {formatCurrency(
-                            Number(selectedAppointment.service.price) || 0,
-                          )}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Estado de Pago
-                        </Label>
-                        <div className="mt-1">
-                          {getPaymentStatusBadge(
-                            selectedAppointment.status || "pending",
-                          )}
-                        </div>
-                      </div>
-                      {selectedAppointment.professional.fullName && (
-                        <div>
-                          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Doctor
-                          </Label>
-                          <p className="text-sm">
-                            {selectedAppointment.professional.fullName}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Notes and Additional Information */}
-              {selectedAppointment.notes && (
-                <Card>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <FileText className="h-4 w-4" />
-                      Información Adicional
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {selectedAppointment.notes && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Notas
-                        </Label>
-                        <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {selectedAppointment.notes}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {/*selectedAppointment.rating && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Calificación</Label>
-                        <div className="flex items-center gap-1 mt-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${
-                                i < selectedAppointment.rating!
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300 dark:text-gray-600"
-                              }`}
-                            />
-                          ))}
-                          <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
-                            {selectedAppointment.rating}/5
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedAppointment.feedback && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Comentarios</Label>
-                        <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <p className="text-sm text-gray-700 dark:text-gray-300">{selectedAppointment.feedback}</p>
-                        </div>
-                      </div>
-                    )*/}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Timestamps */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Clock className="h-4 w-4" />
-                    Historial
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Creada
-                      </Label>
-                      <p className="text-sm">
-                        {new Date(selectedAppointment.createdAt).toLocaleString(
-                          "es-ES",
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Última Actualización
-                      </Label>
-                      <p className="text-sm">
-                        {new Date(selectedAppointment.createdAt).toLocaleString(
-                          "es-ES",
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Recordatorio Enviado
-                      </Label>
-                      <p className="text-sm">
-                        {selectedAppointment ? "Sí" : "No"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Button
-                  onClick={() => handleEditAppointment(selectedAppointment)}
-                  className="flex-1"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Cita
-                </Button>
-                {selectedAppointment.status === "pending" && (
-                  <Button
-                    onClick={() =>
-                      handleConfirmAppointment(selectedAppointment)
-                    }
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Confirmar
-                  </Button>
-                )}
-                {selectedAppointment.status !== "cancelled" && (
-                  <Button
-                    onClick={() => handleCancelAppointment(selectedAppointment)}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Cancelar
-                  </Button>
-                )}
-                <Button
-                  onClick={() => handleDeleteAppointment(selectedAppointment)}
-                  variant="destructive"
-                  className="flex-1"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Eliminar
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <AppointmentDetailsDialog
+        appointment={selectedAppointment}
+        isOpen={selectedAppointment !== null}
+        onClose={handleCloseDialog}
+        onEdit={handleEditAppointment}
+        onConfirm={handleConfirmAppointment}
+        onCancel={handleCancelAppointment}
+        onDelete={handleDeleteAppointment}
+        onCall={handleCallClient}
+        onEmail={handleEmailClient}
+      />
     </div>
   );
 }

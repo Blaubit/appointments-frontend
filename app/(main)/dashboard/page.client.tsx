@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react"; // Agregar este import
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,9 +29,11 @@ import {
   UserRoundCheck,
   BookX,
   OctagonPause,
+  Eye, // Agregar este import
 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/header";
+import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog"; // Agregar este import
 import type { Appointment, AppointmentStats, User, Company } from "@/types";
 import {
   getStatusColor,
@@ -51,6 +54,10 @@ export default function DashboardClient({
   user,
   clinicInfo,
 }: Props) {
+  // Estado para manejar el dialog
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+
   const getInitials = (name: string) => {
     if (!name) return "";
     return name
@@ -88,6 +95,52 @@ export default function DashboardClient({
     // Tomar solo las primeras dos partes (horas y minutos)
     const timeParts = timeString.split(":");
     return `${timeParts[0]}:${timeParts[1]}`;
+  };
+
+  // Funciones para manejar las acciones del dialog
+  const handleViewAppointment = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedAppointment(null);
+  };
+
+  const handleEditAppointment = (appointment: Appointment) => {
+    console.log("Edit appointment:", appointment);
+    // TODO: Navegar a la página de edición
+    // window.location.href = `/appointments/${appointment.id}/edit`;
+  };
+
+  const handleConfirmAppointment = (appointment: Appointment) => {
+    console.log("Confirm appointment:", appointment);
+    // TODO: Llamar API para confirmar cita
+    // await confirmAppointment(appointment.id);
+    setSelectedAppointment(null);
+  };
+
+  const handleCancelAppointment = (appointment: Appointment) => {
+    console.log("Cancel appointment:", appointment);
+    // TODO: Llamar API para cancelar cita
+    // await cancelAppointment(appointment.id);
+    setSelectedAppointment(null);
+  };
+
+  const handleDeleteAppointment = (appointment: Appointment) => {
+    console.log("Delete appointment:", appointment);
+    // TODO: Mostrar confirmación y llamar API
+    // if (confirm("¿Estás seguro?")) await deleteAppointment(appointment.id);
+    setSelectedAppointment(null);
+  };
+
+  const handleCallClient = (appointment: Appointment) => {
+    console.log("Call client:", appointment.client.phone);
+    window.open(`tel:${appointment.client.phone}`);
+  };
+
+  const handleEmailClient = (appointment: Appointment) => {
+    console.log("Email client:", appointment.client.email);
+    window.open(`mailto:${appointment.client.email}`);
   };
 
   return (
@@ -225,6 +278,7 @@ export default function DashboardClient({
                     <div
                       key={appointment.id}
                       className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50"
+                      onClick={() => handleViewAppointment(appointment)}
                     >
                       {/* Avatar and main info */}
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -272,8 +326,18 @@ export default function DashboardClient({
                         </div>
                       </div>
 
-                      {/* Action buttons */}
+                      {/* Action buttons - AQUÍ ES DONDE SE AGREGAN LOS CAMBIOS */}
                       <div className="flex space-x-2 sm:flex-shrink-0">
+                        {/* Nuevo botón para ver detalles */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => handleViewAppointment(appointment)}
+                        >
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="ml-1 sm:hidden">Ver</span>
+                        </Button>
                         <Link href={`tel:${appointment.client.phone}`}>
                           <Button
                             variant="outline"
@@ -410,6 +474,19 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
+
+      {/* Dialog de detalles de la cita - AGREGAR AL FINAL */}
+      <AppointmentDetailsDialog
+        appointment={selectedAppointment}
+        isOpen={selectedAppointment !== null}
+        onClose={handleCloseDialog}
+        onEdit={handleEditAppointment}
+        onConfirm={handleConfirmAppointment}
+        onCancel={handleCancelAppointment}
+        onDelete={handleDeleteAppointment}
+        onCall={handleCallClient}
+        onEmail={handleEmailClient}
+      />
     </div>
   );
 }

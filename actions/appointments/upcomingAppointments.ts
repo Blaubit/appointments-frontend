@@ -35,8 +35,6 @@ export async function upcomingAppointments(
     const parsedParams = parsePaginationParams(props.searchParams);
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/upcoming-with-stats`;
 
-    console.log("hola");
-
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
