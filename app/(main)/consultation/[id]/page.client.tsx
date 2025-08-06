@@ -31,9 +31,15 @@ import {
   ClipboardList,
   UserCheck,
   Star,
+  DollarSign,
+  Package,
+  Info,
+  Target,
+  Zap,
 } from "lucide-react"
 import Link from "next/link"
-import type { Appointment } from "@/types/appointments"
+import type { Appointment } from "@/types"
+import { Header } from "@/components/header"
 
 interface ConsultationPageClientProps {
   appointment: Appointment
@@ -46,8 +52,10 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
   const [treatment, setTreatment] = useState("")
   const [nextAppointment, setNextAppointment] = useState("")
   const [isCompleting, setIsCompleting] = useState(false)
+  const [startTime] = useState(new Date())
 
   const client = appointment.client
+  const service = appointment.service
 
   const getInitials = (name: string) => {
     return name
@@ -57,8 +65,9 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
       .toUpperCase()
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
+  const formatDate = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString
+    return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -66,6 +75,7 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
   }
 
   const calculateAge = (birthDate: string) => {
+    if (!birthDate) return null
     const today = new Date()
     const birth = new Date(birthDate)
     let age = today.getFullYear() - birth.getFullYear()
@@ -78,6 +88,12 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
     return age
   }
 
+  const getElapsedTime = () => {
+    const now = new Date()
+    const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000 / 60)
+    return elapsed
+  }
+
   const handleCompleteConsultation = async () => {
     setIsCompleting(true)
 
@@ -86,10 +102,13 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
 
     console.log("Consulta completada:", {
       appointmentId: appointment.id,
+      serviceId: service.id,
+      serviceName: service.name,
       notes: consultationNotes,
       diagnosis,
       treatment,
       nextAppointment,
+      duration: getElapsedTime(),
     })
 
     setIsCompleting(false)
@@ -104,110 +123,118 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
     window.open(`mailto:${client.email}`)
   }
 
+  const getServiceCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      "Medicina General": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+      Especialidad: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      Laboratorio: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      Diagnóstico: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      Terapia: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+    }
+    return colors[category] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header de la Consulta */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link href="/appointments">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Volver a Citas
-                </Button>
-              </Link>
-
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={client.avatar || "/placeholder.svg"} alt={client.fullName} />
-                  <AvatarFallback className="text-lg">{getInitials(client.fullName)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">{client.fullName}</h1>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span>{appointment.service.name}</span>
-                    <span>•</span>
-                    <span>{appointment.appointmentDate.toLocaleString()}</span>
-                    <span>•</span>
-                    <span>{appointment.startTime}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                <Activity className="h-3 w-3 mr-1" />
-                En Consulta
-              </Badge>
-
-              <Button asChild variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
-                <Link href={`/clients/${client.id}/history`}>
-                  <History className="h-4 w-4 mr-2" />
-                  Ver Historial Completo
-                </Link>
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleCallClient}>
-                  <Phone className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleEmailClient}>
-                  <Mail className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Header 
+        title={`Consulta`} 
+        showBackButton={true}
+        backButtonText="clients"
+        backButtonHref="/clients"
+        notifications={{
+          count: 3,
+        }}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contenido Principal - Consulta Activa */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Información de la Cita Actual */}
+            {/* Información del Servicio y Cita Actual */}
             <Card className="border-l-4 border-l-blue-500">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Stethoscope className="h-5 w-5 text-blue-600" />
-                  Consulta en Progreso
-                </CardTitle>
-                <CardDescription>
-                  {appointment.service.name} - {appointment.service.durationMinutes} minutos
-                </CardDescription>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Stethoscope className="h-5 w-5 text-blue-600" />
+                      {service.name}
+                    </CardTitle>
+                    <CardDescription className="mt-1">descripcion de servicio</CardDescription>
+                  </div>
+                  <Badge className={getServiceCategoryColor('General')}>
+                    {'General'}
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Detalles del Servicio */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Duración</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">{service.durationMinutes} min</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Precio</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">€{service.price || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Ubicación</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">{appointment.company?.address || 'Oficina'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Doctor</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">{appointment.professional?.fullName || 'Doctor'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Estado de la Consulta */}
+                <div className="flex items-center gap-4 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <Timer className="h-5 w-5 text-green-600" />
+                  <div className="flex-1">
+                    <p className="font-medium text-green-900 dark:text-green-100">Consulta en Progreso</p>
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      Iniciada a las {startTime.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })} •
+                      Tiempo transcurrido: {getElapsedTime()} min
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-green-700 dark:text-green-300">Tiempo estimado</p>
+                    <p className="font-medium text-green-900 dark:text-green-100">{service.durationMinutes} min</p>
+                  </div>
+                </div>
+
+                {/* Información de la Cita */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
-                    <span>{appointment.appointmentDate.toLocaleString()}</span>
+                    <span>{formatDate(appointment.appointmentDate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <span>{appointment.startTime}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span>{appointment.company.address}</span>
+                    <Package className="h-4 w-4 text-gray-500" />
+                    <span>ID: #{appointment.id}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <span>{appointment.professional.fullName}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <Timer className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium text-blue-900 dark:text-blue-100">Consulta iniciada</p>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      Tiempo transcurrido:{" "}
-                      {new Date().toLocaleTimeString("es-ES", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                    <Target className="h-4 w-4 text-gray-500" />
+                    <Badge variant="outline" className="text-xs">
+                      {appointment.status === "paid" ? "Pagado" : "Pendiente"}
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
@@ -218,16 +245,16 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Notas de la Consulta
+                  Registro de la Consulta
                 </CardTitle>
-                <CardDescription>Registra los detalles de la consulta actual</CardDescription>
+                <CardDescription>Documenta los detalles específicos de esta consulta de {service.name}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="consultation-notes">Observaciones y Síntomas</Label>
+                  <Label htmlFor="consultation-notes">Observaciones y Hallazgos</Label>
                   <Textarea
                     id="consultation-notes"
-                    placeholder="Describe los síntomas del paciente, observaciones durante la consulta, signos vitales, etc."
+                    placeholder={`Registra los hallazgos específicos para ${service.name}: síntomas, signos vitales, observaciones durante el examen, etc.`}
                     value={consultationNotes}
                     onChange={(e) => setConsultationNotes(e.target.value)}
                     rows={4}
@@ -240,16 +267,16 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
                     <Label htmlFor="diagnosis">Diagnóstico</Label>
                     <Input
                       id="diagnosis"
-                      placeholder="Diagnóstico principal"
+                      placeholder="Diagnóstico principal o impresión clínica"
                       value={diagnosis}
                       onChange={(e) => setDiagnosis(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="treatment">Tratamiento</Label>
+                    <Label htmlFor="treatment">Tratamiento/Plan</Label>
                     <Input
                       id="treatment"
-                      placeholder="Tratamiento prescrito"
+                      placeholder="Tratamiento prescrito o plan de acción"
                       value={treatment}
                       onChange={(e) => setTreatment(e.target.value)}
                     />
@@ -264,6 +291,32 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
                     value={nextAppointment}
                     onChange={(e) => setNextAppointment(e.target.value)}
                   />
+                </div>
+
+                {/* Resumen del Servicio */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                    <Zap className="h-4 w-4" />
+                    Resumen de la Consulta
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Servicio:</span>
+                      <p className="font-medium">{service.name}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Categoría:</span>
+                      <p className="font-medium">{'General'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Duración Programada:</span>
+                      <p className="font-medium">{service.durationMinutes} minutos</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Precio:</span>
+                      <p className="font-medium">€{service.price || 'N/A'}</p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -312,7 +365,7 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
                   <div>
                     <p className="font-semibold">{client.fullName}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {`tenemos que guardar los años años`}
+                      {`0 años`}
                     </p>
                   </div>
                 </div>
@@ -328,12 +381,6 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
                     <span className="text-gray-600 dark:text-gray-400">Teléfono:</span>
                     <span className="font-medium">{client.phone}</span>
                   </div>
-                  {client.fullName && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Emergencia:</span>
-                      <span className="font-medium">{client.phone}</span>
-                    </div>
-                  )}
                 </div>
 
                 {client.tags && client.tags.length > 0 && (
@@ -359,58 +406,9 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
                   Información Médica
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 
-                vamos a poner info medica????
-                {client.allergies && client.allergies.length > 0 && (
-                  <Alert className="border-red-200 bg-red-50 dark:bg-red-950">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <AlertDescription className="text-red-800 dark:text-red-200">
-                      <strong>Alergias:</strong> {client.allergies.join(", ")}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {client.medicalHistory && client.medicalHistory.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4" />
-                      Historial Médico
-                    </h4>
-                    <ul className="text-sm space-y-1">
-                      {client.medicalHistory.map((condition, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                          {condition}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {client.medications && client.medications.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                      <Pill className="h-4 w-4" />
-                      Medicación Actual
-                    </h4>
-                    <ul className="text-sm space-y-1">
-                      {client.medications.map((medication, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                          {medication}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-            */}
-              </CardContent>
             </Card>
 
             {/* Historial Reciente */}
-            {/*
-            cuando este el endpoint de historial de citas
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -429,21 +427,19 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-medium text-sm">{pastAppointment.service.name}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{formatDate(pastAppointment.date)}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {formatDate(pastAppointment.appointmentDate)}
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs mt-1 ${getServiceCategoryColor(pastAppointment.service.name || 'General')}`}
+                        >
+                          {'General'}
+                        </Badge>
                       </div>
-                      {pastAppointment.rating && pastAppointment.rating > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-xs">{pastAppointment.rating}</span>
-                        </div>
-                      )}
                     </div>
-                    {pastAppointment.notes && (
-                      <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">{pastAppointment.notes}</p>
-                    )}
                   </div>
                 ))}
-
                 <Button asChild variant="outline" className="w-full bg-transparent" size="sm">
                   <Link href={`/clients/${client.id}/history`}>
                     <History className="h-4 w-4 mr-2" />
@@ -451,10 +447,8 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
                   </Link>
                 </Button>
               </CardContent>
-                </Card>
-              */
-            }
-            
+
+            </Card>
 
             {/* Estadísticas Rápidas */}
             <Card>
@@ -467,12 +461,20 @@ export default function ConsultationPageClient({ appointment, recentHistory }: C
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{client.totalAppointments}</div>
+                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{client.totalAppointments || 0}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">Total Citas</div>
                   </div>
                   <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                    <div className="text-lg font-bold text-green-600 dark:text-green-400">{client.rating}</div>
+                    <div className="text-lg font-bold text-green-600 dark:text-green-400">{client.rating || 'N/A'}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">Valoración</div>
+                  </div>
+                  <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                    <div className="text-lg font-bold text-purple-600 dark:text-purple-400">€{client.totalSpent || 0}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Total Gastado</div>
+                  </div>
+                  <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg">
+                    <div className="text-lg font-bold text-orange-600 dark:text-orange-400">{ 0}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Puntos</div>
                   </div>
                 </div>
               </CardContent>
