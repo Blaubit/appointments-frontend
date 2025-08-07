@@ -7,40 +7,32 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment } from "@/types";
 
-type Props = {
-  searchParams?: URLSearchParams;
-};
 
-export default async function findAll(
-  props: Props = {},
+
+export async function findHistory(
+    id:string,
 ): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
   try {
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
-    //const UserId = User ? JSON.parse(User).companyId : null;
-    //const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${User}`;
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments?limit=6`;
-    const parsedParams = parsePaginationParams(props.searchParams);
-    //console.log("url", url);
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
+    const session = cookieStore.get("session")?.value;
+    
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
-      },
-      params: {
-        ...parsedParams,
-        query: undefined,
-        q: parsedParams.query,
-      },
+        Authorization: `Bearer ${session}`,
+      }
     });
-
+    
+    console.log("response", response);
     return {
-      data: response.data.data,
+      data: response.data.data.data,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.meta,
+      meta: response.data.data.meta,
       stats: {
-        total: response.data.meta.totalItems,
+        total: response.data.data.meta.totalItems,
         confirmed: 10,
         pending: 5,
         cancelled: 2,
