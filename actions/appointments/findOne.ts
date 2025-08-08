@@ -7,7 +7,7 @@ import { parsedEnv } from "@/app/env";
 import { Appointment } from "@/types";
 
 export default async function findOne(
-  id: number
+  id: number,
 ): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   try {
     const cookieStore = await cookies();

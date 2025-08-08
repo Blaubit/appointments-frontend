@@ -4,37 +4,28 @@ import axios, { isAxiosError } from "axios";
 import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import parsePaginationParams from "@/utils/functions/parsePaginationParams";
-import { Appointment } from "@/types";
+import { Client } from "@/types";
 
-export async function findHistory(
+export async function findOne(
   id: string,
-): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
+): Promise<SuccessReponse<Client> | ErrorResponse | any> {
   try {
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/${id}`;
     const session = cookieStore.get("session")?.value;
-
+    console.log("Fetching client with ID:", id, "from URL:", url);
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
 
-    console.log("response", response);
     return {
-      data: response.data.data.data,
+      data: response.data,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.data.meta,
-      stats: {
-        total: response.data.data.meta.totalItems,
-        confirmed: 10,
-        pending: 5,
-        cancelled: 2,
-      },
     };
   } catch (error) {
     console.log(error);
