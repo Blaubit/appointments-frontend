@@ -30,7 +30,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
-import type { Service, Client,User } from "@/types";
+import type { Service, Client, User } from "@/types";
 import { CalendarCard } from "@/components/calendar-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import create from "@/actions/appointments/create";
@@ -43,10 +43,17 @@ type Props = {
   userSession?: User;
 };
 
-export default function PageClient({ services, clients, professionals, userSession }: Props) {
+export default function PageClient({
+  services,
+  clients,
+  professionals,
+  userSession,
+}: Props) {
   const router = useRouter();
   const [selectedClient, setSelectedClient] = useState<any>(null);
-  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
+    null,
+  );
   const [selectedService, setSelectedService] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -106,13 +113,16 @@ export default function PageClient({ services, clients, professionals, userSessi
   );
 
   const filteredProfessionals =
-  (professionals?.filter((professional) =>
-    professional.fullName.toLowerCase().includes(professionalSearch.toLowerCase())
-  )) || [];
+    professionals?.filter((professional) =>
+      professional.fullName
+        .toLowerCase()
+        .includes(professionalSearch.toLowerCase()),
+    ) || [];
 
+  const [selectedServicesData, setSelectedServicesData] = useState<string[]>(
+    [],
+  );
 
-  const [selectedServicesData, setSelectedServicesData] = useState<string[]>([]);
-  
   useEffect(() => {
     const names = selectedServices.map(
       (id) => services.find((s) => s.id.toString() === id)?.name || "",
@@ -122,10 +132,14 @@ export default function PageClient({ services, clients, professionals, userSessi
 
   // Auto-seleccionar profesional si el usuario logueado es profesional
   useEffect(() => {
-    if (userSession && userSession.role?.name === "profesional" && !selectedProfessional) {
+    if (
+      userSession &&
+      userSession.role?.name === "profesional" &&
+      !selectedProfessional
+    ) {
       // Si el usuario logueado es profesional, auto-seleccionarlo
       setSelectedProfessional(userSession);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         professionalId: userSession.id.toString(),
       }));
@@ -136,13 +150,13 @@ export default function PageClient({ services, clients, professionals, userSessi
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      if (!target.closest('.professional-dropdown-container')) {
+      if (!target.closest(".professional-dropdown-container")) {
         setProfessionalSearch("");
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleClientSelect = (client: any) => {
@@ -194,7 +208,7 @@ export default function PageClient({ services, clients, professionals, userSessi
       let clientId = selectedClient?.id;
 
       // Si no hay cliente seleccionado, crear uno nuevo
-      if (!clientId || clientId === 'temp') {
+      if (!clientId || clientId === "temp") {
         const newClientData = {
           fullName: formData.clientName,
           email: formData.clientEmail || "",
@@ -202,8 +216,8 @@ export default function PageClient({ services, clients, professionals, userSessi
         };
 
         const clientResult = await createClient(newClientData);
-        
-        if ('data' in clientResult) {
+
+        if ("data" in clientResult) {
           clientId = clientResult.data.id;
         } else {
           throw new Error(clientResult.message || "Error creating client");
@@ -211,7 +225,7 @@ export default function PageClient({ services, clients, professionals, userSessi
       }
 
       // Validaciones
-      if (!clientId || clientId === 'temp') {
+      if (!clientId || clientId === "temp") {
         throw new Error("Debe seleccionar o crear un cliente");
       }
 
@@ -249,19 +263,20 @@ export default function PageClient({ services, clients, professionals, userSessi
       const results = await Promise.all(appointmentPromises);
 
       // Verificar si alguna cita falló
-      const failedAppointments = results.filter(result => 'message' in result);
+      const failedAppointments = results.filter(
+        (result) => "message" in result,
+      );
       console.log("Appointment creation results:", results);
       if (failedAppointments.length > 0) {
         throw new Error("Error creating some appointments");
       }
 
       setSuccess(true);
-      
+
       // Redirect after success
       setTimeout(() => {
         router.push("/appointments");
       }, 1500);
-
     } catch (error: any) {
       console.error("Error creating appointment:", error);
       setError(error.message || "Error al crear la cita");
@@ -287,12 +302,18 @@ export default function PageClient({ services, clients, professionals, userSessi
 
   // Validación del formulario
   const isFormValid = () => {
-    const hasClient = selectedClient || (showNewClientForm && formData.clientName.trim() && formData.clientPhone.trim());
+    const hasClient =
+      selectedClient ||
+      (showNewClientForm &&
+        formData.clientName.trim() &&
+        formData.clientPhone.trim());
     const hasProfessional = selectedProfessional;
     const hasServices = selectedServices.length > 0;
     const hasDateTime = selectedDate && selectedTime;
-    
-    return hasClient && hasProfessional && hasServices && hasDateTime && !isLoading;
+
+    return (
+      hasClient && hasProfessional && hasServices && hasDateTime && !isLoading
+    );
   };
 
   return (
@@ -521,10 +542,13 @@ export default function PageClient({ services, clients, professionals, userSessi
                     <Button
                       type="button"
                       onClick={() => {
-                        if (formData.clientName.trim() && formData.clientPhone.trim()) {
+                        if (
+                          formData.clientName.trim() &&
+                          formData.clientPhone.trim()
+                        ) {
                           // Crear un cliente temporal para la UI
                           const tempClient = {
-                            id: 'temp',
+                            id: "temp",
                             fullName: formData.clientName,
                             email: formData.clientEmail,
                             phone: formData.clientPhone,
@@ -533,7 +557,10 @@ export default function PageClient({ services, clients, professionals, userSessi
                           setShowNewClientForm(false);
                         }
                       }}
-                      disabled={!formData.clientName.trim() || !formData.clientPhone.trim()}
+                      disabled={
+                        !formData.clientName.trim() ||
+                        !formData.clientPhone.trim()
+                      }
                     >
                       Seleccionar Cliente
                     </Button>
@@ -563,13 +590,15 @@ export default function PageClient({ services, clients, professionals, userSessi
                       placeholder="Buscar profesional por nombre..."
                       value={professionalSearch}
                       onChange={(e) => setProfessionalSearch(e.target.value)}
-                      onFocus={() => setProfessionalSearch(professionalSearch || ' ')} // Activa el dropdown al hacer focus
+                      onFocus={() =>
+                        setProfessionalSearch(professionalSearch || " ")
+                      } // Activa el dropdown al hacer focus
                       className="pl-10"
                     />
                   </div>
 
                   {/* Dropdown de profesionales */}
-                  {(professionalSearch || professionalSearch === ' ') && (
+                  {(professionalSearch || professionalSearch === " ") && (
                     <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                       {filteredProfessionals.length > 0 ? (
                         <div className="py-2">
@@ -577,11 +606,15 @@ export default function PageClient({ services, clients, professionals, userSessi
                             <div
                               key={professional.id}
                               className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                              onClick={() => handleProfessionalSelect(professional)}
+                              onClick={() =>
+                                handleProfessionalSelect(professional)
+                              }
                             >
                               <Avatar className="h-10 w-10">
                                 <AvatarImage
-                                  src={professional.avatar || "/placeholder.svg"}
+                                  src={
+                                    professional.avatar || "/placeholder.svg"
+                                  }
                                 />
                                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
                                   {professional.fullName
@@ -609,7 +642,7 @@ export default function PageClient({ services, clients, professionals, userSessi
                         </div>
                       ) : (
                         <div className="py-8 text-center">
-                          {professionalSearch === ' ' ? (
+                          {professionalSearch === " " ? (
                             <>
                               <Users className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                               <p className="text-sm text-gray-500">
@@ -618,7 +651,8 @@ export default function PageClient({ services, clients, professionals, userSessi
                             </>
                           ) : (
                             <p className="text-sm text-gray-500">
-                              No se encontraron profesionales con "{professionalSearch}"
+                              No se encontraron profesionales con "
+                              {professionalSearch}"
                             </p>
                           )}
                         </div>
@@ -814,7 +848,9 @@ export default function PageClient({ services, clients, professionals, userSessi
                       >
                         <span>{service}</span>
                         <span className="text-sm text-gray-500">
-                          ${services.find((s) => s.name === service)?.price || "0"}
+                          $
+                          {services.find((s) => s.name === service)?.price ||
+                            "0"}
                         </span>
                       </li>
                     ))}

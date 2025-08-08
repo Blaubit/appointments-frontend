@@ -1,8 +1,8 @@
 "use server";
 
 import axios, { isAxiosError } from "axios";
-import { ErrorResponse, SuccessReponse, } from "@/types/api";
-import { User  } from "@/types";
+import { ErrorResponse, SuccessReponse } from "@/types/api";
+import { User } from "@/types";
 import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 

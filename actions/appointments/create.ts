@@ -8,15 +8,14 @@ import { revalidatePath } from "next/cache";
 import { appointmentDto } from "@/types/dto/appointment/appointmentDto";
 import { Appointment } from "@/types/";
 
-
 export default async function create({
-    clientId,
-    professionalId,
-    serviceId,
-    appointmentDate,
-    startTime,
-    status,
-    notes = "",
+  clientId,
+  professionalId,
+  serviceId,
+  appointmentDate,
+  startTime,
+  status,
+  notes = "",
 }: appointmentDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
@@ -27,15 +26,15 @@ export default async function create({
 
     console.log("Fetching appointment from:", url);
     const body = {
-        clientId,
-        professionalId,
-        serviceId,
-        appointmentDate,
-        startTime,
-        status,
-        notes,
+      clientId,
+      professionalId,
+      serviceId,
+      appointmentDate,
+      startTime,
+      status,
+      notes,
     };
-    console.log("Request body:", body); 
+    console.log("Request body:", body);
     const response = await axios.post<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,

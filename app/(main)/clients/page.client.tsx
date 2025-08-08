@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ClientForm } from "@/components/client-form";
-import {create} from "@/actions/clients/create";
+import { create } from "@/actions/clients/create";
 import edit from "@/actions/clients/edit";
 import {
   Users,

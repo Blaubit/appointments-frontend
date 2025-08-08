@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsDateString, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString, Matches } from "class-validator";
 
 export class appointmentDto {
   @IsString()
@@ -18,7 +18,7 @@ export class appointmentDto {
   appointmentDate: string; // Formato: YYYY-MM-DD
 
   @Matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, {
-    message: 'startTime must be in the format HH:mm',
+    message: "startTime must be in the format HH:mm",
   })
   @IsNotEmpty()
   startTime: string; // Formato: HH:mm

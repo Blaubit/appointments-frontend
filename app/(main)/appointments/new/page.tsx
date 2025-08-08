@@ -10,11 +10,13 @@ export default async function Page() {
   const clients: Client[] = (await findAllClients()).data; // obteniendo los clientes
   const professionals: User[] = (await findAllProfessionals()).data; // obteniendo todos los profesionales
   const userSession = await getUser(); // obteniendo la sesión del usuario
-  
-  return <PageClient 
-    services={services} 
-    clients={clients} 
-    professionals={professionals}
-    userSession={userSession}
-  />;
+
+  return (
+    <PageClient
+      services={services}
+      clients={clients}
+      professionals={professionals}
+      userSession={userSession}
+    />
+  );
 }
