@@ -7,10 +7,8 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment } from "@/types";
 
-
-
 export async function findHistory(
-    id:string,
+  id: string,
 ): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
   try {
     const cookieStore = await cookies();
@@ -18,13 +16,13 @@ export async function findHistory(
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
     const session = cookieStore.get("session")?.value;
-    
+
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
-      }
+      },
     });
-    
+
     console.log("response", response);
     return {
       data: response.data.data.data,

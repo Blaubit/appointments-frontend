@@ -6,10 +6,8 @@ import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { Client } from "@/types";
 
-
-
 export async function findOne(
-    id:string,
+  id: string,
 ): Promise<SuccessReponse<Client> | ErrorResponse | any> {
   try {
     const cookieStore = await cookies();
@@ -21,10 +19,9 @@ export async function findOne(
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
-      }
+      },
     });
-    
-  
+
     return {
       data: response.data,
       status: 200,
