@@ -31,7 +31,8 @@ import {
   getStatusIcon,
   getStatusText,
 } from "@/utils/functions/appointmentStatus";
-
+import WhatsappIcon from "./icons/whatsapp-icon";
+import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 interface AppointmentDetailsDialogProps {
   appointment: Appointment | null;
   isOpen: boolean;
@@ -201,9 +202,26 @@ export function AppointmentDetailsDialog({
                       variant="outline"
                       onClick={() => onEmail(appointment)}
                     >
-                      <Mail className="h-3 w-3 mr-1" />
+                       <Mail className="h-3 w-3 mr-1"  />
                       Email
                     </Button>
+                    
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openWhatsApp(
+                        appointment.client.phone,
+                        `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
+                          appointment.professional.fullName
+                        )}`
+                      )}
+                    >
+                      <WhatsappIcon className="text-green-500" width={32} height={32} />
+                    
+
+                      WhatsApp
+                    </Button>
+                    
                   </div>
                 </div>
               </div>

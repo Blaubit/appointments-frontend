@@ -63,6 +63,8 @@ import type {
   ClientFormData,
   ClientEditFormData,
 } from "@/types";
+import WhatsappIcon from "@/components/icons/whatsapp-icon";
+import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 
 interface ClientsPageClientProps {
   clients: Client[];
@@ -451,6 +453,12 @@ export default function ClientsPageClient({
                           >
                             <Mail className="h-4 w-4 mr-2" />
                             Enviar Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(() => openWhatsApp(client.phone,"Buen dia"))}
+                          >
+                          <WhatsappIcon className="text-green-500 dark:bg-gray-900" width={32} height={32} />
+                           WhatsApp
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleScheduleAppointment(client)}
