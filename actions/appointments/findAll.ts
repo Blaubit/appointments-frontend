@@ -20,7 +20,7 @@ export default async function findAll(
     const companyId = User ? JSON.parse(User).companyId : null;
     //const UserId = User ? JSON.parse(User).companyId : null;
     //const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${User}`;
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments?limit=6`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/all-with-stats?limit=6`;
     const parsedParams = parsePaginationParams(props.searchParams);
     //console.log("url", url);
     const response = await axios.get(url, {
@@ -35,16 +35,11 @@ export default async function findAll(
     });
 
     return {
-      data: response.data.data,
+      data: response.data.appointments.data,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.meta,
-      stats: {
-        total: response.data.meta.totalItems,
-        confirmed: 10,
-        pending: 5,
-        cancelled: 2,
-      },
+      meta: response.data.appointments.meta,
+      stats: response.data.stats,
     };
   } catch (error) {
     console.log(error);
