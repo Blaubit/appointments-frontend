@@ -344,20 +344,20 @@ export default function PageClient({
   };
 
   const statsCards = [
-    { title: "Total Citas", value: stats.today_count, color: "text-blue-600" },
+    { title: "Total Citas", value: stats.todayCount, color: "text-blue-600" },
     {
       title: "Confirmadas",
-      value: stats.confirmed_count,
+      value: stats.confirmedCount,
       color: "text-green-600",
     },
     {
       title: "Pendientes",
-      value: stats.pending_count,
+      value: stats.pendingCount,
       color: "text-yellow-600",
     },
     {
       title: "Canceladas",
-      value: stats.cancelled_count,
+      value: stats.cancelledCount,
       color: "text-red-600",
     },
   ];

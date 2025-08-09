@@ -18,11 +18,11 @@ export interface Appointment {
 }
 
 export interface AppointmentStats {
-  today_count: number;
-  twomorrow_count: number;
-  confirmed_count: number;
-  pending_count: number;
-  cancelled_count: number;
+  todayCount: number;
+  tomorrowCount: number;
+  confirmedCount: number;
+  pendingCount: number;
+  cancelledCount: number;
 }
 
 export interface Pagination {
