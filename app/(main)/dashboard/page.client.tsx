@@ -155,8 +155,8 @@ export default function DashboardClient({
             ¡Buen día, {user.fullName.split(" ")[0]}! 👋
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Tienes {appointmentStats.today_count}{" "}
-            {appointmentStats.today_count === 1
+            Tienes {appointmentStats.todayCount}{" "}
+            {appointmentStats.todayCount === 1
               ? "cita programada"
               : "citas programadas"}{" "}
             para hoy. Aquí tienes un resumen de tu jornada.
@@ -174,7 +174,7 @@ export default function DashboardClient({
                       Citas Hoy
                     </p>
                     <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.today_count}
+                      {appointmentStats.todayCount}
                     </p>
                   </div>
                   <div
@@ -195,7 +195,7 @@ export default function DashboardClient({
                       Confirmadas
                     </p>
                     <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.confirmed_count}
+                      {appointmentStats.confirmedCount}
                     </p>
                   </div>
                   <div
@@ -217,7 +217,7 @@ export default function DashboardClient({
                       Pendientes
                     </p>
                     <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.pending_count}
+                      {appointmentStats.pendingCount}
                     </p>
                   </div>
                   <div
@@ -238,7 +238,7 @@ export default function DashboardClient({
                       Canceladas
                     </p>
                     <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.cancelled_count}
+                      {appointmentStats.cancelledCount}
                     </p>
                   </div>
                   <div
