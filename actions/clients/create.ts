@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { ClientFormData } from "@/types";
 import { Client } from "@/types";
 
-export default async function create({
+export async function create({
   fullName,
   email,
   phone,

@@ -17,31 +17,54 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Clock,
-  User,
+  User as UserIcon,
   Save,
   UserPlus,
   Search,
   CheckCircle,
   DollarSign,
+  AlertCircle,
+  Users,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
-import type { Service, Client } from "@/types";
+import type { Service, Client, User } from "@/types";
 import { CalendarCard } from "@/components/calendar-card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import create from "@/actions/appointments/create";
+import { create as createClient } from "@/actions/clients/create";
+
 type Props = {
   services: Service[];
   clients: Client[];
+  professionals?: User[];
+  userSession?: User;
 };
 
-export default function PageClient({ services, clients }: Props) {
+export default function PageClient({
+  services,
+  clients,
+  professionals,
+  userSession,
+}: Props) {
+  const router = useRouter();
   const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
+    null,
+  );
   const [selectedService, setSelectedService] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [clientSearch, setClientSearch] = useState("");
+  const [professionalSearch, setProfessionalSearch] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
   const totalPrice = selectedServices.reduce((sum, id) => {
     const service = services.find((s) => s.id === id);
     return sum + (service ? Number(service.price) : 0);
@@ -50,18 +73,20 @@ export default function PageClient({ services, clients }: Props) {
     const service = services.find((s) => s.id === id);
     return sum + (service ? Number(service.durationMinutes) : 0);
   }, 0);
+
   // Form data
   const [formData, setFormData] = useState({
     clientName: "",
     clientEmail: "",
     clientPhone: "",
+    professionalId: "",
     service: "",
     date: "",
     time: "",
     duration: "",
     price: "",
     notes: "",
-    status: "pending",
+    status: "pending" as const,
   });
 
   const availableTimes = [
@@ -87,24 +112,72 @@ export default function PageClient({ services, clients }: Props) {
     client.fullName.toLowerCase().includes(clientSearch.toLowerCase()),
   );
 
+  const filteredProfessionals =
+    professionals?.filter((professional) =>
+      professional.fullName
+        .toLowerCase()
+        .includes(professionalSearch.toLowerCase()),
+    ) || [];
+
   const [selectedServicesData, setSelectedServicesData] = useState<string[]>(
     [],
   );
+
   useEffect(() => {
     const names = selectedServices.map(
       (id) => services.find((s) => s.id.toString() === id)?.name || "",
     );
     setSelectedServicesData(names);
   }, [selectedServices, services]);
+
+  // Auto-seleccionar profesional si el usuario logueado es profesional
+  useEffect(() => {
+    if (
+      userSession &&
+      userSession.role?.name === "profesional" &&
+      !selectedProfessional
+    ) {
+      // Si el usuario logueado es profesional, auto-seleccionarlo
+      setSelectedProfessional(userSession);
+      setFormData((prev) => ({
+        ...prev,
+        professionalId: userSession.id.toString(),
+      }));
+    }
+  }, [userSession, selectedProfessional]);
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest(".professional-dropdown-container")) {
+        setProfessionalSearch("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleClientSelect = (client: any) => {
     setSelectedClient(client);
     setFormData({
       ...formData,
-      clientName: client.name,
+      clientName: client.fullName,
       clientEmail: client.email,
       clientPhone: client.phone,
     });
     setShowNewClientForm(false);
+    setClientSearch("");
+  };
+
+  const handleProfessionalSelect = (professional: User) => {
+    setSelectedProfessional(professional);
+    setFormData({
+      ...formData,
+      professionalId: professional.id.toString(),
+    });
+    setProfessionalSearch("");
   };
 
   const handleServiceSelect = (serviceId: string) => {
@@ -120,17 +193,96 @@ export default function PageClient({ services, clients }: Props) {
     }
   };
 
+  const handleDateChange = (fecha: string) => {
+    setSelectedDate(fecha);
+    setFormData({ ...formData, date: fecha });
+    console.log("Fecha elegida:", fecha);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      let clientId = selectedClient?.id;
 
-    console.log("New appointment:", formData);
-    setIsLoading(false);
+      // Si no hay cliente seleccionado, crear uno nuevo
+      if (!clientId || clientId === "temp") {
+        const newClientData = {
+          fullName: formData.clientName,
+          email: formData.clientEmail || "",
+          phone: formData.clientPhone,
+        };
 
-    // Redirect to appointments list or show success message
+        const clientResult = await createClient(newClientData);
+
+        if ("data" in clientResult) {
+          clientId = clientResult.data.id;
+        } else {
+          throw new Error(clientResult.message || "Error creating client");
+        }
+      }
+
+      // Validaciones
+      if (!clientId || clientId === "temp") {
+        throw new Error("Debe seleccionar o crear un cliente");
+      }
+
+      if (!selectedProfessional) {
+        throw new Error("Debe seleccionar un profesional");
+      }
+
+      if (selectedServices.length === 0) {
+        throw new Error("Debe seleccionar al menos un servicio");
+      }
+
+      if (!selectedDate) {
+        throw new Error("Debe seleccionar una fecha");
+      }
+
+      if (!selectedTime) {
+        throw new Error("Debe seleccionar una hora");
+      }
+
+      // Crear las citas (una por cada servicio seleccionado)
+      const appointmentPromises = selectedServices.map(async (serviceId) => {
+        const appointmentData = {
+          clientId: clientId.toString(),
+          professionalId: selectedProfessional.id.toString(),
+          serviceId: serviceId,
+          appointmentDate: selectedDate,
+          startTime: selectedTime,
+          status: "pending",
+          notes: formData.notes || "",
+        };
+        console.log("Creating appointment with data:", appointmentData);
+        return await create(appointmentData);
+      });
+
+      const results = await Promise.all(appointmentPromises);
+
+      // Verificar si alguna cita falló
+      const failedAppointments = results.filter(
+        (result) => "message" in result,
+      );
+      console.log("Appointment creation results:", results);
+      if (failedAppointments.length > 0) {
+        throw new Error("Error creating some appointments");
+      }
+
+      setSuccess(true);
+
+      // Redirect after success
+      setTimeout(() => {
+        router.push("/appointments");
+      }, 1500);
+    } catch (error: any) {
+      console.error("Error creating appointment:", error);
+      setError(error.message || "Error al crear la cita");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const generateCalendarDays = () => {
@@ -145,12 +297,25 @@ export default function PageClient({ services, clients }: Props) {
 
     return days;
   };
-  const [fechaSeleccionada, setFechaSeleccionada] = useState("");
+
   const calendarDays = generateCalendarDays();
-  const handleDateChange = (fecha: string) => {
-    setFechaSeleccionada(fecha);
-    console.log("Fecha elegida:", fecha); // opcional: para depuración
+
+  // Validación del formulario
+  const isFormValid = () => {
+    const hasClient =
+      selectedClient ||
+      (showNewClientForm &&
+        formData.clientName.trim() &&
+        formData.clientPhone.trim());
+    const hasProfessional = selectedProfessional;
+    const hasServices = selectedServices.length > 0;
+    const hasDateTime = selectedDate && selectedTime;
+
+    return (
+      hasClient && hasProfessional && hasServices && hasDateTime && !isLoading
+    );
   };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -165,12 +330,30 @@ export default function PageClient({ services, clients }: Props) {
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Error Alert */}
+        {error && (
+          <Alert className="mb-6" variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <Alert className="mb-6" variant="default">
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
+              ¡Cita creada exitosamente! Redirigiendo...
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Client Selection */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
+                <UserIcon className="h-5 w-5" />
                 <span>Seleccionar Cliente</span>
               </CardTitle>
               <CardDescription>
@@ -259,7 +442,7 @@ export default function PageClient({ services, clients }: Props) {
                   </Avatar>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedClient.name}
+                      {selectedClient.fullName}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {selectedClient.email}
@@ -356,7 +539,172 @@ export default function PageClient({ services, clients }: Props) {
                     >
                       Cancelar
                     </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          formData.clientName.trim() &&
+                          formData.clientPhone.trim()
+                        ) {
+                          // Crear un cliente temporal para la UI
+                          const tempClient = {
+                            id: "temp",
+                            fullName: formData.clientName,
+                            email: formData.clientEmail,
+                            phone: formData.clientPhone,
+                          };
+                          setSelectedClient(tempClient);
+                          setShowNewClientForm(false);
+                        }
+                      }}
+                      disabled={
+                        !formData.clientName.trim() ||
+                        !formData.clientPhone.trim()
+                      }
+                    >
+                      Seleccionar Cliente
+                    </Button>
                   </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Professional Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="h-5 w-5" />
+                <span>Seleccionar Profesional</span>
+              </CardTitle>
+              <CardDescription>
+                Elige el profesional que atenderá la cita
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!selectedProfessional && (
+                <div className="relative professional-dropdown-container">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                    <Input
+                      placeholder="Buscar profesional por nombre..."
+                      value={professionalSearch}
+                      onChange={(e) => setProfessionalSearch(e.target.value)}
+                      onFocus={() =>
+                        setProfessionalSearch(professionalSearch || " ")
+                      } // Activa el dropdown al hacer focus
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {/* Dropdown de profesionales */}
+                  {(professionalSearch || professionalSearch === " ") && (
+                    <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                      {filteredProfessionals.length > 0 ? (
+                        <div className="py-2">
+                          {filteredProfessionals.map((professional) => (
+                            <div
+                              key={professional.id}
+                              className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                              onClick={() =>
+                                handleProfessionalSelect(professional)
+                              }
+                            >
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage
+                                  src={
+                                    professional.avatar || "/placeholder.svg"
+                                  }
+                                />
+                                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
+                                  {professional.fullName
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                  {professional.fullName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {professional.email}
+                                </p>
+                                <div className="flex items-center mt-1">
+                                  <Star className="h-3 w-3 text-yellow-400 mr-1" />
+                                  <span className="text-xs text-gray-400">
+                                    Especialista
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center">
+                          {professionalSearch === " " ? (
+                            <>
+                              <Users className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                              <p className="text-sm text-gray-500">
+                                No hay profesionales disponibles
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No se encontraron profesionales con "
+                              {professionalSearch}"
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedProfessional && (
+                <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage
+                      src={selectedProfessional.avatar || "/placeholder.svg"}
+                    />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                      {selectedProfessional.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedProfessional.fullName}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedProfessional.email}
+                    </p>
+                    <div className="flex items-center mt-1">
+                      <Star className="h-3 w-3 text-yellow-400 mr-1" />
+                      <span className="text-xs text-gray-500">
+                        Profesional seleccionado
+                      </span>
+                    </div>
+                  </div>
+                  <CheckCircle className="h-5 w-5 text-blue-600" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedProfessional(null);
+                      setFormData({
+                        ...formData,
+                        professionalId: "",
+                      });
+                      setProfessionalSearch("");
+                    }}
+                  >
+                    Cambiar
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -367,10 +715,10 @@ export default function PageClient({ services, clients }: Props) {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
-                <span>Servicio</span>
+                <span>Servicios</span>
               </CardTitle>
               <CardDescription>
-                Selecciona el tipo de servicio para la cita
+                Selecciona uno o más servicios para la cita
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -500,17 +848,17 @@ export default function PageClient({ services, clients }: Props) {
                       >
                         <span>{service}</span>
                         <span className="text-sm text-gray-500">
+                          $
                           {services.find((s) => s.name === service)?.price ||
-                            "0"}{" "}
-                          USD
+                            "0"}
                         </span>
                       </li>
                     ))}
                   </ul>
                   <div className="mt-4 border-t pt-2">
                     <div className="flex items-center justify-between">
-                      <span>Total:</span>
-                      <span className="font-medium">
+                      <span className="font-medium">Total:</span>
+                      <span className="font-bold text-lg">
                         ${totalPrice.toFixed(2)}
                       </span>
                     </div>
@@ -529,24 +877,18 @@ export default function PageClient({ services, clients }: Props) {
           {/* Action Buttons */}
           <div className="flex justify-end space-x-4">
             <Link href="/appointments">
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" disabled={isLoading}>
                 Cancelar
               </Button>
             </Link>
             <Button
               type="submit"
-              disabled={
-                isLoading ||
-                !formData.clientName ||
-                !selectedService ||
-                !selectedDate ||
-                !selectedTime
-              }
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+              disabled={!isFormValid()}
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
-                  <div className="spinner mr-2"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Guardando...
                 </>
               ) : (
