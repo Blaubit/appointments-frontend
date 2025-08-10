@@ -12,6 +12,7 @@ export default async function ClientsPage({
 }) {
   const clients = await findAll();
   // Calcular estadísticas basadas en clientes filtrados
+  console.log("clients", clients);
   const stats: ClientStats = {
     totalClients: clients.data.length,
     activeClients: clients.data.length,
@@ -23,7 +24,7 @@ export default async function ClientsPage({
         createdDate.getFullYear() === now.getFullYear()
       );
     }).length,
-    averageRating: 100,
+    averageRating: 5,
   };
 
   return (

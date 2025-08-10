@@ -362,7 +362,7 @@ export default function DashboardClient({
                                                   )}
                           >
                             <WhatsappIcon className="text-green-500 dark:bg-gray-900" width={32} height={32} />
-                            <span className="ml-1 sm:hidden">Email</span>
+                            <span className="ml-1 sm:hidden">WhatsApp</span>
                           </Button>
                         </Link>
                       </div>
