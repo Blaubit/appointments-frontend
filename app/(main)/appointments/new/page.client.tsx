@@ -74,6 +74,20 @@ export default function PageClient({
     return sum + (service ? Number(service.durationMinutes) : 0);
   }, 0);
 
+  // Function to format duration in hours and minutes
+  const formatDuration = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours === 0) {
+      return `${minutes} min`;
+    } else if (minutes === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h ${minutes}min`;
+    }
+  };
+
   // Form data
   const [formData, setFormData] = useState({
     clientName: "",
@@ -324,9 +338,6 @@ export default function PageClient({
         showBackButton={true}
         backButtonText="Citas"
         backButtonHref="/appointments"
-        notifications={{
-          count: 3,
-        }}
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -350,225 +361,229 @@ export default function PageClient({
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Client Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <UserIcon className="h-5 w-5" />
-                <span>Seleccionar Cliente</span>
-              </CardTitle>
-              <CardDescription>
-                Busca un cliente existente o crea uno nuevo
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!selectedClient && !showNewClientForm && (
-                <>
-                  <div className="flex space-x-2">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar cliente por nombre..."
-                        value={clientSearch}
-                        onChange={(e) => setClientSearch(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowNewClientForm(true)}
-                      className="whitespace-nowrap"
-                    >
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Nuevo Cliente
-                    </Button>
-                  </div>
+          {/* Client Selection */}
+<Card>
+  <CardHeader>
+    <CardTitle className="flex items-center space-x-2">
+      <UserIcon className="h-5 w-5" />
+      <span>Seleccionar Cliente</span>
+    </CardTitle>
+    <CardDescription>
+      Busca un cliente existente o crea uno nuevo
+    </CardDescription>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    {!selectedClient && !showNewClientForm && (
+      <>
+        <div className="flex space-x-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar cliente por nombre..."
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowNewClientForm(true)}
+            className="whitespace-nowrap"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Nuevo Cliente
+          </Button>
+        </div>
 
-                  {clientSearch && (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {filteredClients.map((client) => (
-                        <div
-                          key={client.id}
-                          className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                          onClick={() => handleClientSelect(client)}
-                        >
-                          <Avatar>
-                            <AvatarImage
-                              src={client.avatar || "/placeholder.svg"}
-                            />
-                            <AvatarFallback>
-                              {client.fullName
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {client.fullName}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {client.email}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {client.totalAppointments} citas • Última visita:{" "}
-                              {client.createdAt}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {filteredClients.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">
-                          No se encontraron clientes
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {selectedClient && (
-                <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <Avatar>
-                    <AvatarImage
-                      src={selectedClient.avatar || "/placeholder.svg"}
-                    />
-                    <AvatarFallback>
-                      {selectedClient.fullName
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedClient.fullName}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {selectedClient.email}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {selectedClient.phone}
-                    </p>
-                  </div>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedClient(null);
-                      setFormData({
-                        ...formData,
-                        clientName: "",
-                        clientEmail: "",
-                        clientPhone: "",
-                      });
-                    }}
-                  >
-                    Cambiar
-                  </Button>
+        {clientSearch && (
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {filteredClients.map((client) => (
+              <div
+                key={client.id}
+                className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                onClick={() => handleClientSelect(client)}
+              >
+                <Avatar>
+                  <AvatarImage
+                    src={client.avatar || "/placeholder.svg"}
+                  />
+                  <AvatarFallback>
+                    {client.fullName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {client.fullName}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {client.email}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {client.totalAppointments} citas • Última visita:{" "}
+                    {client.createdAt}
+                  </p>
                 </div>
-              )}
+              </div>
+            ))}
+            {filteredClients.length === 0 && (
+              <p className="text-center text-gray-500 py-4">
+                No se encontraron clientes
+              </p>
+            )}
+          </div>
+        )}
+      </>
+    )}
 
-              {showNewClientForm && (
-                <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                  <h4 className="font-medium text-gray-900 dark:text-white">
-                    Nuevo Cliente
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="clientName">Nombre completo *</Label>
-                      <Input
-                        id="clientName"
-                        value={formData.clientName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            clientName: e.target.value,
-                          })
-                        }
-                        placeholder="Nombre del cliente"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="clientPhone">Teléfono *</Label>
-                      <Input
-                        id="clientPhone"
-                        value={formData.clientPhone}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            clientPhone: e.target.value,
-                          })
-                        }
-                        placeholder="+1 (555) 123-4567"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="clientEmail">Email</Label>
-                    <Input
-                      id="clientEmail"
-                      type="email"
-                      value={formData.clientEmail}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          clientEmail: e.target.value,
-                        })
-                      }
-                      placeholder="cliente@email.com"
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowNewClientForm(false);
-                        setFormData({
-                          ...formData,
-                          clientName: "",
-                          clientEmail: "",
-                          clientPhone: "",
-                        });
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (
-                          formData.clientName.trim() &&
-                          formData.clientPhone.trim()
-                        ) {
-                          // Crear un cliente temporal para la UI
-                          const tempClient = {
-                            id: "temp",
-                            fullName: formData.clientName,
-                            email: formData.clientEmail,
-                            phone: formData.clientPhone,
-                          };
-                          setSelectedClient(tempClient);
-                          setShowNewClientForm(false);
-                        }
-                      }}
-                      disabled={
-                        !formData.clientName.trim() ||
-                        !formData.clientPhone.trim()
-                      }
-                    >
-                      Seleccionar Cliente
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    {selectedClient && (
+      <div className="flex items-start sm:items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+        <Avatar className="flex-shrink-0">
+          <AvatarImage
+            src={selectedClient.avatar || "/placeholder.svg"}
+          />
+          <AvatarFallback>
+            {selectedClient.fullName
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-gray-900 dark:text-white truncate">
+            {selectedClient.fullName}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+            {selectedClient.email}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+            {selectedClient.phone}
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedClient(null);
+              setFormData({
+                ...formData,
+                clientName: "",
+                clientEmail: "",
+                clientPhone: "",
+              });
+            }}
+            className="text-xs px-2 py-1 h-auto"
+          >
+            Cambiar
+          </Button>
+        </div>
+      </div>
+    )}
+
+    {showNewClientForm && (
+      <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
+        <h4 className="font-medium text-gray-900 dark:text-white">
+          Nuevo Cliente
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="clientName">Nombre completo *</Label>
+            <Input
+              id="clientName"
+              value={formData.clientName}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  clientName: e.target.value,
+                })
+              }
+              placeholder="Nombre del cliente"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="clientPhone">Teléfono *</Label>
+            <Input
+              id="clientPhone"
+              value={formData.clientPhone}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  clientPhone: e.target.value,
+                })
+              }
+              placeholder="+1 (555) 123-4567"
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="clientEmail">Email</Label>
+          <Input
+            id="clientEmail"
+            type="email"
+            value={formData.clientEmail}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                clientEmail: e.target.value,
+              })
+            }
+            placeholder="cliente@email.com"
+          />
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setShowNewClientForm(false);
+              setFormData({
+                ...formData,
+                clientName: "",
+                clientEmail: "",
+                clientPhone: "",
+              });
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              if (
+                formData.clientName.trim() &&
+                formData.clientPhone.trim()
+              ) {
+                // Crear un cliente temporal para la UI
+                const tempClient = {
+                  id: "temp",
+                  fullName: formData.clientName,
+                  email: formData.clientEmail,
+                  phone: formData.clientPhone,
+                };
+                setSelectedClient(tempClient);
+                setShowNewClientForm(false);
+              }
+            }}
+            disabled={
+              !formData.clientName.trim() ||
+              !formData.clientPhone.trim()
+            }
+          >
+            Seleccionar Cliente
+          </Button>
+        </div>
+      </div>
+    )}
+  </CardContent>
+</Card>
 
           {/* Professional Selection */}
           <Card>
@@ -663,8 +678,8 @@ export default function PageClient({
               )}
 
               {selectedProfessional && (
-                <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <Avatar className="h-12 w-12">
+                <div className="flex items-start sm:items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <Avatar className="h-12 w-12 flex-shrink-0">
                     <AvatarImage
                       src={selectedProfessional.avatar || "/placeholder.svg"}
                     />
@@ -675,36 +690,39 @@ export default function PageClient({
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
                       {selectedProfessional.fullName}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                       {selectedProfessional.email}
                     </p>
                     <div className="flex items-center mt-1">
-                      <Star className="h-3 w-3 text-yellow-400 mr-1" />
+                      <Star className="h-3 w-3 text-yellow-400 mr-1 flex-shrink-0" />
                       <span className="text-xs text-gray-500">
                         Profesional seleccionado
                       </span>
                     </div>
                   </div>
-                  <CheckCircle className="h-5 w-5 text-blue-600" />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedProfessional(null);
-                      setFormData({
-                        ...formData,
-                        professionalId: "",
-                      });
-                      setProfessionalSearch("");
-                    }}
-                  >
-                    Cambiar
-                  </Button>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedProfessional(null);
+                        setFormData({
+                          ...formData,
+                          professionalId: "",
+                        });
+                        setProfessionalSearch("");
+                      }}
+                      className="text-xs px-2 py-1 h-auto"
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -757,7 +775,7 @@ export default function PageClient({
                       <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                         <span className="flex items-center">
                           <Clock className="h-4 w-4 mr-1" />
-                          {service.durationMinutes} min
+                          {formatDuration(service.durationMinutes)}
                         </span>
                         <span className="flex items-center font-medium">
                           <DollarSign className="h-4 w-4 mr-1" />
@@ -865,7 +883,7 @@ export default function PageClient({
                     <div className="flex items-center justify-between mt-1">
                       <span>Duración Total:</span>
                       <span className="font-medium">
-                        {totalDuration} minutos
+                        {formatDuration(totalDuration)}
                       </span>
                     </div>
                   </div>

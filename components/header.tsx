@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Calendar,
-  Bell,
   Settings,
   LogOut,
   ArrowLeft,
@@ -39,16 +38,6 @@ interface HeaderProps {
   showBackButton?: boolean;
   backButtonText?: string;
   backButtonHref?: string;
-  notifications?: {
-    count: number;
-    items?: Array<{
-      id: string;
-      title: string;
-      message: string;
-      time: string;
-      read: boolean;
-    }>;
-  };
   actions?: React.ReactNode;
   className?: string;
 }
@@ -59,11 +48,9 @@ export function Header({
   showBackButton = false,
   backButtonText = "Dashboard",
   backButtonHref = "/dashboard",
-  notifications = { count: 3 },
   actions,
   className = "",
 }: HeaderProps) {
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Usar el hook para obtener el usuario
@@ -100,32 +87,6 @@ export function Header({
   };
 
   const currentUser = user || defaultUser;
-
-  const defaultNotifications = [
-    {
-      id: "1",
-      title: "Nueva cita programada",
-      message: "María González reservó una cita para mañana a las 10:00",
-      time: "Hace 5 min",
-      read: false,
-    },
-    {
-      id: "2",
-      title: "Recordatorio de cita",
-      message: "Cita con Carlos Rodríguez en 30 minutos",
-      time: "Hace 25 min",
-      read: false,
-    },
-    {
-      id: "3",
-      title: "Cita cancelada",
-      message: "Ana Martínez canceló su cita de esta tarde",
-      time: "Hace 1 hora",
-      read: true,
-    },
-  ];
-
-  const notificationItems = notifications.items || defaultNotifications;
 
   return (
     <header
@@ -171,70 +132,6 @@ export function Header({
             {actions && (
               <div className="flex items-center space-x-4">{actions}</div>
             )}
-
-            {/* Notifications */}
-            <DropdownMenu
-              open={showNotifications}
-              onOpenChange={setShowNotifications}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  {notifications.count > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      {notifications.count > 9 ? "9+" : notifications.count}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel className="flex items-center justify-between">
-                  <span>Notificaciones</span>
-                  {notifications.count > 0 && (
-                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                      {notifications.count} nuevas
-                    </span>
-                  )}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="max-h-80 overflow-y-auto">
-                  {notificationItems.length > 0 ? (
-                    notificationItems.map((notification) => (
-                      <DropdownMenuItem
-                        key={notification.id}
-                        className="flex flex-col items-start p-4 cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between w-full">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {notification.title}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-2">
-                              {notification.time}
-                            </p>
-                          </div>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2" />
-                          )}
-                        </div>
-                      </DropdownMenuItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No hay notificaciones</p>
-                    </div>
-                  )}
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-center text-blue-600 hover:text-blue-700">
-                  Ver todas las notificaciones
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             {/* Theme Toggle */}
             <ThemeToggle variant="ghost" />
@@ -327,74 +224,7 @@ export function Header({
           </div>
 
           {/* Right Section - Mobile */}
-          <div className="flex md:hidden items-center space-x-2">
-            {/* Notifications - Mobile */}
-            <DropdownMenu
-              open={showNotifications}
-              onOpenChange={setShowNotifications}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  {notifications.count > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      {notifications.count > 9 ? "9+" : notifications.count}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-80 max-w-[calc(100vw-2rem)]"
-              >
-                <DropdownMenuLabel className="flex items-center justify-between">
-                  <span>Notificaciones</span>
-                  {notifications.count > 0 && (
-                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                      {notifications.count} nuevas
-                    </span>
-                  )}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="max-h-60 overflow-y-auto">
-                  {notificationItems.length > 0 ? (
-                    notificationItems.map((notification) => (
-                      <DropdownMenuItem
-                        key={notification.id}
-                        className="flex flex-col items-start p-3 cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between w-full">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {notification.title}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-2">
-                              {notification.time}
-                            </p>
-                          </div>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2 flex-shrink-0" />
-                          )}
-                        </div>
-                      </DropdownMenuItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No hay notificaciones</p>
-                    </div>
-                  )}
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-center text-blue-600 hover:text-blue-700">
-                  Ver todas las notificaciones
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
+          <div className="flex md:hidden items-center">
             {/* Mobile Menu */}
             <DropdownMenu
               open={showMobileMenu}

@@ -33,6 +33,7 @@ import {
 } from "@/utils/functions/appointmentStatus";
 import WhatsappIcon from "./icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
+
 interface AppointmentDetailsDialogProps {
   appointment: Appointment | null;
   isOpen: boolean;
@@ -128,84 +129,96 @@ export function AppointmentDetailsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Detalles de la Cita
+      <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            <span className="truncate">Detalles de la Cita</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Información completa de la cita programada
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Client Information */}
           <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <UserIcon className="h-4 w-4" />
-                Información del Cliente
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <UserIcon className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Información del Cliente</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-start gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage
-                    src={appointment.client.avatar || "/Avatar1.png"}
-                    alt={appointment.client.fullName}
-                  />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(appointment.client.fullName)}
-                  </AvatarFallback>
-                </Avatar>
+            <CardContent className="space-y-4">
+              {/* Mobile: Stack avatar and info vertically */}
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                <div className="flex items-center sm:flex-col sm:items-center gap-3 sm:gap-2">
+                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
+                    <AvatarImage
+                      src={appointment.client.avatar || "/Avatar1.png"}
+                      alt={appointment.client.fullName}
+                    />
+                    <AvatarFallback className="text-sm sm:text-lg">
+                      {getInitials(appointment.client.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="sm:hidden">
+                    <h3 className="font-medium text-sm">
+                      {appointment.client.fullName}
+                    </h3>
+                  </div>
+                </div>
+                
                 <div className="flex-1 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    <div className="hidden sm:block">
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Nombre
                       </Label>
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-medium truncate">
                         {appointment.client.fullName}
                       </p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Email
                       </Label>
-                      <p className="text-sm">{appointment.client.email}</p>
+                      <p className="text-xs sm:text-sm truncate">{appointment.client.email}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Teléfono
                       </Label>
-                      <p className="text-sm">{appointment.client.phone}</p>
+                      <p className="text-xs sm:text-sm">{appointment.client.phone}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Estado
                       </Label>
-                      <p className="text-sm">Activo</p>
+                      <p className="text-xs sm:text-sm">Activo</p>
                     </div>
                   </div>
-                  <div className="flex gap-2 pt-2">
+                  
+                  {/* Contact buttons - responsive layout */}
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onCall(appointment)}
+                      className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
                     >
-                      <Phone className="h-3 w-3 mr-1" />
-                      Llamar
+                      <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">Llamar</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onEmail(appointment)}
+                      className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
                     >
-                       <Mail className="h-3 w-3 mr-1"  />
-                      Email
+                      <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">Email</span>
                     </Button>
-                    
                     <Button
                       size="sm"
                       variant="outline"
@@ -215,13 +228,11 @@ export function AppointmentDetailsDialog({
                           appointment.professional.fullName
                         )}`
                       )}
+                      className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
                     >
-                      <WhatsappIcon className="text-green-500" width={32} height={32} />
-                    
-
-                      WhatsApp
+                      <WhatsappIcon className="text-green-500 mr-1 flex-shrink-0" width={16} height={16} />
+                      <span className="truncate">WhatsApp</span>
                     </Button>
-                    
                   </div>
                 </div>
               </div>
@@ -230,20 +241,20 @@ export function AppointmentDetailsDialog({
 
           {/* Appointment Information */}
           <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="h-4 w-4" />
-                Información de la Cita
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Calendar className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Información de la Cita</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                       Servicio
                     </Label>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium truncate">
                       {appointment.service.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -251,10 +262,10 @@ export function AppointmentDetailsDialog({
                     </p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                       Fecha y Hora
                     </Label>
-                    <p className="text-sm font-medium">
+                    <p className="text-xs sm:text-sm font-medium break-words">
                       {formatDateTime(
                         appointment.appointmentDate.toLocaleString(),
                         appointment.startTime,
@@ -262,31 +273,31 @@ export function AppointmentDetailsDialog({
                     </p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                       Duración
                     </Label>
                     <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <p className="text-sm">
+                      <Clock className="h-3 w-3 flex-shrink-0" />
+                      <p className="text-xs sm:text-sm">
                         {appointment.service.durationMinutes} minutos
                       </p>
                     </div>
                   </div>
                   {appointment.company.address && (
                     <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Ubicación
                       </Label>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        <p className="text-sm">{appointment.company.address}</p>
+                      <div className="flex items-start gap-1">
+                        <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs sm:text-sm break-words">{appointment.company.address}</p>
                       </div>
                     </div>
                   )}
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                       Estado
                     </Label>
                     <div className="mt-1">
@@ -294,7 +305,7 @@ export function AppointmentDetailsDialog({
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                       Precio
                     </Label>
                     <p className="text-sm font-medium">
@@ -302,7 +313,7 @@ export function AppointmentDetailsDialog({
                     </p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                       Estado de Pago
                     </Label>
                     <div className="mt-1">
@@ -311,10 +322,10 @@ export function AppointmentDetailsDialog({
                   </div>
                   {appointment.professional.fullName && (
                     <div>
-                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Doctor
                       </Label>
-                      <p className="text-sm">
+                      <p className="text-xs sm:text-sm truncate">
                         {appointment.professional.fullName}
                       </p>
                     </div>
@@ -327,19 +338,19 @@ export function AppointmentDetailsDialog({
           {/* Notes and Additional Information */}
           {appointment.notes && (
             <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <FileText className="h-4 w-4" />
-                  Información Adicional
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <FileText className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Información Adicional</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                     Notas
                   </Label>
-                  <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
                       {appointment.notes}
                     </p>
                   </div>
@@ -350,73 +361,76 @@ export function AppointmentDetailsDialog({
 
           {/* Timestamps */}
           <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-4 w-4" />
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Clock className="h-4 w-4 flex-shrink-0" />
                 Historial
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                     Creada
                   </Label>
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm break-words">
                     {new Date(appointment.createdAt).toLocaleString("es-ES")}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                     Última Actualización
                   </Label>
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm break-words">
                     {new Date(appointment.createdAt).toLocaleString("es-ES")}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                     Recordatorio Enviado
                   </Label>
-                  <p className="text-sm">{appointment ? "Sí" : "No"}</p>
+                  <p className="text-xs sm:text-sm">{appointment ? "Sí" : "No"}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button onClick={() => onEdit(appointment)} className="flex-1">
-              <Edit className="h-4 w-4 mr-2" />
-              Editar Cita
+          <div className="grid grid-cols-1 sm:flex sm:flex-row gap-2 sm:gap-3 pt-4">
+            <Button 
+              onClick={() => onEdit(appointment)} 
+              className="w-full sm:flex-1 h-10 text-sm"
+            >
+              <Edit className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Editar Cita</span>
             </Button>
             {appointment.status === "pending" && (
               <Button
                 onClick={() => onConfirm(appointment)}
                 variant="outline"
-                className="flex-1"
+                className="w-full sm:flex-1 h-10 text-sm"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Confirmar
+                <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Confirmar</span>
               </Button>
             )}
             {appointment.status !== "cancelled" && (
               <Button
                 onClick={() => onCancel(appointment)}
                 variant="outline"
-                className="flex-1"
+                className="w-full sm:flex-1 h-10 text-sm"
               >
-                <XCircle className="h-4 w-4 mr-2" />
-                Cancelar
+                <XCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Cancelar</span>
               </Button>
             )}
             <Button
               onClick={() => onDelete(appointment)}
               variant="destructive"
-              className="flex-1"
+              className="w-full sm:flex-1 h-10 text-sm"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Eliminar
+              <Trash2 className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Eliminar</span>
             </Button>
           </div>
         </div>
