@@ -40,7 +40,8 @@ import {
   getStatusIcon,
   getStatusText,
 } from "@/utils/functions/appointmentStatus";
-
+import WhatsappIcon from "@/components/icons/whatsapp-icon";
+import { openWhatsApp } from "@/utils/functions/openWhatsapp"; // Importar la función openWhatsApp
 type Props = {
   upcomingAppointments: Appointment[];
   appointmentStats: AppointmentStats;
@@ -353,8 +354,14 @@ export default function DashboardClient({
                             variant="outline"
                             size="sm"
                             className="text-xs"
+                            onClick={() => openWhatsApp(
+                                                    appointment.client.phone,
+                                                    `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
+                                                      appointment.professional.fullName
+                                                    )}`
+                                                  )}
                           >
-                            <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <WhatsappIcon className="text-green-500 dark:bg-gray-900" width={32} height={32} />
                             <span className="ml-1 sm:hidden">Email</span>
                           </Button>
                         </Link>
