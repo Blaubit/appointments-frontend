@@ -35,10 +35,10 @@ export default async function findAll(
     });
 
     return {
-      data: response.data.appointments.data,
+      data: response.data.data,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.appointments.meta,
+      meta: response.data.meta,
       stats: response.data.stats,
     };
   } catch (error) {
