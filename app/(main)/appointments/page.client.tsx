@@ -73,11 +73,13 @@ import {
   getStatusText,
 } from "@/utils/functions/appointmentStatus";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+
 type Props = {
   appointments: Appointment[];
   stats: AppointmentStats;
   pagination: Pagination;
   professionals?: User[];
+  currentUser?: User; // Add current user prop to check role
 };
 
 export default function PageClient({
@@ -85,6 +87,7 @@ export default function PageClient({
   stats,
   pagination,
   professionals,
+  currentUser,
 }: Props) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,6 +98,9 @@ export default function PageClient({
     useState<Appointment | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState("all");
+
+  // Check if current user is a professional
+  const isProfessional = currentUser?.role?.name === "profesional";
 
   // Helper function to check if date matches filter
   const doesDateMatchFilter = (
@@ -380,23 +386,20 @@ export default function PageClient({
         showBackButton={true}
         backButtonText="Dashboard"
         backButtonHref="/dashboard"
-        notifications={{
-          count: 3,
-        }}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Stats Cards - Responsive grid for mobile */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
           {statsCards.map((stat, index) => (
             <Card key={index}>
-              <CardContent className="p-6">
+              <CardContent className="p-3 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    <p className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">
                       {stat.title}
                     </p>
-                    <p className={`text-2xl font-bold ${stat.color}`}>
+                    <p className={`text-lg md:text-2xl font-bold ${stat.color}`}>
                       {stat.value}
                     </p>
                   </div>
@@ -432,9 +435,9 @@ export default function PageClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col gap-4 mb-6">
               {/* Search */}
-              <div className="flex-1">
+              <div className="w-full">
                 <Label htmlFor="search" className="sr-only">
                   Buscar
                 </Label>
@@ -450,102 +453,107 @@ export default function PageClient({
                 </div>
               </div>
 
-              {/* Status Filter */}
-              <div className="w-full md:w-48">
-                <Select value={statusFilter} onValueChange={handleStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="confirmed">Confirmada</SelectItem>
-                    <SelectItem value="scheduled">Agendada</SelectItem>
-                    <SelectItem value="completed">Completada</SelectItem>
-                    <SelectItem value="in_progress">En progreso</SelectItem>
-                    <SelectItem value="cancelled">Cancelada</SelectItem>
-                    <SelectItem value="no_show">No asistió</SelectItem>
-                    <SelectItem value="expired">Expirada</SelectItem>
-                    <SelectItem value="rescheduled">Reagendada</SelectItem>
-                    <SelectItem value="waitlist">Lista de espera</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Filters Row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Status Filter */}
+                <div className="w-full md:w-48">
+                  <Select value={statusFilter} onValueChange={handleStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los estados</SelectItem>
+                      <SelectItem value="confirmed">Confirmada</SelectItem>
+                      <SelectItem value="scheduled">Agendada</SelectItem>
+                      <SelectItem value="completed">Completada</SelectItem>
+                      <SelectItem value="in_progress">En progreso</SelectItem>
+                      <SelectItem value="cancelled">Cancelada</SelectItem>
+                      <SelectItem value="no_show">No asistió</SelectItem>
+                      <SelectItem value="expired">Expirada</SelectItem>
+                      <SelectItem value="rescheduled">Reagendada</SelectItem>
+                      <SelectItem value="waitlist">Lista de espera</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date Filter */}
+                <div className="w-full md:w-48">
+                  <Select value={dateFilter} onValueChange={handleDateFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Fecha" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las fechas</SelectItem>
+                      <SelectItem value="today">Hoy</SelectItem>
+                      <SelectItem value="tomorrow">Mañana</SelectItem>
+                      <SelectItem value="week">Esta semana</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {/* Date Filter */}
-              <div className="w-full md:w-48">
-                <Select value={dateFilter} onValueChange={handleDateFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Fecha" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las fechas</SelectItem>
-                    <SelectItem value="today">Hoy</SelectItem>
-                    <SelectItem value="tomorrow">Mañana</SelectItem>
-                    <SelectItem value="week">Esta semana</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Professional Filter - Only show if not a professional */}
+              {!isProfessional && professionals && (
+                <div className="w-full md:w-64">
+                  <Select
+                    value={selectedProfessionalId}
+                    onValueChange={handleProfessionalFilter}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filtrar por profesional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los profesionales</SelectItem>
+                      {professionals.map((professional) => (
+                        <SelectItem key={professional.id} value={professional.id}>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage
+                                src={professional.avatar || "/Avatar1.png"}
+                                alt={professional.fullName}
+                              />
+                              <AvatarFallback>
+                                {getInitials(professional.fullName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{professional.fullName}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* View Mode Toggle - Moved to bottom on mobile */}
+              <div className="flex justify-center md:justify-end">
+                <div className="flex border rounded-lg">
+                  <Button
+                    variant={viewMode === "cards" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("cards")}
+                    className="rounded-r-none"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "table" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("table")}
+                    className="rounded-l-none"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
-              {/* View Mode Toggle */}
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "cards" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("cards")}
-                  className="rounded-r-none"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "table" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("table")}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
+              {/* Results count */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Mostrando {clientFilteredAppointments.length} de{" "}
+                  {appointments.length} citas
+                </p>
               </div>
-            </div>
-
-            {/* Professional Filter */}
-            {professionals && (
-              <div className="mb-4">
-                <Select
-                  value={selectedProfessionalId}
-                  onValueChange={handleProfessionalFilter}
-                >
-                  <SelectTrigger className="w-full md:w-64">
-                    <SelectValue placeholder="Filtrar por profesional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los profesionales</SelectItem>
-                    {professionals.map((professional) => (
-                      <SelectItem key={professional.id} value={professional.id}>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-5 w-5">
-                            <AvatarImage
-                              src={professional.avatar || "/Avatar1.png"}
-                              alt={professional.fullName}
-                            />
-                            <AvatarFallback>
-                              {getInitials(professional.fullName)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{professional.fullName}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Results count */}
-            <div className="flex items-center justify-between mb-4 my-5">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Mostrando {clientFilteredAppointments.length} de{" "}
-                {appointments.length} citas
-              </p>
             </div>
           </CardContent>
         </Card>

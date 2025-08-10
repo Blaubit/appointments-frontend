@@ -84,7 +84,6 @@ export default function ClientsPageClient({
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  // Filtrar clientes en el cliente (filtrado adicional)
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
       client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,29 +96,17 @@ export default function ClientsPageClient({
     return matchesSearch && matchesStatus;
   });
 
-  // Solo necesitas actualizar estas funciones en tu page.client.tsx:
-
   const handleCreateClient = (data: ClientFormData) => {
-    console.log("Crear cliente:", data);
-
-    // aquii se llama la funcion para crear
     create(data)
       .then((response) => {
         if (response.status === 201) {
-          console.log("Cliente creado exitosamente:", response.status);
-          // Aquí podrías actualizar el estado o hacer algo más
-        } else {
-          console.error("Error al crear cliente:", response.status);
+          console.log("Cliente creado exitosamente");
         }
       })
-      .catch((error) => {
-        console.error("Error al crear cliente:", error);
-      });
+      .catch((error) => console.error(error));
   };
 
   const handleEditClient = (data: ClientFormData) => {
-    console.log("Editar cliente:", editingClient?.id, data);
-    // Los datos vienen en el mismo formato simplificado
     const data2: ClientEditFormData = {
       id: editingClient?.id,
       fullName: data.fullName,
@@ -130,33 +117,16 @@ export default function ClientsPageClient({
     edit(data2)
       .then((response) => {
         if (response.status === 201) {
-          console.log("Cliente editado exitosamente:", response.status);
-          // Aquí podrías actualizar el estado o hacer algo más
-        } else {
-          console.error("Error al editar cliente:", response.status);
+          console.log("Cliente editado exitosamente");
         }
       })
-      .catch((error) => {
-        console.error("Error al editar cliente:", error);
-      });
-    // Aquí iría la lógica para actualizar el cliente
-    // Ejemplo:
-    /*
-  const updatePayload = {
-    fullName: data.fullName,
-    email: data.email,
-    phone: data.phone,
-  };
-  
-  // await updateClient(editingClient.id, updatePayload);
-  */
+      .catch((error) => console.error(error));
 
     setEditingClient(null);
   };
 
   const handleDeleteClient = (client: Client) => {
     console.log("Eliminar cliente:", client.id);
-    // Aquí iría la lógica para eliminar el cliente
   };
 
   const handleViewClient = (client: Client) => {
@@ -174,17 +144,15 @@ export default function ClientsPageClient({
 
   const handleScheduleAppointment = (client: Client) => {
     console.log("Programar cita para:", client.id);
-    // Aquí iría la navegación para crear una nueva cita con este cliente
   };
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -210,45 +178,42 @@ export default function ClientsPageClient({
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const renderStars = (rating: number) => {
-    return [...Array(5)].map((_, i) => (
+  const renderStars = (rating: number) =>
+    [...Array(5)].map((_, i) => (
       <Star
         key={i}
-        className={`h-4 w-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+        className={`h-4 w-4 ${
+          i < rating ? "text-yellow-400 fill-current" : "text-gray-300"
+        }`}
       />
     ));
-  };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("es-ES", {
       style: "currency",
       currency: "EUR",
     }).format(amount);
-  };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("es-ES", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-  };
 
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <ClientForm
-            trigger={
-              <Button className="btn-gradient-primary text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Cliente
-              </Button>
-            }
-            onSubmit={handleCreateClient}
-          />
-        </div>
+      <div className="flex flex-wrap sm:flex-row justify-between items-start sm:items-center gap-4">
+        <ClientForm
+          trigger={
+            <Button className="btn-gradient-primary text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Cliente
+            </Button>
+          }
+          onSubmit={handleCreateClient}
+        />
 
         {/* View Toggle */}
         <div className="flex border rounded-lg">
@@ -272,31 +237,37 @@ export default function ClientsPageClient({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1 */}
         <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               Total Clientes
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalClients}</div>
+            <div className="text-xl sm:text-2xl font-bold">
+              {stats.totalClients}
+            </div>
             <p className="text-xs text-muted-foreground">
               +{stats.newThisMonth} este mes
             </p>
           </CardContent>
         </Card>
 
+        {/* Card 2 */}
         <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               Clientes Activos
             </CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.activeClients}</div>
+            <div className="text-xl sm:text-2xl font-bold">
+              {stats.activeClients}
+            </div>
             <p className="text-xs text-muted-foreground">
               {stats.totalClients > 0
                 ? Math.round((stats.activeClients / stats.totalClients) * 100)
@@ -306,28 +277,32 @@ export default function ClientsPageClient({
           </CardContent>
         </Card>
 
+        {/* Card 3 */}
         <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               Nuevos este Mes
             </CardTitle>
             <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.newThisMonth}</div>
+            <div className="text-xl sm:text-2xl font-bold">
+              {stats.newThisMonth}
+            </div>
             <p className="text-xs text-muted-foreground">Crecimiento mensual</p>
           </CardContent>
         </Card>
 
+        {/* Card 4 */}
         <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               Valoración Promedio
             </CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {stats.averageRating.toFixed(1)}
             </div>
             <p className="text-xs text-muted-foreground">De 5.0 estrellas</p>
@@ -335,23 +310,21 @@ export default function ClientsPageClient({
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filtros */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nombre, email o teléfono..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar por nombre, email o teléfono..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
             <div className="w-full sm:w-48">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -371,7 +344,7 @@ export default function ClientsPageClient({
         </CardContent>
       </Card>
 
-      {/* Clients Data */}
+      {/* Lista de Clientes */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -385,8 +358,7 @@ export default function ClientsPageClient({
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No hay clientes</h3>
               <p className="text-muted-foreground mb-4">
-                No se encontraron clientes que coincidan con los filtros
-                aplicados.
+                No se encontraron clientes que coincidan con los filtros.
               </p>
               <ClientForm
                 trigger={
@@ -398,7 +370,7 @@ export default function ClientsPageClient({
               />
             </div>
           ) : viewMode === "cards" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredClients.map((client) => (
                 <Card
                   key={client.id}
@@ -707,250 +679,6 @@ export default function ClientsPageClient({
           )}
         </CardContent>
       </Card>
-
-      {/* Client Details Dialog */}
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Detalles del Cliente
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedClient && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Información del Cliente */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Información Personal
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage
-                        src={selectedClient.avatar || "/placeholder.svg"}
-                        alt={selectedClient.fullName}
-                      />
-                      <AvatarFallback className="text-lg">
-                        {getInitials(selectedClient.fullName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                      <p className="text-lg font-semibold">
-                        {selectedClient.fullName}
-                      </p>
-                      {getStatusBadge(selectedClient.status)}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Email:
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{selectedClient.email}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEmailClient(selectedClient)}
-                        >
-                          <Mail className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Teléfono:
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{selectedClient.phone}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleCallClient(selectedClient)}
-                        >
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedClient.notes && (
-                    <div className="pt-4">
-                      <h4 className="text-sm font-medium mb-2">Notas:</h4>
-                      <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-sm">{selectedClient.notes}</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Estadísticas del Cliente */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <StarIcon className="h-5 w-5" />
-                    Estadísticas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {selectedClient.totalAppointments}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Total Citas
-                      </div>
-                    </div>
-
-                    <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {formatCurrency(selectedClient.totalSpent)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Total Gastado
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Valoración:
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        {renderStars(selectedClient.rating)}
-                        <span className="text-sm ml-2 font-medium">
-                          {selectedClient.rating}/5
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Primera Cita:
-                      </span>
-                      <span className="text-sm">
-                        {selectedClient.createdAt
-                          ? formatDate(selectedClient.createdAt)
-                          : "N/A"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Última Cita:
-                      </span>
-                      <span className="text-sm">
-                        {selectedClient.lastAppointment
-                          ? formatDate(selectedClient.lastAppointment)
-                          : "Nunca"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Cliente desde:
-                      </span>
-                      <span className="text-sm">
-                        {formatDate(selectedClient.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {selectedClient.tags && selectedClient.tags.length > 0 && (
-                    <div className="pt-4">
-                      <h4 className="text-sm font-medium mb-2">Etiquetas:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedClient.tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary">
-                            <Tag className="h-3 w-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Acciones */}
-              <div className="sm:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Acciones</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        onClick={() => setEditingClient(selectedClient)}
-                        className="flex-1 sm:flex-none"
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar Cliente
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          handleScheduleAppointment(selectedClient)
-                        }
-                        className="flex-1 sm:flex-none"
-                      >
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Programar Cita
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleCallClient(selectedClient)}
-                        className="flex-1 sm:flex-none"
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Llamar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleEmailClient(selectedClient)}
-                        className="flex-1 sm:flex-none"
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        Enviar Email
-                      </Button>
-                      {selectedClient.status !== "active" && (
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDeleteClient(selectedClient)}
-                          className="flex-1 sm:flex-none"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Client Dialog */}
-      {editingClient && (
-        <ClientForm
-          client={editingClient}
-          trigger={<div />} // Hidden trigger since we control open state
-          onSubmit={handleEditClient}
-          onCancel={() => setEditingClient(null)}
-        />
-      )}
     </div>
   );
 }
