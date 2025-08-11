@@ -1,47 +1,43 @@
 "use server";
 
+import { parsedEnv } from "@/app/env";
 import axios, { isAxiosError } from "axios";
 import { cookies } from "next/headers";
-import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import parsePaginationParams from "@/utils/functions/parsePaginationParams";
-import { Appointment } from "@/types";
+import { revalidatePath } from "next/cache";
+import { serviceDto } from "@/types/dto/service/serviceDto";
+import { Appointment } from "@/types/";
 
-type Props = {
-  searchParams?: URLSearchParams;
-};
-
-export default async function findAll(
-  props: Props = {},
-): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
+export default async function create({
+    name,
+    durationMinutes,
+    price,
+}: serviceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
+    const session = cookieStore.get("session")?.value;
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services`;
-    const session = cookieStore.get("session")?.value || "";
-    const parsedParams = parsePaginationParams(props.searchParams);
-    //console.log("url", url);
-    const response = await axios.get(url, {
+    const body = {
+        name,
+        durationMinutes,
+        price,
+    };
+    const response = await axios.post<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
-    
+
+    revalidatePath("/services");
+
     return {
-      data: response.data.data,
-      status: 200,
+      data: response.data, 
+      status: response.status,
       statusText: response.statusText,
-      meta: response.data.meta,
-      stats: {
-        total: response.data.meta.totalItems,
-        active: 10,
-        total_income: 5,
-        total_appointments: 2,
-      },
     };
   } catch (error) {
-    console.log(error);
     if (isAxiosError(error)) {
       return {
         message: error.message,

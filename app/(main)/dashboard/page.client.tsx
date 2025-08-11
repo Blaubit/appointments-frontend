@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react"; // Agregar este import
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,19 +21,19 @@ import {
   Stethoscope,
   MapPin,
   Phone,
-  Mail,
-  CheckCircle,
-  AlertCircle,
-  XCircle,
   CalendarCheck,
   UserRoundCheck,
   BookX,
   OctagonPause,
-  Eye, // Agregar este import
+  Eye,
+  CalendarX,
+  Smile,
+  Coffee,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/header";
-import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog"; // Agregar este import
+import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 import type { Appointment, AppointmentStats, User, Company } from "@/types";
 import {
   getStatusColor,
@@ -41,7 +41,8 @@ import {
   getStatusText,
 } from "@/utils/functions/appointmentStatus";
 import WhatsappIcon from "@/components/icons/whatsapp-icon";
-import { openWhatsApp } from "@/utils/functions/openWhatsapp"; // Importar la función openWhatsApp
+import { openWhatsApp } from "@/utils/functions/openWhatsapp";
+
 type Props = {
   upcomingAppointments: Appointment[];
   appointmentStats: AppointmentStats;
@@ -144,6 +145,106 @@ export default function DashboardClient({
     window.open(`mailto:${appointment.client.email}`);
   };
 
+  // Función para determinar si no hay actividad
+  const hasNoActivity = () => {
+    return (
+      appointmentStats.todayCount === 0 &&
+      appointmentStats.confirmedCount === 0 &&
+      appointmentStats.pendingCount === 0
+    );
+  };
+
+  // Componente para estado vacío de citas
+  const EmptyAppointmentsState = () => (
+    <div className="text-center py-12">
+      <div className="flex justify-center mb-6">
+        <div className="relative">
+          <div className="p-4 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full">
+            <CalendarX className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="absolute -top-1 -right-1">
+            <Sparkles className="h-6 w-6 text-yellow-500" />
+          </div>
+        </div>
+      </div>
+      
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+        ¡No hay citas programadas!
+      </h3>
+      
+      {hasNoActivity() ? (
+        <div className="space-y-3 mb-6">
+          <p className="text-gray-600 dark:text-gray-400">
+            Parece que tienes un día libre. Es perfecto para:
+          </p>
+          <div className="flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center space-x-2">
+              <Coffee className="h-4 w-4" />
+              <span>Tomar un descanso</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Smile className="h-4 w-4" />
+              <span>Organizar el consultorio</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Todas tus próximas citas están más adelante en la semana.
+        </p>
+      )}
+      
+      <div className="space-y-3">
+        <Link href="/appointments/new">
+          <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+            <Plus className="h-4 w-4 mr-2" />
+            Programar Nueva Cita
+          </Button>
+        </Link>
+        
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <Link href="/calendar">
+            <Button variant="outline" size="sm">
+              <Calendar className="h-4 w-4 mr-2" />
+              Ver Calendario
+            </Button>
+          </Link>
+          <Link href="/clients">
+            <Button variant="outline" size="sm">
+              <Users className="h-4 w-4 mr-2" />
+              Gestionar Clientes
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Componente para mostrar mensaje motivacional cuando hay pocas citas
+  const LowActivityMessage = () => {
+    if (appointmentStats.todayCount > 0 && appointmentStats.todayCount <= 2) {
+      return (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-full">
+              <Smile className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                Día Tranquilo Hoy
+              </h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Solo tienes {appointmentStats.todayCount} {appointmentStats.todayCount === 1 ? 'cita' : 'citas'} hoy. 
+                ¡Perfecto para enfocarte en cada paciente!
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -155,14 +256,24 @@ export default function DashboardClient({
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             ¡Buen día, {user.fullName.split(" ")[0]}! 👋
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Tienes {appointmentStats.todayCount}{" "}
-            {appointmentStats.todayCount === 1
-              ? "cita programada"
-              : "citas programadas"}{" "}
-            para hoy. Aquí tienes un resumen de tu jornada.
-          </p>
+          
+          {hasNoActivity() ? (
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Hoy parece ser un día tranquilo. ¿Qué tal si aprovechas para organizarte o descansar?
+            </p>
+          ) : (
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Tienes {appointmentStats.todayCount}{" "}
+              {appointmentStats.todayCount === 1
+                ? "cita programada"
+                : "citas programadas"}{" "}
+              para hoy. Aquí tienes un resumen de tu jornada.
+            </p>
+          )}
         </div>
+
+        {/* Mensaje de baja actividad */}
+        <LowActivityMessage />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
@@ -187,6 +298,7 @@ export default function DashboardClient({
               </CardContent>
             </Link>
           </Card>
+          
           <Card className="hover:shadow-lg transition-shadow">
             <Link href="/appointments">
               <CardContent className="p-3 sm:p-6">
@@ -224,12 +336,13 @@ export default function DashboardClient({
                   <div
                     className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-yellow-600 flex-shrink-0`}
                   >
-                    <OctagonPause className="h-4 w-4 sm:h-6 sm:w-6 " />
+                    <OctagonPause className="h-4 w-4 sm:h-6 sm:w-6" />
                   </div>
                 </div>
               </CardContent>
             </Link>
           </Card>
+          
           <Card className="hover:shadow-lg transition-shadow">
             <Link href="/appointments">
               <CardContent className="p-3 sm:p-6">
@@ -263,7 +376,9 @@ export default function DashboardClient({
                     Próximas Citas
                   </CardTitle>
                   <CardDescription className="text-sm">
-                    Tus citas programadas
+                    {upcomingAppointments.length > 0 
+                      ? "Tus citas programadas" 
+                      : "No hay citas programadas"}
                   </CardDescription>
                 </div>
                 <Link href="/appointments/new">
@@ -274,109 +389,120 @@ export default function DashboardClient({
                 </Link>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 sm:space-y-4">
-                  {upcomingAppointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50"
-                      onClick={() => handleViewAppointment(appointment)}
-                    >
-                      {/* Avatar and main info */}
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                          <AvatarImage
-                            src={appointment.client.avatar || "/Avatar1.png"}
-                            alt={appointment.client.fullName}
-                          />
-                          <AvatarFallback className="text-xs sm:text-sm">
-                            {getInitials(appointment.client.fullName)}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-1">
-                            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate pr-2">
-                              {appointment.client.fullName}
-                            </p>
-                            <Badge
-                              className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
-                            >
-                              <div className="flex items-center space-x-1">
-                                {getStatusIcon(appointment.status)}
-                                <span className="capitalize hidden sm:inline">
-                                  {getStatusText(appointment.status)}
-                                </span>
-                              </div>
-                            </Badge>
-                          </div>
-                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {appointment.service.name}
-                          </p>
-                          <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {formatTime(appointment.startTime)}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(
-                                appointment.appointmentDate.toLocaleString(),
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action buttons - AQUÍ ES DONDE SE AGREGAN LOS CAMBIOS */}
-                      <div className="flex space-x-2 sm:flex-shrink-0">
-                        {/* Nuevo botón para ver detalles */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
+                {upcomingAppointments.length === 0 ? (
+                  <EmptyAppointmentsState />
+                ) : (
+                  <>
+                    <div className="space-y-3 sm:space-y-4">
+                      {upcomingAppointments.map((appointment) => (
+                        <div
+                          key={appointment.id}
+                          className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
                           onClick={() => handleViewAppointment(appointment)}
                         >
-                          <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <span className="ml-1 sm:hidden">Ver</span>
-                        </Button>
-                        <Link href={`tel:${appointment.client.phone}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="ml-1 sm:hidden">Llamar</span>
-                          </Button>
-                        </Link>
-                        <Link href={`mailto:${appointment.client.email}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                            onClick={() => openWhatsApp(
-                                                    appointment.client.phone,
-                                                    `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                                                      appointment.professional.fullName
-                                                    )}`
-                                                  )}
-                          >
-                            <WhatsappIcon className="text-green-500 dark:bg-gray-900" width={32} height={32} />
-                            <span className="ml-1 sm:hidden">WhatsApp</span>
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                          {/* Avatar and main info */}
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                              <AvatarImage
+                                src={appointment.client.avatar || "/Avatar1.png"}
+                                alt={appointment.client.fullName}
+                              />
+                              <AvatarFallback className="text-xs sm:text-sm">
+                                {getInitials(appointment.client.fullName)}
+                              </AvatarFallback>
+                            </Avatar>
 
-                <div className="mt-4 sm:mt-6 text-center">
-                  <Link href="/appointments">
-                    <Button variant="outline" className="w-full text-sm">
-                      Ver Todas las Citas
-                    </Button>
-                  </Link>
-                </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-1">
+                                <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate pr-2">
+                                  {appointment.client.fullName}
+                                </p>
+                                <Badge
+                                  className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
+                                >
+                                  <div className="flex items-center space-x-1">
+                                    {getStatusIcon(appointment.status)}
+                                    <span className="capitalize hidden sm:inline">
+                                      {getStatusText(appointment.status)}
+                                    </span>
+                                  </div>
+                                </Badge>
+                              </div>
+                              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                                {appointment.service.name}
+                              </p>
+                              <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
+                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {formatTime(appointment.startTime)}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {formatDate(
+                                    appointment.appointmentDate.toLocaleString(),
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="flex space-x-2 sm:flex-shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewAppointment(appointment);
+                              }}
+                            >
+                              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="ml-1 sm:hidden">Ver</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`tel:${appointment.client.phone}`);
+                              }}
+                            >
+                              <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="ml-1 sm:hidden">Llamar</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openWhatsApp(
+                                  appointment.client.phone,
+                                  `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
+                                    appointment.professional.fullName
+                                  )}`
+                                );
+                              }}
+                            >
+                              <WhatsappIcon className="text-green-500 dark:bg-gray-900" width={16} height={16} />
+                              <span className="ml-1 sm:hidden">WhatsApp</span>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 sm:mt-6 text-center">
+                      <Link href="/appointments">
+                        <Button variant="outline" className="w-full text-sm">
+                          Ver Todas las Citas
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -460,7 +586,7 @@ export default function DashboardClient({
                   <div className="flex items-start space-x-3">
                     <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium">codigo postal</p>
+                      <p className="text-sm font-medium">Código postal</p>
                       <p className="text-xs text-gray-500 break-words">
                         {clinicInfo.postal_code}
                       </p>
@@ -469,7 +595,7 @@ export default function DashboardClient({
                   <div className="flex items-start space-x-3">
                     <Clock className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium">ciudad</p>
+                      <p className="text-sm font-medium">Ciudad</p>
                       <p className="text-xs text-gray-500 break-words">
                         {clinicInfo.city}
                       </p>
@@ -482,7 +608,7 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* Dialog de detalles de la cita - AGREGAR AL FINAL */}
+      {/* Dialog de detalles de la cita */}
       <AppointmentDetailsDialog
         appointment={selectedAppointment}
         isOpen={selectedAppointment !== null}

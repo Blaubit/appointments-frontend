@@ -67,14 +67,22 @@ import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 
 interface ClientsPageClientProps {
-  clients: Client[];
-  stats: ClientStats;
-  pagination: Pagination;
+  clients?: Client[];
+  stats?: ClientStats;
+  pagination?: Pagination;
 }
 
+// Valores por defecto para stats
+const defaultStats: ClientStats = {
+  totalClients: 0,
+  activeClients: 0,
+  newThisMonth: 0,
+  averageRating: 0,
+};
+
 export default function ClientsPageClient({
-  clients,
-  stats,
+  clients = [],
+  stats = defaultStats,
   pagination,
 }: ClientsPageClientProps) {
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
@@ -84,23 +92,30 @@ export default function ClientsPageClient({
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const filteredClients = clients.filter((client) => {
-    const matchesSearch =
-      client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.includes(searchTerm);
+  // Verificar si hay clientes
+  const hasClients = clients && clients.length > 0;
 
-    const matchesStatus =
-      statusFilter === "all" || client.status === statusFilter;
+  const filteredClients = hasClients 
+    ? clients.filter((client) => {
+        const matchesSearch =
+          client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          client.phone.includes(searchTerm);
 
-    return matchesSearch && matchesStatus;
-  });
+        const matchesStatus =
+          statusFilter === "all" || client.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+      })
+    : [];
 
   const handleCreateClient = (data: ClientFormData) => {
     create(data)
       .then((response) => {
         if (response.status === 201) {
           console.log("Cliente creado exitosamente");
+          // Aquí podrías agregar un refresh de la página o actualización del estado
+          window.location.reload(); // Temporal, idealmente usarías router.refresh() o state management
         }
       })
       .catch((error) => console.error(error));
@@ -118,6 +133,7 @@ export default function ClientsPageClient({
       .then((response) => {
         if (response.status === 201) {
           console.log("Cliente editado exitosamente");
+          window.location.reload(); // Temporal
         }
       })
       .catch((error) => console.error(error));
@@ -143,6 +159,7 @@ export default function ClientsPageClient({
   };
 
   const handleScheduleAppointment = (client: Client) => {
+     window.open(`appointments/new?clientId=${client.id}`, "_self");
     console.log("Programar cita para:", client.id);
   };
 
@@ -200,6 +217,109 @@ export default function ClientsPageClient({
       month: "short",
       day: "numeric",
     });
+
+  // Estado vacío cuando no hay clientes del servidor
+  if (!hasClients) {
+    return (
+      <div className="space-y-6">
+        {/* Header con botón para crear cliente */}
+        <div className="flex flex-wrap sm:flex-row justify-between items-start sm:items-center gap-4">
+          <ClientForm
+            trigger={
+              <Button className="btn-gradient-primary text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Cliente
+              </Button>
+            }
+            onSubmit={handleCreateClient}
+          />
+        </div>
+
+        {/* Stats Cards - Todos en 0 */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Clientes
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">
+                Comienza agregando clientes
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Clientes Activos
+              </CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">
+                0% del total
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Nuevos este Mes
+              </CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">Sin registros</p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Valoración Promedio
+              </CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold">0.0</div>
+              <p className="text-xs text-muted-foreground">Sin valoraciones</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Estado vacío principal */}
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="rounded-full bg-muted p-4 mb-6">
+              <Users className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">
+              ¡Bienvenido a tu lista de clientes!
+            </h2>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              Aún no tienes clientes registrados. Comienza agregando tu primer cliente para gestionar tus citas y relaciones comerciales.
+            </p>
+            <ClientForm
+              trigger={
+                <Button size="lg" className="btn-gradient-primary text-white">
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  Agregar Primer Cliente
+                </Button>
+              }
+              onSubmit={handleCreateClient}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -358,15 +478,18 @@ export default function ClientsPageClient({
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No hay clientes</h3>
               <p className="text-muted-foreground mb-4">
-                No se encontraron clientes que coincidan con los filtros.
+                {searchTerm || statusFilter !== "all" 
+                  ? "No se encontraron clientes que coincidan con los filtros."
+                  : "Aún no tienes clientes registrados."}
               </p>
               <ClientForm
                 trigger={
                   <Button>
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Agregar Primer Cliente
+                    Agregar Cliente
                   </Button>
                 }
+                onSubmit={handleCreateClient}
               />
             </div>
           ) : viewMode === "cards" ? (
@@ -679,6 +802,103 @@ export default function ClientsPageClient({
           )}
         </CardContent>
       </Card>
+
+      {/* Dialogs */}
+      {editingClient && (
+        <ClientForm
+          trigger={<button>Editar</button>}
+          client={editingClient}
+          onSubmit={handleEditClient}
+          
+        />
+      )}
+
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalles del Cliente</DialogTitle>
+          </DialogHeader>
+          {selectedClient && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage
+                    src={selectedClient.avatar}
+                    alt={selectedClient.fullName}
+                  />
+                  <AvatarFallback>
+                    {getInitials(selectedClient.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedClient.fullName}</h2>
+                  <p className="text-muted-foreground">{selectedClient.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Estado</label>
+                    <div className="mt-1">
+                      {getStatusBadge(selectedClient.status)}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Teléfono</label>
+                    <p className="mt-1">{selectedClient.phone}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Email</label>
+                    <p className="mt-1">{selectedClient.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Valoración</label>
+                    <div className="flex items-center space-x-1 mt-1">
+                      {renderStars(selectedClient.rating)}
+                      <span className="text-sm ml-1">({selectedClient.rating})</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Total de Citas</label>
+                    <p className="mt-1 text-2xl font-bold">{selectedClient.totalAppointments}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Total Gastado</label>
+                    <p className="mt-1 text-2xl font-bold">
+                      {formatCurrency(selectedClient.totalSpent)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Última Cita</label>
+                    <p className="mt-1">
+                      {selectedClient.lastAppointment
+                        ? formatDate(selectedClient.lastAppointment)
+                        : "Nunca"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {selectedClient.tags && selectedClient.tags.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium">Etiquetas</label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedClient.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
