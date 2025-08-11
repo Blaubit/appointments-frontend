@@ -1,5 +1,4 @@
 export function openWhatsApp(phone: string, message: string) {
-  
   const isMobile = /Android|iPhone/i.test(navigator.userAgent);
   const isLinux = /Linux/i.test(navigator.userAgent);
 

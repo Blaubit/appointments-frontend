@@ -15,7 +15,7 @@ type DeleteServiceRequest = {
 };
 
 export default async function deleteService({
-  id
+  id,
 }: DeleteServiceRequest): Promise<SuccessReponse<service> | ErrorResponse> {
   try {
     const cookieStore = await cookies();

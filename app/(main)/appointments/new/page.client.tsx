@@ -55,9 +55,9 @@ export default function PageClient({
   const clientIdFromUrl = searchParams.get("clientId") ?? "";
   const router = useRouter();
   const [selectedClient, setSelectedClient] = useState(() => {
-  if (!clientIdFromUrl) return null;
-  return clients.find(client => client.id === clientIdFromUrl) || null;
-});
+    if (!clientIdFromUrl) return null;
+    return clients.find((client) => client.id === clientIdFromUrl) || null;
+  });
 
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
     null,
@@ -72,7 +72,7 @@ export default function PageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  
+
   const totalPrice = selectedServices.reduce((sum, id) => {
     const service = services.find((s) => s.id === id);
     return sum + (service ? Number(service.price) : 0);
@@ -86,7 +86,7 @@ export default function PageClient({
   const formatDuration = (totalMinutes: number) => {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
+
     if (hours === 0) {
       return `${minutes} min`;
     } else if (minutes === 0) {
@@ -226,16 +226,16 @@ export default function PageClient({
     setIsLoading(true);
     setError(null);
     const dataToValidate = {
-    clientName: formData.clientName,
-    clientEmail: formData.clientEmail,
-    clientPhone: formData.clientPhone,
-    professionalId: formData.professionalId,
-    selectedServices,
-    date: selectedDate,
-    time: selectedTime,
-    notes: formData.notes,
-    status: formData.status,
-  };
+      clientName: formData.clientName,
+      clientEmail: formData.clientEmail,
+      clientPhone: formData.clientPhone,
+      professionalId: formData.professionalId,
+      selectedServices,
+      date: selectedDate,
+      time: selectedTime,
+      notes: formData.notes,
+      status: formData.status,
+    };
 
     try {
       appointmentSchema.parse(dataToValidate);
@@ -387,220 +387,220 @@ export default function PageClient({
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Client Selection */}
           {/* Client Selection */}
-<Card>
-  <CardHeader>
-    <CardTitle className="flex items-center space-x-2">
-      <UserIcon className="h-5 w-5" />
-      <span>Seleccionar Cliente</span>
-    </CardTitle>
-    <CardDescription>
-      Busca un cliente existente o crea uno nuevo
-    </CardDescription>
-  </CardHeader>
-  <CardContent className="space-y-4">
-    {!selectedClient && !showNewClientForm && (
-      <>
-        <div className="flex space-x-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar cliente por nombre..."
-              value={clientSearch}
-              onChange={(e) => setClientSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowNewClientForm(true)}
-            className="whitespace-nowrap"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Nuevo Cliente
-          </Button>
-        </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <UserIcon className="h-5 w-5" />
+                <span>Seleccionar Cliente</span>
+              </CardTitle>
+              <CardDescription>
+                Busca un cliente existente o crea uno nuevo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!selectedClient && !showNewClientForm && (
+                <>
+                  <div className="flex space-x-2">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar cliente por nombre..."
+                        value={clientSearch}
+                        onChange={(e) => setClientSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowNewClientForm(true)}
+                      className="whitespace-nowrap"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Nuevo Cliente
+                    </Button>
+                  </div>
 
-        {clientSearch && (
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {filteredClients.map((client) => (
-              <div
-                key={client.id}
-                className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                onClick={() => handleClientSelect(client)}
-              >
-                <Avatar>
-                  <AvatarImage
-                    src={client.avatar || "/placeholder.svg"}
-                  />
-                  <AvatarFallback>
-                    {client.fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {client.fullName}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {client.email}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {client.totalAppointments} citas • Última visita:{" "}
-                    {client.createdAt}
-                  </p>
+                  {clientSearch && (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {filteredClients.map((client) => (
+                        <div
+                          key={client.id}
+                          className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                          onClick={() => handleClientSelect(client)}
+                        >
+                          <Avatar>
+                            <AvatarImage
+                              src={client.avatar || "/placeholder.svg"}
+                            />
+                            <AvatarFallback>
+                              {client.fullName
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {client.fullName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {client.email}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {client.totalAppointments} citas • Última visita:{" "}
+                              {client.createdAt}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      {filteredClients.length === 0 && (
+                        <p className="text-center text-gray-500 py-4">
+                          No se encontraron clientes
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {selectedClient && (
+                <div className="flex items-start sm:items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <Avatar className="flex-shrink-0">
+                    <AvatarImage
+                      src={selectedClient.avatar || "/placeholder.svg"}
+                    />
+                    <AvatarFallback>
+                      {selectedClient.fullName
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {selectedClient.fullName}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                      {selectedClient.email}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                      {selectedClient.phone}
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedClient(null);
+                        setFormData({
+                          ...formData,
+                          clientName: "",
+                          clientEmail: "",
+                          clientPhone: "",
+                        });
+                      }}
+                      className="text-xs px-2 py-1 h-auto"
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-            {filteredClients.length === 0 && (
-              <p className="text-center text-gray-500 py-4">
-                No se encontraron clientes
-              </p>
-            )}
-          </div>
-        )}
-      </>
-    )}
+              )}
 
-    {selectedClient && (
-      <div className="flex items-start sm:items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-        <Avatar className="flex-shrink-0">
-          <AvatarImage
-            src={selectedClient.avatar || "/placeholder.svg"}
-          />
-          <AvatarFallback>
-            {selectedClient.fullName
-              .split(" ")
-              .map((n: string) => n[0])
-              .join("")}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 dark:text-white truncate">
-            {selectedClient.fullName}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-            {selectedClient.email}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-            {selectedClient.phone}
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSelectedClient(null);
-              setFormData({
-                ...formData,
-                clientName: "",
-                clientEmail: "",
-                clientPhone: "",
-              });
-            }}
-            className="text-xs px-2 py-1 h-auto"
-          >
-            Cambiar
-          </Button>
-        </div>
-      </div>
-    )}
-
-    {showNewClientForm && (
-      <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-        <h4 className="font-medium text-gray-900 dark:text-white">
-          Nuevo Cliente
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="clientName">Nombre completo *</Label>
-            <Input
-              id="clientName"
-              value={formData.clientName}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  clientName: e.target.value,
-                })
-              }
-              placeholder="Nombre del cliente"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="clientPhone">Teléfono *</Label>
-            <Input
-              id="clientPhone"
-              value={formData.clientPhone}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  clientPhone: e.target.value,
-                })
-              }
-              placeholder="+1 (555) 123-4567"
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <Label htmlFor="clientEmail">Email</Label>
-          <Input
-            id="clientEmail"
-            type="email"
-            value={formData.clientEmail}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                clientEmail: e.target.value,
-              })
-            }
-            placeholder="cliente@email.com"
-          />
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setShowNewClientForm(false);
-              setFormData({
-                ...formData,
-                clientName: "",
-                clientEmail: "",
-                clientPhone: "",
-              });
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            onClick={() => {
-              if (
-                formData.clientName.trim() &&
-                formData.clientPhone.trim()
-              ) {
-                setShowNewClientForm(false);
-              }
-            }}
-            disabled={
-              !formData.clientName.trim() ||
-              !formData.clientPhone.trim()
-            }
-          >
-            Seleccionar Cliente
-          </Button>
-        </div>
-      </div>
-    )}
-  </CardContent>
-</Card>
+              {showNewClientForm && (
+                <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    Nuevo Cliente
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="clientName">Nombre completo *</Label>
+                      <Input
+                        id="clientName"
+                        value={formData.clientName}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            clientName: e.target.value,
+                          })
+                        }
+                        placeholder="Nombre del cliente"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="clientPhone">Teléfono *</Label>
+                      <Input
+                        id="clientPhone"
+                        value={formData.clientPhone}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            clientPhone: e.target.value,
+                          })
+                        }
+                        placeholder="+1 (555) 123-4567"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="clientEmail">Email</Label>
+                    <Input
+                      id="clientEmail"
+                      type="email"
+                      value={formData.clientEmail}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          clientEmail: e.target.value,
+                        })
+                      }
+                      placeholder="cliente@email.com"
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowNewClientForm(false);
+                        setFormData({
+                          ...formData,
+                          clientName: "",
+                          clientEmail: "",
+                          clientPhone: "",
+                        });
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          formData.clientName.trim() &&
+                          formData.clientPhone.trim()
+                        ) {
+                          setShowNewClientForm(false);
+                        }
+                      }}
+                      disabled={
+                        !formData.clientName.trim() ||
+                        !formData.clientPhone.trim()
+                      }
+                    >
+                      Seleccionar Cliente
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Professional Selection */}
           <Card>

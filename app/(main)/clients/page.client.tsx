@@ -95,7 +95,7 @@ export default function ClientsPageClient({
   // Verificar si hay clientes
   const hasClients = clients && clients.length > 0;
 
-  const filteredClients = hasClients 
+  const filteredClients = hasClients
     ? clients.filter((client) => {
         const matchesSearch =
           client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,7 +159,7 @@ export default function ClientsPageClient({
   };
 
   const handleScheduleAppointment = (client: Client) => {
-     window.open(`appointments/new?clientId=${client.id}`, "_self");
+    window.open(`appointments/new?clientId=${client.id}`, "_self");
     console.log("Programar cita para:", client.id);
   };
 
@@ -261,9 +261,7 @@ export default function ClientsPageClient({
             </CardHeader>
             <CardContent>
               <div className="text-xl sm:text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                0% del total
-              </p>
+              <p className="text-xs text-muted-foreground">0% del total</p>
             </CardContent>
           </Card>
 
@@ -304,7 +302,8 @@ export default function ClientsPageClient({
               ¡Bienvenido a tu lista de clientes!
             </h2>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Aún no tienes clientes registrados. Comienza agregando tu primer cliente para gestionar tus citas y relaciones comerciales.
+              Aún no tienes clientes registrados. Comienza agregando tu primer
+              cliente para gestionar tus citas y relaciones comerciales.
             </p>
             <ClientForm
               trigger={
@@ -478,7 +477,7 @@ export default function ClientsPageClient({
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No hay clientes</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm || statusFilter !== "all" 
+                {searchTerm || statusFilter !== "all"
                   ? "No se encontraron clientes que coincidan con los filtros."
                   : "Aún no tienes clientes registrados."}
               </p>
@@ -507,7 +506,7 @@ export default function ClientsPageClient({
                             src={client.avatar}
                             alt={client.fullName}
                           />
-                          
+
                           <AvatarFallback>
                             {getInitials(client.fullName)}
                           </AvatarFallback>
@@ -551,10 +550,16 @@ export default function ClientsPageClient({
                             Enviar Email
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={(() => openWhatsApp(client.phone,"Buen dia"))}
+                            onClick={() =>
+                              openWhatsApp(client.phone, "Buen dia")
+                            }
                           >
-                          <WhatsappIcon className="text-green-500 dark:bg-gray-900" width={32} height={32} />
-                           WhatsApp
+                            <WhatsappIcon
+                              className="text-green-500 dark:bg-gray-900"
+                              width={32}
+                              height={32}
+                            />
+                            WhatsApp
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleScheduleAppointment(client)}
@@ -809,7 +814,6 @@ export default function ClientsPageClient({
           trigger={<button>Editar</button>}
           client={editingClient}
           onSubmit={handleEditClient}
-          
         />
       )}
 
@@ -831,8 +835,12 @@ export default function ClientsPageClient({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="text-2xl font-bold">{selectedClient.fullName}</h2>
-                  <p className="text-muted-foreground">{selectedClient.email}</p>
+                  <h2 className="text-2xl font-bold">
+                    {selectedClient.fullName}
+                  </h2>
+                  <p className="text-muted-foreground">
+                    {selectedClient.email}
+                  </p>
                 </div>
               </div>
 
@@ -856,15 +864,21 @@ export default function ClientsPageClient({
                     <label className="text-sm font-medium">Valoración</label>
                     <div className="flex items-center space-x-1 mt-1">
                       {renderStars(selectedClient.rating)}
-                      <span className="text-sm ml-1">({selectedClient.rating})</span>
+                      <span className="text-sm ml-1">
+                        ({selectedClient.rating})
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium">Total de Citas</label>
-                    <p className="mt-1 text-2xl font-bold">{selectedClient.totalAppointments}</p>
+                    <label className="text-sm font-medium">
+                      Total de Citas
+                    </label>
+                    <p className="mt-1 text-2xl font-bold">
+                      {selectedClient.totalAppointments}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Total Gastado</label>

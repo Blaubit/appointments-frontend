@@ -67,11 +67,13 @@ export default function PageClient({ services, pagination }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
-  
+
   // Estados para los diálogos del formulario
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceType | null>(
+    null,
+  );
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -103,7 +105,7 @@ export default function PageClient({ services, pagination }: Props) {
   });
 
   const handleDelete = (id: string) => {
-    deleteService({ id })
+    deleteService({ id });
     // Aquí implementarías la lógica para eliminar
   };
 
@@ -154,7 +156,7 @@ export default function PageClient({ services, pagination }: Props) {
                 <Button variant="outline">
                   <Download className="h-4 w-4 mr-2" /> Exportar
                 </Button>
-                <Button 
+                <Button
                   onClick={() => setIsCreateDialogOpen(true)}
                   className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
                 >

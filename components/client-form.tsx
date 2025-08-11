@@ -38,10 +38,7 @@ const clientSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(
-      /^\+?[1-9]\d{6,14}$/,
-      "Debe ser un número telefónico válido"
-    ),
+    .regex(/^\+?[1-9]\d{6,14}$/, "Debe ser un número telefónico válido"),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;

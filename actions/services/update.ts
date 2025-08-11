@@ -10,26 +10,25 @@ import { Appointment } from "@/types/";
 import { updateServiceDto } from "@/types/dto/service/updateServiceDto";
 
 export default async function update({
-    id,
-    name,
-    durationMinutes,
-    price,
+  id,
+  name,
+  durationMinutes,
+  price,
 }: updateServiceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
     const session = cookieStore.get("session")?.value;
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
-    
+
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services/${id}`;
-    
+
     const body = {
-        name,
-        durationMinutes,
-        price,
+      name,
+      durationMinutes,
+      price,
     };
 
-    
     const response = await axios.patch<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
@@ -39,12 +38,11 @@ export default async function update({
     revalidatePath("/services");
 
     return {
-      data: response.data, 
+      data: response.data,
       status: response.status,
       statusText: response.statusText,
     };
   } catch (error) {
-   
     if (isAxiosError(error)) {
       return {
         message: error.message,

@@ -27,7 +27,7 @@ export default async function findAll(
         Authorization: `Bearer ${session}`,
       },
     });
-    
+
     return {
       data: response.data.data,
       status: 200,

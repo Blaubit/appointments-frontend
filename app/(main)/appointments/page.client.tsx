@@ -399,7 +399,9 @@ export default function PageClient({
                     <p className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">
                       {stat.title}
                     </p>
-                    <p className={`text-lg md:text-2xl font-bold ${stat.color}`}>
+                    <p
+                      className={`text-lg md:text-2xl font-bold ${stat.color}`}
+                    >
                       {stat.value}
                     </p>
                   </div>
@@ -457,7 +459,10 @@ export default function PageClient({
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Status Filter */}
                 <div className="w-full md:w-48">
-                  <Select value={statusFilter} onValueChange={handleStatusFilter}>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={handleStatusFilter}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Estado" />
                     </SelectTrigger>
@@ -503,9 +508,14 @@ export default function PageClient({
                       <SelectValue placeholder="Filtrar por profesional" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los profesionales</SelectItem>
+                      <SelectItem value="all">
+                        Todos los profesionales
+                      </SelectItem>
                       {professionals.map((professional) => (
-                        <SelectItem key={professional.id} value={professional.id}>
+                        <SelectItem
+                          key={professional.id}
+                          value={professional.id}
+                        >
                           <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
                               <AvatarImage

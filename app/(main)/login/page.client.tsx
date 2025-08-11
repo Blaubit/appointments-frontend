@@ -38,7 +38,12 @@ interface ServerMetadata {
 }
 
 interface LoginClientProps {
-  serverAction: (formData: FormData) => Promise<{ error?: string; fieldErrors?: Record<string, string[]> } | void>;
+  serverAction: (
+    formData: FormData,
+  ) => Promise<{
+    error?: string;
+    fieldErrors?: Record<string, string[]>;
+  } | void>;
   serverMetadata: ServerMetadata;
 }
 
@@ -66,17 +71,17 @@ export default function LoginClient({
       // Validar solo el campo específico
       const fieldSchema = loginSchema.shape[field];
       fieldSchema.parse(value);
-      
+
       // Si la validación pasa, limpiar errores de ese campo
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
         [field]: undefined,
       }));
     } catch (error) {
       if (error instanceof z.ZodError) {
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          [field]: error.errors.map(e => e.message),
+          [field]: error.errors.map((e) => e.message),
         }));
       }
     }
@@ -85,10 +90,10 @@ export default function LoginClient({
   // Validación completa del formulario
   const validateForm = (): boolean => {
     const result = loginSchema.safeParse(formData);
-    
+
     if (!result.success) {
       const fieldErrors: Record<string, string[]> = {};
-      
+
       result.error.errors.forEach((error) => {
         const field = error.path[0] as string;
         if (!fieldErrors[field]) {
@@ -96,27 +101,27 @@ export default function LoginClient({
         }
         fieldErrors[field].push(error.message);
       });
-      
+
       setErrors({ ...fieldErrors });
       return false;
     }
-    
+
     setErrors({});
     return true;
   };
 
   // Manejar cambios en los campos
   const handleFieldChange = (field: keyof LoginFormData, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-    
+
     // Limpiar error general al cambiar cualquier campo
     if (errors.general) {
-      setErrors(prev => ({ ...prev, general: undefined }));
+      setErrors((prev) => ({ ...prev, general: undefined }));
     }
-    
+
     // Validar el campo después de un breve delay para evitar validación muy agresiva
     setTimeout(() => {
       validateField(field, value);
@@ -148,15 +153,17 @@ export default function LoginClient({
         if (result?.error) {
           setErrors({ general: result.error });
         }
-        
+
         if (result?.fieldErrors) {
-          setErrors(prev => ({ ...prev, ...result.fieldErrors }));
+          setErrors((prev) => ({ ...prev, ...result.fieldErrors }));
         }
-        
+
         // Si no hay error, el servidor redirigirá automáticamente
       } catch (err) {
         console.error("Error durante el login:", err);
-        setErrors({ general: "Ocurrió un error inesperado. Por favor intenta de nuevo." });
+        setErrors({
+          general: "Ocurrió un error inesperado. Por favor intenta de nuevo.",
+        });
       }
     });
   };
@@ -229,8 +236,8 @@ export default function LoginClient({
                     value={formData.email}
                     onChange={(e) => handleFieldChange("email", e.target.value)}
                     className={`pl-10 h-12 ${
-                      hasFieldError("email") 
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500" 
+                      hasFieldError("email")
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                         : ""
                     }`}
                     disabled={isLoading}
@@ -256,10 +263,12 @@ export default function LoginClient({
                     type={showPassword ? "text" : "password"}
                     placeholder="Tu contraseña"
                     value={formData.password}
-                    onChange={(e) => handleFieldChange("password", e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange("password", e.target.value)
+                    }
                     className={`pl-10 pr-10 h-12 ${
-                      hasFieldError("password") 
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500" 
+                      hasFieldError("password")
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                         : ""
                     }`}
                     disabled={isLoading}
@@ -293,7 +302,9 @@ export default function LoginClient({
                   id="remember"
                   name="remember"
                   checked={formData.remember}
-                  onChange={(e) => handleFieldChange("remember", e.target.checked)}
+                  onChange={(e) =>
+                    handleFieldChange("remember", e.target.checked)
+                  }
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   disabled={isLoading}
                 />

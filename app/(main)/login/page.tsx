@@ -9,7 +9,7 @@ import { z } from "zod";
 // Validación con backend real usando Zod
 async function handleServerLogin(formData: FormData) {
   "use server";
-  
+
   try {
     // Extraer datos del FormData
     const rawData = {
@@ -20,11 +20,11 @@ async function handleServerLogin(formData: FormData) {
 
     // Validación con Zod en el servidor
     const validationResult = loginSchema.safeParse(rawData);
-    
+
     if (!validationResult.success) {
       // Formatear errores de validación por campo
       const fieldErrors: Record<string, string[]> = {};
-      
+
       validationResult.error.errors.forEach((error) => {
         const field = error.path[0] as string;
         if (!fieldErrors[field]) {
@@ -32,10 +32,10 @@ async function handleServerLogin(formData: FormData) {
         }
         fieldErrors[field].push(error.message);
       });
-      
-      return { 
+
+      return {
         error: "Datos de formulario inválidos",
-        fieldErrors 
+        fieldErrors,
       };
     }
 
@@ -53,15 +53,20 @@ async function handleServerLogin(formData: FormData) {
       // Error en el login - determinar si es error de credenciales o del servidor
       const errorMessage = result.message || "Error en el login";
       const statusCode = result.status || 500;
-      
+
       // Errores específicos basados en el código de estado
       switch (statusCode) {
         case 401:
-          return { error: "Credenciales incorrectas. Verifica tu email y contraseña." };
+          return {
+            error: "Credenciales incorrectas. Verifica tu email y contraseña.",
+          };
         case 404:
           return { error: "Usuario no encontrado. ¿Necesitas registrarte?" };
         case 429:
-          return { error: "Demasiados intentos. Por favor espera antes de intentar nuevamente." };
+          return {
+            error:
+              "Demasiados intentos. Por favor espera antes de intentar nuevamente.",
+          };
         case 500:
           return { error: "Error interno del servidor. Intenta más tarde." };
         default:
@@ -70,7 +75,7 @@ async function handleServerLogin(formData: FormData) {
     }
   } catch (error) {
     console.error("Error durante el login:", error);
-    
+
     // Distinguir entre diferentes tipos de errores
     if (error instanceof z.ZodError) {
       // Error de validación que se escapó
@@ -82,13 +87,13 @@ async function handleServerLogin(formData: FormData) {
         }
         fieldErrors[field].push(err.message);
       });
-      
-      return { 
+
+      return {
         error: "Datos de formulario inválidos",
-        fieldErrors 
+        fieldErrors,
       };
     }
-    
+
     // Error genérico del servidor
     return { error: "Error interno del servidor. Por favor intenta de nuevo." };
   }

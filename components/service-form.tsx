@@ -30,15 +30,20 @@ interface FormData {
   price: string;
 }
 
-export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceFormProps) {
+export function ServiceForm({
+  isOpen,
+  onClose,
+  service,
+  onSuccess,
+}: ServiceFormProps) {
   const isEditing = !!service;
-  
+
   const [formData, setFormData] = useState<FormData>({
     name: service?.name || "",
     durationMinutes: service?.durationMinutes?.toString() || "",
     price: service?.price?.toString() || "",
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData>>({});
 
@@ -84,13 +89,13 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       const serviceData = {
         name: formData.name.trim(),
@@ -103,7 +108,7 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
       console.log("Service ID:", service?.id); // Para debug
 
       let response;
-      
+
       if (isEditing && service) {
         // Modo editar
         response = await update({
@@ -117,12 +122,12 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
         console.log("Create response:", response); // Para debug
       }
 
-      if ('data' in response) {
+      if ("data" in response) {
         // Éxito
         toast.success(
-          isEditing 
-            ? "Servicio actualizado correctamente" 
-            : "Servicio creado correctamente"
+          isEditing
+            ? "Servicio actualizado correctamente"
+            : "Servicio creado correctamente",
         );
         onSuccess?.();
         handleClose();
@@ -139,11 +144,11 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -156,13 +161,12 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
               {isEditing ? "Editar Servicio" : "Crear Nuevo Servicio"}
             </DialogTitle>
             <DialogDescription>
-              {isEditing 
-                ? "Modifica la información del servicio" 
-                : "Completa la información del nuevo servicio"
-              }
+              {isEditing
+                ? "Modifica la información del servicio"
+                : "Completa la información del nuevo servicio"}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
@@ -181,7 +185,7 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
                 )}
               </div>
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="duration" className="text-right">
                 Duración *
@@ -192,16 +196,20 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
                   type="number"
                   min="1"
                   value={formData.durationMinutes}
-                  onChange={(e) => handleInputChange("durationMinutes", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("durationMinutes", e.target.value)
+                  }
                   placeholder="Minutos"
                   className={errors.durationMinutes ? "border-red-500" : ""}
                 />
                 {errors.durationMinutes && (
-                  <p className="text-red-500 text-sm mt-1">{errors.durationMinutes}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.durationMinutes}
+                  </p>
                 )}
               </div>
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right">
                 Precio *
@@ -223,25 +231,28 @@ export function ServiceForm({ isOpen, onClose, service, onSuccess }: ServiceForm
               </div>
             </div>
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleClose}
               disabled={isLoading}
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading}
               className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
             >
-              {isLoading 
-                ? (isEditing ? "Actualizando..." : "Creando...") 
-                : (isEditing ? "Actualizar Servicio" : "Crear Servicio")
-              }
+              {isLoading
+                ? isEditing
+                  ? "Actualizando..."
+                  : "Creando..."
+                : isEditing
+                  ? "Actualizar Servicio"
+                  : "Crear Servicio"}
             </Button>
           </DialogFooter>
         </form>

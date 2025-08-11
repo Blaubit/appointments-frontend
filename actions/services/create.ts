@@ -9,9 +9,9 @@ import { serviceDto } from "@/types/dto/service/serviceDto";
 import { Appointment } from "@/types/";
 
 export default async function create({
-    name,
-    durationMinutes,
-    price,
+  name,
+  durationMinutes,
+  price,
 }: serviceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
@@ -20,9 +20,9 @@ export default async function create({
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services`;
     const body = {
-        name,
-        durationMinutes,
-        price,
+      name,
+      durationMinutes,
+      price,
     };
     const response = await axios.post<Appointment>(url, body, {
       headers: {
@@ -33,7 +33,7 @@ export default async function create({
     revalidatePath("/services");
 
     return {
-      data: response.data, 
+      data: response.data,
       status: response.status,
       statusText: response.statusText,
     };

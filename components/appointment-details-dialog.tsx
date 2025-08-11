@@ -168,7 +168,7 @@ export function AppointmentDetailsDialog({
                     </h3>
                   </div>
                 </div>
-                
+
                 <div className="flex-1 space-y-3">
                   <div className="grid grid-cols-1 gap-3 sm:gap-4">
                     <div className="hidden sm:block">
@@ -183,13 +183,17 @@ export function AppointmentDetailsDialog({
                       <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Email
                       </Label>
-                      <p className="text-xs sm:text-sm truncate">{appointment.client.email}</p>
+                      <p className="text-xs sm:text-sm truncate">
+                        {appointment.client.email}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                         Teléfono
                       </Label>
-                      <p className="text-xs sm:text-sm">{appointment.client.phone}</p>
+                      <p className="text-xs sm:text-sm">
+                        {appointment.client.phone}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -198,7 +202,7 @@ export function AppointmentDetailsDialog({
                       <p className="text-xs sm:text-sm">Activo</p>
                     </div>
                   </div>
-                  
+
                   {/* Contact buttons - responsive layout */}
                   <div className="flex flex-col sm:flex-row gap-2 pt-2">
                     <Button
@@ -222,15 +226,21 @@ export function AppointmentDetailsDialog({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => openWhatsApp(
-                        appointment.client.phone,
-                        `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                          appointment.professional.fullName
-                        )}`
-                      )}
+                      onClick={() =>
+                        openWhatsApp(
+                          appointment.client.phone,
+                          `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
+                            appointment.professional.fullName,
+                          )}`,
+                        )
+                      }
                       className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
                     >
-                      <WhatsappIcon className="text-green-500 mr-1 flex-shrink-0" width={16} height={16} />
+                      <WhatsappIcon
+                        className="text-green-500 mr-1 flex-shrink-0"
+                        width={16}
+                        height={16}
+                      />
                       <span className="truncate">WhatsApp</span>
                     </Button>
                   </div>
@@ -290,7 +300,9 @@ export function AppointmentDetailsDialog({
                       </Label>
                       <div className="flex items-start gap-1">
                         <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        <p className="text-xs sm:text-sm break-words">{appointment.company.address}</p>
+                        <p className="text-xs sm:text-sm break-words">
+                          {appointment.company.address}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -389,7 +401,9 @@ export function AppointmentDetailsDialog({
                   <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                     Recordatorio Enviado
                   </Label>
-                  <p className="text-xs sm:text-sm">{appointment ? "Sí" : "No"}</p>
+                  <p className="text-xs sm:text-sm">
+                    {appointment ? "Sí" : "No"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -397,8 +411,8 @@ export function AppointmentDetailsDialog({
 
           {/* Action Buttons */}
           <div className="grid grid-cols-1 sm:flex sm:flex-row gap-2 sm:gap-3 pt-4">
-            <Button 
-              onClick={() => onEdit(appointment)} 
+            <Button
+              onClick={() => onEdit(appointment)}
               className="w-full sm:flex-1 h-10 text-sm"
             >
               <Edit className="h-4 w-4 mr-2 flex-shrink-0" />

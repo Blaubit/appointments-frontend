@@ -11,8 +11,5 @@ export default async function Page({ searchParams }: Props) {
   const responseServices = await findAll();
   const services: Service[] = responseServices.data;
   const pagination = responseServices.meta;
-  return (
-    
-    <PageClient services={services} pagination={pagination} />
-  );
+  return <PageClient services={services} pagination={pagination} />;
 }

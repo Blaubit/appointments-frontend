@@ -167,11 +167,11 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
-      
+
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
         ¡No hay citas programadas!
       </h3>
-      
+
       {hasNoActivity() ? (
         <div className="space-y-3 mb-6">
           <p className="text-gray-600 dark:text-gray-400">
@@ -193,7 +193,7 @@ export default function DashboardClient({
           Todas tus próximas citas están más adelante en la semana.
         </p>
       )}
-      
+
       <div className="space-y-3">
         <Link href="/appointments/new">
           <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
@@ -201,7 +201,7 @@ export default function DashboardClient({
             Programar Nueva Cita
           </Button>
         </Link>
-        
+
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
           <Link href="/calendar">
             <Button variant="outline" size="sm">
@@ -234,7 +234,8 @@ export default function DashboardClient({
                 Día Tranquilo Hoy
               </h4>
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                Solo tienes {appointmentStats.todayCount} {appointmentStats.todayCount === 1 ? 'cita' : 'citas'} hoy. 
+                Solo tienes {appointmentStats.todayCount}{" "}
+                {appointmentStats.todayCount === 1 ? "cita" : "citas"} hoy.
                 ¡Perfecto para enfocarte en cada paciente!
               </p>
             </div>
@@ -256,10 +257,11 @@ export default function DashboardClient({
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             ¡Buen día, {user.fullName.split(" ")[0]}! 👋
           </h2>
-          
+
           {hasNoActivity() ? (
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Hoy parece ser un día tranquilo. ¿Qué tal si aprovechas para organizarte o descansar?
+              Hoy parece ser un día tranquilo. ¿Qué tal si aprovechas para
+              organizarte o descansar?
             </p>
           ) : (
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
@@ -298,7 +300,7 @@ export default function DashboardClient({
               </CardContent>
             </Link>
           </Card>
-          
+
           <Card className="hover:shadow-lg transition-shadow">
             <Link href="/appointments">
               <CardContent className="p-3 sm:p-6">
@@ -342,7 +344,7 @@ export default function DashboardClient({
               </CardContent>
             </Link>
           </Card>
-          
+
           <Card className="hover:shadow-lg transition-shadow">
             <Link href="/appointments">
               <CardContent className="p-3 sm:p-6">
@@ -376,8 +378,8 @@ export default function DashboardClient({
                     Próximas Citas
                   </CardTitle>
                   <CardDescription className="text-sm">
-                    {upcomingAppointments.length > 0 
-                      ? "Tus citas programadas" 
+                    {upcomingAppointments.length > 0
+                      ? "Tus citas programadas"
                       : "No hay citas programadas"}
                   </CardDescription>
                 </div>
@@ -404,7 +406,9 @@ export default function DashboardClient({
                           <div className="flex items-center space-x-3 flex-1 min-w-0">
                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                               <AvatarImage
-                                src={appointment.client.avatar || "/Avatar1.png"}
+                                src={
+                                  appointment.client.avatar || "/Avatar1.png"
+                                }
                                 alt={appointment.client.fullName}
                               />
                               <AvatarFallback className="text-xs sm:text-sm">
@@ -481,12 +485,16 @@ export default function DashboardClient({
                                 openWhatsApp(
                                   appointment.client.phone,
                                   `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                                    appointment.professional.fullName
-                                  )}`
+                                    appointment.professional.fullName,
+                                  )}`,
                                 );
                               }}
                             >
-                              <WhatsappIcon className="text-green-500 dark:bg-gray-900" width={16} height={16} />
+                              <WhatsappIcon
+                                className="text-green-500 dark:bg-gray-900"
+                                width={16}
+                                height={16}
+                              />
                               <span className="ml-1 sm:hidden">WhatsApp</span>
                             </Button>
                           </div>
