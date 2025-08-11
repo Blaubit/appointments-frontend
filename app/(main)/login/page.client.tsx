@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
+import { z } from "zod";
 
 interface ServerMetadata {
   timestamp: string;
@@ -36,7 +38,7 @@ interface ServerMetadata {
 }
 
 interface LoginClientProps {
-  serverAction: (formData: FormData) => Promise<{ error?: string } | void>;
+  serverAction: (formData: FormData) => Promise<{ error?: string; fieldErrors?: Record<string, string[]> } | void>;
   serverMetadata: ServerMetadata;
 }
 
@@ -46,41 +48,85 @@ export default function LoginClient({
 }: LoginClientProps) {
   // Estados del cliente
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: "",
+    password: "",
+    remember: false,
+  });
+  const [errors, setErrors] = useState<{
+    general?: string;
+    email?: string[];
+    password?: string[];
+  }>({});
   const [isLoading, startTransition] = useTransition();
 
-  // Validación del cliente
-  const validateForm = () => {
-    if (!email.trim()) {
-      setError("El correo electrónico es requerido");
+  // Validación en tiempo real del campo
+  const validateField = (field: keyof LoginFormData, value: any) => {
+    try {
+      // Validar solo el campo específico
+      const fieldSchema = loginSchema.shape[field];
+      fieldSchema.parse(value);
+      
+      // Si la validación pasa, limpiar errores de ese campo
+      setErrors(prev => ({
+        ...prev,
+        [field]: undefined,
+      }));
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setErrors(prev => ({
+          ...prev,
+          [field]: error.errors.map(e => e.message),
+        }));
+      }
+    }
+  };
+
+  // Validación completa del formulario
+  const validateForm = (): boolean => {
+    const result = loginSchema.safeParse(formData);
+    
+    if (!result.success) {
+      const fieldErrors: Record<string, string[]> = {};
+      
+      result.error.errors.forEach((error) => {
+        const field = error.path[0] as string;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = [];
+        }
+        fieldErrors[field].push(error.message);
+      });
+      
+      setErrors({ ...fieldErrors });
       return false;
     }
-
-    if (!email.includes("@")) {
-      setError("Por favor ingresa un correo electrónico válido");
-      return false;
-    }
-
-    if (!password.trim()) {
-      setError("La contraseña es requerida");
-      return false;
-    }
-
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
-      return false;
-    }
-
+    
+    setErrors({});
     return true;
+  };
+
+  // Manejar cambios en los campos
+  const handleFieldChange = (field: keyof LoginFormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+    
+    // Limpiar error general al cambiar cualquier campo
+    if (errors.general) {
+      setErrors(prev => ({ ...prev, general: undefined }));
+    }
+    
+    // Validar el campo después de un breve delay para evitar validación muy agresiva
+    setTimeout(() => {
+      validateField(field, value);
+    }, 300);
   };
 
   // Manejar envío del formulario
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    setErrors({});
 
     // Validación del cliente
     if (!validateForm()) {
@@ -90,23 +136,41 @@ export default function LoginClient({
     // Ejecutar acción del servidor
     startTransition(async () => {
       try {
-        const formData = new FormData(e.currentTarget);
-        const result = await serverAction(formData);
+        const formDataObj = new FormData();
+        formDataObj.append("email", formData.email);
+        formDataObj.append("password", formData.password);
+        if (formData.remember) {
+          formDataObj.append("remember", "on");
+        }
+
+        const result = await serverAction(formDataObj);
 
         if (result?.error) {
-          setError(result.error);
+          setErrors({ general: result.error });
         }
+        
+        if (result?.fieldErrors) {
+          setErrors(prev => ({ ...prev, ...result.fieldErrors }));
+        }
+        
         // Si no hay error, el servidor redirigirá automáticamente
       } catch (err) {
         console.error("Error durante el login:", err);
-        setError("Ocurrió un error inesperado. Por favor intenta de nuevo.");
+        setErrors({ general: "Ocurrió un error inesperado. Por favor intenta de nuevo." });
       }
     });
   };
 
-  // Efectos de animación y UX
-  const handleInputFocus = (inputName: string) => {
-    setError(""); // Limpiar errores al enfocar campos
+  // Helper para obtener el primer error de un campo
+  const getFieldError = (field: keyof typeof errors) => {
+    const fieldErrors = errors[field];
+    return Array.isArray(fieldErrors) ? fieldErrors[0] : fieldErrors;
+  };
+
+  // Helper para verificar si un campo tiene errores
+  const hasFieldError = (field: keyof typeof errors) => {
+    const fieldErrors = errors[field];
+    return Array.isArray(fieldErrors) ? fieldErrors.length > 0 : !!fieldErrors;
   };
 
   return (
@@ -139,14 +203,14 @@ export default function LoginClient({
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Mostrar errores */}
-            {error && (
+            {/* Mostrar error general */}
+            {errors.general && (
               <Alert
                 variant="destructive"
                 className="animate-in slide-in-from-top-2"
               >
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{errors.general}</AlertDescription>
               </Alert>
             )}
 
@@ -162,14 +226,22 @@ export default function LoginClient({
                     name="email"
                     type="email"
                     placeholder="tu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onFocus={() => handleInputFocus("email")}
-                    className="pl-10 h-12"
+                    value={formData.email}
+                    onChange={(e) => handleFieldChange("email", e.target.value)}
+                    className={`pl-10 h-12 ${
+                      hasFieldError("email") 
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-500" 
+                        : ""
+                    }`}
                     disabled={isLoading}
                     required
                   />
                 </div>
+                {hasFieldError("email") && (
+                  <p className="text-sm text-red-500 animate-in slide-in-from-top-1">
+                    {getFieldError("email")}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -183,10 +255,13 @@ export default function LoginClient({
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Tu contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onFocus={() => handleInputFocus("password")}
-                    className="pl-10 pr-10 h-12"
+                    value={formData.password}
+                    onChange={(e) => handleFieldChange("password", e.target.value)}
+                    className={`pl-10 pr-10 h-12 ${
+                      hasFieldError("password") 
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-500" 
+                        : ""
+                    }`}
                     disabled={isLoading}
                     required
                   />
@@ -205,6 +280,11 @@ export default function LoginClient({
                     )}
                   </Button>
                 </div>
+                {hasFieldError("password") && (
+                  <p className="text-sm text-red-500 animate-in slide-in-from-top-1">
+                    {getFieldError("password")}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">
@@ -212,8 +292,8 @@ export default function LoginClient({
                   type="checkbox"
                   id="remember"
                   name="remember"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
+                  checked={formData.remember}
+                  onChange={(e) => handleFieldChange("remember", e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   disabled={isLoading}
                 />

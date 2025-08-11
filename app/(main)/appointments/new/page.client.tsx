@@ -35,7 +35,9 @@ import { CalendarCard } from "@/components/calendar-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import create from "@/actions/appointments/create";
 import { create as createClient } from "@/actions/clients/create";
-
+import { appointmentSchema } from "@/lib/validations/appointments";
+import { set, z } from "zod";
+import { useSearchParams } from "next/navigation";
 type Props = {
   services: Service[];
   clients: Client[];
@@ -49,8 +51,14 @@ export default function PageClient({
   professionals,
   userSession,
 }: Props) {
+  const searchParams = useSearchParams();
+  const clientIdFromUrl = searchParams.get("clientId") ?? "";
   const router = useRouter();
-  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedClient, setSelectedClient] = useState(() => {
+  if (!clientIdFromUrl) return null;
+  return clients.find(client => client.id === clientIdFromUrl) || null;
+});
+
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
     null,
   );
@@ -64,7 +72,7 @@ export default function PageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
+  
   const totalPrice = selectedServices.reduce((sum, id) => {
     const service = services.find((s) => s.id === id);
     return sum + (service ? Number(service.price) : 0);
@@ -217,8 +225,20 @@ export default function PageClient({
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    const dataToValidate = {
+    clientName: formData.clientName,
+    clientEmail: formData.clientEmail,
+    clientPhone: formData.clientPhone,
+    professionalId: formData.professionalId,
+    selectedServices,
+    date: selectedDate,
+    time: selectedTime,
+    notes: formData.notes,
+    status: formData.status,
+  };
 
     try {
+      appointmentSchema.parse(dataToValidate);
       let clientId = selectedClient?.id;
 
       // Si no hay cliente seleccionado, crear uno nuevo
@@ -292,8 +312,13 @@ export default function PageClient({
         router.push("/appointments");
       }, 1500);
     } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        setError(error.errors.map((err: any) => err.message).join(", "));
+      } else {
+        setError(error.message || "Error inesperado en la validación");
+      }
+      setIsLoading(false);
       console.error("Error creating appointment:", error);
-      setError(error.message || "Error al crear la cita");
     } finally {
       setIsLoading(false);
     }
@@ -561,14 +586,6 @@ export default function PageClient({
                 formData.clientName.trim() &&
                 formData.clientPhone.trim()
               ) {
-                // Crear un cliente temporal para la UI
-                const tempClient = {
-                  id: "temp",
-                  fullName: formData.clientName,
-                  email: formData.clientEmail,
-                  phone: formData.clientPhone,
-                };
-                setSelectedClient(tempClient);
                 setShowNewClientForm(false);
               }
             }}

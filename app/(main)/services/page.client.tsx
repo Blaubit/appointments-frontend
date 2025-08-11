@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,22 +27,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Header } from "@/components/header";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ServiceForm } from "@/components/service-form"; // Importa el nuevo componente
 import {
   Edit,
   Trash2,
@@ -60,7 +50,7 @@ import {
   Star,
 } from "lucide-react";
 import type { Service as ServiceType } from "@/types";
-
+import deleteService from "@/actions/services/delete";
 interface Pagination {
   totalItems: number;
   totalPages: number;
@@ -77,16 +67,11 @@ export default function PageClient({ services, pagination }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
+  
+  // Estados para los diálogos del formulario
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(
-    null,
-  );
-  const [formData, setFormData] = useState({
-    name: "",
-    durationMinutes: "",
-    price: "",
-  });
+  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -118,21 +103,33 @@ export default function PageClient({ services, pagination }: Props) {
   });
 
   const handleDelete = (id: string) => {
-    console.log("Eliminar", id);
+    deleteService({ id })
+    // Aquí implementarías la lógica para eliminar
   };
 
   const handleToggleStatus = (s: ServiceType) => {
     console.log("Toggle", s.id);
+    // Aquí implementarías la lógica para cambiar estado
   };
 
-  const openEdit = (s: ServiceType) => {
-    setSelectedService(s);
-    setFormData({
-      name: s.name,
-      durationMinutes: String(s.durationMinutes),
-      price: s.price,
-    });
+  const handleCreateSuccess = () => {
+    // Refrescar la página o actualizar los datos
+    router.refresh();
+  };
+
+  const handleEditSuccess = () => {
+    // Refrescar la página o actualizar los datos
+    router.refresh();
+  };
+
+  const openEdit = (service: ServiceType) => {
+    setSelectedService(service);
     setIsEditDialogOpen(true);
+  };
+
+  const closeEditDialog = () => {
+    setSelectedService(null);
+    setIsEditDialogOpen(false);
   };
 
   return (
@@ -157,36 +154,12 @@ export default function PageClient({ services, pagination }: Props) {
                 <Button variant="outline">
                   <Download className="h-4 w-4 mr-2" /> Exportar
                 </Button>
-                <Dialog
-                  open={isCreateDialogOpen}
-                  onOpenChange={setIsCreateDialogOpen}
+                <Button 
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
                 >
-                  <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                      <Plus className="h-4 w-4 mr-2" /> Nuevo Servicio
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <form>
-                      <DialogHeader>
-                        <DialogTitle>Crear Servicio</DialogTitle>
-                        <DialogDescription>
-                          Completa los datos del servicio
-                        </DialogDescription>
-                      </DialogHeader>
-                      <DialogFooter>
-                        <Button
-                          type="button"
-                          onClick={() => setIsCreateDialogOpen(false)}
-                          variant="outline"
-                        >
-                          Cancelar
-                        </Button>
-                        <Button type="submit">Crear</Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                  <Plus className="h-4 w-4 mr-2" /> Nuevo Servicio
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -360,6 +333,20 @@ export default function PageClient({ services, pagination }: Props) {
             </CardContent>
           </Card>
         )}
+
+        {/* Diálogos del formulario */}
+        <ServiceForm
+          isOpen={isCreateDialogOpen}
+          onClose={() => setIsCreateDialogOpen(false)}
+          onSuccess={handleCreateSuccess}
+        />
+
+        <ServiceForm
+          isOpen={isEditDialogOpen}
+          onClose={closeEditDialog}
+          service={selectedService}
+          onSuccess={handleEditSuccess}
+        />
       </div>
     </div>
   );
