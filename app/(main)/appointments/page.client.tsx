@@ -35,19 +35,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import {
   Calendar,
   Search,
   Plus,
   CheckCircle,
-  AlertCircle,
   XCircle,
   Phone,
   Mail,
@@ -58,11 +51,7 @@ import {
   MoreHorizontal,
   Grid3X3,
   List,
-  Clock,
-  MapPin,
   User as UserIcon,
-  FileText,
-  Star,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import type { Appointment, AppointmentStats, Pagination, User } from "@/types";
