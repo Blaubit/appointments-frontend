@@ -670,7 +670,7 @@ export default function CalendarPageClient({
           <CardContent className="p-6">
             {/* Week Header */}
             <div className="grid grid-cols-8 gap-2 mb-4">
-              <div className="text-center text-sm font-medium text-gray-500 py-2">
+              <div className="text-center text-sm font-medium text-gray-700 py-2">
                 Hora
               </div>
               {generateWeekDays().map((date, index) => {
@@ -694,7 +694,7 @@ export default function CalendarPageClient({
             <div className="space-y-1">
               {timeSlots.map((time) => (
                 <div key={time} className="grid grid-cols-8 gap-2 min-h-[60px]">
-                  <div className="text-sm text-gray-500 py-2 text-right pr-2">
+                  <div className="text-sm  py-2 text-right pr-2">
                     {time}
                   </div>
                   {generateWeekDays().map((date, dayIndex) => {
@@ -744,7 +744,7 @@ export default function CalendarPageClient({
                 ).filter((apt) => formatTime(apt.startTime) === time);
                 return (
                   <div key={time} className="flex min-h-[80px]">
-                    <div className="w-20 text-sm text-gray-500 py-2 text-right pr-4">
+                    <div className="w-20 text-sm  py-2 text-right pr-4">
                       {time}
                     </div>
                     <div
