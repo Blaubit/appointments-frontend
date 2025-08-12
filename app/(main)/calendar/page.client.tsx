@@ -647,7 +647,7 @@ export default function CalendarPageClient({
                             openEditDialog(appointment);
                           }}
                         >
-                          {appointment.startTime} -{" "}
+                          {formatTime(appointment.startTime)} -{" "}
                           {appointment.client.fullName}
                         </div>
                       ))}
