@@ -20,7 +20,7 @@ export default async function findAll(
     const companyId = User ? JSON.parse(User).companyId : null;
     //const UserId = User ? JSON.parse(User).companyId : null;
     //const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${User}`;
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/all-with-stats?limit=6`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/all-with-stats?limit=1000`;
     const parsedParams = parsePaginationParams(props.searchParams);
     //console.log("url", url);
     const response = await axios.get(url, {

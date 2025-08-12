@@ -1,5 +1,5 @@
 import PageClient from "./page.client";
-import findAll from "@/actions/services/findAll"; // asegúrate que esta función exista
+import { findAll } from "@/actions/services/findAll"; // asegúrate que esta función exista
 import { findAll as findAllClients } from "@/actions/clients/findAll"; // nueva importación para clientes
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import { getUser } from "@/actions/auth/getUser"; // nueva importación para obtener el usuario

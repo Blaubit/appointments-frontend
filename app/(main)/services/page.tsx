@@ -1,6 +1,6 @@
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import PageClient from "./page.client";
-import findAll from "@/actions/services/findAll";
+import { findAll } from "@/actions/services/findAll";
 import { Service } from "@/types";
 type Props = {
   searchParams: ReadonlyURLSearchParams;
