@@ -38,9 +38,7 @@ interface ServerMetadata {
 }
 
 interface LoginClientProps {
-  serverAction: (
-    formData: FormData,
-  ) => Promise<{
+  serverAction: (formData: FormData) => Promise<{
     error?: string;
     fieldErrors?: Record<string, string[]>;
   } | void>;

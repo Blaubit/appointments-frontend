@@ -1,13 +1,16 @@
-import { Suspense } from "react"
-import CalendarPageClient from "./page.client"
-import { Header } from "@/components/header"
+import { Suspense } from "react";
+import CalendarPageClient from "./page.client";
+import { Header } from "@/components/header";
 import findAll from "@/actions/appointments/findAll";
-import {findAll as findAllServices} from "@/actions/services/findAll";
+import { findAll as findAllServices } from "@/actions/services/findAll";
 // Mock data que vendría de la base de datos
 
 export default async function CalendarPage() {
   // Obtener datos del servidor
-  const [appointments, services] = await Promise.all([findAll(), findAllServices()])
+  const [appointments, services] = await Promise.all([
+    findAll(),
+    findAllServices(),
+  ]);
   console.log("Appointments:", appointments.data);
   console.log("Services:", services.data);
   return (
@@ -31,8 +34,11 @@ export default async function CalendarPage() {
           </div>
         }
       >
-        <CalendarPageClient initialAppointments={appointments.data} services={services.data} />
+        <CalendarPageClient
+          initialAppointments={appointments.data}
+          services={services.data}
+        />
       </Suspense>
     </div>
-  )
+  );
 }
