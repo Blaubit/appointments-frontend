@@ -16,21 +16,19 @@ export async function findHistory(
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
     const session = cookieStore.get("session")?.value;
-
+    
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
-
-    console.log("response", response);
     return {
-      data: response.data.data.data,
+      data: response.data.data,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.data.meta,
+      meta: response.data.meta,
       stats: {
-        total: response.data.data.meta.totalItems,
+        total: response.data.meta.totalItems,
         confirmed: 10,
         pending: 5,
         cancelled: 2,

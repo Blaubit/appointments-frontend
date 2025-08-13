@@ -24,7 +24,11 @@ import {
   MapPin,
   User as UserIcon,
   FileText,
+  Stethoscope,
+  CalendarClock,
+  History,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { Appointment } from "@/types";
 import {
   getStatusColor,
@@ -57,6 +61,8 @@ export function AppointmentDetailsDialog({
   onCall,
   onEmail,
 }: AppointmentDetailsDialogProps) {
+  const router = useRouter();
+
   if (!appointment) return null;
 
   const getInitials = (name: string) => {
@@ -127,6 +133,27 @@ export function AppointmentDetailsDialog({
     );
   };
 
+  // Nuevas funciones para manejar las acciones
+  const handleCancelAppointment = () => {
+    onCancel(appointment);
+  };
+
+  const handleRescheduleAppointment = () => {
+    // Implementar lógica de reprogramación
+    console.log("Reprogramar cita:", appointment.id);
+    // Aquí podrías abrir un modal de reprogramación o redirigir
+  };
+
+  const handleAttendAppointment = () => {
+    onClose();
+    router.push(`/consultation/${appointment.id}`);
+  };
+
+  const handleViewClientHistory = () => {
+    onClose();
+    router.push(`/clients/${appointment.client.id}/history`);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full overflow-y-auto p-4 sm:p-6">
@@ -144,9 +171,21 @@ export function AppointmentDetailsDialog({
           {/* Client Information */}
           <Card>
             <CardHeader className="pb-3 sm:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <UserIcon className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Información del Cliente</span>
+              <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+                <div className="flex items-center gap-2">
+                  <UserIcon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Información del Cliente</span>
+                </div>
+                {/* Botón para ver historial del cliente */}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleViewClientHistory}
+                  className="text-xs sm:text-sm h-8 sm:h-9 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  <History className="h-3 w-3 mr-1 flex-shrink-0" />
+                  Ver Historial
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -410,38 +449,69 @@ export function AppointmentDetailsDialog({
           </Card>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-1 sm:flex sm:flex-row gap-2 sm:gap-3 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 pt-4">
+            {/* Botón Atender Cita */}
+            {(appointment.status === "confirmed" || appointment.status === "pending") && (
+              <Button
+                onClick={handleAttendAppointment}
+                className="w-full h-10 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+              >
+                <Stethoscope className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Atender Cita</span>
+              </Button>
+            )}
+
+            {/* Botón Editar */}
             <Button
               onClick={() => onEdit(appointment)}
-              className="w-full sm:flex-1 h-10 text-sm"
+              variant="outline"
+              className="w-full h-10 text-sm"
             >
               <Edit className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Editar Cita</span>
+              <span className="truncate">Editar</span>
             </Button>
+
+            {/* Botón Reprogramar */}
+            {appointment.status !== "cancelled" && appointment.status !== "completed" && (
+              <Button
+                onClick={handleRescheduleAppointment}
+                variant="outline"
+                className="w-full h-10 text-sm text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-600 dark:hover:bg-blue-950"
+              >
+                <CalendarClock className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Reprogramar</span>
+              </Button>
+            )}
+
+            {/* Botón Confirmar (solo si está pendiente) */}
             {appointment.status === "pending" && (
               <Button
                 onClick={() => onConfirm(appointment)}
                 variant="outline"
-                className="w-full sm:flex-1 h-10 text-sm"
+                className="w-full h-10 text-sm text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-950"
               >
                 <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate">Confirmar</span>
               </Button>
             )}
-            {appointment.status !== "cancelled" && (
+
+            {/* Botón Cancelar */}
+            {appointment.status !== "cancelled" && appointment.status !== "completed" && (
               <Button
-                onClick={() => onCancel(appointment)}
+                onClick={handleCancelAppointment}
                 variant="outline"
-                className="w-full sm:flex-1 h-10 text-sm"
+                className="w-full h-10 text-sm text-orange-600 border-orange-300 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-600 dark:hover:bg-orange-950"
               >
                 <XCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate">Cancelar</span>
               </Button>
             )}
+
+            {/* Botón Eliminar */}
             <Button
               onClick={() => onDelete(appointment)}
               variant="destructive"
-              className="w-full sm:flex-1 h-10 text-sm"
+              className="w-full h-10 text-sm"
             >
               <Trash2 className="h-4 w-4 mr-2 flex-shrink-0" />
               <span className="truncate">Eliminar</span>
