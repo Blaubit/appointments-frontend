@@ -37,27 +37,19 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Client } from "@/types/clients";
-import type { Appointment } from "@/types/appointments";
+import type { Appointment, ClientAppointmentsStats } from "@/types/appointments";
 import { Header } from "@/components/header";
-
-interface ClientStats {
-  totalAppointments: number;
-  completedAppointments: number;
-  cancelledAppointments: number;
-  noShowAppointments: number;
-  totalSpent: number;
-  averageRating: number;
-  completionRate: number;
-}
 
 interface ClientHistoryPageClientProps {
   client: Client;
   appointments: Appointment[];
+  stats: ClientAppointmentsStats;
 }
 
 export default function ClientHistoryPageClient({
   client,
   appointments,
+  stats,
 }: ClientHistoryPageClientProps) {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
@@ -110,7 +102,7 @@ export default function ClientHistoryPageClient({
     const Icon = config.icon;
 
     return (
-      <Badge className={config.color}>
+      <Badge className={`${config.color} text-xs`}>
         <Icon className="h-3 w-3 mr-1" />
         {config.label}
       </Badge>
@@ -119,18 +111,18 @@ export default function ClientHistoryPageClient({
 
   const getTimelineIcon = (status: string) => {
     const iconConfig = {
-      completed: { icon: CheckCircle, color: "text-green-500" },
-      cancelled: { icon: XCircle, color: "text-red-500" },
-      no_show: { icon: UserX, color: "text-orange-500" },
-      scheduled: { icon: Clock, color: "text-blue-500" },
-      confirmed: { icon: CheckCircle, color: "text-purple-500" },
+      completed: { icon: CheckCircle, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20" },
+      cancelled: { icon: XCircle, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20" },
+      no_show: { icon: UserX, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
+      scheduled: { icon: Clock, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+      confirmed: { icon: CheckCircle, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
     };
 
     const config =
       iconConfig[status as keyof typeof iconConfig] || iconConfig.scheduled;
     const Icon = config.icon;
 
-    return <Icon className={`h-4 w-4 ${config.color}`} />;
+    return { Icon, color: config.color, bg: config.bg };
   };
 
   const formatDate = (dateString: string) => {
@@ -170,76 +162,76 @@ export default function ClientHistoryPageClient({
         backButtonHref={`/clients`}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Estadísticas del Cliente */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+        {/* Estadísticas del Cliente - Responsive Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <Card className="p-0">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
                     Total Citas
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    stats.totalAppointments
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
+                    {stats.total}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="h-8 w-8 sm:h-12 sm:w-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="p-0">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
                     Completadas
                   </p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    stats.completedAppointments
+                  <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
+                    {stats.completed}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="h-8 w-8 sm:h-12 sm:w-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-4 w-4 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="p-0">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
                     Total Gastado
                   </p>
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    €stats.totalSpent
+                  <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    €{stats.resecheduled}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="h-8 w-8 sm:h-12 sm:w-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="p-0">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Valoración Media
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Canceladas
                   </p>
-                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                    stats.averageRating
+                  <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    {stats.cancelled}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
-                  <Star className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <div className="h-8 w-8 sm:h-12 sm:w-12 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
+                  <XCircle className="h-4 w-4 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </CardContent>
@@ -248,16 +240,16 @@ export default function ClientHistoryPageClient({
 
         {/* Timeline de Citas */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Activity className="h-5 w-5" />
               Historial de Citas
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Cronología completa de todas las citas de {client.fullName}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 sm:p-6">
             {appointments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Calendar className="h-12 w-12 text-gray-400 mb-4" />
@@ -269,118 +261,155 @@ export default function ClientHistoryPageClient({
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {appointments.map((appointment, index) => (
-                  <div key={appointment.id} className="relative">
-                    {/* Línea de conexión */}
-                    {index < appointments.length - 1 && (
-                      <div className="absolute left-6 top-12 w-0.5 h-16 bg-gray-200 dark:bg-gray-700" />
-                    )}
+              <div className="relative">
+                {/* Línea vertical continua - mejorada para modo oscuro */}
+                <div className="absolute left-4 sm:left-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 z-0" />
+                
+                <div className="space-y-4 sm:space-y-6">
+                  {appointments.map((appointment, index) => {
+                    const { Icon, color, bg } = getTimelineIcon(appointment.status);
+                    
+                    return (
+                      <div key={appointment.id} className="relative z-10">
+                        <div className="flex gap-3 sm:gap-4">
+                          {/* Icono del timeline con línea conectada - mejorado z-index */}
+                          <div className="relative flex-shrink-0 z-20">
+                            <div className={`w-8 h-8 sm:w-12 sm:h-12 ${bg} border-2 border-white dark:border-gray-800 rounded-full flex items-center justify-center shadow-sm`}>
+                              <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
+                            </div>
+                          </div>
 
-                    <div className="flex gap-4">
-                      {/* Icono del timeline */}
-                      <div className="flex-shrink-0 w-12 h-12 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center">
-                        {getTimelineIcon(appointment.status)}
-                      </div>
-
-                      {/* Contenido de la cita */}
-                      <div className="flex-1 min-w-0">
-                        <Card
-                          className="hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => handleViewAppointment(appointment)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                                  {appointment.service.name}
-                                </h3>
-                                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                                  <div className="flex items-center gap-1">
-                                    <Calendar className="h-4 w-4" />
-                                    {appointment.appointmentDate.toLocaleString()}
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-4 w-4" />
-                                    {appointment.startTime} -{" "}
-                                    {appointment.endTime}
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <User className="h-4 w-4" />
-                                    {appointment.professional.fullName}
-                                  </div>
-                                  {appointment.company.address && (
-                                    <div className="flex items-center gap-1">
-                                      <MapPin className="h-4 w-4" />
-                                      {appointment.company.address}
+                          {/* Contenido de la cita - con línea siempre visible y mejor hover */}
+                          <div className="flex-1 min-w-0 pb-4 sm:pb-6 relative z-10">
+                            <Card
+                              className="
+                                transition-all duration-300 cursor-pointer 
+                                border-l-4 border-l-gray-200 dark:border-l-gray-700
+                                hover:border-l-blue-500 dark:hover:border-l-blue-400 
+                                hover:shadow-lg hover:shadow-blue-100/50 dark:hover:shadow-blue-900/20
+                                hover:-translate-y-1
+                                relative overflow-hidden
+                                before:absolute before:inset-0 before:bg-gradient-to-r 
+                                before:from-blue-50/0 before:to-blue-50/20 
+                                dark:before:from-blue-900/0 dark:before:to-blue-900/10
+                                before:opacity-0 hover:before:opacity-100 
+                                before:transition-opacity before:duration-300
+                              "
+                              onClick={() => handleViewAppointment(appointment)}
+                            >
+                              <CardContent className="p-3 sm:p-4 relative z-10">
+                                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                      {appointment.service.name}
+                                    </h3>
+                                    
+                                    {/* Información principal - Stack en móvil */}
+                                    <div className="space-y-1 sm:space-y-0 sm:flex sm:items-center sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="truncate">
+                                          {new Date(appointment.appointmentDate).toLocaleDateString('es-ES')}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span>
+                                          {appointment.startTime} - {appointment.endTime}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="truncate">
+                                          {appointment.professional.fullName}
+                                        </span>
+                                      </div>
                                     </div>
-                                  )}
+
+                                    {/* Dirección en línea separada en móvil */}
+                                    {appointment.company.address && (
+                                      <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 sm:mt-0">
+                                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="truncate">
+                                          {appointment.company.address}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Lado derecho - Stack en móvil */}
+                                  <div className="flex flex-col items-end gap-2 ml-2 sm:ml-3">
+                                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                                      {formatDate(appointment.appointmentDate.toLocaleString())}
+                                    </span>
+                                    {getStatusBadge(appointment.status)}
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm text-gray-500">
-                                  {formatDate(
-                                    appointment.appointmentDate.toLocaleString(),
-                                  )}
-                                </span>
-                                {getStatusBadge(appointment.status)}
-                              </div>
-                            </div>
+                                {/* Notas */}
+                                {appointment.notes && (
+                                  <div className="mb-2 sm:mb-3">
+                                    <div className="flex items-start gap-2">
+                                      <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                      <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                                        {appointment.notes}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
 
-                            {appointment.notes && (
-                              <div className="mb-3">
-                                <div className="flex items-start gap-2">
-                                  <FileText className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                                  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-                                    {appointment.notes}
-                                  </p>
+                                {/* Footer con precio */}
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                                      €{appointment.service.price}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      • {appointment.service.durationMinutes} min
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-gray-500">
+                                    #{appointment.id}
+                                  </span>
                                 </div>
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                  €{appointment.service.price}
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Modal de Detalles */}
+        {/* Modal de Detalles - Optimizado para móvil */}
         <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-3 sm:mx-auto">
             <DialogHeader>
-              <DialogTitle>Detalles de la Cita</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Detalles de la Cita</DialogTitle>
+              <DialogDescription className="text-sm">
                 Información completa de la cita del{" "}
-                {selectedAppointment?.appointmentDate.toLocaleString()} con{" "}
+                {selectedAppointment?.appointmentDate && 
+                  new Date(selectedAppointment.appointmentDate).toLocaleDateString('es-ES')} con{" "}
                 {client.fullName}
               </DialogDescription>
             </DialogHeader>
 
             {selectedAppointment && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {/* Información de la Cita */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
                       Información de la Cita
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                  <CardContent className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                       <div>
                         <span className="text-gray-500">Servicio:</span>
                         <p className="font-medium">
@@ -396,7 +425,7 @@ export default function ClientHistoryPageClient({
                       <div>
                         <span className="text-gray-500">Fecha:</span>
                         <p className="font-medium">
-                          {selectedAppointment.appointmentDate.toLocaleString()}
+                          {new Date(selectedAppointment.appointmentDate).toLocaleDateString('es-ES')}
                         </p>
                       </div>
                       <div>
@@ -405,13 +434,13 @@ export default function ClientHistoryPageClient({
                           {selectedAppointment.startTime}
                         </p>
                       </div>
-                      <div>
+                      <div className="sm:col-span-2">
                         <span className="text-gray-500">Profesional:</span>
                         <p className="font-medium">
                           {selectedAppointment.professional.fullName}
                         </p>
                       </div>
-                      <div>
+                      <div className="sm:col-span-2">
                         <span className="text-gray-500">Ubicación:</span>
                         <p className="font-medium">
                           {selectedAppointment.company.address}
@@ -436,14 +465,14 @@ export default function ClientHistoryPageClient({
                 {/* Información del Cliente */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <User className="h-5 w-5" />
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <User className="h-4 w-4 sm:h-5 sm:w-5" />
                       Cliente
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                         <AvatarImage
                           src={client.avatar || "/placeholder.svg"}
                           alt={client.fullName}
@@ -452,18 +481,19 @@ export default function ClientHistoryPageClient({
                           {getInitials(client.fullName)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <p className="font-semibold">{client.fullName}</p>
-                        <p className="text-sm text-gray-500">{client.email}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold truncate">{client.fullName}</p>
+                        <p className="text-sm text-gray-500 truncate">{client.email}</p>
                         <p className="text-sm text-gray-500">{client.phone}</p>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={handleCallClient}
+                        className="flex-1"
                       >
                         <Phone className="h-4 w-4 mr-2" />
                         Llamar
@@ -472,6 +502,7 @@ export default function ClientHistoryPageClient({
                         size="sm"
                         variant="outline"
                         onClick={handleEmailClient}
+                        className="flex-1"
                       >
                         <Mail className="h-4 w-4 mr-2" />
                         Email
@@ -484,24 +515,22 @@ export default function ClientHistoryPageClient({
                 {selectedAppointment.notes && (
                   <Card className="sm:col-span-2">
                     <CardHeader>
-                      <CardTitle className="text-lg">
+                      <CardTitle className="text-base sm:text-lg">
                         Notas y Comentarios
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {selectedAppointment.notes && (
-                        <div>
-                          <span className="text-sm text-gray-500 flex items-center gap-2 mb-2">
-                            <FileText className="h-4 w-4" />
-                            Notas médicas:
-                          </span>
-                          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <p className="text-sm">
-                              {selectedAppointment.notes}
-                            </p>
-                          </div>
+                      <div>
+                        <span className="text-sm text-gray-500 flex items-center gap-2 mb-2">
+                          <FileText className="h-4 w-4" />
+                          Notas médicas:
+                        </span>
+                        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <p className="text-sm">
+                            {selectedAppointment.notes}
+                          </p>
                         </div>
-                      )}
+                      </div>
                     </CardContent>
                   </Card>
                 )}
