@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  User,
+  User as UserIcon,
   Building2,
   Bell,
   Clock,
@@ -34,51 +34,65 @@ import {
   Trash2,
 } from "lucide-react";
 import { Header } from "@/components/header";
-import NotificationForm from "@/components/notification-form";
-import type { NotificationSettings } from "@/types";
+import { UserManagementForm } from "@/components/user-management-form";
 import { ScheduleForm } from "@/components/schedule-form";
 import { SecurityForm } from "@/components/security-form";
 import { AppearenceForm } from "@/components/appearence-form";
+import { Company, User } from "@/types";
 
-const notificationSettings: NotificationSettings = {
-  emailNotifications: false,
-  smsNotifications: false,
-  pushNotifications: false,
-  appointmentReminders: false,
-  appointmentConfirmations: false,
-  cancellationAlerts: false,
-  dailyReports: false,
-  weeklyReports: false,
-  marketingEmails: false,
-};
+// Mock data - En producción vendría del servidor
+const mockDoctors = [
+  {
+    id: "1",
+    name: "Dr. Roberto Silva",
+    specialization: "Médico General",
+    status: "active" as const,
+  },
+  {
+    id: "2", 
+    name: "Dra. Ana García",
+    specialization: "Cardiología",
+    status: "active" as const,
+  },
+  {
+    id: "3",
+    name: "Dr. Carlos Mendez",
+    specialization: "Pediatría", 
+    status: "active" as const,
+  },
+  {
+    id: "4",
+    name: "Dra. Laura Pérez",
+    specialization: "Ginecología",
+    status: "active" as const,
+  },
+];
+
+const mockUsers = [
+  {
+    id: "1",
+    fullName: "María González",
+    email: "maria@clinica.com",
+    phone: "+502 1234-5678",
+    role: "secretaria" as const,
+    status: "active" as const,
+    assignedDoctors: ["1", "2"], // Dr. Roberto Silva y Dra. Ana García
+    createdAt: new Date(),
+  },
+  {
+    id: "2",
+    fullName: "Rosa Morales",
+    email: "rosa@clinica.com", 
+    phone: "+502 9876-5432",
+    role: "secretaria" as const,
+    status: "active" as const,
+    assignedDoctors: ["3", "4"], // Dr. Carlos Mendez y Dra. Laura Pérez
+    createdAt: new Date(),
+  },
+];
 
 interface SettingsPageClientProps {
-  profileData: {
-    fullName: string;
-    email: string;
-    role: {
-      id: string;
-      name: string;
-      description: string;
-    };
-    phone: string;
-    specialization: string;
-    license: string;
-    bio: string;
-    avatar: string;
-  };
-  company: {
-    id: string;
-    name: string;
-    companyType: string;
-    address: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    description: string;
-    createdAt: Date;
-  };
+  profileData: User;
   scheduleSettings: {
     timezone: string;
     workingDays: {
@@ -109,21 +123,24 @@ interface SettingsPageClientProps {
     timeFormat: string;
     currency: string;
   };
+  doctors: User[];
+  users: User[];
 }
 
 export function SettingsPageClient({
   profileData: initialProfileData,
-  company,
   scheduleSettings: initialScheduleSettings,
   securityData: initialSecurityData,
   appearanceSettings: initialAppearanceSettings,
+  doctors,
+  users: initialUsers,
 }: SettingsPageClientProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "profile");
   const [isLoading, setIsLoading] = useState(false);
 
-  // State management
+  // State management para datos que pueden cambiar en el cliente
   const [profileData, setProfileData] = useState(initialProfileData);
   const [scheduleSettings, setScheduleSettings] = useState(
     initialScheduleSettings,
@@ -132,6 +149,10 @@ export function SettingsPageClient({
   const [appearanceSettings, setAppearanceSettings] = useState(
     initialAppearanceSettings,
   );
+  const [users, setUsers] = useState(initialUsers);
+
+  // Determinar el rol del usuario actual (en producción vendría de autenticación)
+  const currentUserRole = initialProfileData.role.name === "Administrador" ? "admin" : "profesional";
 
   // Update tab when URL changes
   useEffect(() => {
@@ -140,55 +161,126 @@ export function SettingsPageClient({
     }
   }, [tabFromUrl]);
 
-  // Handler functions
+  // Handler functions - Estas deberían hacer llamadas a API
   const handleSaveProfile = async () => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Saving profile:", profileData);
-    setIsLoading(false);
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // await fetch('/api/profile', { method: 'PUT', body: JSON.stringify(profileData) });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Saving profile:", profileData);
+    } catch (error) {
+      console.error("Error saving profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveBusiness = async () => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Saving business info:", company);
-    setIsLoading(false);
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // await fetch('/api/company', { method: 'PUT', body: JSON.stringify(company) });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Saving business info:", profileData.company);
+    } catch (error) {
+      console.error("Error saving business info:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSaveNotifications = async () => {
+  const handleSaveUsers = async (userData: any) => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Saving notifications:", notificationSettings);
-    setIsLoading(false);
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // await fetch('/api/users', { method: userData.type === 'create' ? 'POST' : 'PUT', body: JSON.stringify(userData) });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Saving user data:", userData);
+    } catch (error) {
+      console.error("Error saving user data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      // TODO: Reemplazar con llamada real a API  
+      // await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log("Deleting user:", userId);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
   };
 
   const handleSaveSchedule = async () => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Saving schedule:", scheduleSettings);
-    setIsLoading(false);
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // await fetch('/api/schedule', { method: 'PUT', body: JSON.stringify(scheduleSettings) });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Saving schedule:", scheduleSettings);
+    } catch (error) {
+      console.error("Error saving schedule:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveSecurity = async () => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Saving security:", securityData);
-    setIsLoading(false);
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // await fetch('/api/security', { method: 'PUT', body: JSON.stringify(securityData) });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Saving security:", securityData);
+    } catch (error) {
+      console.error("Error saving security:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveAppearance = async () => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Saving appearance:", appearanceSettings);
-    setIsLoading(false);
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // await fetch('/api/appearance', { method: 'PUT', body: JSON.stringify(appearanceSettings) });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Saving appearance:", appearanceSettings);
+    } catch (error) {
+      console.error("Error saving appearance:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
-    console.log("Deleting account...");
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // await fetch('/api/account', { method: 'DELETE' });
+      console.log("Deleting account...");
+    } catch (error) {
+      console.error("Error deleting account:", error);
+    }
   };
 
   const handleExportData = async () => {
-    console.log("Exporting data...");
+    try {
+      // TODO: Reemplazar con llamada real a API
+      // const response = await fetch('/api/export');
+      // const blob = await response.blob();
+      // const url = window.URL.createObjectURL(blob);
+      // const a = document.createElement('a');
+      // a.href = url;
+      // a.download = 'my-data.json';
+      // a.click();
+      console.log("Exporting data...");
+    } catch (error) {
+      console.error("Error exporting data:", error);
+    }
   };
 
   return (
@@ -199,16 +291,6 @@ export function SettingsPageClient({
         showBackButton={true}
         backButtonText="Dashboard"
         backButtonHref="/dashboard"
-        user={{
-          name: "Dr. Roberto Silva",
-          email: "roberto.silva@email.com",
-          role: "Médico General",
-          avatar: "/Avatar1.png?height=32&width=32",
-          initials: "DR",
-        }}
-        notifications={{
-          count: 3,
-        }}
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -222,7 +304,7 @@ export function SettingsPageClient({
               value="profile"
               className="flex items-center space-x-2"
             >
-              <User className="h-4 w-4" />
+              <UserIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Perfil</span>
             </TabsTrigger>
             <TabsTrigger
@@ -233,11 +315,11 @@ export function SettingsPageClient({
               <span className="hidden sm:inline">Negocio</span>
             </TabsTrigger>
             <TabsTrigger
-              value="notifications"
+              value="users"
               className="flex items-center space-x-2"
             >
               <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Notificaciones</span>
+              <span className="hidden sm:inline">Usuarios</span>
             </TabsTrigger>
             <TabsTrigger
               value="schedule"
@@ -274,17 +356,20 @@ export function SettingsPageClient({
           {/* Business Tab */}
           <TabsContent value="business" className="space-y-6">
             <BusinessInfoForm
-              company={company}
+              company={profileData.company}
               onSave={handleSaveBusiness}
               isLoading={isLoading}
             />
           </TabsContent>
 
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <NotificationForm
-              initialSettings={notificationSettings}
-              onSave={handleSaveNotifications}
+          {/* Users Management Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <UserManagementForm
+              currentUserRole={currentUserRole}
+              doctors={doctors}
+              users={initialUsers}
+              onSave={handleSaveUsers}
+              onDeleteUser={handleDeleteUser}
               isLoading={isLoading}
             />
           </TabsContent>
