@@ -15,6 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { AvatarSelector } from "@/components/avatar-selector";
 import { useUser } from "@/hooks/useUser";
+import { useUserContext } from "@/contexts/user-context";
 import { AlertCircle } from "lucide-react";
 
 interface ProfileFormProps {
@@ -23,6 +24,7 @@ interface ProfileFormProps {
   isLoading?: boolean;
   title?: string;
   description?: string;
+  mockUser?: User | null; // For testing purposes
 }
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({
@@ -31,8 +33,23 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   isLoading = false,
   title = "Información Personal",
   description = "Actualiza tu información personal y profesional",
+  mockUser = null,
 }) => {
-  const { user: currentUser } = useUser();
+  // Try to use context first (for testing), then fallback to hook
+  let currentUser: User | null = null;
+  try {
+    const context = useUserContext();
+    currentUser = context.user;
+  } catch {
+    // Context not available, use hook
+    const { user } = useUser();
+    currentUser = user;
+  }
+  
+  // Use mock user if provided (for testing)
+  if (mockUser) {
+    currentUser = mockUser;
+  }
   
   const [profileData, setProfileData] = useState<Partial<User>>({
     id: "",
