@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { User } from "@/types/common";
+import type { User } from "@/types/user";
 import {
   Card,
   CardHeader,
@@ -13,7 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Camera } from "lucide-react";
+import { AvatarSelector } from "@/components/avatar-selector";
+import { useUser } from "@/hooks/useUser";
+import { AlertCircle } from "lucide-react";
 
 interface ProfileFormProps {
   initialData?: Partial<User>;
@@ -30,24 +32,26 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   title = "Información Personal",
   description = "Actualiza tu información personal y profesional",
 }) => {
+  const { user: currentUser } = useUser();
+  
   const [profileData, setProfileData] = useState<Partial<User>>({
     id: "",
     fullName: "",
     email: "",
     bio: "",
     avatar: "",
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
     company: {
       id: "",
       name: "",
-      companyType: "",
+      company_type: "",
       address: "",
       city: "",
       state: "",
-      postalCode: "",
+      postal_code: "",
       country: "",
       description: "",
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     },
     role: {
       id: "",
@@ -58,6 +62,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Check if current user has full editing permissions
+  const hasFullEditPermissions = currentUser?.role?.name === "admin_empresa" || currentUser?.role?.name === "super_admin";
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -127,9 +134,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
   };
 
-  const handleAvatarChange = () => {
-    // Aquí puedes implementar la lógica para cambiar la foto
-    console.log("Cambiar foto clicked");
+  const handleAvatarChange = (avatarPath: string) => {
+    setProfileData((prev) => ({ ...prev, avatar: avatarPath }));
   };
 
   return (
@@ -155,22 +161,28 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               </AvatarFallback>
             </Avatar>
             <div className="space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAvatarChange}
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Cambiar Foto
-              </Button>
+              <AvatarSelector
+                currentAvatar={profileData.avatar || "/Avatar1.png"}
+                onAvatarChange={handleAvatarChange}
+                disabled={false}
+              />
               <p className="text-sm text-gray-500">
-                JPG, PNG o GIF. Máximo 2MB.
+                Selecciona tu avatar preferido
               </p>
             </div>
           </div>
 
           <Separator />
+
+          {/* Permission Notice for Restricted Users */}
+          {!hasFullEditPermissions && (
+            <div className="flex items-center gap-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-blue-600" />
+              <p className="text-sm text-blue-800">
+                Para cambiar los datos debe comunicarse con el administrador
+              </p>
+            </div>
+          )}
 
           {/* Personal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -181,6 +193,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 value={profileData.fullName || ""}
                 onChange={(e) => handleInputChange("fullName", e.target.value)}
                 className={errors.fullName ? "border-red-500" : ""}
+                disabled={!hasFullEditPermissions}
               />
               {errors.fullName && (
                 <p className="text-sm text-red-500">{errors.fullName}</p>
@@ -195,6 +208,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 value={profileData.email || ""}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className={errors.email ? "border-red-500" : ""}
+                disabled={!hasFullEditPermissions}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email}</p>
@@ -208,6 +222,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 value={profileData.role?.name || ""}
                 onChange={(e) => handleInputChange("role.name", e.target.value)}
                 className={errors.roleName ? "border-red-500" : ""}
+                disabled={!hasFullEditPermissions}
               />
               {errors.roleName && (
                 <p className="text-sm text-red-500">{errors.roleName}</p>
@@ -222,10 +237,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               onChange={(e) => handleInputChange("bio", e.target.value)}
               placeholder="Describe tu experiencia y especialidades..."
               rows={4}
+              disabled={!hasFullEditPermissions}
             />
           </div>
           <div className="flex justify-end">
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !hasFullEditPermissions}>
               {isLoading ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>
