@@ -64,10 +64,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       }
     }
   });
-
-  console.log("Search params received:", searchParams);
-  console.log("URLSearchParams created:", urlSearchParams.toString());
-
   // Extraer página específicamente para usuarios si estamos en el tab de usuarios
   const currentTab = searchParams.tab as string;
   const currentPage = currentTab === "users" ? parseInt(searchParams.page as string || "1") : 1;

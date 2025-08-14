@@ -337,6 +337,7 @@ export function SettingsPageClient({
               initialData={profileData}
               onSave={handleSaveProfile}
               isLoading={isLoading}
+              roles={roles}
             />
           </TabsContent>
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { User } from "@/types/common";
+import type { User, Role } from "@/types";
 import {
   Card,
   CardHeader,
@@ -13,7 +13,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Camera } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { User as UserIcon, Edit, X, Save } from "lucide-react";
+import { AvatarSelector } from "@/components/avatar-selector";
+import { updateProfile } from "@/actions/user/update";
+import { logout } from "@/actions/auth/logout";
+import { LogoutWarningDialog } from "@/components/logout-warning-dialog";
 
 interface ProfileFormProps {
   initialData?: Partial<User>;
@@ -21,6 +32,7 @@ interface ProfileFormProps {
   isLoading?: boolean;
   title?: string;
   description?: string;
+  roles?: Role[]; // Array de roles disponibles
 }
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({
@@ -29,6 +41,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   isLoading = false,
   title = "Información Personal",
   description = "Actualiza tu información personal y profesional",
+  roles = [], // Array de roles por defecto vacío
 }) => {
   const [profileData, setProfileData] = useState<Partial<User>>({
     id: "",
@@ -36,19 +49,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     email: "",
     bio: "",
     avatar: "",
-    createdAt: new Date(),
-    company: {
-      id: "",
-      name: "",
-      companyType: "",
-      address: "",
-      city: "",
-      state: "",
-      postalCode: "",
-      country: "",
-      description: "",
-      createdAt: new Date(),
-    },
+    createdAt: "",
+    company: undefined,
     role: {
       id: "",
       name: "",
@@ -58,8 +60,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showAvatarSelector, setShowAvatarSelector] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [originalData, setOriginalData] = useState<Partial<User>>(profileData);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [showLogoutWarning, setShowLogoutWarning] = useState<boolean>(false);
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!profileData.fullName?.trim()) {
@@ -72,19 +79,15 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       newErrors.email = "El email no es válido";
     }
 
-    if (!profileData.company?.name?.trim()) {
-      newErrors.companyName = "El nombre de la empresa es requerido";
-    }
-
-    if (!profileData.role?.name?.trim()) {
-      newErrors.roleName = "El rol es requerido";
+    if (!profileData.role?.id?.trim()) {
+      newErrors.roleId = "El rol es requerido";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string): void => {
     if (field.startsWith("company.")) {
       const companyField = field.split(".")[1];
       setProfileData((prev) => ({
@@ -113,124 +116,284 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }
   };
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+  const handleRoleChange = (roleId: string): void => {
+    const selectedRole = roles.find(role => role.id === roleId);
+    if (selectedRole) {
+      setProfileData((prev) => ({
+        ...prev,
+        role: {
+          id: selectedRole.id,
+          name: selectedRole.name,
+          description: selectedRole.description || "",
+        },
+      }));
+      
+      // Clear error when user selects a role
+      if (errors.roleId) {
+        setErrors((prev) => ({ ...prev, roleId: "" }));
+      }
+    }
+  };
 
+  const handleAvatarChange = (): void => {
+    // Solo permitir cambiar avatar si está en modo edición
+    if (!isEditing) {
+      return;
+    }
+    setShowAvatarSelector(true);
+  };
+
+  const handleAvatarSelect = (avatarUrl: string): void => {
+    // Solo actualizar el estado local, sin guardar automáticamente
+    setProfileData((prev) => ({ ...prev, avatar: avatarUrl }));
+    setShowAvatarSelector(false);
+  };
+
+  const handleEditToggle = (): void => {
+    if (isEditing) {
+      // Cancelar edición - restaurar todos los datos originales (incluyendo avatar)
+      setProfileData(originalData);
+      setErrors({});
+    } else {
+      // Habilitar edición - guardar estado actual como respaldo
+      setOriginalData(profileData);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleSaveClick = (): void => {
     if (!validateForm()) {
       return;
     }
+    
+    // Mostrar el popup de advertencia
+    setShowLogoutWarning(true);
+  };
+
+  const handleContinueWithLogout = async (): Promise<void> => {
+    if (!profileData.id) {
+      console.error("User ID is required for update");
+      return;
+    }
+
+    setIsSaving(true);
+    setShowLogoutWarning(false);
 
     try {
-      await onSave(profileData);
+      const result = await updateProfile({
+        userId: profileData.id,
+        email: profileData.email,
+        avatar: profileData.avatar, // Ahora incluye el avatar
+        fullName: profileData.fullName,
+        bio: profileData.bio,
+        roleId: profileData.role?.id,
+      });
+
+      if ('data' in result) {
+        // Éxito - pero no actualizar el estado porque vamos a cerrar sesión
+        console.log("Profile updated successfully, logging out for security:", result.data);
+        
+        // Cerrar sesión por seguridad
+        await logout();
+      } else {
+        // Error en la actualización
+        console.error("Error updating profile:", result.message);
+        setIsSaving(false);
+        // Aquí puedes mostrar un toast de error
+        // toast.error(result.message || "Error al actualizar el perfil");
+      }
     } catch (error) {
-      console.error("Error saving profile:", error);
+      console.error("Unexpected error:", error);
+      setIsSaving(false);
+      // toast.error("Error inesperado al actualizar el perfil");
     }
   };
 
-  const handleAvatarChange = () => {
-    // Aquí puedes implementar la lógica para cambiar la foto
-    console.log("Cambiar foto clicked");
+  const handleCancelWarning = (): void => {
+    setShowLogoutWarning(false);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar Section */}
-          <div className="flex items-center space-x-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={profileData.avatar || "/Avatar1.png"} />
-              <AvatarFallback className="text-lg">
-                {profileData.fullName
-                  ? profileData.fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                  : "US"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAvatarChange}
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Cambiar Foto
-              </Button>
-              <p className="text-sm text-gray-500">
-                JPG, PNG o GIF. Máximo 2MB.
-              </p>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Personal Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="fullName">Nombre Completo *</Label>
-              <Input
-                id="fullName"
-                value={profileData.fullName || ""}
-                onChange={(e) => handleInputChange("fullName", e.target.value)}
-                className={errors.fullName ? "border-red-500" : ""}
-              />
-              {errors.fullName && (
-                <p className="text-sm text-red-500">{errors.fullName}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profileData.email || ""}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className={errors.email ? "border-red-500" : ""}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="roleName">Rol *</Label>
-              <Input
-                id="roleName"
-                value={profileData.role?.name || ""}
-                onChange={(e) => handleInputChange("role.name", e.target.value)}
-                className={errors.roleName ? "border-red-500" : ""}
-              />
-              {errors.roleName && (
-                <p className="text-sm text-red-500">{errors.roleName}</p>
+            <div className="flex space-x-2">
+              {!isEditing ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEditToggle}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditToggle}
+                    disabled={isSaving}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSaveClick}
+                    disabled={isSaving}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSaving ? "Guardando..." : "Guardar"}
+                  </Button>
+                </>
               )}
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="bio">Biografía Personal</Label>
-            <Textarea
-              id="bio"
-              value={profileData.bio || ""}
-              onChange={(e) => handleInputChange("bio", e.target.value)}
-              placeholder="Describe tu experiencia y especialidades..."
-              rows={4}
-            />
+        </CardHeader>
+        <CardContent>
+          {/* Removido el form wrapper ya que no necesitamos el handleSubmit */}
+          <div className="space-y-6">
+            {/* Avatar Section - Solo editable en modo edición */}
+            <div className="flex items-center space-x-6">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={profileData.avatar || "/Avatar1.png"} />
+                <AvatarFallback className="text-lg">
+                  {profileData.fullName
+                    ? profileData.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                    : "US"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAvatarChange}
+                  disabled={!isEditing} // Solo habilitado en modo edición
+                >
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  Cambiar Avatar
+                </Button>
+                <p className="text-sm text-gray-500">
+                  {isEditing 
+                    ? "Selecciona un avatar predeterminado." 
+                    : "Habilita el modo edición para cambiar el avatar."
+                  }
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Personal Information - Controlado por isEditing */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="fullName">Nombre Completo *</Label>
+                <Input
+                  id="fullName"
+                  value={profileData.fullName || ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    handleInputChange("fullName", e.target.value)
+                  }
+                  className={errors.fullName ? "border-red-500" : ""}
+                  disabled={!isEditing}
+                />
+                {errors.fullName && (
+                  <p className="text-sm text-red-500">{errors.fullName}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profileData.email || ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    handleInputChange("email", e.target.value)
+                  }
+                  className={errors.email ? "border-red-500" : ""}
+                  disabled={!isEditing}
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Rol *</Label>
+                <Select
+                  value={profileData.role?.id || ""}
+                  onValueChange={handleRoleChange}
+                  disabled={!isEditing}
+                >
+                  <SelectTrigger 
+                    className={errors.roleId ? "border-red-500" : ""}
+                  >
+                    <SelectValue placeholder="Selecciona un rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{role.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.roleId && (
+                  <p className="text-sm text-red-500">{errors.roleId}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio">Biografía Personal</Label>
+              <Textarea
+                id="bio"
+                value={profileData.bio || ""}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => 
+                  handleInputChange("bio", e.target.value)
+                }
+                placeholder="Describe tu experiencia y especialidades..."
+                rows={4}
+                disabled={!isEditing}
+              />
+            </div>
+
+            {/* ELIMINADO: El botón "Guardar Cambios" que aparecía cuando !isEditing */}
           </div>
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Guardando..." : "Guardar Cambios"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Avatar Selector Modal - Solo funciona en modo edición */}
+      <AvatarSelector
+        isOpen={showAvatarSelector}
+        onClose={() => setShowAvatarSelector(false)}
+        onSelect={handleAvatarSelect}
+        currentAvatar={profileData.avatar}
+      />
+
+      {/* Logout Warning Dialog */}
+      <LogoutWarningDialog
+        isOpen={showLogoutWarning}
+        onClose={handleCancelWarning}
+        onContinue={handleContinueWithLogout}
+      />
+    </>
   );
 };

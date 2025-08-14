@@ -38,16 +38,12 @@ export async function findAll(
       // pero por ahora solo enviamos page y limit ya que search y filtros serán en frontend
     };
 
-    console.log("Final params being sent to API:", finalParams);
-
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
       },
       params: finalParams,
     });
-    
-    console.log("Response from findAll:", response.data);
     
     return {
       data: response.data.data,
