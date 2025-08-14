@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,58 +38,7 @@ import { UserManagementForm } from "@/components/user-management-form";
 import { ScheduleForm } from "@/components/schedule-form";
 import { SecurityForm } from "@/components/security-form";
 import { AppearenceForm } from "@/components/appearence-form";
-import { Company, User } from "@/types";
-
-// Mock data - En producción vendría del servidor
-const mockDoctors = [
-  {
-    id: "1",
-    name: "Dr. Roberto Silva",
-    specialization: "Médico General",
-    status: "active" as const,
-  },
-  {
-    id: "2", 
-    name: "Dra. Ana García",
-    specialization: "Cardiología",
-    status: "active" as const,
-  },
-  {
-    id: "3",
-    name: "Dr. Carlos Mendez",
-    specialization: "Pediatría", 
-    status: "active" as const,
-  },
-  {
-    id: "4",
-    name: "Dra. Laura Pérez",
-    specialization: "Ginecología",
-    status: "active" as const,
-  },
-];
-
-const mockUsers = [
-  {
-    id: "1",
-    fullName: "María González",
-    email: "maria@clinica.com",
-    phone: "+502 1234-5678",
-    role: "secretaria" as const,
-    status: "active" as const,
-    assignedDoctors: ["1", "2"], // Dr. Roberto Silva y Dra. Ana García
-    createdAt: new Date(),
-  },
-  {
-    id: "2",
-    fullName: "Rosa Morales",
-    email: "rosa@clinica.com", 
-    phone: "+502 9876-5432",
-    role: "secretaria" as const,
-    status: "active" as const,
-    assignedDoctors: ["3", "4"], // Dr. Carlos Mendez y Dra. Laura Pérez
-    createdAt: new Date(),
-  },
-];
+import { Role, User } from "@/types";
 
 interface SettingsPageClientProps {
   profileData: User;
@@ -125,6 +74,17 @@ interface SettingsPageClientProps {
   };
   doctors: User[];
   users: User[];
+  roles: Role[];
+  usersMeta?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
 }
 
 export function SettingsPageClient({
@@ -134,9 +94,16 @@ export function SettingsPageClient({
   appearanceSettings: initialAppearanceSettings,
   doctors,
   users: initialUsers,
+  roles,
+  usersMeta,
 }: SettingsPageClientProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  
   const tabFromUrl = searchParams.get("tab");
+  const pageFromUrl = parseInt(searchParams.get("page") || "1");
+  
   const [activeTab, setActiveTab] = useState(tabFromUrl || "profile");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -161,12 +128,54 @@ export function SettingsPageClient({
     }
   }, [tabFromUrl]);
 
+  // Función para actualizar URL con parámetros - ORDEN CORRECTO: tab primero, luego page
+  const updateUrlParams = (params: Record<string, string | number>) => {
+    const current = new URLSearchParams();
+    
+    // Siempre mantener el tab como primer parámetro
+    const tab = params.tab?.toString() || activeTab;
+    current.set("tab", tab);
+    
+    // Agregar page solo si es mayor a 1 y estamos en el tab de users
+    if (tab === "users" && params.page && Number(params.page) > 1) {
+      current.set("page", params.page.toString());
+    }
+    
+    // Agregar otros parámetros si existen
+    Object.entries(params).forEach(([key, value]) => {
+      if (key !== "tab" && key !== "page" && value) {
+        current.set(key, value.toString());
+      }
+    });
+
+    const search = current.toString();
+    const query = search ? `?${search}` : "";
+    
+    router.push(`${pathname}${query}`);
+  };
+
+  // Función para cambiar página - Esta función causará una recarga del servidor
+  const handlePageChange = (newPage: number) => {
+    console.log("Changing to page:", newPage);
+    updateUrlParams({ tab: activeTab, page: newPage });
+  };
+
+  // Función para cambiar tab y resetear página
+  const handleTabChange = (newTab: string) => {
+    console.log("Changing to tab:", newTab);
+    setActiveTab(newTab);
+    if (newTab === "users") {
+      updateUrlParams({ tab: newTab, page: 1 });
+    } else {
+      updateUrlParams({ tab: newTab });
+    }
+  };
+
   // Handler functions - Estas deberían hacer llamadas a API
   const handleSaveProfile = async () => {
     setIsLoading(true);
     try {
       // TODO: Reemplazar con llamada real a API
-      // await fetch('/api/profile', { method: 'PUT', body: JSON.stringify(profileData) });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving profile:", profileData);
     } catch (error) {
@@ -179,8 +188,6 @@ export function SettingsPageClient({
   const handleSaveBusiness = async () => {
     setIsLoading(true);
     try {
-      // TODO: Reemplazar con llamada real a API
-      // await fetch('/api/company', { method: 'PUT', body: JSON.stringify(company) });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving business info:", profileData.company);
     } catch (error) {
@@ -193,8 +200,6 @@ export function SettingsPageClient({
   const handleSaveUsers = async (userData: any) => {
     setIsLoading(true);
     try {
-      // TODO: Reemplazar con llamada real a API
-      // await fetch('/api/users', { method: userData.type === 'create' ? 'POST' : 'PUT', body: JSON.stringify(userData) });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving user data:", userData);
     } catch (error) {
@@ -206,8 +211,6 @@ export function SettingsPageClient({
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      // TODO: Reemplazar con llamada real a API  
-      // await fetch(`/api/users/${userId}`, { method: 'DELETE' });
       await new Promise((resolve) => setTimeout(resolve, 500));
       console.log("Deleting user:", userId);
     } catch (error) {
@@ -218,8 +221,6 @@ export function SettingsPageClient({
   const handleSaveSchedule = async () => {
     setIsLoading(true);
     try {
-      // TODO: Reemplazar con llamada real a API
-      // await fetch('/api/schedule', { method: 'PUT', body: JSON.stringify(scheduleSettings) });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving schedule:", scheduleSettings);
     } catch (error) {
@@ -232,8 +233,6 @@ export function SettingsPageClient({
   const handleSaveSecurity = async () => {
     setIsLoading(true);
     try {
-      // TODO: Reemplazar con llamada real a API
-      // await fetch('/api/security', { method: 'PUT', body: JSON.stringify(securityData) });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving security:", securityData);
     } catch (error) {
@@ -246,8 +245,6 @@ export function SettingsPageClient({
   const handleSaveAppearance = async () => {
     setIsLoading(true);
     try {
-      // TODO: Reemplazar con llamada real a API
-      // await fetch('/api/appearance', { method: 'PUT', body: JSON.stringify(appearanceSettings) });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving appearance:", appearanceSettings);
     } catch (error) {
@@ -259,8 +256,6 @@ export function SettingsPageClient({
 
   const handleDeleteAccount = async () => {
     try {
-      // TODO: Reemplazar con llamada real a API
-      // await fetch('/api/account', { method: 'DELETE' });
       console.log("Deleting account...");
     } catch (error) {
       console.error("Error deleting account:", error);
@@ -269,14 +264,6 @@ export function SettingsPageClient({
 
   const handleExportData = async () => {
     try {
-      // TODO: Reemplazar con llamada real a API
-      // const response = await fetch('/api/export');
-      // const blob = await response.blob();
-      // const url = window.URL.createObjectURL(blob);
-      // const a = document.createElement('a');
-      // a.href = url;
-      // a.download = 'my-data.json';
-      // a.click();
       console.log("Exporting data...");
     } catch (error) {
       console.error("Error exporting data:", error);
@@ -296,7 +283,7 @@ export function SettingsPageClient({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={handleTabChange}
           className="space-y-8"
         >
           <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
@@ -367,10 +354,17 @@ export function SettingsPageClient({
             <UserManagementForm
               currentUserRole={currentUserRole}
               doctors={doctors}
-              users={initialUsers}
+              users={users}
               onSave={handleSaveUsers}
               onDeleteUser={handleDeleteUser}
               isLoading={isLoading}
+              roles={roles}
+              // Props para paginación del backend
+              currentPage={usersMeta?.currentPage || 1}
+              onPageChange={handlePageChange}
+              meta={usersMeta}
+              // Indicar que la paginación es del backend
+              useBackendPagination={true}
             />
           </TabsContent>
 
