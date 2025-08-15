@@ -54,22 +54,27 @@ interface SettingsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+export default async function SettingsPage({
+  searchParams,
+}: SettingsPageProps) {
   // Esperar a que searchParams se resuelva
   const resolvedSearchParams = await searchParams;
-  
+
   // Extraer página específicamente para usuarios si estamos en el tab de usuarios
   const currentTab = resolvedSearchParams.tab as string;
-  const currentPage = currentTab === "users" ? parseInt(resolvedSearchParams.page as string || "1") : 1;
+  const currentPage =
+    currentTab === "users"
+      ? parseInt((resolvedSearchParams.page as string) || "1")
+      : 1;
 
   // Primero obtener los datos del usuario
   const profileData = await getUser();
-  
+
   // Buscar información de la empresa usando el companyId del usuario - VALIDAR QUE EXISTE
   let companyData = null;
-  if (profileData?.companyId && typeof profileData.companyId === 'string') {
+  if (profileData?.companyId && typeof profileData.companyId === "string") {
     const companyResult = await findCompany(profileData.companyId);
-    if ('data' in companyResult) {
+    if ("data" in companyResult) {
       companyData = companyResult.data;
     } else {
       console.error("Error fetching company data:", companyResult.message);
@@ -92,14 +97,14 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     getAppearanceSettings(),
     findAllProfessionals(),
     // Solo hacer la llamada con paginación si estamos en el tab de usuarios
-    currentTab === "users" 
+    currentTab === "users"
       ? findAll({ page: currentPage, limit: 10 })
       : findAll({ page: 1, limit: 10 }), // Cargar página 1 por defecto
     findAllRoles(),
   ]);
 
   // Crear el objeto de usuario con la información de la empresa
-  const profileDataWithCompany: User & { company?: any} = {
+  const profileDataWithCompany: User & { company?: any } = {
     ...profileData,
     company: companyData, // Agregar los datos completos de la empresa
   };

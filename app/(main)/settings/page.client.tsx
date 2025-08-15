@@ -150,10 +150,10 @@ export function SettingsPageClient({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const tabFromUrl = searchParams.get("tab");
   const pageFromUrl = parseInt(searchParams.get("page") || "1");
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   // State management para datos que pueden cambiar en el cliente
@@ -172,9 +172,9 @@ export function SettingsPageClient({
 
   // Función para verificar si el usuario tiene permiso para ver un tab
   const hasPermissionForTab = (tabId: string): boolean => {
-    const tabConfig = TAB_CONFIG.find(tab => tab.id === tabId);
+    const tabConfig = TAB_CONFIG.find((tab) => tab.id === tabId);
     if (!tabConfig) return false;
-    
+
     return tabConfig.permissions.includes(currentUserRole as any);
   };
 
@@ -185,7 +185,7 @@ export function SettingsPageClient({
 
   // Filtrar tabs según permisos del usuario
   const allowedTabs = useMemo(() => {
-    return TAB_CONFIG.filter(tab => hasPermissionForTab(tab.id));
+    return TAB_CONFIG.filter((tab) => hasPermissionForTab(tab.id));
   }, [currentUserRole]);
 
   // Determinar el primer tab permitido como default
@@ -207,7 +207,9 @@ export function SettingsPageClient({
       setActiveTab(tabFromUrl);
     } else if (tabFromUrl && !hasPermissionForTab(tabFromUrl)) {
       // Si el usuario intenta acceder a un tab no permitido, redirigir al default
-      console.warn(`Usuario sin permisos para el tab: ${tabFromUrl}. Redirigiendo a: ${defaultTab}`);
+      console.warn(
+        `Usuario sin permisos para el tab: ${tabFromUrl}. Redirigiendo a: ${defaultTab}`,
+      );
       updateUrlParams({ tab: defaultTab });
     }
   }, [tabFromUrl, defaultTab]);
@@ -215,14 +217,14 @@ export function SettingsPageClient({
   // Función para actualizar URL con parámetros
   const updateUrlParams = (params: Record<string, string | number>) => {
     const current = new URLSearchParams();
-    
+
     const tab = params.tab?.toString() || activeTab;
     current.set("tab", tab);
-    
+
     if (tab === "users" && params.page && Number(params.page) > 1) {
       current.set("page", params.page.toString());
     }
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (key !== "tab" && key !== "page" && value) {
         current.set(key, value.toString());
@@ -231,13 +233,12 @@ export function SettingsPageClient({
 
     const search = current.toString();
     const query = search ? `?${search}` : "";
-    
+
     router.push(`${pathname}${query}`);
   };
 
   // Función para cambiar página
   const handlePageChange = (newPage: number) => {
-
     updateUrlParams({ tab: activeTab, page: newPage });
   };
 
@@ -268,20 +269,23 @@ export function SettingsPageClient({
     }
   };
 
-  const handleSaveBusiness = async (companyData: Omit<Company, "id" | "createdAt">) => {
+  const handleSaveBusiness = async (
+    companyData: Omit<Company, "id" | "createdAt">,
+  ) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving business info:", companyData);
-      
-      setProfileData(prev => ({
+
+      setProfileData((prev) => ({
         ...prev,
-        company: prev.company ? {
-          ...prev.company,
-          ...companyData,
-        } : undefined,
+        company: prev.company
+          ? {
+              ...prev.company,
+              ...companyData,
+            }
+          : undefined,
       }));
-      
     } catch (error) {
       console.error("Error saving business info:", error);
     } finally {
@@ -426,7 +430,8 @@ export function SettingsPageClient({
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-500">
-                      Por favor, contacta al administrador para configurar la información de tu empresa.
+                      Por favor, contacta al administrador para configurar la
+                      información de tu empresa.
                     </p>
                   </CardContent>
                 </Card>
@@ -438,7 +443,9 @@ export function SettingsPageClient({
           {hasPermissionForTab("users") && (
             <TabsContent value="users" className="space-y-6">
               <UserManagementForm
-                currentUserRole={currentUserRole === "admin_empresa" ? "admin" : "profesional"}
+                currentUserRole={
+                  currentUserRole === "admin_empresa" ? "admin" : "profesional"
+                }
                 doctors={doctors}
                 users={users}
                 onSave={handleSaveUsers}
@@ -476,7 +483,9 @@ export function SettingsPageClient({
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-red-600">Zona de Peligro</CardTitle>
+                  <CardTitle className="text-red-600">
+                    Zona de Peligro
+                  </CardTitle>
                   <CardDescription>
                     Acciones irreversibles para tu cuenta
                   </CardDescription>

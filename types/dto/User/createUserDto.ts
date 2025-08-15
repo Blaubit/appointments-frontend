@@ -1,13 +1,23 @@
 // src/dto/create-user.dto.ts
-import { IsString, IsEmail, IsUUID, MinLength, MaxLength } from "class-validator";
+import {
+  IsString,
+  IsEmail,
+  IsUUID,
+  MinLength,
+  MaxLength,
+} from "class-validator";
 
 export class CreateUserDto {
   @IsUUID("4", { message: "El ID del rol debe ser un UUID válido" })
   roleId!: string;
 
   @IsString({ message: "El nombre completo debe ser un texto" })
-  @MinLength(3, { message: "El nombre completo debe tener al menos 3 caracteres" })
-  @MaxLength(100, { message: "El nombre completo no debe superar los 100 caracteres" })
+  @MinLength(3, {
+    message: "El nombre completo debe tener al menos 3 caracteres",
+  })
+  @MaxLength(100, {
+    message: "El nombre completo no debe superar los 100 caracteres",
+  })
   fullName!: string;
 
   @IsEmail({}, { message: "El correo electrónico no es válido" })
@@ -20,6 +30,8 @@ export class CreateUserDto {
 
   @IsString({ message: "La biografía debe ser un texto" })
   @MinLength(10, { message: "La biografía debe tener al menos 10 caracteres" })
-  @MaxLength(500, { message: "La biografía no debe superar los 500 caracteres" })
+  @MaxLength(500, {
+    message: "La biografía no debe superar los 500 caracteres",
+  })
   bio!: string;
 }

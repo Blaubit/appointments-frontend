@@ -21,16 +21,16 @@ export async function findAll(
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
-    
+
     // Combinar parámetros de searchParams y props directos
     const parsedParams = parsePaginationParams(props.searchParams);
-    
+
     // Obtener parámetros finales, priorizando props directos sobre searchParams
     const page = props.page || parsedParams.page || 1;
     const limit = props.limit || parsedParams.limit || 5;
-    
+
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users`;
-    
+
     const finalParams = {
       page,
       limit,
@@ -44,7 +44,7 @@ export async function findAll(
       },
       params: finalParams,
     });
-    
+
     return {
       data: response.data.data,
       status: 200,

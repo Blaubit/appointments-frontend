@@ -48,7 +48,7 @@ export default async function edit({
     const url = `${parsedEnv.API_URL}/companies/${id}`;
     const session = cookieStore.get("session")?.value;
     console.log("url", url);
-    
+
     // Validar que tenemos session
     if (!session) {
       return {
@@ -73,31 +73,39 @@ export default async function edit({
     if (name !== undefined && name !== null && name.trim() !== "") {
       body.name = name.trim();
     }
-    
-    if (companyType !== undefined && companyType !== null && companyType.trim() !== "") {
+
+    if (
+      companyType !== undefined &&
+      companyType !== null &&
+      companyType.trim() !== ""
+    ) {
       body.companyType = companyType.trim();
     }
-    
+
     if (address !== undefined && address !== null && address.trim() !== "") {
       body.address = address.trim();
     }
-    
+
     if (city !== undefined && city !== null && city.trim() !== "") {
       body.city = city.trim();
     }
-    
+
     if (state !== undefined && state !== null && state.trim() !== "") {
       body.state = state.trim();
     }
-    
-    if (postal_code !== undefined && postal_code !== null && postal_code.trim() !== "") {
+
+    if (
+      postal_code !== undefined &&
+      postal_code !== null &&
+      postal_code.trim() !== ""
+    ) {
       body.postal_code = postal_code.trim();
     }
-    
+
     if (country !== undefined && country !== null && country.trim() !== "") {
       body.country = country.trim();
     }
-    
+
     if (description !== undefined && description !== null) {
       body.description = description.trim();
     }

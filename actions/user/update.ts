@@ -9,10 +9,10 @@ import { UpdateUserDto } from "@/types/dto/User/updateUserDto";
 import { User } from "@/types";
 
 export async function updateUser({
-    userId,
-    email,
-    password,
-    avatar,
+  userId,
+  email,
+  password,
+  avatar,
 }: UpdateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
@@ -105,22 +105,22 @@ export async function updateUser({
 
 // Interface para updateProfile con todos los campos opcionales
 interface UpdateProfileParams {
-    userId: string;
-    email?: string;
-    avatar?: string;
-    fullName?: string;
-    bio?: string;
-    roleId?: string;
+  userId: string;
+  email?: string;
+  avatar?: string;
+  fullName?: string;
+  bio?: string;
+  roleId?: string;
 }
 
 // Función específica para actualizar el perfil (sin password)
 export async function updateProfile({
-    userId,
-    email,
-    avatar,
-    fullName,
-    bio,
-    roleId,
+  userId,
+  email,
+  avatar,
+  fullName,
+  bio,
+  roleId,
 }: UpdateProfileParams): Promise<SuccessReponse<User> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
@@ -146,31 +146,31 @@ export async function updateProfile({
 
     // Construir el body solo con los campos que tienen valores válidos
     const body: Partial<{
-        email: string;
-        avatar: string;
-        fullName: string;
-        bio: string;
-        roleId: string;
+      email: string;
+      avatar: string;
+      fullName: string;
+      bio: string;
+      roleId: string;
     }> = {};
 
     // Solo agregar campos que no sean undefined, null o string vacío
     if (email !== undefined && email !== null && email.trim() !== "") {
       body.email = email.trim();
     }
-    
+
     if (avatar !== undefined && avatar !== null && avatar.trim() !== "") {
       body.avatar = avatar.trim();
     }
-    
+
     if (fullName !== undefined && fullName !== null && fullName.trim() !== "") {
       body.fullName = fullName.trim();
     }
-    
+
     if (bio !== undefined && bio !== null) {
       // Para bio permitimos string vacío (para limpiar la biografía)
       body.bio = bio.trim();
     }
-    
+
     if (roleId !== undefined && roleId !== null && roleId.trim() !== "") {
       body.roleId = roleId.trim();
     }
@@ -191,14 +191,14 @@ export async function updateProfile({
 
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/profile");
-      
+
       // Actualizar la cookie del usuario con los nuevos datos
       const updatedUser = response.data;
       if (userCookie) {
         try {
           const currentUser = JSON.parse(userCookie);
           const newUserData = { ...currentUser, ...updatedUser };
-          
+
           cookieStore.set("user", JSON.stringify(newUserData), {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -244,26 +244,41 @@ export async function updateProfile({
 }
 
 // Función helper para actualizar solo el avatar
-export async function updateAvatar(userId: string, avatar: string): Promise<SuccessReponse<User> | ErrorResponse> {
+export async function updateAvatar(
+  userId: string,
+  avatar: string,
+): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, avatar });
 }
 
 // Función helper para actualizar solo el email
-export async function updateEmail(userId: string, email: string): Promise<SuccessReponse<User> | ErrorResponse> {
+export async function updateEmail(
+  userId: string,
+  email: string,
+): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, email });
 }
 
 // Función helper para actualizar solo el nombre completo
-export async function updateFullName(userId: string, fullName: string): Promise<SuccessReponse<User> | ErrorResponse> {
+export async function updateFullName(
+  userId: string,
+  fullName: string,
+): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, fullName });
 }
 
 // Función helper para actualizar solo la biografía
-export async function updateBio(userId: string, bio: string): Promise<SuccessReponse<User> | ErrorResponse> {
+export async function updateBio(
+  userId: string,
+  bio: string,
+): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, bio });
 }
 
 // Función helper para actualizar solo el rol
-export async function updateRole(userId: string, roleId: string): Promise<SuccessReponse<User> | ErrorResponse> {
+export async function updateRole(
+  userId: string,
+  roleId: string,
+): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, roleId });
 }

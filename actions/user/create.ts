@@ -9,13 +9,12 @@ import { CreateUserDto } from "@/types/dto/User/createUserDto";
 import { User } from "@/types";
 
 export async function create({
-    roleId,
-    fullName,
-    email,
-    password,
-    bio,
-
-}:CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
+  roleId,
+  fullName,
+  email,
+  password,
+  bio,
+}: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
@@ -41,11 +40,11 @@ export async function create({
     }
 
     const body = {
-        roleId,
-        fullName,
-        email,
-        password,
-        bio,
+      roleId,
+      fullName,
+      email,
+      password,
+      bio,
     };
 
     const response = await axios.post<User>(url, body, {

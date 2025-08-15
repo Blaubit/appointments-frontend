@@ -15,7 +15,7 @@ export default async function findOne(
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${id}`;
-    
+
     const response = await axios.get<Appointment>(url, {
       headers: {
         Authorization: `Bearer ${session}`,

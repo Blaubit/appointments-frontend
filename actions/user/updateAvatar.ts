@@ -9,8 +9,8 @@ import { UpdateUserAvatarDto } from "@/types/dto/User/updateUserAvatarDto";
 import { User } from "@/types";
 
 export async function updateAvatar({
-    userId,
-    avatar,
+  userId,
+  avatar,
 }: UpdateUserAvatarDto): Promise<SuccessReponse<User> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
@@ -68,11 +68,11 @@ export async function updateAvatar({
       if (userCookie) {
         try {
           const currentUser = JSON.parse(userCookie);
-          const updatedUserData = { 
-            ...currentUser, 
-            avatar: response.data.avatar || body.avatar 
+          const updatedUserData = {
+            ...currentUser,
+            avatar: response.data.avatar || body.avatar,
           };
-          
+
           cookieStore.set("user", JSON.stringify(updatedUserData), {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",

@@ -12,7 +12,7 @@ export default async function ClientsPage({
 }) {
   const clients = await findAll();
   // Calcular estadísticas basadas en clientes filtrados
-  
+
   const stats: ClientStats = {
     totalClients: clients.data.length,
     activeClients: clients.data.length,

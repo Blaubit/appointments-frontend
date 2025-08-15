@@ -11,8 +11,10 @@ import { User } from "@/types";
 export async function create({
   secretaryId,
   professionalId,
-  isActive
-}:CreateSecretaryProfessionalDto): Promise<SuccessReponse<User> | ErrorResponse> {
+  isActive,
+}: CreateSecretaryProfessionalDto): Promise<
+  SuccessReponse<User> | ErrorResponse
+> {
   try {
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
@@ -38,9 +40,9 @@ export async function create({
     }
 
     const body = {
-        secretaryId,
-  professionalId,
-  isActive
+      secretaryId,
+      professionalId,
+      isActive,
     };
 
     const response = await axios.post<User>(url, body, {

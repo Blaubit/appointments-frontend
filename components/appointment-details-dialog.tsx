@@ -451,7 +451,8 @@ export function AppointmentDetailsDialog({
           {/* Action Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 pt-4">
             {/* Botón Atender Cita */}
-            {(appointment.status === "confirmed" || appointment.status === "pending") && (
+            {(appointment.status === "confirmed" ||
+              appointment.status === "pending") && (
               <Button
                 onClick={handleAttendAppointment}
                 className="w-full h-10 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
@@ -472,16 +473,17 @@ export function AppointmentDetailsDialog({
             </Button>
 
             {/* Botón Reprogramar */}
-            {appointment.status !== "cancelled" && appointment.status !== "completed" && (
-              <Button
-                onClick={handleRescheduleAppointment}
-                variant="outline"
-                className="w-full h-10 text-sm text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-600 dark:hover:bg-blue-950"
-              >
-                <CalendarClock className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">Reprogramar</span>
-              </Button>
-            )}
+            {appointment.status !== "cancelled" &&
+              appointment.status !== "completed" && (
+                <Button
+                  onClick={handleRescheduleAppointment}
+                  variant="outline"
+                  className="w-full h-10 text-sm text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-600 dark:hover:bg-blue-950"
+                >
+                  <CalendarClock className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">Reprogramar</span>
+                </Button>
+              )}
 
             {/* Botón Confirmar (solo si está pendiente) */}
             {appointment.status === "pending" && (
@@ -496,16 +498,17 @@ export function AppointmentDetailsDialog({
             )}
 
             {/* Botón Cancelar */}
-            {appointment.status !== "cancelled" && appointment.status !== "completed" && (
-              <Button
-                onClick={handleCancelAppointment}
-                variant="outline"
-                className="w-full h-10 text-sm text-orange-600 border-orange-300 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-600 dark:hover:bg-orange-950"
-              >
-                <XCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">Cancelar</span>
-              </Button>
-            )}
+            {appointment.status !== "cancelled" &&
+              appointment.status !== "completed" && (
+                <Button
+                  onClick={handleCancelAppointment}
+                  variant="outline"
+                  className="w-full h-10 text-sm text-orange-600 border-orange-300 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-600 dark:hover:bg-orange-950"
+                >
+                  <XCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">Cancelar</span>
+                </Button>
+              )}
 
             {/* Botón Eliminar */}
             <Button

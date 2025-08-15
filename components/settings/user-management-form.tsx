@@ -106,8 +106,7 @@ export function UserManagementForm({
   }, [initialUsers]);
 
   // Log para debugging
-  useEffect(() => {
-  }, [meta, initialCurrentPage, users]);
+  useEffect(() => {}, [meta, initialCurrentPage, users]);
 
   // Lógica de filtrado y paginación
   const filteredAndPaginatedData = useMemo(() => {
@@ -117,15 +116,16 @@ export function UserManagementForm({
 
       // Filtro por búsqueda (frontend)
       if (searchTerm) {
-        filteredUsers = filteredUsers.filter(user =>
-          user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        filteredUsers = filteredUsers.filter(
+          (user) =>
+            user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()),
         );
       }
 
       // Filtro por rol (frontend)
       if (selectedRole && selectedRole !== "all") {
-        filteredUsers = filteredUsers.filter(user => {
+        filteredUsers = filteredUsers.filter((user) => {
           const userRole = user.role?.name || "";
           return userRole.toLowerCase().includes(selectedRole.toLowerCase());
         });
@@ -149,15 +149,16 @@ export function UserManagementForm({
 
       // Filtro por búsqueda
       if (searchTerm) {
-        filteredUsers = filteredUsers.filter(user =>
-          user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        filteredUsers = filteredUsers.filter(
+          (user) =>
+            user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()),
         );
       }
 
       // Filtro por rol
       if (selectedRole && selectedRole !== "all") {
-        filteredUsers = filteredUsers.filter(user => {
+        filteredUsers = filteredUsers.filter((user) => {
           const userRole = user.role?.name || "";
           return userRole.toLowerCase().includes(selectedRole.toLowerCase());
         });
@@ -177,11 +178,19 @@ export function UserManagementForm({
         hasPrevPage: initialCurrentPage > 1,
         currentPage: initialCurrentPage,
         itemsPerPage: ITEMS_PER_PAGE,
-        nextPage: initialCurrentPage < totalPages ? initialCurrentPage + 1 : null,
+        nextPage:
+          initialCurrentPage < totalPages ? initialCurrentPage + 1 : null,
         previousPage: initialCurrentPage > 1 ? initialCurrentPage - 1 : null,
       };
     }
-  }, [users, searchTerm, selectedRole, initialCurrentPage, useBackendPagination, meta]);
+  }, [
+    users,
+    searchTerm,
+    selectedRole,
+    initialCurrentPage,
+    useBackendPagination,
+    meta,
+  ]);
 
   const handleCreateUser = () => {
     if (!canEdit) return;
@@ -197,20 +206,25 @@ export function UserManagementForm({
 
   const handleUserFormSuccess = async (userData: User) => {
     if (!canEdit) return;
-    
+
     try {
       if (editingUser) {
-        setUsers(prev => prev.map(user => 
-          user.id === editingUser.id ? { ...user, ...userData } : user
-        ));
-        await onSave({ type: 'update', user: userData });
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.id === editingUser.id ? { ...user, ...userData } : user,
+          ),
+        );
+        await onSave({ type: "update", user: userData });
       } else {
         const enrichedUser = {
           ...userData,
-          role: userData.role || roles.find(r => r.id === userData.role.id) || null
+          role:
+            userData.role ||
+            roles.find((r) => r.id === userData.role.id) ||
+            null,
         };
-        setUsers(prev => [...prev, enrichedUser]);
-        await onSave({ type: 'create', user: enrichedUser });
+        setUsers((prev) => [...prev, enrichedUser]);
+        await onSave({ type: "create", user: enrichedUser });
       }
     } catch (error) {
       console.error("Error in handleUserFormSuccess:", error);
@@ -224,11 +238,11 @@ export function UserManagementForm({
 
   const handleDeleteUser = async (userId: string) => {
     if (!canEdit) return;
-    
+
     try {
       await onDeleteUser(userId);
-      setUsers(prev => prev.filter(u => u.id !== userId));
-      
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+
       toast({
         title: "Usuario eliminado",
         description: "El usuario ha sido eliminado exitosamente",
@@ -249,7 +263,10 @@ export function UserManagementForm({
   };
 
   const handlePageChange = (page: number) => {
-    console.log("UserManagementForm - handlePageChange called with page:", page);
+    console.log(
+      "UserManagementForm - handlePageChange called with page:",
+      page,
+    );
     if (onPageChange) {
       onPageChange(page);
     }
@@ -257,8 +274,8 @@ export function UserManagementForm({
 
   const getDoctorNames = (doctorIds: string[]) => {
     return doctors
-      .filter(doctor => doctorIds.includes(doctor.id))
-      .map(doctor => doctor.fullName)
+      .filter((doctor) => doctorIds.includes(doctor.id))
+      .map((doctor) => doctor.fullName)
       .join(", ");
   };
 
@@ -303,7 +320,9 @@ export function UserManagementForm({
 
   // Obtener roles únicos para el filtro
   const uniqueRoles = useMemo(() => {
-    const roleNames = users.map(user => getUserRoleName(user)).filter(Boolean);
+    const roleNames = users
+      .map((user) => getUserRoleName(user))
+      .filter(Boolean);
     return [...new Set(roleNames)];
   }, [users]);
 
@@ -311,13 +330,20 @@ export function UserManagementForm({
   const getDisplayRange = () => {
     if (useBackendPagination && meta) {
       const start = (meta.currentPage - 1) * meta.itemsPerPage + 1;
-      const end = Math.min(meta.currentPage * meta.itemsPerPage, meta.totalItems);
+      const end = Math.min(
+        meta.currentPage * meta.itemsPerPage,
+        meta.totalItems,
+      );
       return { start, end, total: meta.totalItems };
     } else {
-      const start = (filteredAndPaginatedData.currentPage - 1) * filteredAndPaginatedData.itemsPerPage + 1;
+      const start =
+        (filteredAndPaginatedData.currentPage - 1) *
+          filteredAndPaginatedData.itemsPerPage +
+        1;
       const end = Math.min(
-        filteredAndPaginatedData.currentPage * filteredAndPaginatedData.itemsPerPage, 
-        filteredAndPaginatedData.totalItems
+        filteredAndPaginatedData.currentPage *
+          filteredAndPaginatedData.itemsPerPage,
+        filteredAndPaginatedData.totalItems,
       );
       return { start, end, total: filteredAndPaginatedData.totalItems };
     }
@@ -337,7 +363,8 @@ export function UserManagementForm({
                 Gestión de Usuarios
               </CardTitle>
               <CardDescription>
-                Crea y administra usuarios del sistema. Asigna secretarias a doctores específicos.
+                Crea y administra usuarios del sistema. Asigna secretarias a
+                doctores específicos.
               </CardDescription>
             </div>
             {canEdit && (
@@ -375,7 +402,10 @@ export function UserManagementForm({
 
             {/* Filtro por rol */}
             <div className="w-full sm:w-48">
-              <Select value={selectedRole || undefined} onValueChange={(value) => setSelectedRole(value || "")}>
+              <Select
+                value={selectedRole || undefined}
+                onValueChange={(value) => setSelectedRole(value || "")}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Filtrar por rol" />
                 </SelectTrigger>
@@ -404,9 +434,7 @@ export function UserManagementForm({
             <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
               <span>Filtros activos:</span>
               {searchTerm && (
-                <Badge variant="secondary">
-                  Búsqueda: "{searchTerm}"
-                </Badge>
+                <Badge variant="secondary">Búsqueda: "{searchTerm}"</Badge>
               )}
               {selectedRole && selectedRole !== "all" && (
                 <Badge variant="secondary">
@@ -414,7 +442,8 @@ export function UserManagementForm({
                 </Badge>
               )}
               <span className="ml-2">
-                ({filteredAndPaginatedData.totalItems} resultado{filteredAndPaginatedData.totalItems !== 1 ? 's' : ''})
+                ({filteredAndPaginatedData.totalItems} resultado
+                {filteredAndPaginatedData.totalItems !== 1 ? "s" : ""})
               </span>
             </div>
           )}
@@ -432,7 +461,8 @@ export function UserManagementForm({
               </CardDescription>
             </div>
             <div className="text-sm text-gray-500">
-              Mostrando {displayRange.start} - {displayRange.end} de {displayRange.total} usuarios
+              Mostrando {displayRange.start} - {displayRange.end} de{" "}
+              {displayRange.total} usuarios
             </div>
           </div>
         </CardHeader>
@@ -440,15 +470,21 @@ export function UserManagementForm({
           {filteredAndPaginatedData.users.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              {filteredAndPaginatedData.totalItems === 0 && !searchTerm && (!selectedRole || selectedRole === "all") ? (
+              {filteredAndPaginatedData.totalItems === 0 &&
+              !searchTerm &&
+              (!selectedRole || selectedRole === "all") ? (
                 <>
                   <p>No hay usuarios registrados</p>
-                  <p className="text-sm">Crea el primer usuario usando el botón de arriba</p>
+                  <p className="text-sm">
+                    Crea el primer usuario usando el botón de arriba
+                  </p>
                 </>
               ) : (
                 <>
                   <p>No se encontraron usuarios</p>
-                  <p className="text-sm">Prueba ajustando los filtros de búsqueda</p>
+                  <p className="text-sm">
+                    Prueba ajustando los filtros de búsqueda
+                  </p>
                 </>
               )}
             </div>
@@ -470,16 +506,22 @@ export function UserManagementForm({
                         <TableCell>
                           <div>
                             <div className="font-medium">{user.fullName}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
+                            <div className="text-sm text-gray-500">
+                              {user.email}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getRoleBadgeColor(getUserRoleName(user))}>
+                          <Badge
+                            className={getRoleBadgeColor(getUserRoleName(user))}
+                          >
                             {getRoleDisplayName(getUserRoleName(user))}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {getUserRoleName(user).toLowerCase().includes('secretaria') ? (
+                          {getUserRoleName(user)
+                            .toLowerCase()
+                            .includes("secretaria") ? (
                             <span className="text-sm text-gray-500">
                               No asignado
                             </span>
@@ -505,14 +547,19 @@ export function UserManagementForm({
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+                                    <AlertDialogTitle>
+                                      ¿Eliminar usuario?
+                                    </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Esta acción eliminará permanentemente el usuario{" "}
-                                      <strong>{user.fullName}</strong>. Esta acción no se puede deshacer.
+                                      Esta acción eliminará permanentemente el
+                                      usuario <strong>{user.fullName}</strong>.
+                                      Esta acción no se puede deshacer.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => handleDeleteUser(user.id)}
                                       className="bg-red-600 hover:bg-red-700"
@@ -535,51 +582,81 @@ export function UserManagementForm({
               {filteredAndPaginatedData.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <div className="text-sm text-gray-500">
-                    Página {filteredAndPaginatedData.currentPage} de {filteredAndPaginatedData.totalPages}
+                    Página {filteredAndPaginatedData.currentPage} de{" "}
+                    {filteredAndPaginatedData.totalPages}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(filteredAndPaginatedData.previousPage || filteredAndPaginatedData.currentPage - 1)}
+                      onClick={() =>
+                        handlePageChange(
+                          filteredAndPaginatedData.previousPage ||
+                            filteredAndPaginatedData.currentPage - 1,
+                        )
+                      }
                       disabled={!filteredAndPaginatedData.hasPrevPage}
                     >
                       <ChevronLeft className="h-4 w-4" />
                       Anterior
                     </Button>
-                    
+
                     {/* Números de página */}
                     <div className="flex gap-1">
-                      {Array.from({ length: Math.min(5, filteredAndPaginatedData.totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (filteredAndPaginatedData.totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (filteredAndPaginatedData.currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (filteredAndPaginatedData.currentPage >= filteredAndPaginatedData.totalPages - 2) {
-                          pageNum = filteredAndPaginatedData.totalPages - 4 + i;
-                        } else {
-                          pageNum = filteredAndPaginatedData.currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={pageNum === filteredAndPaginatedData.currentPage ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(pageNum)}
-                            className="w-8"
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
+                      {Array.from(
+                        {
+                          length: Math.min(
+                            5,
+                            filteredAndPaginatedData.totalPages,
+                          ),
+                        },
+                        (_, i) => {
+                          let pageNum;
+                          if (filteredAndPaginatedData.totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (
+                            filteredAndPaginatedData.currentPage <= 3
+                          ) {
+                            pageNum = i + 1;
+                          } else if (
+                            filteredAndPaginatedData.currentPage >=
+                            filteredAndPaginatedData.totalPages - 2
+                          ) {
+                            pageNum =
+                              filteredAndPaginatedData.totalPages - 4 + i;
+                          } else {
+                            pageNum =
+                              filteredAndPaginatedData.currentPage - 2 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={
+                                pageNum === filteredAndPaginatedData.currentPage
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              onClick={() => handlePageChange(pageNum)}
+                              className="w-8"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        },
+                      )}
                     </div>
 
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(filteredAndPaginatedData.nextPage || filteredAndPaginatedData.currentPage + 1)}
+                      onClick={() =>
+                        handlePageChange(
+                          filteredAndPaginatedData.nextPage ||
+                            filteredAndPaginatedData.currentPage + 1,
+                        )
+                      }
                       disabled={!filteredAndPaginatedData.hasNextPage}
                     >
                       Siguiente

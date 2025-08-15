@@ -13,7 +13,7 @@ export async function findOne(
     const url = `${parsedEnv.API_URL}/companies/${id}`; // Corregido: era /:${id}
     const cookieStore = await cookies();
     const session = cookieStore.get("session")?.value;
-    
+
     if (!session) {
       return {
         message: "Session not found. Please log in again.",

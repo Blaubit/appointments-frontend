@@ -116,7 +116,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   const handleRoleChange = (roleId: string): void => {
-    const selectedRole = roles.find(role => role.id === roleId);
+    const selectedRole = roles.find((role) => role.id === roleId);
     if (selectedRole) {
       setProfileData((prev) => ({
         ...prev,
@@ -126,7 +126,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           description: selectedRole.description || "",
         },
       }));
-      
+
       // Clear error when user selects a role
       if (errors.roleId) {
         setErrors((prev) => ({ ...prev, roleId: "" }));
@@ -172,7 +172,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     if (!validateForm()) {
       return;
     }
-    
+
     // Mostrar el popup de advertencia
     setShowLogoutWarning(true);
   };
@@ -196,10 +196,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         roleId: profileData.role?.id,
       });
 
-      if ('data' in result) {
+      if ("data" in result) {
         // Éxito - pero no actualizar el estado porque vamos a cerrar sesión
-        console.log("Profile updated successfully, logging out for security:", result.data);
-        
+        console.log(
+          "Profile updated successfully, logging out for security:",
+          result.data,
+        );
+
         // Cerrar sesión por seguridad
         await logout();
       } else {
@@ -297,11 +300,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 </Button>
                 <p className="text-sm text-gray-500">
                   {isEditing && canEdit
-                    ? "Selecciona un avatar predeterminado." 
-                    : !canEdit 
-                    ? "No tienes permisos para editar el perfil."
-                    : "Habilita el modo edición para cambiar el avatar."
-                  }
+                    ? "Selecciona un avatar predeterminado."
+                    : !canEdit
+                      ? "No tienes permisos para editar el perfil."
+                      : "Habilita el modo edición para cambiar el avatar."}
                 </p>
               </div>
             </div>
@@ -315,7 +317,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 <Input
                   id="fullName"
                   value={profileData.fullName || ""}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     handleInputChange("fullName", e.target.value)
                   }
                   className={errors.fullName ? "border-red-500" : ""}
@@ -332,7 +334,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                   id="email"
                   type="email"
                   value={profileData.email || ""}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     handleInputChange("email", e.target.value)
                   }
                   className={errors.email ? "border-red-500" : ""}
@@ -350,7 +352,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                   onValueChange={handleRoleChange}
                   disabled={!isEditing || !canEdit}
                 >
-                  <SelectTrigger 
+                  <SelectTrigger
                     className={errors.roleId ? "border-red-500" : ""}
                   >
                     <SelectValue placeholder="Selecciona un rol" />
@@ -376,7 +378,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               <Textarea
                 id="bio"
                 value={profileData.bio || ""}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => 
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   handleInputChange("bio", e.target.value)
                 }
                 placeholder="Describe tu experiencia y especialidades..."
@@ -389,7 +391,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             {!canEdit && (
               <div className="bg-red-500 border border-red-200 rounded-md p-4">
                 <p className="text-sm text-white-800">
-                  <strong>Información:</strong> No tienes permisos para editar la información del perfil. 
+                  <strong>Información:</strong> No tienes permisos para editar
+                  la información del perfil.
                 </p>
               </div>
             )}

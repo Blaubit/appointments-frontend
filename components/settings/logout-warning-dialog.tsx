@@ -33,22 +33,23 @@ export const LogoutWarningDialog: React.FC<LogoutWarningDialogProps> = ({
           <AlertDialogDescription asChild>
             <div className="space-y-3">
               <div>
-                <strong>¡Atención!</strong> Al guardar cambios en tu perfil, tu sesión actual será cerrada por motivos de seguridad.
+                <strong>¡Atención!</strong> Al guardar cambios en tu perfil, tu
+                sesión actual será cerrada por motivos de seguridad.
               </div>
               <div>
-                Después de guardar los cambios, tendrás que iniciar sesión nuevamente con tus credenciales.
+                Después de guardar los cambios, tendrás que iniciar sesión
+                nuevamente con tus credenciales.
               </div>
               <div className="text-sm text-gray-600">
-                Esto es necesario para mantener la integridad y seguridad de tu cuenta.
+                Esto es necesario para mantener la integridad y seguridad de tu
+                cuenta.
               </div>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>
-            Cancelar
-          </AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
             onClick={onContinue}
             className="bg-amber-600 hover:bg-amber-700"
           >

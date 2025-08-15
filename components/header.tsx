@@ -179,7 +179,10 @@ export function Header({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/settings?tab=profile" className="flex items-center">
+                  <Link
+                    href="/settings?tab=profile"
+                    className="flex items-center"
+                  >
                     <UserIcon className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </Link>
@@ -197,7 +200,10 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings?tab=security" className="flex items-center">
+                  <Link
+                    href="/settings?tab=security"
+                    className="flex items-center"
+                  >
                     <Shield className="h-4 w-4 mr-2" />
                     Seguridad
                   </Link>

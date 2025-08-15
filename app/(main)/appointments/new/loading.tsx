@@ -3,8 +3,10 @@ export default function Loading() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center">
         <div className="spinner mb-4"></div>
-        <p className="text-gray-600 dark:text-gray-400">Cargando formulario...</p>
+        <p className="text-gray-600 dark:text-gray-400">
+          Cargando formulario...
+        </p>
       </div>
     </div>
-  )
+  );
 }

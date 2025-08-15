@@ -37,7 +37,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Client } from "@/types/clients";
-import type { Appointment, ClientAppointmentsStats } from "@/types/appointments";
+import type {
+  Appointment,
+  ClientAppointmentsStats,
+} from "@/types/appointments";
 import { Header } from "@/components/header";
 
 interface ClientHistoryPageClientProps {
@@ -111,11 +114,31 @@ export default function ClientHistoryPageClient({
 
   const getTimelineIcon = (status: string) => {
     const iconConfig = {
-      completed: { icon: CheckCircle, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20" },
-      cancelled: { icon: XCircle, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20" },
-      no_show: { icon: UserX, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" },
-      scheduled: { icon: Clock, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-      confirmed: { icon: CheckCircle, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/20" },
+      completed: {
+        icon: CheckCircle,
+        color: "text-green-500",
+        bg: "bg-green-50 dark:bg-green-900/20",
+      },
+      cancelled: {
+        icon: XCircle,
+        color: "text-red-500",
+        bg: "bg-red-50 dark:bg-red-900/20",
+      },
+      no_show: {
+        icon: UserX,
+        color: "text-orange-500",
+        bg: "bg-orange-50 dark:bg-orange-900/20",
+      },
+      scheduled: {
+        icon: Clock,
+        color: "text-blue-500",
+        bg: "bg-blue-50 dark:bg-blue-900/20",
+      },
+      confirmed: {
+        icon: CheckCircle,
+        color: "text-purple-500",
+        bg: "bg-purple-50 dark:bg-purple-900/20",
+      },
     };
 
     const config =
@@ -264,18 +287,24 @@ export default function ClientHistoryPageClient({
               <div className="relative">
                 {/* Línea vertical continua - mejorada para modo oscuro */}
                 <div className="absolute left-4 sm:left-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 z-0" />
-                
+
                 <div className="space-y-4 sm:space-y-6">
                   {appointments.map((appointment, index) => {
-                    const { Icon, color, bg } = getTimelineIcon(appointment.status);
-                    
+                    const { Icon, color, bg } = getTimelineIcon(
+                      appointment.status,
+                    );
+
                     return (
                       <div key={appointment.id} className="relative z-10">
                         <div className="flex gap-3 sm:gap-4">
                           {/* Icono del timeline con línea conectada - mejorado z-index */}
                           <div className="relative flex-shrink-0 z-20">
-                            <div className={`w-8 h-8 sm:w-12 sm:h-12 ${bg} border-2 border-white dark:border-gray-800 rounded-full flex items-center justify-center shadow-sm`}>
-                              <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`} />
+                            <div
+                              className={`w-8 h-8 sm:w-12 sm:h-12 ${bg} border-2 border-white dark:border-gray-800 rounded-full flex items-center justify-center shadow-sm`}
+                            >
+                              <Icon
+                                className={`h-4 w-4 sm:h-5 sm:w-5 ${color}`}
+                              />
                             </div>
                           </div>
 
@@ -303,19 +332,22 @@ export default function ClientHistoryPageClient({
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">
                                       {appointment.service.name}
                                     </h3>
-                                    
+
                                     {/* Información principal - Stack en móvil */}
                                     <div className="space-y-1 sm:space-y-0 sm:flex sm:items-center sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                       <div className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                                         <span className="truncate">
-                                          {new Date(appointment.appointmentDate).toLocaleDateString('es-ES')}
+                                          {new Date(
+                                            appointment.appointmentDate,
+                                          ).toLocaleDateString("es-ES")}
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-1">
                                         <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                                         <span>
-                                          {appointment.startTime} - {appointment.endTime}
+                                          {appointment.startTime} -{" "}
+                                          {appointment.endTime}
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-1">
@@ -340,7 +372,9 @@ export default function ClientHistoryPageClient({
                                   {/* Lado derecho - Stack en móvil */}
                                   <div className="flex flex-col items-end gap-2 ml-2 sm:ml-3">
                                     <span className="text-xs text-gray-500 whitespace-nowrap">
-                                      {formatDate(appointment.appointmentDate.toLocaleString())}
+                                      {formatDate(
+                                        appointment.appointmentDate.toLocaleString(),
+                                      )}
                                     </span>
                                     {getStatusBadge(appointment.status)}
                                   </div>
@@ -365,7 +399,8 @@ export default function ClientHistoryPageClient({
                                       €{appointment.service.price}
                                     </span>
                                     <span className="text-xs text-gray-500">
-                                      • {appointment.service.durationMinutes} min
+                                      • {appointment.service.durationMinutes}{" "}
+                                      min
                                     </span>
                                   </div>
                                   <span className="text-xs text-gray-500">
@@ -389,12 +424,16 @@ export default function ClientHistoryPageClient({
         <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-3 sm:mx-auto">
             <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">Detalles de la Cita</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
+                Detalles de la Cita
+              </DialogTitle>
               <DialogDescription className="text-sm">
                 Información completa de la cita del{" "}
-                {selectedAppointment?.appointmentDate && 
-                  new Date(selectedAppointment.appointmentDate).toLocaleDateString('es-ES')} con{" "}
-                {client.fullName}
+                {selectedAppointment?.appointmentDate &&
+                  new Date(
+                    selectedAppointment.appointmentDate,
+                  ).toLocaleDateString("es-ES")}{" "}
+                con {client.fullName}
               </DialogDescription>
             </DialogHeader>
 
@@ -425,7 +464,9 @@ export default function ClientHistoryPageClient({
                       <div>
                         <span className="text-gray-500">Fecha:</span>
                         <p className="font-medium">
-                          {new Date(selectedAppointment.appointmentDate).toLocaleDateString('es-ES')}
+                          {new Date(
+                            selectedAppointment.appointmentDate,
+                          ).toLocaleDateString("es-ES")}
                         </p>
                       </div>
                       <div>
@@ -482,8 +523,12 @@ export default function ClientHistoryPageClient({
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold truncate">{client.fullName}</p>
-                        <p className="text-sm text-gray-500 truncate">{client.email}</p>
+                        <p className="font-semibold truncate">
+                          {client.fullName}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {client.email}
+                        </p>
                         <p className="text-sm text-gray-500">{client.phone}</p>
                       </div>
                     </div>
@@ -526,9 +571,7 @@ export default function ClientHistoryPageClient({
                           Notas médicas:
                         </span>
                         <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <p className="text-sm">
-                            {selectedAppointment.notes}
-                          </p>
+                          <p className="text-sm">{selectedAppointment.notes}</p>
                         </div>
                       </div>
                     </CardContent>

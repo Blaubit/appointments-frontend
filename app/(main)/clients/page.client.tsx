@@ -113,7 +113,6 @@ export default function ClientsPageClient({
     create(data)
       .then((response) => {
         if (response.status === 201) {
-          
           // Aquí podrías agregar un refresh de la página o actualización del estado
           window.location.reload(); // Temporal, idealmente usarías router.refresh() o state management
         }

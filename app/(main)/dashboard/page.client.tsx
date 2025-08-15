@@ -578,48 +578,48 @@ export default function DashboardClient({
 
             {/* Profile Info */}
             <Card>
-  <Link href="/settings?tab=business">
-    <CardHeader>
-      <CardTitle className="text-lg sm:text-xl my-2">
-        Información del Consultorio
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4 sm:space-y-6">
-      {/* Nombre del consultorio */}
-      <div className="flex items-start space-x-3">
-        <Building2 className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-        <div className="min-w-0">
-          <p className="text-sm font-medium">Nombre</p>
-          <p className="text-xs text-gray-500 break-words">
-            {clinicInfo.name}
-          </p>
-        </div>
-      </div>
+              <Link href="/settings?tab=business">
+                <CardHeader>
+                  <CardTitle className="text-lg sm:text-xl my-2">
+                    Información del Consultorio
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  {/* Nombre del consultorio */}
+                  <div className="flex items-start space-x-3">
+                    <Building2 className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">Nombre</p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo.name}
+                      </p>
+                    </div>
+                  </div>
 
-      {/* Dirección completa */}
-      <div className="flex items-start space-x-3">
-        <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-        <div className="min-w-0">
-          <p className="text-sm font-medium">Dirección</p>
-          <p className="text-xs text-gray-500 break-words">
-            {clinicInfo.address}, {clinicInfo.city} 
-          </p>
-        </div>
-      </div>
+                  {/* Dirección completa */}
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">Dirección</p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo.address}, {clinicInfo.city}
+                      </p>
+                    </div>
+                  </div>
 
-      {/* Ciudad y Código postal */}
-      <div className="flex items-start space-x-3">
-        <Globe className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-        <div className="min-w-0">
-          <p className="text-sm font-medium">Telefono</p>
-          <p className="text-xs text-gray-500 break-words">
-            {clinicInfo.postal_code}
-          </p>
-        </div>
-      </div>
-    </CardContent>
-  </Link>
-</Card>
+                  {/* Ciudad y Código postal */}
+                  <div className="flex items-start space-x-3">
+                    <Globe className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">Telefono</p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo.postal_code}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Link>
+            </Card>
           </div>
         </div>
       </div>

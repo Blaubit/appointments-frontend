@@ -56,7 +56,8 @@ export function BusinessInfoForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [originalData, setOriginalData] = useState<Omit<Company, "id" | "createdAt">>(formData);
+  const [originalData, setOriginalData] =
+    useState<Omit<Company, "id" | "createdAt">>(formData);
   const [showLogoutWarning, setShowLogoutWarning] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
@@ -89,7 +90,7 @@ export function BusinessInfoForm({
 
   const updateFormData = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -98,7 +99,7 @@ export function BusinessInfoForm({
 
   const handleEditToggle = (): void => {
     if (!canEdit) return; // <- Verificación de permisos agregada
-    
+
     if (isEditing) {
       // Cancelar edición - restaurar datos originales
       setFormData(originalData);
@@ -112,11 +113,11 @@ export function BusinessInfoForm({
 
   const handleSaveClick = (): void => {
     if (!canEdit) return; // <- Verificación de permisos agregada
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     // Mostrar el popup de advertencia
     setShowLogoutWarning(true);
   };
@@ -143,10 +144,13 @@ export function BusinessInfoForm({
         description: formData.description,
       });
 
-      if ('data' in result) {
+      if ("data" in result) {
         // Éxito - pero no actualizar el estado porque vamos a cerrar sesión
-        console.log("Company updated successfully, logging out for security:", result.data);
-        
+        console.log(
+          "Company updated successfully, logging out for security:",
+          result.data,
+        );
+
         // Cerrar sesión por seguridad
         await logout();
       } else {
@@ -169,7 +173,7 @@ export function BusinessInfoForm({
 
   // Función para obtener el label del tipo de empresa
   const getBusinessTypeLabel = (value: string) => {
-    const businessType = businessTypes.find(type => type.value === value);
+    const businessType = businessTypes.find((type) => type.value === value);
     return businessType ? businessType.label : value;
   };
 
