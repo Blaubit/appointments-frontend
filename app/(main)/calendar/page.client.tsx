@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,8 +57,8 @@ interface CalendarPageClientProps {
 }
 
 export default function CalendarPageClient({
-  initialAppointments,
-  services,
+  initialAppointments = [], // Valor por defecto
+  services = [], // Valor por defecto
 }: CalendarPageClientProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day" | "agenda">(
@@ -73,8 +73,14 @@ export default function CalendarPageClient({
   const [serviceFilter, setServiceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
-  const [appointments, setAppointments] =
-    useState<Appointment[]>(initialAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+
+  // Inicializar appointments de forma segura
+  useEffect(() => {
+    if (initialAppointments && Array.isArray(initialAppointments)) {
+      setAppointments(initialAppointments);
+    }
+  }, [initialAppointments]);
 
   // Form data for create/edit appointment
   const [formData, setFormData] = useState({
@@ -113,15 +119,17 @@ export default function CalendarPageClient({
     "18:00",
   ];
 
-  // Filter appointments
-  const filteredAppointments = appointments.filter((appointment) => {
+  // Filter appointments - protegido contra arrays undefined
+  const filteredAppointments = (appointments || []).filter((appointment) => {
+    if (!appointment) return false;
+    
     const matchesSearch =
-      appointment.client.fullName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      appointment.service.name.toLowerCase().includes(searchTerm.toLowerCase());
+      appointment.client?.fullName
+        ?.toLowerCase()
+        ?.includes(searchTerm.toLowerCase()) ||
+      appointment.service?.name?.toLowerCase()?.includes(searchTerm.toLowerCase());
     const matchesService =
-      serviceFilter === "all" || appointment.service.name === serviceFilter;
+      serviceFilter === "all" || appointment.service?.name === serviceFilter;
     const matchesStatus =
       statusFilter === "all" || appointment.status === statusFilter;
 
@@ -132,12 +140,16 @@ export default function CalendarPageClient({
   const getAppointmentsForDate = (date: Date) => {
     const dateStr = date.toISOString().split("T")[0];
     return filteredAppointments.filter((apt) => {
+      if (!apt) return false;
+      
       // Handle both string and Date formats for appointmentDate
       let aptDateStr: string;
       if (typeof apt.appointmentDate === "string") {
         aptDateStr = apt.appointmentDate;
-      } else {
+      } else if (apt.appointmentDate) {
         aptDateStr = new Date(apt.appointmentDate).toISOString().split("T")[0];
+      } else {
+        return false;
       }
       return aptDateStr === dateStr;
     });
@@ -145,6 +157,7 @@ export default function CalendarPageClient({
 
   // Convert time format from HH:MM:SS to HH:MM
   const formatTime = (timeStr: string) => {
+    if (!timeStr) return "";
     if (timeStr.includes(":")) {
       const parts = timeStr.split(":");
       return `${parts[0]}:${parts[1]}`;
@@ -365,16 +378,16 @@ export default function CalendarPageClient({
   const openEditDialog = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setFormData({
-      clientName: appointment.client.fullName,
-      clientEmail: appointment.client.email,
-      clientPhone: appointment.client.phone,
-      serviceId: appointment.service.id,
+      clientName: appointment.client?.fullName || "",
+      clientEmail: appointment.client?.email || "",
+      clientPhone: appointment.client?.phone || "",
+      serviceId: appointment.service?.id || "",
       date:
         typeof appointment.appointmentDate === "string"
           ? appointment.appointmentDate
-          : new Date(appointment.appointmentDate).toISOString().split("T")[0],
+          : appointment.appointmentDate ? new Date(appointment.appointmentDate).toISOString().split("T")[0] : "",
       time: formatTime(appointment.startTime),
-      duration: appointment.service.durationMinutes,
+      duration: appointment.service?.durationMinutes || 30,
       notes: appointment.notes || "",
       status: appointment.status,
     });
@@ -570,7 +583,7 @@ export default function CalendarPageClient({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los servicios</SelectItem>
-                  {services.map((service) => (
+                  {(services || []).map((service) => (
                     <SelectItem key={service.id} value={service.name}>
                       <span>{service.name}</span>
                     </SelectItem>
@@ -648,7 +661,7 @@ export default function CalendarPageClient({
                           }}
                         >
                           {formatTime(appointment.startTime)} -{" "}
-                          {appointment.client.fullName}
+                          {appointment.client?.fullName || "Sin nombre"}
                         </div>
                       ))}
                       {dayAppointments.length > 3 && (
@@ -715,10 +728,10 @@ export default function CalendarPageClient({
                             }}
                           >
                             <div className="font-medium truncate">
-                              {appointment.client.fullName}
+                              {appointment.client?.fullName || "Sin nombre"}
                             </div>
                             <div className="truncate">
-                              {appointment.service.name}
+                              {appointment.service?.name || "Sin servicio"}
                             </div>
                           </div>
                         ))}
@@ -761,13 +774,13 @@ export default function CalendarPageClient({
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="font-medium">
-                                {appointment.client.fullName}
+                                {appointment.client?.fullName || "Sin nombre"}
                               </div>
                               <div className="text-sm">
-                                {appointment.service.name}
+                                {appointment.service?.name || "Sin servicio"}
                               </div>
                               <div className="text-xs opacity-75">
-                                {appointment.service.durationMinutes} min
+                                {appointment.service?.durationMinutes || 30} min
                               </div>
                             </div>
                             <Badge
@@ -835,7 +848,7 @@ export default function CalendarPageClient({
                       <Avatar className="h-12 w-12">
                         <AvatarImage src="/placeholder.svg" />
                         <AvatarFallback>
-                          {appointment.client.fullName
+                          {(appointment.client?.fullName || "NN")
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
@@ -845,7 +858,7 @@ export default function CalendarPageClient({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate">
-                            {appointment.client.fullName}
+                            {appointment.client?.fullName || "Sin nombre"}
                           </h3>
                           <Badge className={getStatusColor(appointment.status)}>
                             <div className="flex items-center space-x-1">
@@ -868,13 +881,13 @@ export default function CalendarPageClient({
                           <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 rounded-full bg-blue-500" />
                             <span>
-                              {appointment.service.name} (
-                              {appointment.service.durationMinutes} min)
+                              {appointment.service?.name || "Sin servicio"} (
+                              {appointment.service?.durationMinutes || 30} min)
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Phone className="h-4 w-4" />
-                            <span>{appointment.client.phone}</span>
+                            <span>{appointment.client?.phone || "Sin teléfono"}</span>
                           </div>
                         </div>
 
@@ -1024,7 +1037,7 @@ export default function CalendarPageClient({
                     <SelectValue placeholder="Seleccionar servicio" />
                   </SelectTrigger>
                   <SelectContent>
-                    {services.map((service) => (
+                    {(services || []).map((service) => (
                       <SelectItem key={service.id} value={service.id}>
                         <span>
                           {service.name} - {service.durationMinutes} min
@@ -1177,7 +1190,7 @@ export default function CalendarPageClient({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {services.map((service) => (
+                    {(services || []).map((service) => (
                       <SelectItem key={service.id} value={service.id}>
                         <span>
                           {service.name} - {service.durationMinutes} min

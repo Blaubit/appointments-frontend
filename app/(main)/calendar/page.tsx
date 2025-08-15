@@ -3,14 +3,20 @@ import CalendarPageClient from "./page.client";
 import { Header } from "@/components/header";
 import findAll from "@/actions/appointments/findAll";
 import { findAll as findAllServices } from "@/actions/services/findAll";
-// Mock data que vendría de la base de datos
+
+// Forzar renderizado dinámico
+export const dynamic = 'force-dynamic'
 
 export default async function CalendarPage() {
   // Obtener datos del servidor
-  const [appointments, services] = await Promise.all([
+  const [appointmentsResult, servicesResult] = await Promise.all([
     findAll(),
     findAllServices(),
   ]);
+
+  // Manejar casos donde no hay datos o hay errores
+  const appointments = appointmentsResult?.data || [];
+  const services = servicesResult?.data || [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -34,8 +40,8 @@ export default async function CalendarPage() {
         }
       >
         <CalendarPageClient
-          initialAppointments={appointments.data}
-          services={services.data}
+          initialAppointments={appointments}
+          services={services}
         />
       </Suspense>
     </div>

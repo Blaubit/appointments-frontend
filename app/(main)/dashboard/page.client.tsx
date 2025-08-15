@@ -564,15 +564,7 @@ export default function DashboardClient({
                     Reportes
                   </Button>
                 </Link>
-                <Link href="/bot">
-                  <Button
-                    className="w-full justify-start text-sm my-1"
-                    variant="outline"
-                  >
-                    <Bot className="h-4 w-4 mr-2" />
-                    Bot
-                  </Button>
-                </Link>
+                {/*AQUI DEBERIA IR UN BOTON DE BOT CUANDO EXISTA LA FUNCIONALIDAD */}
               </CardContent>
             </Card>
 
