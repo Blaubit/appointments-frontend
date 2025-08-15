@@ -5,15 +5,16 @@ import axios, { isAxiosError } from "axios";
 import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { ClientEditFormData } from "@/types";
-import { Client } from "@/types";
+import { CreateSecretaryProfessionalDto } from "@/types/dto/User/SecretaryProfessional/createSecretaryProfesionalDto";
+import { User } from "@/types";
 
-export default async function edit({
-  id,
-  fullName,
-  email,
-  phone,
-}: ClientEditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
+export async function create({
+  secretaryId,
+  professionalId,
+  isActive,
+}: CreateSecretaryProfessionalDto): Promise<
+  SuccessReponse<User> | ErrorResponse
+> {
   try {
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
@@ -27,7 +28,7 @@ export default async function edit({
       };
     }
 
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/:${id}`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/secretary-professional-assignments`;
     const session = cookieStore.get("session")?.value;
 
     // Validar que tenemos session
@@ -39,12 +40,12 @@ export default async function edit({
     }
 
     const body = {
-      fullName,
-      email,
-      phone,
+      secretaryId,
+      professionalId,
+      isActive,
     };
 
-    const response = await axios.post<Client>(url, body, {
+    const response = await axios.post<User>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
@@ -53,7 +54,7 @@ export default async function edit({
 
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
-      revalidatePath("/Client");
+      revalidatePath("/User");
 
       return {
         data: response.data,
@@ -68,7 +69,7 @@ export default async function edit({
       status: response.status,
     };
   } catch (error) {
-    console.error("Error creating client:", error);
+    console.error("Error creating User:", error);
 
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;

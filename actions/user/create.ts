@@ -5,15 +5,16 @@ import axios, { isAxiosError } from "axios";
 import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { ClientEditFormData } from "@/types";
-import { Client } from "@/types";
+import { CreateUserDto } from "@/types/dto/User/createUserDto";
+import { User } from "@/types";
 
-export default async function edit({
-  id,
+export async function create({
+  roleId,
   fullName,
   email,
-  phone,
-}: ClientEditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
+  password,
+  bio,
+}: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
   try {
     const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
@@ -27,7 +28,7 @@ export default async function edit({
       };
     }
 
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/:${id}`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/Users`;
     const session = cookieStore.get("session")?.value;
 
     // Validar que tenemos session
@@ -39,21 +40,23 @@ export default async function edit({
     }
 
     const body = {
+      roleId,
       fullName,
       email,
-      phone,
+      password,
+      bio,
     };
 
-    const response = await axios.post<Client>(url, body, {
+    const response = await axios.post<User>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
-
+    console.log("Response from create User:", response.data);
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
-      revalidatePath("/Client");
+      revalidatePath("/settings?ta=users");
 
       return {
         data: response.data,
@@ -68,7 +71,7 @@ export default async function edit({
       status: response.status,
     };
   } catch (error) {
-    console.error("Error creating client:", error);
+    console.error("Error creating User:", error);
 
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;

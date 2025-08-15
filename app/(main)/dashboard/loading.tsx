@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function DashboardLoading() {
   return (
@@ -55,7 +55,10 @@ export default function DashboardLoading() {
           </CardHeader>
           <CardContent className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 p-3 border rounded-lg">
+              <div
+                key={i}
+                className="flex items-center space-x-4 p-3 border rounded-lg"
+              >
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="flex-1">
                   <Skeleton className="h-4 w-32 mb-2" />
@@ -82,7 +85,10 @@ export default function DashboardLoading() {
           </CardHeader>
           <CardContent className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 p-3 border rounded-lg">
+              <div
+                key={i}
+                className="flex items-center space-x-4 p-3 border rounded-lg"
+              >
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="flex-1">
                   <Skeleton className="h-4 w-28 mb-2" />
@@ -111,7 +117,10 @@ export default function DashboardLoading() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-auto p-4 flex-col gap-2 border rounded-lg">
+              <div
+                key={i}
+                className="h-auto p-4 flex-col gap-2 border rounded-lg"
+              >
                 <Skeleton className="h-6 w-6 mx-auto mb-2" />
                 <Skeleton className="h-4 w-20 mx-auto" />
               </div>
@@ -120,5 +129,5 @@ export default function DashboardLoading() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

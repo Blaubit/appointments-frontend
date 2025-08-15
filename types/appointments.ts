@@ -33,7 +33,7 @@ export interface Pagination {
   hasNext: boolean;
   hasPrev: boolean;
 }
-export interface ClientAppointmentsStats{
+export interface ClientAppointmentsStats {
   total: number;
   completed: number;
   resecheduled: number;

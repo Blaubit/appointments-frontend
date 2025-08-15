@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function CalendarLoading() {
   return (
@@ -57,7 +57,10 @@ export default function CalendarLoading() {
             {/* Month Header Skeleton */}
             <div className="grid grid-cols-7 gap-2 mb-4">
               {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day) => (
-                <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                <div
+                  key={day}
+                  className="text-center text-sm font-medium text-gray-500 py-2"
+                >
                   {day}
                 </div>
               ))}
@@ -66,7 +69,10 @@ export default function CalendarLoading() {
             {/* Calendar Days Skeleton */}
             <div className="grid grid-cols-7 gap-2">
               {[...Array(42)].map((_, index) => (
-                <div key={index} className="min-h-[120px] p-2 border rounded-lg">
+                <div
+                  key={index}
+                  className="min-h-[120px] p-2 border rounded-lg"
+                >
                   <Skeleton className="h-4 w-6 mb-2" />
                   <div className="space-y-1">
                     {Math.random() > 0.7 && <Skeleton className="h-6 w-full" />}
@@ -80,5 +86,5 @@ export default function CalendarLoading() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

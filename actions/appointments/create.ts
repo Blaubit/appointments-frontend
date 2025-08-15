@@ -23,8 +23,6 @@ export default async function create({
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments`;
-
-    console.log("Fetching appointment from:", url);
     const body = {
       clientId,
       professionalId,
@@ -34,7 +32,6 @@ export default async function create({
       status,
       notes,
     };
-    console.log("Request body:", body);
     const response = await axios.post<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,

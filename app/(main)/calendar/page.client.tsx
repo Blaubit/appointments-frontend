@@ -694,9 +694,7 @@ export default function CalendarPageClient({
             <div className="space-y-1">
               {timeSlots.map((time) => (
                 <div key={time} className="grid grid-cols-8 gap-2 min-h-[60px]">
-                  <div className="text-sm  py-2 text-right pr-2">
-                    {time}
-                  </div>
+                  <div className="text-sm  py-2 text-right pr-2">{time}</div>
                   {generateWeekDays().map((date, dayIndex) => {
                     const dayAppointments = getAppointmentsForDate(date).filter(
                       (apt) => formatTime(apt.startTime) === time,

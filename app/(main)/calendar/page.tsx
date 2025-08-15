@@ -11,8 +11,7 @@ export default async function CalendarPage() {
     findAll(),
     findAllServices(),
   ]);
-  console.log("Appointments:", appointments.data);
-  console.log("Services:", services.data);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header del servidor */}

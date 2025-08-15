@@ -5,46 +5,31 @@ import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
-import { User } from "@/types";
+import { Role } from "@/types";
 
 type Props = {
   searchParams?: URLSearchParams;
-  page?: number;
-  limit?: number;
-  search?: string;
 };
 
 export async function findAll(
   props: Props = {},
-): Promise<SuccessReponse<User[]> | ErrorResponse | any> {
+): Promise<SuccessReponse<Role[]> | ErrorResponse | any> {
   try {
     const cookieStore = await cookies();
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
-
-    // Combinar parámetros de searchParams y props directos
+    const Role = cookieStore.get("Role")?.value;
+    const companyId = Role ? JSON.parse(Role).companyId : null;
+    const url = `${parsedEnv.API_URL}/roles`;
     const parsedParams = parsePaginationParams(props.searchParams);
-
-    // Obtener parámetros finales, priorizando props directos sobre searchParams
-    const page = props.page || parsedParams.page || 1;
-    const limit = props.limit || parsedParams.limit || 5;
-
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/users`;
-
-    const finalParams = {
-      page,
-      limit,
-      // Aquí puedes agregar otros parámetros que necesites para el backend
-      // pero por ahora solo enviamos page y limit ya que search y filtros serán en frontend
-    };
-
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
       },
-      params: finalParams,
+      params: {
+        ...parsedParams,
+        query: undefined,
+        q: parsedParams.query,
+      },
     });
-
     return {
       data: response.data.data,
       status: 200,
@@ -54,7 +39,7 @@ export async function findAll(
         total: response.data.meta.totalItems,
         active: 10,
         total_income: 5,
-        total_Users: 2,
+        total_Roles: 2,
       },
     };
   } catch (error) {

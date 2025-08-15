@@ -30,6 +30,9 @@ import {
   Smile,
   Coffee,
   Sparkles,
+  FileText,
+  Globe,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/header";
@@ -582,30 +585,35 @@ export default function DashboardClient({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 sm:space-y-6">
+                  {/* Nombre del consultorio */}
+                  <div className="flex items-start space-x-3">
+                    <Building2 className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">Nombre</p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo.name}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Dirección completa */}
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Dirección</p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo.address}
+                        {clinicInfo.address}, {clinicInfo.city}
                       </p>
                     </div>
                   </div>
+
+                  {/* Ciudad y Código postal */}
                   <div className="flex items-start space-x-3">
-                    <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <Globe className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium">Código postal</p>
+                      <p className="text-sm font-medium">Telefono</p>
                       <p className="text-xs text-gray-500 break-words">
                         {clinicInfo.postal_code}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Clock className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">Ciudad</p>
-                      <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo.city}
                       </p>
                     </div>
                   </div>

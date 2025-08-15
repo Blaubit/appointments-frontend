@@ -59,7 +59,7 @@ export function Header({
   const defaultCompany: Company = {
     id: "default",
     name: "CitasFácil",
-    company_type: "default",
+    companyType: "default",
     address: "Calle Falsa 123",
     city: "Ciudad",
     state: "Estado",
@@ -83,7 +83,7 @@ export function Header({
     avatar: "/Professional1.png",
     bio: "Usuario invitado sin acceso completo",
     createdAt: "2023-01-01T00:00:00Z",
-    company: defaultCompany,
+    companyId: "",
   };
 
   const currentUser = user || defaultUser;
@@ -179,7 +179,10 @@ export function Header({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center">
+                  <Link
+                    href="/settings?tab=profile"
+                    className="flex items-center"
+                  >
                     <UserIcon className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </Link>
@@ -197,7 +200,10 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/security" className="flex items-center">
+                  <Link
+                    href="/settings?tab=security"
+                    className="flex items-center"
+                  >
                     <Shield className="h-4 w-4 mr-2" />
                     Seguridad
                   </Link>

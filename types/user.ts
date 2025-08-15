@@ -11,7 +11,7 @@ type User = {
   fullName: string;
   bio: string;
   createdAt: string;
-  company: Company;
+  companyId: string;
   role: Role;
 };
 

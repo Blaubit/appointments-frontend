@@ -16,7 +16,7 @@ export async function findHistory(
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
     const session = cookieStore.get("session")?.value;
-    
+
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,

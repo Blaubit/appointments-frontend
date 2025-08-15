@@ -113,7 +113,6 @@ export default function ClientsPageClient({
     create(data)
       .then((response) => {
         if (response.status === 201) {
-          console.log("Cliente creado exitosamente");
           // Aquí podrías agregar un refresh de la página o actualización del estado
           window.location.reload(); // Temporal, idealmente usarías router.refresh() o state management
         }
@@ -132,7 +131,6 @@ export default function ClientsPageClient({
     edit(data2)
       .then((response) => {
         if (response.status === 201) {
-          console.log("Cliente editado exitosamente");
           window.location.reload(); // Temporal
         }
       })
