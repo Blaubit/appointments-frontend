@@ -23,11 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, CheckCircle2, XCircle, Shield, Ban } from "lucide-react";
 
 import { Role, User } from "@/types";
 import { create as createUser } from "@/actions/user/create";
-import { create as updateUser } from "@/actions/user/update";
+import { updateProfile as updateUser } from "@/actions/user/update";
 import { create as createSecretaryProfessional } from "@/actions/user/secretary-professional/create";
 
 // Esquemas de validación con Zod
@@ -129,6 +129,14 @@ const updateUserSchema = z.object({
 type CreateUserFormData = z.infer<typeof createUserSchema>;
 type UpdateUserFormData = z.infer<typeof updateUserSchema>;
 
+// Tipos para errores del servidor
+interface ServerError {
+  statusCode: number;
+  message: string;
+  field?: string;
+  details?: string;
+}
+
 interface UserFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -150,6 +158,7 @@ export function UserForm({
 }: UserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState<ServerError | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -173,6 +182,7 @@ export function UserForm({
   useEffect(() => {
     if (isOpen) {
       setShowSuccessMessage(false);
+      setServerError(null);
       if (editingUser) {
         setFormData({
           fullName: editingUser.fullName,
@@ -202,6 +212,7 @@ export function UserForm({
       confirmPassword: "",
     });
     setValidationErrors({});
+    setServerError(null);
     setPasswordsMatch(null);
     setShowPassword(false);
     setShowConfirmPassword(false);
@@ -209,6 +220,19 @@ export function UserForm({
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Limpiar errores cuando el usuario empiece a escribir
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [field]: ""
+      }));
+    }
+    
+    // Limpiar error del servidor si existe
+    if (serverError) {
+      setServerError(null);
+    }
     
     // Verificar coincidencia de contraseñas en tiempo real
     if (field === "confirmPassword" || (field === "password" && formData.confirmPassword)) {
@@ -221,14 +245,6 @@ export function UserForm({
         setPasswordsMatch(null);
       }
     }
-    
-    // Limpiar error del campo cuando el usuario empiece a escribir
-    if (validationErrors[field]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [field]: ""
-      }));
-    }
   };
 
   const handleDoctorAssignment = (doctorId: string, checked: boolean) => {
@@ -238,6 +254,11 @@ export function UserForm({
         ? [...prev.assignedDoctors, doctorId]
         : prev.assignedDoctors.filter(id => id !== doctorId)
     }));
+    
+    // Limpiar error del servidor si existe
+    if (serverError) {
+      setServerError(null);
+    }
   };
 
   const validateForm = () => {
@@ -269,7 +290,97 @@ export function UserForm({
     }
   };
 
+  const handleServerError = (error: any) => {
+    console.error("Server error:", error);
+    
+    // Determinar el tipo de error basado en el código de estado o estructura
+    let serverError: ServerError = {
+      statusCode: 500,
+      message: "Error interno del servidor",
+    };
+
+    if (error && typeof error === 'object') {
+      // Si el error tiene una estructura específica del backend
+      if (error.statusCode || error.status) {
+        serverError.statusCode = error.statusCode || error.status;
+      }
+      
+      if (error.message) {
+        serverError.message = error.message;
+      }
+      
+      if (error.field) {
+        serverError.field = error.field;
+      }
+      
+      if (error.details) {
+        serverError.details = error.details;
+      }
+    } else if (typeof error === 'string') {
+      serverError.message = error;
+    }
+
+    // Personalizar mensajes según el código de estado
+    const errorMessages: Record<number, { title: string; description: string; icon?: any }> = {
+      400: {
+        title: "Datos inválidos",
+        description: serverError.message || "Los datos enviados no son válidos. Verifica la información e intenta nuevamente.",
+        icon: XCircle
+      },
+      401: {
+        title: "No autorizado",
+        description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+        icon: Shield
+      },
+      403: {
+        title: "Acceso denegado",
+        description: "No tienes permisos suficientes para realizar esta acción.",
+        icon: Ban
+      },
+      404: {
+        title: "Recurso no encontrado",
+        description: "El usuario o recurso solicitado no existe.",
+        icon: XCircle
+      },
+      409: {
+        title: "Conflicto de datos",
+        description: serverError.message || "Ya existe un usuario con este correo electrónico.",
+        icon: AlertCircle
+      },
+      422: {
+        title: "Datos no procesables",
+        description: serverError.message || "Los datos enviados no pueden ser procesados.",
+        icon: XCircle
+      },
+      429: {
+        title: "Demasiadas solicitudes",
+        description: "Has excedido el límite de solicitudes. Intenta nuevamente en unos minutos.",
+        icon: AlertCircle
+      },
+      500: {
+        title: "Error interno del servidor",
+        description: "Ocurrió un error en el servidor. Intenta nuevamente más tarde.",
+        icon: XCircle
+      }
+    };
+
+    const errorInfo = errorMessages[serverError.statusCode] || errorMessages[500];
+    
+    setServerError(serverError);
+    
+    toast({
+      title: errorInfo.title,
+      description: errorInfo.description,
+      variant: "destructive",
+    });
+
+    return serverError;
+  };
+
   const handleSubmit = async () => {
+    // Limpiar errores previos
+    setServerError(null);
+    
     const validation = validateForm();
     if (!validation.success) return;
 
@@ -292,11 +403,7 @@ export function UserForm({
         result = await updateUser(updateData);
 
         if ('message' in result) {
-          toast({
-            title: "Error al actualizar usuario",
-            description: result.message,
-            variant: "destructive",
-          });
+          handleServerError(result);
           return;
         }
 
@@ -329,11 +436,7 @@ export function UserForm({
         });
 
         if ('message' in result) {
-          toast({
-            title: "Error al crear usuario",
-            description: result.message,
-            variant: "destructive",
-          });
+          handleServerError(result);
           return;
         }
 
@@ -383,12 +486,7 @@ export function UserForm({
       }, 2000);
 
     } catch (error) {
-      console.error("Error submitting form:", error);
-      toast({
-        title: "Error inesperado",
-        description: `No se pudo ${isEditMode ? 'actualizar' : 'crear'} el usuario. Inténtalo de nuevo.`,
-        variant: "destructive",
-      });
+      handleServerError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -408,6 +506,53 @@ export function UserForm({
       <div className="flex items-center gap-1 mt-1 text-sm text-red-600">
         <AlertCircle className="h-3 w-3" />
         {validationErrors[field]}
+      </div>
+    );
+  };
+
+  // Componente para mostrar errores del servidor
+  const ServerErrorDisplay = () => {
+    if (!serverError) return null;
+    
+    const getErrorIcon = () => {
+      switch (serverError.statusCode) {
+        case 401:
+          return <Shield className="h-4 w-4" />;
+        case 403:
+          return <Ban className="h-4 w-4" />;
+        default:
+          return <AlertCircle className="h-4 w-4" />;
+      }
+    };
+
+    const getErrorColor = () => {
+      switch (serverError.statusCode) {
+        case 401:
+        case 403:
+          return "text-orange-600 bg-orange-50 border-orange-200";
+        default:
+          return "text-red-600 bg-red-50 border-red-200";
+      }
+    };
+
+    return (
+      <div className={`rounded-md border p-3 ${getErrorColor()}`}>
+        <div className="flex items-center gap-2">
+          {getErrorIcon()}
+          <div className="flex-1">
+            <h4 className="font-medium text-sm">
+              Error {serverError.statusCode}
+            </h4>
+            <p className="text-sm mt-1">
+              {serverError.message}
+            </p>
+            {serverError.details && (
+              <p className="text-xs mt-1 opacity-75">
+                {serverError.details}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
@@ -470,6 +615,9 @@ export function UserForm({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Mostrar errores del servidor */}
+          <ServerErrorDisplay />
+
           {/* Información Personal */}
           <div className="space-y-2">
             <Label htmlFor="fullName">Nombre Completo *</Label>

@@ -21,10 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { User as UserIcon, Edit, X, Save } from "lucide-react";
-import { AvatarSelector } from "@/components/avatar-selector";
+import { AvatarSelector } from "@/components/settings/avatar-selector";
 import { updateProfile } from "@/actions/user/update";
 import { logout } from "@/actions/auth/logout";
-import { LogoutWarningDialog } from "@/components/logout-warning-dialog";
+import { LogoutWarningDialog } from "@/components/settings/logout-warning-dialog";
 
 interface ProfileFormProps {
   initialData?: Partial<User>;
@@ -32,7 +32,8 @@ interface ProfileFormProps {
   isLoading?: boolean;
   title?: string;
   description?: string;
-  roles?: Role[]; // Array de roles disponibles
+  roles?: Role[];
+  canEdit?: boolean;
 }
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({
@@ -41,7 +42,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   isLoading = false,
   title = "Información Personal",
   description = "Actualiza tu información personal y profesional",
-  roles = [], // Array de roles por defecto vacío
+  roles = [],
+  canEdit = true,
 }) => {
   const [profileData, setProfileData] = useState<Partial<User>>({
     id: "",
@@ -50,7 +52,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     bio: "",
     avatar: "",
     createdAt: "",
-    company: undefined,
+    companyId: "",
     role: {
       id: "",
       name: "",
@@ -92,10 +94,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       const companyField = field.split(".")[1];
       setProfileData((prev) => ({
         ...prev,
-        company: {
-          ...prev.company!,
-          [companyField]: value,
-        },
+        companyId: value,
       }));
     } else if (field.startsWith("role.")) {
       const roleField = field.split(".")[1];
@@ -136,8 +135,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   const handleAvatarChange = (): void => {
-    // Solo permitir cambiar avatar si está en modo edición
-    if (!isEditing) {
+    // Solo permitir cambiar avatar si está en modo edición y tiene permisos
+    if (!isEditing || !canEdit) {
       return;
     }
     setShowAvatarSelector(true);
@@ -150,6 +149,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   const handleEditToggle = (): void => {
+    if (!canEdit) {
+      return;
+    }
+
     if (isEditing) {
       // Cancelar edición - restaurar todos los datos originales (incluyendo avatar)
       setProfileData(originalData);
@@ -162,6 +165,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   const handleSaveClick = (): void => {
+    if (!canEdit) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -183,7 +190,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       const result = await updateProfile({
         userId: profileData.id,
         email: profileData.email,
-        avatar: profileData.avatar, // Ahora incluye el avatar
+        avatar: profileData.avatar,
         fullName: profileData.fullName,
         bio: profileData.bio,
         roleId: profileData.role?.id,
@@ -224,15 +231,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             </div>
             <div className="flex space-x-2">
               {!isEditing ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEditToggle}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
+                canEdit && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditToggle}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                )
               ) : (
                 <>
                   <Button
@@ -260,9 +269,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          {/* Removido el form wrapper ya que no necesitamos el handleSubmit */}
           <div className="space-y-6">
-            {/* Avatar Section - Solo editable en modo edición */}
+            {/* Avatar Section */}
             <div className="flex items-center space-x-6">
               <Avatar className="h-24 w-24">
                 <AvatarImage src={profileData.avatar || "/Avatar1.png"} />
@@ -282,14 +290,16 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={handleAvatarChange}
-                  disabled={!isEditing} // Solo habilitado en modo edición
+                  disabled={!isEditing || !canEdit}
                 >
                   <UserIcon className="h-4 w-4 mr-2" />
                   Cambiar Avatar
                 </Button>
                 <p className="text-sm text-gray-500">
-                  {isEditing 
+                  {isEditing && canEdit
                     ? "Selecciona un avatar predeterminado." 
+                    : !canEdit 
+                    ? "No tienes permisos para editar el perfil."
                     : "Habilita el modo edición para cambiar el avatar."
                   }
                 </p>
@@ -298,7 +308,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
             <Separator />
 
-            {/* Personal Information - Controlado por isEditing */}
+            {/* Personal Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="fullName">Nombre Completo *</Label>
@@ -309,7 +319,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                     handleInputChange("fullName", e.target.value)
                   }
                   className={errors.fullName ? "border-red-500" : ""}
-                  disabled={!isEditing}
+                  disabled={!isEditing || !canEdit}
                 />
                 {errors.fullName && (
                   <p className="text-sm text-red-500">{errors.fullName}</p>
@@ -326,7 +336,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                     handleInputChange("email", e.target.value)
                   }
                   className={errors.email ? "border-red-500" : ""}
-                  disabled={!isEditing}
+                  disabled={!isEditing || !canEdit}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500">{errors.email}</p>
@@ -338,7 +348,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 <Select
                   value={profileData.role?.id || ""}
                   onValueChange={handleRoleChange}
-                  disabled={!isEditing}
+                  disabled={!isEditing || !canEdit}
                 >
                   <SelectTrigger 
                     className={errors.roleId ? "border-red-500" : ""}
@@ -371,16 +381,23 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 }
                 placeholder="Describe tu experiencia y especialidades..."
                 rows={4}
-                disabled={!isEditing}
+                disabled={!isEditing || !canEdit}
               />
             </div>
 
-            {/* ELIMINADO: El botón "Guardar Cambios" que aparecía cuando !isEditing */}
+            {/* Mensaje cuando no tiene permisos */}
+            {!canEdit && (
+              <div className="bg-red-500 border border-red-200 rounded-md p-4">
+                <p className="text-sm text-white-800">
+                  <strong>Información:</strong> No tienes permisos para editar la información del perfil. 
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Avatar Selector Modal - Solo funciona en modo edición */}
+      {/* Avatar Selector Modal */}
       <AvatarSelector
         isOpen={showAvatarSelector}
         onClose={() => setShowAvatarSelector(false)}

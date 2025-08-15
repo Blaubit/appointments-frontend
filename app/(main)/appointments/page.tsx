@@ -9,8 +9,8 @@ type Props = {
 };
 
 export default async function Page({ searchParams }: Props) {
-  const params = new URLSearchParams();
-  Object.entries(searchParams).forEach(([key, value]) => {
+  const params = await new URLSearchParams();
+  Object.entries(await searchParams).forEach(([key, value]) => {
     if (value !== undefined) {
       if (Array.isArray(value)) {
         value.forEach((v) => params.append(key, v));

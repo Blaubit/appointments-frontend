@@ -29,7 +29,7 @@ export default async function edit({
 
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/:${id}`;
     const session = cookieStore.get("session")?.value;
-    console.log("url", url);
+
     // Validar que tenemos session
     if (!session) {
       return {

@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 
 import { Role, User } from "@/types";
-import { UserForm } from "@/components/user-form";
+import { UserForm } from "@/components/settings/user-form";
 
 interface UserManagementFormProps {
   currentUserRole: "admin" | "profesional";
@@ -74,6 +74,7 @@ interface UserManagementFormProps {
     previousPage: number | null;
   };
   useBackendPagination?: boolean;
+  canEdit?: boolean;
 }
 
 export function UserManagementForm({
@@ -88,6 +89,7 @@ export function UserManagementForm({
   onPageChange,
   meta,
   useBackendPagination = false,
+  canEdit = true,
 }: UserManagementFormProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
@@ -105,9 +107,6 @@ export function UserManagementForm({
 
   // Log para debugging
   useEffect(() => {
-    console.log("Meta information:", meta);
-    console.log("Current page from props:", initialCurrentPage);
-    console.log("Users count:", users.length);
   }, [meta, initialCurrentPage, users]);
 
   // Lógica de filtrado y paginación
@@ -185,16 +184,20 @@ export function UserManagementForm({
   }, [users, searchTerm, selectedRole, initialCurrentPage, useBackendPagination, meta]);
 
   const handleCreateUser = () => {
+    if (!canEdit) return;
     setEditingUser(null);
     setIsUserFormOpen(true);
   };
 
   const handleEditUser = (user: User) => {
+    if (!canEdit) return;
     setEditingUser(user);
     setIsUserFormOpen(true);
   };
 
   const handleUserFormSuccess = async (userData: User) => {
+    if (!canEdit) return;
+    
     try {
       if (editingUser) {
         setUsers(prev => prev.map(user => 
@@ -220,6 +223,8 @@ export function UserManagementForm({
   };
 
   const handleDeleteUser = async (userId: string) => {
+    if (!canEdit) return;
+    
     try {
       await onDeleteUser(userId);
       setUsers(prev => prev.filter(u => u.id !== userId));
@@ -335,10 +340,12 @@ export function UserManagementForm({
                 Crea y administra usuarios del sistema. Asigna secretarias a doctores específicos.
               </CardDescription>
             </div>
-            <Button onClick={handleCreateUser}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Crear Usuario
-            </Button>
+            {canEdit && (
+              <Button onClick={handleCreateUser}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Crear Usuario
+              </Button>
+            )}
           </div>
         </CardHeader>
       </Card>
@@ -454,7 +461,7 @@ export function UserManagementForm({
                       <TableHead>Usuario</TableHead>
                       <TableHead>Rol</TableHead>
                       <TableHead>Doctores Asignados</TableHead>
-                      <TableHead>Acciones</TableHead>
+                      {canEdit && <TableHead>Acciones</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -474,49 +481,50 @@ export function UserManagementForm({
                         <TableCell>
                           {getUserRoleName(user).toLowerCase().includes('secretaria') ? (
                             <span className="text-sm text-gray-500">
-                              {/* TODO: Mostrar doctores asignados */}
                               No asignado
                             </span>
                           ) : (
                             <span className="text-sm text-gray-400">N/A</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditUser(user)}
-                            >
-                              <Edit3 className="h-3 w-3" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Trash2 className="h-3 w-3 text-red-500" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Esta acción eliminará permanentemente el usuario{" "}
-                                    <strong>{user.fullName}</strong>. Esta acción no se puede deshacer.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteUser(user.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Eliminar Usuario
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
+                        {canEdit && (
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                              >
+                                <Edit3 className="h-3 w-3" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Trash2 className="h-3 w-3 text-red-500" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción eliminará permanentemente el usuario{" "}
+                                      <strong>{user.fullName}</strong>. Esta acción no se puede deshacer.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteUser(user.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Eliminar Usuario
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -586,15 +594,17 @@ export function UserManagementForm({
       </Card>
 
       {/* Formulario de Usuario (Modal) */}
-      <UserForm
-        isOpen={isUserFormOpen}
-        onClose={() => setIsUserFormOpen(false)}
-        onSuccess={handleUserFormSuccess}
-        editingUser={editingUser}
-        doctors={doctors}
-        roles={roles}
-        isLoading={isLoading}
-      />
+      {canEdit && (
+        <UserForm
+          isOpen={isUserFormOpen}
+          onClose={() => setIsUserFormOpen(false)}
+          onSuccess={handleUserFormSuccess}
+          editingUser={editingUser}
+          doctors={doctors}
+          roles={roles}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 }

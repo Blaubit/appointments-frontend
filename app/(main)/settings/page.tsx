@@ -4,6 +4,8 @@ import { get } from "http";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import { findAll } from "@/actions/user/findAll";
 import { findAll as findAllRoles } from "@/actions/user/role/findAll";
+import { findOne as findCompany } from "@/actions/companies/findOne";
+import { User } from "@/types";
 
 async function getScheduleSettings() {
   // Simular fetch de datos del servidor
@@ -47,30 +49,37 @@ async function getAppearanceSettings() {
   };
 }
 
-// Agregar searchParams como prop
+// Actualizar la interfaz para esperar searchParams
 interface SettingsPageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
-  // Convertir searchParams a URLSearchParams
-  const urlSearchParams = new URLSearchParams();
-  Object.entries(searchParams).forEach(([key, value]) => {
-    if (value !== undefined) {
-      if (Array.isArray(value)) {
-        value.forEach(v => urlSearchParams.append(key, v));
-      } else {
-        urlSearchParams.set(key, value);
-      }
-    }
-  });
+  // Esperar a que searchParams se resuelva
+  const resolvedSearchParams = await searchParams;
+  
   // Extraer página específicamente para usuarios si estamos en el tab de usuarios
-  const currentTab = searchParams.tab as string;
-  const currentPage = currentTab === "users" ? parseInt(searchParams.page as string || "1") : 1;
+  const currentTab = resolvedSearchParams.tab as string;
+  const currentPage = currentTab === "users" ? parseInt(resolvedSearchParams.page as string || "1") : 1;
 
-  // Fetch de datos del servidor
+  // Primero obtener los datos del usuario
+  const profileData = await getUser();
+  
+  // Buscar información de la empresa usando el companyId del usuario - VALIDAR QUE EXISTE
+  let companyData = null;
+  if (profileData?.companyId && typeof profileData.companyId === 'string') {
+    const companyResult = await findCompany(profileData.companyId);
+    if ('data' in companyResult) {
+      companyData = companyResult.data;
+    } else {
+      console.error("Error fetching company data:", companyResult.message);
+    }
+  } else {
+    console.warn("No companyId found for user or companyId is not a string");
+  }
+
+  // Fetch del resto de datos del servidor
   const [
-    profileData,
     scheduleSettings,
     securityData,
     appearanceSettings,
@@ -78,7 +87,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     Users,
     roles,
   ] = await Promise.all([
-    getUser(),
     getScheduleSettings(),
     getSecurityData(),
     getAppearanceSettings(),
@@ -90,9 +98,15 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     findAllRoles(),
   ]);
 
+  // Crear el objeto de usuario con la información de la empresa
+  const profileDataWithCompany: User & { company?: any} = {
+    ...profileData,
+    company: companyData, // Agregar los datos completos de la empresa
+  };
+
   return (
     <SettingsPageClient
-      profileData={profileData}
+      profileData={profileDataWithCompany}
       scheduleSettings={scheduleSettings}
       securityData={securityData}
       appearanceSettings={appearanceSettings}

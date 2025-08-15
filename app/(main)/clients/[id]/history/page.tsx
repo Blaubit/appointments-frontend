@@ -14,7 +14,8 @@ export default async function ClientHistoryPage({
   params,
 }: ClientHistoryPageProps) {
   try {
-    const clientResponse = await findOne(params.id);
+    const paramsdone = await params;
+    const clientResponse = await findOne(paramsdone.id);
     if (clientResponse.status !== 200 || !("data" in clientResponse)) {
       notFound();
     }
@@ -22,7 +23,7 @@ export default async function ClientHistoryPage({
     const client: Client = clientResponse.data;
     let recentHistory: Appointment[] = [];
     try {
-      const findHistoryResponse = await findHistory(params.id);
+      const findHistoryResponse = await findHistory(paramsdone.id);
       
       if (findHistoryResponse.status === 200) {
         recentHistory = findHistoryResponse.data;

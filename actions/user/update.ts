@@ -182,9 +182,6 @@ export async function updateProfile({
         status: 400,
       };
     }
-
-    console.log("Updating user profile with data:", body);
-
     const response = await axios.patch<User>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,

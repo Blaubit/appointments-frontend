@@ -42,7 +42,6 @@ export default async function findAll(
       stats: response.data.stats,
     };
   } catch (error) {
-    console.log(error);
     if (isAxiosError(error)) {
       return {
         message: error.message,
