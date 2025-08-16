@@ -31,8 +31,8 @@ export default async function edit({
   country,
   description,
 }: EditCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
+  const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
 

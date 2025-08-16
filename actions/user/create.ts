@@ -15,8 +15,8 @@ export async function create({
   password,
   bio,
 }: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
+  const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
 

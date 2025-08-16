@@ -12,8 +12,8 @@ export async function updateAvatar({
   userId,
   avatar,
 }: UpdateUserAvatarDto): Promise<SuccessReponse<User> | ErrorResponse> {
+  const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
     const userCookie = cookieStore.get("user")?.value;
     const companyId = userCookie ? JSON.parse(userCookie).companyId : null;
 

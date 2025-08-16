@@ -14,8 +14,8 @@ type Props = {
 export default async function findStatusStats(
   props: Props = {},
 ): Promise<SuccessReponse<statusStats[]> | ErrorResponse | any> {
+   const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/count-by-status`;

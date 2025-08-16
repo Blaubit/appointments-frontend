@@ -14,8 +14,8 @@ type Props = {
 export async function findAll(
   props: Props = {},
 ): Promise<SuccessReponse<Role[]> | ErrorResponse | any> {
+  const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
     const Role = cookieStore.get("Role")?.value;
     const companyId = Role ? JSON.parse(Role).companyId : null;
     const url = `${parsedEnv.API_URL}/roles`;
