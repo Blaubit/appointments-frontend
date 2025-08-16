@@ -6,7 +6,11 @@ export * from "./appointments";
 export * from "./services";
 export * from "./clients";
 export * from "./whatsapp-bot";
-
+export * from "./notifications";
+export * from "./schedule";
+export * from "./security";
+export * from "./appearence";
+export * from "./support";
 // Re-export commonly used types for convenience
 export type { Notification, Pagination } from "./common";
 export type { Appointment, AppointmentStats } from "./appointments";
