@@ -17,8 +17,9 @@ type DeleteServiceRequest = {
 export default async function deleteService({
   id,
 }: DeleteServiceRequest): Promise<SuccessReponse<service> | ErrorResponse> {
+  const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
+    
     const session = cookieStore.get("session")?.value;
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;

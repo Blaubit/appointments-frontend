@@ -15,8 +15,8 @@ export default async function update({
   durationMinutes,
   price,
 }: updateServiceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
+  const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
     const session = cookieStore.get("session")?.value;
     const User = cookieStore.get("user")?.value;
     const companyId = User ? JSON.parse(User).companyId : null;

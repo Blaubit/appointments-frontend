@@ -9,9 +9,10 @@ import { parsedEnv } from "@/app/env";
 export default async function findOne(
   id: number,
 ): Promise<SuccessReponse<User> | ErrorResponse> {
+   const cookieStore = await cookies();
   try {
     const url = `${parsedEnv.API_URL}/users/${id}`;
-    const session = cookies().get("session")?.value;
+    const session = cookieStore.get("session")?.value;
     const response = await axios.get<User>(url, {
       headers: {
         Authorization: `Bearer ${session}`,

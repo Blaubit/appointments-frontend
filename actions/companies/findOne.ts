@@ -9,11 +9,10 @@ import { Company } from "@/types";
 export async function findOne(
   id: string, // Cambiado a string para ser consistente con los IDs
 ): Promise<SuccessReponse<Company> | ErrorResponse> {
+  const cookieStore = await cookies();
   try {
     const url = `${parsedEnv.API_URL}/companies/${id}`; // Corregido: era /:${id}
-    const cookieStore = await cookies();
     const session = cookieStore.get("session")?.value;
-
     if (!session) {
       return {
         message: "Session not found. Please log in again.",

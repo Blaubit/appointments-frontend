@@ -14,8 +14,8 @@ type Props = {
 export async function findAllCompanyTypes(
   props: Props = {},
 ): Promise<SuccessReponse<CompanyTypes[]> | ErrorResponse | any> {
+  const cookieStore = await cookies();
   try {
-    const cookieStore = await cookies();
     const url = `${parsedEnv.API_URL}/company-types`;
     const session = cookieStore.get("session")?.value || "";
     const response = await axios.get(url, {
