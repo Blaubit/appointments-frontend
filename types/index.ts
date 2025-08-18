@@ -13,6 +13,7 @@ export * from "./appearence";
 export * from "./support";
 export * from "./saas";
 export * from "./user";
+export * from "./calendar";
 // Re-export commonly used types for convenience
 export type { Notification, Pagination } from "./common";
 export type { Appointment, AppointmentStats } from "./appointments";
