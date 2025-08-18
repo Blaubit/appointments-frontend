@@ -11,6 +11,10 @@ export default async function Page() {
   const professionals: User[] = (await findAllProfessionals()).data; // obteniendo todos los profesionales
   const userSession = await getUser(); // obteniendo la sesión del usuario
 
+  if (!userSession){
+    throw new Error("User not authenticated");
+  }
+  
   return (
     <PageClient
       services={services}

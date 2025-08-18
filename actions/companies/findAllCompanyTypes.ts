@@ -1,11 +1,10 @@
 "use server";
 
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { CompanyTypes } from "@/types";
+import { getSession } from "@/actions/auth";
 
 type Props = {
   searchParams?: URLSearchParams;
@@ -14,10 +13,10 @@ type Props = {
 export async function findAllCompanyTypes(
   props: Props = {},
 ): Promise<SuccessReponse<CompanyTypes[]> | ErrorResponse | any> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  
   try {
-    const url = `${parsedEnv.API_URL}/company-types`;
-    const session = cookieStore.get("session")?.value || "";
+    const url = `${parsedEnv.API_URL}/company-types`
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,

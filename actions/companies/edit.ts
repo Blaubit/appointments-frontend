@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Company } from "@/types";
-
+import { getUser, getSession } from "@/actions/auth";
 // Interface para los parámetros de edición usando los nombres correctos del tipo Company
 interface EditCompanyParams {
   id: string;
@@ -31,10 +31,11 @@ export default async function edit({
   country,
   description,
 }: EditCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+    
+    const companyId = User?.company.id;
 
     // Validar que tenemos companyId
     if (!companyId) {
@@ -46,7 +47,6 @@ export default async function edit({
 
     // Corregir la URL - no debería tener `:` antes del id
     const url = `${parsedEnv.API_URL}/companies/${id}`;
-    const session = cookieStore.get("session")?.value;
     console.log("url", url);
 
     // Validar que tenemos session

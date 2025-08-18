@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@/types";
+import { getUser } from "@/actions/auth/getUser"; // Ajusta la ruta al archivo donde esté la función getUser
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -9,24 +10,24 @@ export function useUser() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    try {
-      const cookie = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("user="))
-        ?.split("=")[1];
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
 
-      if (cookie) {
-        const decoded = decodeURIComponent(cookie);
-        const parsedUser = JSON.parse(decoded);
-        setUser(parsedUser);
-      } else {
-        setUser(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
-    } finally {
-      setLoading(false);
-    }
+    getUser()
+      .then((u) => {
+        if (isMounted) setUser(u);
+      })
+      .catch((err) => {
+        if (isMounted) setError(err instanceof Error ? err : new Error("Unknown error"));
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return { user, loading, error };

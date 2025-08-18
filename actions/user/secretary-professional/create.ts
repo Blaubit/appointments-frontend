@@ -7,6 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { CreateSecretaryProfessionalDto } from "@/types/dto/User/SecretaryProfessional/createSecretaryProfesionalDto";
 import { User } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 export async function create({
   secretaryId,
@@ -15,10 +16,10 @@ export async function create({
 }: CreateSecretaryProfessionalDto): Promise<
   SuccessReponse<User> | ErrorResponse
 > {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+    const companyId = User?.company.id;
 
     // Validar que tenemos companyId
     if (!companyId) {
@@ -27,9 +28,7 @@ export async function create({
         status: 401,
       };
     }
-
     const url = `${parsedEnv.API_URL}/companies/${companyId}/secretary-professional-assignments`;
-    const session = cookieStore.get("session")?.value;
 
     // Validar que tenemos session
     if (!session) {

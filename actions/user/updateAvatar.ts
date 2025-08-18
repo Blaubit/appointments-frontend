@@ -7,15 +7,17 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { UpdateUserAvatarDto } from "@/types/dto/User/updateUserAvatarDto";
 import { User } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 export async function updateAvatar({
   userId,
   avatar,
 }: UpdateUserAvatarDto): Promise<SuccessReponse<User> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const userCookie = cookieStore.get("user")?.value;
-    const companyId = userCookie ? JSON.parse(userCookie).companyId : null;
+    
+    const companyId = User?.company.id;
 
     // Validar que tenemos companyId
     if (!companyId) {
@@ -27,8 +29,6 @@ export async function updateAvatar({
 
     // Construir la URL correctamente
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users/${userId}`;
-    const session = cookieStore.get("session")?.value;
-
     // Validar que tenemos session
     if (!session) {
       return {
@@ -63,27 +63,6 @@ export async function updateAvatar({
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/profile");
       revalidatePath("/users");
-
-      // Actualizar la cookie del usuario con el nuevo avatar
-      if (userCookie) {
-        try {
-          const currentUser = JSON.parse(userCookie);
-          const updatedUserData = {
-            ...currentUser,
-            avatar: response.data.avatar || body.avatar,
-          };
-
-          cookieStore.set("user", JSON.stringify(updatedUserData), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 60 * 60 * 24 * 7, // 7 días
-          });
-        } catch (cookieError) {
-          console.error("Error updating user cookie:", cookieError);
-          // No fallar la operación si no se puede actualizar la cookie
-        }
-      }
 
       return {
         data: response.data,

@@ -11,7 +11,17 @@ type User = {
   fullName: string;
   bio: string;
   createdAt: string;
+  company: Company;
+  role: Role;
+};
+export type MeUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  avatar: string;
+  bio: string;
   companyId: string;
+  roleId: string;
   role: Role;
 };
 // Roles predefinidos del sistema

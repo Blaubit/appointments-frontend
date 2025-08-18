@@ -2,32 +2,26 @@
 
 import axios, { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import { cookies } from "next/headers";
+import { User } from "@/types";
 import { parsedEnv } from "@/app/env";
-import { Company } from "@/types";
 import { getSession } from "@/actions/auth";
 
-export async function findOne(
-  id: string, // Cambiado a string para ser consistente con los IDs
-): Promise<SuccessReponse<Company> | ErrorResponse> {
-  const session = await getSession();
+export default async function findMe(
+): Promise<SuccessReponse<User> | ErrorResponse> {
+   
+   const session = await getSession();
   try {
-    const url = `${parsedEnv.API_URL}/companies/${id}`; // Corregido: era /:${id
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
-
-    const response = await axios.get<Company>(url, {
+    const url = `${parsedEnv.API_URL}/auth/me`;
+     
+    const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
-    });
+    }); 
+    
 
     return {
-      data: response.data,
+      data: response.data.data,
       status: 200,
       statusText: response.statusText,
     };

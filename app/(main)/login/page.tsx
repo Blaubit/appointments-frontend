@@ -5,6 +5,7 @@ import LoginClient from "./page.client";
 import { Login } from "@/actions/auth/login";
 import { loginSchema } from "@/lib/validations/auth";
 import { z } from "zod";
+import { getUser, getSession } from "@/actions/auth";
 
 // Validación con backend real usando Zod
 async function handleServerLogin(formData: FormData) {
@@ -101,9 +102,9 @@ async function handleServerLogin(formData: FormData) {
 
 // Verifica si ya hay token, y si lo hay redirige al dashboard
 async function checkAuth() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("session")?.value;
-  if (token) {
+  const session = await getSession();
+  
+  if (session) {
     redirect("/dashboard");
   }
 }

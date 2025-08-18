@@ -6,6 +6,7 @@ import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment, AppointmentStats } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 type Props = {
   searchParams?: URLSearchParams;
@@ -19,12 +20,11 @@ type UpcomingAppointmentsResponse = SuccessReponse<Appointment[]> & {
 export async function upcomingAppointments(
   props: Props = {},
 ): Promise<UpcomingAppointmentsResponse | ErrorResponse> {
-  const cookieStore = await cookies();
+
+  const User = await getUser();
+  const session = await getSession();
   try {
-    const userCookie = cookieStore.get("user")?.value;
-
-    const companyId = userCookie ? JSON.parse(userCookie).companyId : null;
-
+    const companyId = User?.company.id;
     if (!companyId) {
       return {
         message: "Company ID not found in cookies",
@@ -37,7 +37,7 @@ export async function upcomingAppointments(
 
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
+        Authorization: `Bearer ${session}`,
       },
       params: {
         ...parsedParams,

@@ -7,17 +7,18 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { ClientFormData } from "@/types";
 import { Client } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 export async function create({
   fullName,
   email,
   phone,
 }: ClientFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const User = await getUser();
+  const session = await getSession();
   try {
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
-
+    
+    const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -25,9 +26,7 @@ export async function create({
         status: 401,
       };
     }
-
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients`;
-    const session = cookieStore.get("session")?.value;
 
     // Validar que tenemos session
     if (!session) {

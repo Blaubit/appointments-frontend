@@ -7,17 +7,19 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { serviceDto } from "@/types/dto/service/serviceDto";
 import { Appointment } from "@/types/";
-
+import { getUser } from "@/actions/auth/getUser";
+import { getSession } from "@/actions/auth";
 export default async function create({
   name,
   durationMinutes,
   price,
 }: serviceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const session = cookieStore.get("session")?.value;
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+
+    
+    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services`;
     const body = {
       name,

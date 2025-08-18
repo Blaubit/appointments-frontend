@@ -20,7 +20,12 @@ export default async function DashboardPage({ searchParams }: Props) {
   const upcomingAppointmentsData: Appointment[] = response.data;
   const stats: AppointmentStats = response.stats;
 
-  const user: User = await getUser();
+  const user = await getUser();
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
   let companyInfo: Company = {
     id: "default",
     name: "CitasFácil",
@@ -33,7 +38,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     description: "Empresa de citas por defecto",
     createdAt: "2023-01-01T00:00:00Z",
   };
-  const companyResponse = await findOne(user.companyId);
+  const companyResponse = await findOne(user.company.id);
   if (companyResponse.status === 200 && "data" in companyResponse) {
     companyInfo = companyResponse.data;
   }

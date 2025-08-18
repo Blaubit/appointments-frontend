@@ -5,10 +5,8 @@ import axios, { isAxiosError } from "axios";
 import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { serviceDto } from "@/types/dto/service/serviceDto";
-import { Appointment } from "@/types/";
-import { updateServiceDto } from "@/types/dto/service/updateServiceDto";
 import { service } from "@/types/service";
+import { getUser, getSession } from "@/actions/auth";
 
 type DeleteServiceRequest = {
   id: string;
@@ -17,12 +15,10 @@ type DeleteServiceRequest = {
 export default async function deleteService({
   id,
 }: DeleteServiceRequest): Promise<SuccessReponse<service> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    
-    const session = cookieStore.get("session")?.value;
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services/${id}`;
 
     const response = await axios.delete(url, {

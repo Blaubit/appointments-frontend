@@ -5,16 +5,18 @@ import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { Client } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 export async function findOne(
   id: string,
 ): Promise<SuccessReponse<Client> | ErrorResponse | any> {
-  const cookieStore = await cookies();
+  const User = await getUser();
+  const session = await getSession();
   try {
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+    
+    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/${id}`;
-    const session = cookieStore.get("session")?.value;
+    
 
     const response = await axios.get(url, {
       headers: {

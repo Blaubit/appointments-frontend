@@ -6,6 +6,8 @@ import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { statusStats } from "@/types";
+import { getUser } from "@/actions/auth/getUser";
+import { getSession } from "../auth";
 
 type Props = {
   searchParams?: URLSearchParams;
@@ -14,16 +16,17 @@ type Props = {
 export default async function findStatusStats(
   props: Props = {},
 ): Promise<SuccessReponse<statusStats[]> | ErrorResponse | any> {
-   const cookieStore = await cookies();
+   const User = await getUser();
+   const session = await getSession();
   try {
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+    
+        const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/count-by-status`;
     const parsedParams = parsePaginationParams(props.searchParams);
     //console.log("url", url);
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
+        Authorization: `Bearer ${session}`,
       },
       params: {
         ...parsedParams,

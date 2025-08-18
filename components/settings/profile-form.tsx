@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { User, Role } from "@/types";
+import type { User, Role, Company } from "@/types";
 import {
   Card,
   CardHeader,
@@ -23,7 +23,7 @@ import {
 import { User as UserIcon, Edit, X, Save } from "lucide-react";
 import { AvatarSelector } from "@/components/settings/avatar-selector";
 import { updateProfile } from "@/actions/user/update";
-import { logout } from "@/actions/auth/logout";
+//import { logout } from "@/actions/auth/logout";
 import { LogoutWarningDialog } from "@/components/settings/logout-warning-dialog";
 
 interface ProfileFormProps {
@@ -45,6 +45,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   roles = [],
   canEdit = true,
 }) => {
+
+ 
   const [profileData, setProfileData] = useState<Partial<User>>({
     id: "",
     fullName: "",
@@ -52,7 +54,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     bio: "",
     avatar: "",
     createdAt: "",
-    companyId: "",
+    company:,
     role: {
       id: "",
       name: "",
@@ -204,7 +206,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         );
 
         // Cerrar sesión por seguridad
-        await logout();
+        //await logout();
       } else {
         // Error en la actualización
         console.error("Error updating profile:", result.message);

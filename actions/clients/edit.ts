@@ -7,6 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { ClientEditFormData } from "@/types";
 import { Client } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 export default async function edit({
   id,
@@ -14,10 +15,11 @@ export default async function edit({
   email,
   phone,
 }: ClientEditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+    
+    const companyId = User?.company.id;
 
     // Validar que tenemos companyId
     if (!companyId) {
@@ -28,7 +30,6 @@ export default async function edit({
     }
 
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/:${id}`;
-    const session = cookieStore.get("session")?.value;
 
     // Validar que tenemos session
     if (!session) {

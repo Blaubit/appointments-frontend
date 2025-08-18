@@ -70,17 +70,17 @@ export default async function SettingsPage({
   // Primero obtener los datos del usuario
   const profileData = await getUser();
 
-  // Buscar información de la empresa usando el companyId del usuario - VALIDAR QUE EXISTE
+  // Buscar información de la empresa usando el company.id del usuario - VALIDAR QUE EXISTE
   let companyData = null;
-  if (profileData?.companyId && typeof profileData.companyId === "string") {
-    const companyResult = await findCompany(profileData.companyId);
+  if (profileData?.company.id && typeof profileData.company.id === "string") {
+    const companyResult = await findCompany(profileData.company.id);
     if ("data" in companyResult) {
       companyData = companyResult.data;
     } else {
       console.error("Error fetching company data:", companyResult.message);
     }
   } else {
-    console.warn("No companyId found for user or companyId is not a string");
+    console.warn("No company.id found for user or company.id is not a string");
   }
 
   // Fetch del resto de datos del servidor
@@ -104,7 +104,7 @@ export default async function SettingsPage({
   ]);
 
   // Crear el objeto de usuario con la información de la empresa
-  const profileDataWithCompany: User & { company?: any } = {
+  const profileDataWithCompany: any = {
     ...profileData,
     company: companyData, // Agregar los datos completos de la empresa
   };
