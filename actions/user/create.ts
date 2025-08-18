@@ -7,6 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { CreateUserDto } from "@/types/dto/User/createUserDto";
 import { User } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 export async function create({
   roleId,
@@ -15,11 +16,11 @@ export async function create({
   password,
   bio,
 }: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const User = await getUser();
+  const session = await getSession();
   try {
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
-
+    
+    const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -28,8 +29,7 @@ export async function create({
       };
     }
 
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/Users`;
-    const session = cookieStore.get("session")?.value;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/Users`
 
     // Validar que tenemos session
     if (!session) {

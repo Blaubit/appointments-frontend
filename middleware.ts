@@ -1,71 +1,57 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Definir los roles y las rutas restringidas para cada uno
+// Rutas restringidas por rol
 const ROLE_RESTRICTIONS = {
-  // Rutas que cada rol NO puede acceder
-  secretaria: [
-    '/bot',
-    '/consultation', 
-    '/reports',
-    '/services',
-  ],
-  profesional: [
-    '/bot',
-    
-  ],
-  admin_empresa: [
-    '/bot', 
-  ],
-  super_admin: [] // Super admin puede acceder a todo
+  secretaria: ['/bot', '/consultation', '/reports', '/services'],
+  profesional: ['/bot'],
+  admin_empresa: ['/bot'],
+  super_admin: []
 };
 
-// Función para obtener el rol del usuario
-function getUserRole(userCookie: string): string | null {
+// Decodifica el payload del JWT
+function parseJwt(token: string): any {
   try {
-    // Decodificar la cookie URL-encoded
-    const decodedUser = decodeURIComponent(userCookie);
-    
-    // Parsear el JSON
-    const userData = JSON.parse(decodedUser);
-    
-    // Extraer el rol desde user.role.name
-    return userData?.role?.name || null;
+    const base64Payload = token.split('.')[1];
+    const payload = Buffer.from(base64Payload, 'base64').toString();
+    return JSON.parse(payload);
   } catch (error) {
     return null;
   }
 }
 
+// Obtiene el rol desde el token JWT
+function getUserRole(sessionToken: string): string | null {
+  const payload = parseJwt(sessionToken);
+  return payload?.role || null;
+}
+
 export function middleware(request: NextRequest) {
-  const userToken = request.cookies.get("user");
+  const sessionToken = request.cookies.get("session")?.value;
   const pathname = request.nextUrl.pathname;
 
-  // Si no hay token de usuario, redirigir a login
-  if (!userToken) {
+  // Si no hay token de sesión, redirigir a login
+  if (!sessionToken) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Obtener el rol del usuario
-  const userRole = getUserRole(userToken.value);
-  
-  // Si no se puede obtener el rol, permitir acceso (para no romper la funcionalidad)
+  // Obtener el rol desde el token
+  const userRole = getUserRole(sessionToken);
+
+  // Si no se puede obtener el rol, permitir acceso
   if (!userRole) {
     console.log("No se pudo obtener el rol del usuario, permitiendo acceso");
     return NextResponse.next();
   }
 
-  // Verificar si el rol tiene restricciones para esta ruta
+  // Verificar rutas restringidas
   const restrictedRoutes = ROLE_RESTRICTIONS[userRole as keyof typeof ROLE_RESTRICTIONS];
-  
   if (restrictedRoutes && restrictedRoutes.length > 0) {
-    // Verificar si la ruta actual está restringida para este rol
-    const isRestricted = restrictedRoutes.some(restrictedRoute => 
+    const isRestricted = restrictedRoutes.some(restrictedRoute =>
       pathname.startsWith(restrictedRoute)
     );
-    
     if (isRestricted) {
       console.log(`Acceso denegado: ${userRole} intentó acceder a ${pathname}`);
-      // Redirigir al dashboard si intenta acceder a una ruta restringida
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

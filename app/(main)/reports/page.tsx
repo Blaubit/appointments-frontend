@@ -177,17 +177,7 @@ export default function ReportsPage() {
         showBackButton={true}
         backButtonText="Dashboard"
         backButtonHref="/dashboard"
-        user={{
-          name: "Dr. Roberto Silva",
-          email: "roberto.silva@email.com",
-          role: "Médico General",
-          avatar: "/Avatar1.png?height=32&width=32",
-          initials: "DR",
-        }}
-        notifications={{
-          count: 3,
-        }}
-      />
+          />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters and Actions */}
         <Card className="mb-8">

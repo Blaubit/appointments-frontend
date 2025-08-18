@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { serviceDto } from "@/types/dto/service/serviceDto";
 import { Appointment } from "@/types/";
 import { updateServiceDto } from "@/types/dto/service/updateServiceDto";
+import { getUser, getSession } from "@/actions/auth";
 
 export default async function update({
   id,
@@ -15,12 +16,10 @@ export default async function update({
   durationMinutes,
   price,
 }: updateServiceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const session = cookieStore.get("session")?.value;
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
-
+    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services/${id}`;
 
     const body = {

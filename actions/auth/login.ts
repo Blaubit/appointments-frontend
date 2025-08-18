@@ -20,17 +20,14 @@ export async function Login({
 
     const token = response.data.data.token;
     const cookieStore = await cookies();
+
+    // Cookie de sesión segura
     cookieStore.set("session", token, {
       httpOnly: true,
-      secure: false, // Cambiado para aceptar conexiones HTTP
-      maxAge: response.data.data.expiresIn, // 7 días
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-    });
-    cookieStore.set({
-      name: "user",
-      value: JSON.stringify(response.data.data.user),
-      httpOnly: false,
-      path: "/",
+      path: "/"
+      // No maxAge ni expires para que se borre al cerrar el navegador
     });
 
     return {

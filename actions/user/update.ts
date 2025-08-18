@@ -7,6 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { UpdateUserDto } from "@/types/dto/User/updateUserDto";
 import { User } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 export async function updateUser({
   userId,
@@ -14,11 +15,11 @@ export async function updateUser({
   password,
   avatar,
 }: UpdateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const userCookie = cookieStore.get("user")?.value;
-    const companyId = userCookie ? JSON.parse(userCookie).companyId : null;
-
+    
+    const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -26,10 +27,8 @@ export async function updateUser({
         status: 401,
       };
     }
-
     // Construir la URL correctamente
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users/${userId}`;
-    const session = cookieStore.get("session")?.value;
 
     // Validar que tenemos session
     if (!session) {
@@ -122,10 +121,10 @@ export async function updateProfile({
   bio,
   roleId,
 }: UpdateProfileParams): Promise<SuccessReponse<User> | ErrorResponse> {
+  const session = await getSession();
+  const User = await getUser();
   try {
-    const cookieStore = await cookies();
-    const userCookie = cookieStore.get("user")?.value;
-    const companyId = userCookie ? JSON.parse(userCookie).companyId : null;
+    const companyId = User?.company.id;
 
     if (!companyId) {
       return {
@@ -135,7 +134,6 @@ export async function updateProfile({
     }
 
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users/${userId}`;
-    const session = cookieStore.get("session")?.value;
 
     if (!session) {
       return {
@@ -191,25 +189,6 @@ export async function updateProfile({
 
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/profile");
-
-      // Actualizar la cookie del usuario con los nuevos datos
-      const updatedUser = response.data;
-      if (userCookie) {
-        try {
-          const currentUser = JSON.parse(userCookie);
-          const newUserData = { ...currentUser, ...updatedUser };
-
-          cookieStore.set("user", JSON.stringify(newUserData), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 60 * 60 * 24 * 7, // 7 días
-          });
-        } catch (cookieError) {
-          console.error("Error updating user cookie:", cookieError);
-          // No fallar la operación si no se puede actualizar la cookie
-        }
-      }
 
       return {
         data: response.data,

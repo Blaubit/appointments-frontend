@@ -55,6 +55,7 @@ export function Header({
 
   // Usar el hook para obtener el usuario
   const { user, loading, error } = useUser();
+  
   // defatult company para usuario por defecto
   const defaultCompany: Company = {
     id: "default",
@@ -83,11 +84,10 @@ export function Header({
     avatar: "/Professional1.png",
     bio: "Usuario invitado sin acceso completo",
     createdAt: "2023-01-01T00:00:00Z",
-    companyId: "",
+    company: defaultCompany,
   };
 
   const currentUser = user || defaultUser;
-
   return (
     <header
       className={`bg-white dark:bg-gray-800 shadow-sm border-b ${className}`}
@@ -216,14 +216,16 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild onClick={logout}>
-                  <Link
-                    href="/login"
-                    className="flex items-center text-red-600 hover:text-red-700"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Cerrar Sesión
-                  </Link>
+                <DropdownMenuItem asChild >
+                  <form action={logout} className="w-full">
+                    <button
+                      type="submit"
+                      className="flex items-center text-red-600 hover:text-red-700 w-full bg-transparent border-none cursor-pointer"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Cerrar Sesión
+                    </button>
+                  </form>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

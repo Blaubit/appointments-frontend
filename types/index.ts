@@ -12,6 +12,7 @@ export * from "./security";
 export * from "./appearence";
 export * from "./support";
 export * from "./saas";
+export * from "./user";
 // Re-export commonly used types for convenience
 export type { Notification, Pagination } from "./common";
 export type { Appointment, AppointmentStats } from "./appointments";

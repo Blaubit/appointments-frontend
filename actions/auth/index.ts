@@ -1,3 +1,3 @@
 import getSession from "./getSession";
-
-export { getSession };
+import { getUser } from "./getUser";
+export { getSession,  getUser };

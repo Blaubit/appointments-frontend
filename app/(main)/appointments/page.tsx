@@ -23,7 +23,9 @@ export default async function Page({ searchParams }: Props) {
   const response = await findAll({ searchParams: params });
   const professionalsResponse = await findAllProfessionals();
   const user = await getUser();
-
+  if (!user) {
+    throw new Error("User not found");
+  }
   if (response.status !== 200 || !("data" in response)) {
     throw new Error("Failed to fetch appointments data");
   }

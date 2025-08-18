@@ -6,6 +6,7 @@ import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { User } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
 type Props = {
   searchParams?: URLSearchParams;
@@ -17,11 +18,12 @@ type Props = {
 export async function findAll(
   props: Props = {},
 ): Promise<SuccessReponse<User[]> | ErrorResponse | any> {
-  const cookieStore = await cookies();
+  const session = await getSession();
+  const User = await getUser();
   try {
    
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
+    
+    const companyId = User?.company.id;
 
     // Combinar parámetros de searchParams y props directos
     const parsedParams = parsePaginationParams(props.searchParams);
@@ -41,7 +43,7 @@ export async function findAll(
 
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${cookieStore.get("session")?.value || ""}`,
+        Authorization: `Bearer ${session}`,
       },
       params: finalParams,
     });

@@ -13,7 +13,7 @@ import {
 
 import { Separator } from "@/components/ui/separator";
 import { LogoutWarningDialog } from "@/components/settings/logout-warning-dialog";
-import { logout } from "@/actions/auth/logout";
+//import { logout } from "@/actions/auth/logout";
 import edit from "@/actions/companies/edit";
 import { Edit, X, Save } from "lucide-react";
 import type { Company } from "@/types";
@@ -152,7 +152,7 @@ export function BusinessInfoForm({
         );
 
         // Cerrar sesión por seguridad
-        await logout();
+        //await logout();
       } else {
         // Error en la actualización
         console.error("Error updating company:", result.message);
