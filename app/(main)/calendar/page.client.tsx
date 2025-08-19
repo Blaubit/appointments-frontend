@@ -8,6 +8,7 @@ import { WeekViewCalendar } from "@/components/calendar/weekViewCalendar";
 import { DayViewCalendar } from "@/components/calendar/dayViewCalendar";
 import { ScheduleResponse, OccupiedSlot, Service } from "@/types";
 import { findPeriod } from "@/actions/calendar/findPeriod";
+import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 
 interface CalendarPageClientProps {
   userId: string;
@@ -34,14 +35,13 @@ export default function CalendarPageClient({
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | undefined>(undefined);
   // Fetch schedule cada vez que cambian fecha/mode/userId
   useEffect(() => {
     const fetchSchedule = async () => {
       setLoading(true);
       const dateStr = formatDateForPeriod(currentDate, viewMode);
       const result = await findPeriod(userId, dateStr, viewMode);
-      console.log(`result:${dateStr}`, result.data);
       setSchedule(result?.data || null);
       setLoading(false);
     };
@@ -182,14 +182,14 @@ export default function CalendarPageClient({
                   schedule={schedule}
                   currentDate={currentDate}
                   onDayClick={handleDayClick}
-                  onSlotClick={handleSlotClick}
+                  onSlotClick={(slot) => setSelectedAppointmentId(slot.appointmentId)}
                 />
               )}
               {viewMode === "week" && (
                 <WeekViewCalendar
                   schedule={schedule}
                   weekDate={currentDate}
-                  onSlotClick={handleSlotClick}
+                  onSlotClick={(slot) => setSelectedAppointmentId(slot.appointmentId)}
                   onDayColumnClick={handleHourClickWeek}
                 />
               )}
@@ -198,7 +198,7 @@ export default function CalendarPageClient({
                   schedule={schedule}
                   date={currentDate}
                   onHourClick={handleHourClickDay}
-                  onSlotClick={handleSlotClick}
+                  onSlotClick={(slot) => setSelectedAppointmentId(slot.appointmentId)}
                 />
               )}
             </>
@@ -207,6 +207,18 @@ export default function CalendarPageClient({
           )}
         </CardContent>
       </Card>
+     {/* Este es el dialog, debe ir aquí, fuera del Card, para que sea global y flotante */}
+      <AppointmentDetailsDialog
+        appointmentId={selectedAppointmentId}
+        isOpen={!!selectedAppointmentId}
+        onClose={() => setSelectedAppointmentId(undefined)}
+        onEdit={() => {}}     // Puedes implementar la lógica aquí
+        onConfirm={() => {}}
+        onCancel={() => {}}
+        onDelete={() => {}}
+        onCall={() => {}}
+        onEmail={() => {}}
+      />
     </div>
   );
 }

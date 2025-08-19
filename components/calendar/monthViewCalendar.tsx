@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ScheduleResponse, OccupiedSlot } from "@/types";
 
 type SlotWithDate = OccupiedSlot & { date: string };
@@ -38,7 +38,7 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
   const firstDay = new Date(year, month, 1);
   const startDate = new Date(firstDay);
   startDate.setDate(startDate.getDate() - firstDay.getDay());
-
+  
   const days: Date[] = [];
   const currentDateObj = new Date(startDate);
   for (let i = 0; i < 42; i++) {

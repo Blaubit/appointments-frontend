@@ -618,7 +618,7 @@ export default function DashboardClient({
 
       {/* Dialog de detalles de la cita */}
       <AppointmentDetailsDialog
-        appointment={selectedAppointment}
+        appointmentId={selectedAppointment?.id}
         isOpen={selectedAppointment !== null}
         onClose={handleCloseDialog}
         onEdit={handleEditAppointment}
