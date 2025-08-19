@@ -14,16 +14,19 @@ type User = {
   company: Company;
   role: Role;
 };
-export type MeUser = {
-  id: string;
-  fullName: string;
-  email: string;
-  avatar: string;
-  bio: string;
-  companyId: string;
-  roleId: string;
-  role: Role;
-};
+export type FormDataType = {
+  professionalId: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  service: string;
+  date: string;
+  time: string;
+  duration: string;
+  price: string;
+  notes: string;
+  status: string;
+}
 // Roles predefinidos del sistema
 export const DEFAULT_ROLES: Role[] = [
   {

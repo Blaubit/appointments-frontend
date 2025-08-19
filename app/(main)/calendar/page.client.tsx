@@ -9,6 +9,7 @@ import { DayViewCalendar } from "@/components/calendar/dayViewCalendar";
 import { ScheduleResponse, OccupiedSlot, Service } from "@/types";
 import { findPeriod } from "@/actions/calendar/findPeriod";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+import { redirect } from "next/navigation";
 
 interface CalendarPageClientProps {
   userId: string;
@@ -84,7 +85,8 @@ export default function CalendarPageClient({
     setViewMode("day");
   };
   const handleHourClickDay = (time: string) => {
-    console.log("Clicked hour:", time, "on", currentDate);
+    console.log();
+    redirect(`appointments/new?fechaHora=${currentDate.toISOString().split("T")[0]}T${time}`)
   };
   const handleSlotClick = (slot: OccupiedSlot & { date: string }) => {
     console.log("Clicked slot:", slot);

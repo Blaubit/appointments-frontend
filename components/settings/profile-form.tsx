@@ -54,7 +54,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     bio: "",
     avatar: "",
     createdAt: "",
-    company:,
+    company:undefined,
     role: {
       id: "",
       name: "",
