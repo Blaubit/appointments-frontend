@@ -25,9 +25,9 @@ export interface AppointmentStats {
   cancelledCount: number;
 }
 
-export interface CompanyTypes{
-  value:string;
-  label:string;
+export interface CompanyTypes {
+  value: string;
+  label: string;
 }
 export interface Pagination {
   page: number;

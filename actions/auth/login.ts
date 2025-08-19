@@ -26,7 +26,7 @@ export async function Login({
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      path: "/"
+      path: "/",
       // No maxAge ni expires para que se borre al cerrar el navegador
     });
 

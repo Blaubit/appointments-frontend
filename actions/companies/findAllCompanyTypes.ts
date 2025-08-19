@@ -14,15 +14,15 @@ export async function findAllCompanyTypes(
   props: Props = {},
 ): Promise<SuccessReponse<CompanyTypes[]> | ErrorResponse | any> {
   const session = await getSession();
-  
+
   try {
-    const url = `${parsedEnv.API_URL}/company-types`
+    const url = `${parsedEnv.API_URL}/company-types`;
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
-    
+
     return {
       data: response.data,
       status: 200,

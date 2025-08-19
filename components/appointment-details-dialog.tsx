@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,9 +38,10 @@ import {
 } from "@/utils/functions/appointmentStatus";
 import WhatsappIcon from "./icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
+import findOne from "@/actions/appointments/findOne"; // Ajusta la ruta según tu estructura
 
 interface AppointmentDetailsDialogProps {
-  appointment: Appointment | null;
+  appointmentId: string | undefined;
   isOpen: boolean;
   onClose: () => void;
   onEdit: (appointment: Appointment) => void;
@@ -51,7 +53,7 @@ interface AppointmentDetailsDialogProps {
 }
 
 export function AppointmentDetailsDialog({
-  appointment,
+  appointmentId,
   isOpen,
   onClose,
   onEdit,
@@ -61,9 +63,62 @@ export function AppointmentDetailsDialog({
   onCall,
   onEmail,
 }: AppointmentDetailsDialogProps) {
+  console.log("appointmentId:", appointmentId);
   const router = useRouter();
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!appointment) return null;
+  useEffect(() => {
+    async function fetchAppointment() {
+      if (!appointmentId) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await findOne(appointmentId);
+        if ("data" in result) {
+          setAppointment(result.data);
+        } else {
+          setError(result.message || "No se pudo cargar la cita.");
+        }
+      } catch (err) {
+        setError("Error inesperado al cargar la cita.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAppointment();
+  }, [appointmentId]);
+
+  if (!appointmentId || !isOpen) return null;
+
+  if (loading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cargando detalles...</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center text-gray-500">Cargando...</div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (error || !appointment) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center text-red-500">
+            {error || "No se pudo encontrar la cita."}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const getInitials = (name: string) => {
     if (!name) return "";
@@ -133,7 +188,6 @@ export function AppointmentDetailsDialog({
     );
   };
 
-  // Nuevas funciones para manejar las acciones
   const handleCancelAppointment = () => {
     onCancel(appointment);
   };

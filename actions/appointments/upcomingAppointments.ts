@@ -20,7 +20,6 @@ type UpcomingAppointmentsResponse = SuccessReponse<Appointment[]> & {
 export async function upcomingAppointments(
   props: Props = {},
 ): Promise<UpcomingAppointmentsResponse | ErrorResponse> {
-
   const User = await getUser();
   const session = await getSession();
   try {

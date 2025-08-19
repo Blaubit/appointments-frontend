@@ -16,11 +16,10 @@ type Props = {
 export default async function findStatusStats(
   props: Props = {},
 ): Promise<SuccessReponse<statusStats[]> | ErrorResponse | any> {
-   const User = await getUser();
-   const session = await getSession();
+  const User = await getUser();
+  const session = await getSession();
   try {
-    
-        const companyId = User?.company.id;
+    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/count-by-status`;
     const parsedParams = parsePaginationParams(props.searchParams);
     //console.log("url", url);

@@ -17,7 +17,6 @@ export async function create({
   const User = await getUser();
   const session = await getSession();
   try {
-    
     const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {

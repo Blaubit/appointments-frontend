@@ -883,7 +883,7 @@ export default function PageClient({
 
       {/* Appointment Details Dialog */}
       <AppointmentDetailsDialog
-        appointment={selectedAppointment}
+        appointmentId={selectedAppointment?.id}
         isOpen={selectedAppointment !== null}
         onClose={handleCloseDialog}
         onEdit={handleEditAppointment}

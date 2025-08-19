@@ -263,7 +263,6 @@ export function UserManagementForm({
   };
 
   const handlePageChange = (page: number) => {
-    
     if (onPageChange) {
       onPageChange(page);
     }

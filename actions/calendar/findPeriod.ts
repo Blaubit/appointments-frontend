@@ -1,38 +1,36 @@
 "use server";
 
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import parsePaginationParams from "@/utils/functions/parsePaginationParams";
-import { Appointment } from "@/types";
+import { Client, ScheduleDay, ScheduleResponse } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 
-export async function findHistory(
-  id: string,
-): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
+export async function findPeriod(
+  userId: string,
+  date: string,
+  periodtype: "day" | "week" | "month" = "month",
+): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse | any> {
   const User = await getUser();
   const session = await getSession();
+  if (!User) {
+    return {
+      message: "User not found",
+      status: 404,
+    };
+  }
   try {
-    const companyId = User?.company.id;
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
-
+    const url = `${parsedEnv.API_URL}/availabilities/professional/${userId}/schedule/${periodtype}/${date}`;
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
+
     return {
-      data: response.data.data,
+      data: response.data,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.meta,
-      stats: {
-        total: response.data.meta.totalItems,
-        confirmed: 10,
-        pending: 5,
-        cancelled: 2,
-      },
     };
   } catch (error) {
     console.log(error);

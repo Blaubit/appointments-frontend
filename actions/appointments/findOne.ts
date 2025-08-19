@@ -8,15 +8,14 @@ import { Appointment } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 
 export default async function findOne(
-  id: number,
+  id: string,
 ): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const User = await getUser();
   const session = await getSession();
   try {
-    
     const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${id}`;
-
+    console.log(`findOne: ${url}`);
     const response = await axios.get<Appointment>(url, {
       headers: {
         Authorization: `Bearer ${session}`,

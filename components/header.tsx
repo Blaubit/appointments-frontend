@@ -55,7 +55,7 @@ export function Header({
 
   // Usar el hook para obtener el usuario
   const { user, loading, error } = useUser();
-  
+
   // defatult company para usuario por defecto
   const defaultCompany: Company = {
     id: "default",
@@ -216,7 +216,7 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild >
+                <DropdownMenuItem asChild>
                   <form action={logout} className="w-full">
                     <button
                       type="submit"

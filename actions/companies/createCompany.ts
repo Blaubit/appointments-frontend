@@ -30,12 +30,12 @@ export default async function createCompany({
 }: CreateCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
   try {
     const url = `${parsedEnv.API_URL}/companies`;
-    
+
     console.log("Creating company with URL:", url);
 
     // Para crear una empresa nueva, NO necesitamos session ni companyId
     // Esto debería ser un endpoint público para registro
-    
+
     const body = {
       name: name.trim(),
       companyType: companyType,
@@ -59,7 +59,7 @@ export default async function createCompany({
 
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/dashboard");
-      
+
       return {
         data: response.data,
         status: response.status,
@@ -77,7 +77,7 @@ export default async function createCompany({
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;
       const errorStatus = error.response?.status;
-      
+
       // Manejar errores específicos
       if (errorStatus === 409) {
         return {
@@ -85,7 +85,7 @@ export default async function createCompany({
           status: errorStatus,
         };
       }
-      
+
       if (errorStatus === 400) {
         return {
           message: errorMessage || "Datos de empresa inválidos",

@@ -18,7 +18,6 @@ export async function findAllProfessionals(
   const session = await getSession();
   const User = await getUser();
   try {
-   
     const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users`;
     const parsedParams = parsePaginationParams(props.searchParams);

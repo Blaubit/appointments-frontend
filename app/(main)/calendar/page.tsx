@@ -1,34 +1,33 @@
 import { Suspense } from "react";
 import CalendarPageClient from "./page.client";
 import { Header } from "@/components/header";
-import findAll from "@/actions/appointments/findAll";
 import { findAll as findAllServices } from "@/actions/services/findAll";
+import { getUser } from "@/actions/auth";
 
 // Forzar renderizado dinámico
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   // Obtener datos del servidor
-  const [appointmentsResult, servicesResult] = await Promise.all([
-    findAll(),
+  const [servicesResult, user] = await Promise.all([
     findAllServices(),
+    getUser(),
   ]);
 
-  // Manejar casos donde no hay datos o hay errores
-  const appointments = appointmentsResult?.data || [];
   const services = servicesResult?.data || [];
+  if (!user) {
+    // Manejar caso donde no hay usuario
+    return <div>No tienes permisos para ver este calendario</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header del servidor */}
       <Header
         title="Calendario"
         showBackButton={true}
         backButtonText="Dashboard"
         backButtonHref="/dashboard"
       />
-
-      {/* Componente cliente con datos del servidor */}
       <Suspense
         fallback={
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -39,8 +38,9 @@ export default async function CalendarPage() {
           </div>
         }
       >
+        {/* Solo pasas userId al cliente */}
         <CalendarPageClient
-          initialAppointments={appointments}
+          userId={"23708ceb-4c17-4771-b59f-4958179bc7c5"}
           services={services}
         />
       </Suspense>

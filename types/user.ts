@@ -41,20 +41,19 @@ export const DEFAULT_ROLES: Role[] = [
     name: "Secretaria",
     description: "Asistente administrativa para gestión de citas",
   },
-]
+];
 
 export interface RegistrationData {
   // Datos de la empresa
-  company: Company ,
+  company: Company;
   // Datos del usuario administrador
   user: {
-    email: string
-    fullName: string
-    password: string
-    confirmPassword: string
-    bio?: string
-  }
+    email: string;
+    fullName: string;
+    password: string;
+    confirmPassword: string;
+    bio?: string;
+  };
 }
-
 
 export type { User, Role };
