@@ -19,7 +19,6 @@ export async function getUser(): Promise<User | null> {
   }
 
   try {
-  
     const res = await findMe();
     if ("data" in res && res.status === 200 && res.data) {
       return res.data;

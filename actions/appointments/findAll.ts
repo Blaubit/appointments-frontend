@@ -18,7 +18,6 @@ export default async function findAll(
   const User = await getUser();
   const session = await getSession();
   try {
-    
     const companyId = User?.company.id;
     //const UserId = User ? JSON.parse(User).companyId : null;
     //const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${User}`;

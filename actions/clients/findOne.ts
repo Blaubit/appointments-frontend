@@ -13,10 +13,8 @@ export async function findOne(
   const User = await getUser();
   const session = await getSession();
   try {
-    
     const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/${id}`;
-    
 
     const response = await axios.get(url, {
       headers: {

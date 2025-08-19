@@ -13,7 +13,7 @@ export async function findPeriod(
 ): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse | any> {
   const User = await getUser();
   const session = await getSession();
-  if (!User){
+  if (!User) {
     return {
       message: "User not found",
       status: 404,
@@ -26,7 +26,6 @@ export async function findPeriod(
         Authorization: `Bearer ${session}`,
       },
     });
-    
 
     return {
       data: response.data,

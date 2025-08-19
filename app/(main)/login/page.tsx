@@ -103,7 +103,7 @@ async function handleServerLogin(formData: FormData) {
 // Verifica si ya hay token, y si lo hay redirige al dashboard
 async function checkAuth() {
   const session = await getSession();
-  
+
   if (session) {
     redirect("/dashboard");
   }

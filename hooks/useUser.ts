@@ -19,7 +19,8 @@ export function useUser() {
         if (isMounted) setUser(u);
       })
       .catch((err) => {
-        if (isMounted) setError(err instanceof Error ? err : new Error("Unknown error"));
+        if (isMounted)
+          setError(err instanceof Error ? err : new Error("Unknown error"));
       })
       .finally(() => {
         if (isMounted) setLoading(false);

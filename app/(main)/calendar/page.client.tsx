@@ -35,7 +35,9 @@ export default function CalendarPageClient({
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | undefined>(undefined);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | undefined
+  >(undefined);
   // Fetch schedule cada vez que cambian fecha/mode/userId
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -90,12 +92,27 @@ export default function CalendarPageClient({
 
   // UI strings
   const monthNames = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
   ];
   const dayNamesLong = [
-    "Domingo", "Lunes", "Martes", "Miércoles",
-    "Jueves", "Viernes", "Sábado"
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
   ];
 
   return (
@@ -174,7 +191,9 @@ export default function CalendarPageClient({
       <Card>
         <CardContent className="p-6">
           {loading ? (
-            <div className="text-center py-12 text-gray-500">Cargando calendario...</div>
+            <div className="text-center py-12 text-gray-500">
+              Cargando calendario...
+            </div>
           ) : schedule ? (
             <>
               {viewMode === "month" && (
@@ -182,14 +201,18 @@ export default function CalendarPageClient({
                   schedule={schedule}
                   currentDate={currentDate}
                   onDayClick={handleDayClick}
-                  onSlotClick={(slot) => setSelectedAppointmentId(slot.appointmentId)}
+                  onSlotClick={(slot) =>
+                    setSelectedAppointmentId(slot.appointmentId)
+                  }
                 />
               )}
               {viewMode === "week" && (
                 <WeekViewCalendar
                   schedule={schedule}
                   weekDate={currentDate}
-                  onSlotClick={(slot) => setSelectedAppointmentId(slot.appointmentId)}
+                  onSlotClick={(slot) =>
+                    setSelectedAppointmentId(slot.appointmentId)
+                  }
                   onDayColumnClick={handleHourClickWeek}
                 />
               )}
@@ -198,21 +221,25 @@ export default function CalendarPageClient({
                   schedule={schedule}
                   date={currentDate}
                   onHourClick={handleHourClickDay}
-                  onSlotClick={(slot) => setSelectedAppointmentId(slot.appointmentId)}
+                  onSlotClick={(slot) =>
+                    setSelectedAppointmentId(slot.appointmentId)
+                  }
                 />
               )}
             </>
           ) : (
-            <div className="text-center py-12 text-gray-500">No hay datos de calendario</div>
+            <div className="text-center py-12 text-gray-500">
+              No hay datos de calendario
+            </div>
           )}
         </CardContent>
       </Card>
-     {/* Este es el dialog, debe ir aquí, fuera del Card, para que sea global y flotante */}
+      {/* Este es el dialog, debe ir aquí, fuera del Card, para que sea global y flotante */}
       <AppointmentDetailsDialog
         appointmentId={selectedAppointmentId}
         isOpen={!!selectedAppointmentId}
         onClose={() => setSelectedAppointmentId(undefined)}
-        onEdit={() => {}}     // Puedes implementar la lógica aquí
+        onEdit={() => {}} // Puedes implementar la lógica aquí
         onConfirm={() => {}}
         onCancel={() => {}}
         onDelete={() => {}}

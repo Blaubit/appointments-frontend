@@ -27,7 +27,9 @@ function generateHourLines(start = 8, end = 19, stepMinutes = 30) {
   const lines = [];
   for (let h = start; h < end; h++) {
     for (let m = 0; m < 60; m += stepMinutes) {
-      lines.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
+      lines.push(
+        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`,
+      );
     }
   }
   return lines;
@@ -42,20 +44,27 @@ function timeToPosition(time: string, startHour = 8, endHour = 19) {
 }
 
 function assignColumns(slots: SlotWithDate[]) {
-  type SlotWithTimes = SlotWithDate & { start: number, end: number };
+  type SlotWithTimes = SlotWithDate & { start: number; end: number };
   const sorted: SlotWithTimes[] = slots
-    .map(s => ({
+    .map((s) => ({
       ...s,
-      start: parseInt(s.startTime.split(":")[0]) * 60 + parseInt(s.startTime.split(":")[1]),
-      end: parseInt(s.endTime.split(":")[0]) * 60 + parseInt(s.endTime.split(":")[1])
+      start:
+        parseInt(s.startTime.split(":")[0]) * 60 +
+        parseInt(s.startTime.split(":")[1]),
+      end:
+        parseInt(s.endTime.split(":")[0]) * 60 +
+        parseInt(s.endTime.split(":")[1]),
     }))
     .sort((a, b) => a.start - b.start);
 
   let columns: SlotWithTimes[][] = [];
-  sorted.forEach(slot => {
+  sorted.forEach((slot) => {
     let placed = false;
     for (let col = 0; col < columns.length; col++) {
-      if (columns[col].length === 0 || columns[col][columns[col].length - 1].end <= slot.start) {
+      if (
+        columns[col].length === 0 ||
+        columns[col][columns[col].length - 1].end <= slot.start
+      ) {
         columns[col].push(slot);
         placed = true;
         break;
@@ -67,7 +76,7 @@ function assignColumns(slots: SlotWithDate[]) {
   });
   const slotColumns: { [id: string]: number } = {};
   columns.forEach((col, idx) => {
-    col.forEach(slot => {
+    col.forEach((slot) => {
       slotColumns[slot.appointmentId] = idx;
     });
   });
@@ -110,7 +119,9 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                   : "text-gray-700 dark:text-gray-200"
               }`}
             >
-              <div className="text-base font-semibold">{dayNames[date.getDay()]}</div>
+              <div className="text-base font-semibold">
+                {dayNames[date.getDay()]}
+              </div>
               <div className="text-xl">{date.getDate()}</div>
             </div>
           );
@@ -133,7 +144,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                 height: "40px",
                 left: 0,
                 display: "flex",
-                alignItems: "center"
+                alignItems: "center",
               }}
             >
               <span
@@ -161,16 +172,20 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                 key={dayIdx}
                 className="relative h-full border-l border-gray-200 dark:border-gray-700"
                 style={{ background: "transparent", cursor: "pointer" }}
-                onClick={e => {
+                onClick={(e) => {
                   if (onDayColumnClick) onDayColumnClick(date);
                 }}
               >
                 {slots.map((slot) => {
                   const top = timeToPosition(slot.startTime.slice(0, 5), 8, 19);
-                  const end = slot.endTime ? slot.endTime.slice(0, 5) : slot.startTime.slice(0, 5);
+                  const end = slot.endTime
+                    ? slot.endTime.slice(0, 5)
+                    : slot.startTime.slice(0, 5);
                   const durationMinutes =
-                    (parseInt(end.split(":")[0]) * 60 + parseInt(end.split(":")[1])) -
-                    (parseInt(slot.startTime.split(":")[0]) * 60 + parseInt(slot.startTime.split(":")[1]));
+                    parseInt(end.split(":")[0]) * 60 +
+                    parseInt(end.split(":")[1]) -
+                    (parseInt(slot.startTime.split(":")[0]) * 60 +
+                      parseInt(slot.startTime.split(":")[1]));
                   const slotHeight = Math.max((durationMinutes / 60) * 64, 40);
 
                   const colIdx = slotColumns[slot.appointmentId];
@@ -187,7 +202,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                         height: `${slotHeight}px`,
                         zIndex: 2,
                         overflow: "visible",
-                        fontSize: "1.1rem"
+                        fontSize: "1.1rem",
                       }}
                       className={`
                         shadow-lg
@@ -206,7 +221,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                       `}
                       onMouseEnter={() => setHoveredSlotId(slot.appointmentId)}
                       onMouseLeave={() => setHoveredSlotId(null)}
-                      onClick={e => {
+                      onClick={(e) => {
                         e.stopPropagation(); // Evita que el click en el slot cambie de vista
                         if (onSlotClick) onSlotClick(slot);
                       }}
@@ -225,9 +240,16 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                             animate-fadeIn
                           "
                         >
-                          <div className="mb-1"><b>Paciente:</b> {slot.clientName}</div>
-                          <div className="mb-1"><b>Servicio:</b> {slot.serviceName}</div>
-                          <div className="mb-1"><b>Horario:</b> {slot.startTime.slice(0,5)} - {slot.endTime.slice(0,5)}</div>
+                          <div className="mb-1">
+                            <b>Paciente:</b> {slot.clientName}
+                          </div>
+                          <div className="mb-1">
+                            <b>Servicio:</b> {slot.serviceName}
+                          </div>
+                          <div className="mb-1">
+                            <b>Horario:</b> {slot.startTime.slice(0, 5)} -{" "}
+                            {slot.endTime.slice(0, 5)}
+                          </div>
                         </div>
                       )}
                     </div>

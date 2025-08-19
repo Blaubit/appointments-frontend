@@ -9,8 +9,7 @@ import { getSession } from "@/actions/auth";
 export default async function findOne(
   id: number,
 ): Promise<SuccessReponse<User> | ErrorResponse> {
-   
-   const session = await getSession();
+  const session = await getSession();
   try {
     const url = `${parsedEnv.API_URL}/users/${id}`;
     const response = await axios.get<User>(url, {
@@ -19,7 +18,6 @@ export default async function findOne(
       },
     });
 
-   
     return {
       data: response.data,
       status: 200,

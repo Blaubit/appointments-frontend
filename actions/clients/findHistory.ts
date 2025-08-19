@@ -6,7 +6,7 @@ import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment } from "@/types";
-import { getUser,getSession } from "@/actions/auth";
+import { getUser, getSession } from "@/actions/auth";
 
 export async function findHistory(
   id: string,
@@ -14,10 +14,9 @@ export async function findHistory(
   const User = await getUser();
   const session = await getSession();
   try {
-    
     const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
-    
+
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,

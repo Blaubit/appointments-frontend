@@ -13,7 +13,6 @@ export default async function findOne(
   const User = await getUser();
   const session = await getSession();
   try {
-    
     const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${id}`;
     console.log(`findOne: ${url}`);

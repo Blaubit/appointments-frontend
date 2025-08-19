@@ -6,19 +6,18 @@ import { User } from "@/types";
 import { parsedEnv } from "@/app/env";
 import { getSession } from "@/actions/auth";
 
-export default async function findMe(
-): Promise<SuccessReponse<User> | ErrorResponse> {
-   
-   const session = await getSession();
+export default async function findMe(): Promise<
+  SuccessReponse<User> | ErrorResponse
+> {
+  const session = await getSession();
   try {
     const url = `${parsedEnv.API_URL}/auth/me`;
-     
+
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
-    }); 
-    
+    });
 
     return {
       data: response.data.data,

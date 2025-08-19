@@ -3,17 +3,17 @@ import type { NextRequest } from "next/server";
 
 // Rutas restringidas por rol
 const ROLE_RESTRICTIONS = {
-  secretaria: ['/bot', '/consultation', '/reports', '/services'],
-  profesional: ['/bot'],
-  admin_empresa: ['/bot'],
-  super_admin: []
+  secretaria: ["/bot", "/consultation", "/reports", "/services"],
+  profesional: ["/bot"],
+  admin_empresa: ["/bot"],
+  super_admin: [],
 };
 
 // Decodifica el payload del JWT
 function parseJwt(token: string): any {
   try {
-    const base64Payload = token.split('.')[1];
-    const payload = Buffer.from(base64Payload, 'base64').toString();
+    const base64Payload = token.split(".")[1];
+    const payload = Buffer.from(base64Payload, "base64").toString();
     return JSON.parse(payload);
   } catch (error) {
     return null;
@@ -45,10 +45,11 @@ export function middleware(request: NextRequest) {
   }
 
   // Verificar rutas restringidas
-  const restrictedRoutes = ROLE_RESTRICTIONS[userRole as keyof typeof ROLE_RESTRICTIONS];
+  const restrictedRoutes =
+    ROLE_RESTRICTIONS[userRole as keyof typeof ROLE_RESTRICTIONS];
   if (restrictedRoutes && restrictedRoutes.length > 0) {
-    const isRestricted = restrictedRoutes.some(restrictedRoute =>
-      pathname.startsWith(restrictedRoute)
+    const isRestricted = restrictedRoutes.some((restrictedRoute) =>
+      pathname.startsWith(restrictedRoute),
     );
     if (isRestricted) {
       console.log(`Acceso denegado: ${userRole} intentó acceder a ${pathname}`);
@@ -61,7 +62,5 @@ export function middleware(request: NextRequest) {
 
 // Proteger todas las rutas excepto `/` y `/login`
 export const config = {
-  matcher: [
-    "/((?!login|$|favicon.ico|_next).*)",
-  ],
+  matcher: ["/((?!login|$|favicon.ico|_next).*)"],
 };

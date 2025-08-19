@@ -21,8 +21,6 @@ export async function findAll(
   const session = await getSession();
   const User = await getUser();
   try {
-   
-    
     const companyId = User?.company.id;
 
     // Combinar parámetros de searchParams y props directos

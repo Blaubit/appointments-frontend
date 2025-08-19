@@ -19,7 +19,6 @@ export async function create({
   const User = await getUser();
   const session = await getSession();
   try {
-    
     const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
@@ -29,7 +28,7 @@ export async function create({
       };
     }
 
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/Users`
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/Users`;
 
     // Validar que tenemos session
     if (!session) {

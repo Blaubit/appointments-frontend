@@ -5,13 +5,13 @@ import { findAll as findAllServices } from "@/actions/services/findAll";
 import { getUser } from "@/actions/auth";
 
 // Forzar renderizado dinámico
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   // Obtener datos del servidor
   const [servicesResult, user] = await Promise.all([
     findAllServices(),
-    getUser()
+    getUser(),
   ]);
 
   const services = servicesResult?.data || [];

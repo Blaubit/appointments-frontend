@@ -1,16 +1,34 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Header } from "@/components/header"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState } from "react";
+import { Header } from "@/components/header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Building2,
   DollarSign,
@@ -21,8 +39,13 @@ import {
   CreditCard,
   Eye,
   Edit,
-} from "lucide-react"
-import type { Company, SaaSMetrics, CreatePaymentData, SubscriptionStatus } from "@/types/saas"
+} from "lucide-react";
+import type {
+  Company,
+  SaaSMetrics,
+  CreatePaymentData,
+  SubscriptionStatus,
+} from "@/types/saas";
 
 // Mock data para el SaaS
 const mockMetrics: SaaSMetrics = {
@@ -33,7 +56,7 @@ const mockMetrics: SaaSMetrics = {
   churnRate: 2.1,
   newSignups: 8,
   overduePayments: 3,
-}
+};
 
 const mockCompanies: Company[] = [
   {
@@ -195,16 +218,16 @@ const mockCompanies: Company[] = [
       },
     ],
   },
-]
+];
 
 export default function AdminPageClient() {
-  const [companies, setCompanies] = useState<Company[]>(mockCompanies)
-  const [metrics] = useState<SaaSMetrics>(mockMetrics)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [planFilter, setPlanFilter] = useState<string>("all")
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
+  const [companies, setCompanies] = useState<Company[]>(mockCompanies);
+  const [metrics] = useState<SaaSMetrics>(mockMetrics);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [planFilter, setPlanFilter] = useState<string>("all");
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [paymentData, setPaymentData] = useState<CreatePaymentData>({
     companyId: "",
     amount: 0,
@@ -212,86 +235,92 @@ export default function AdminPageClient() {
     paymentMethod: "credit_card",
     transactionId: "",
     notes: "",
-  })
+  });
 
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch =
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || company.subscription.status === statusFilter
-    const matchesPlan = planFilter === "all" || company.subscription.plan === planFilter
+      company.contactEmail.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || company.subscription.status === statusFilter;
+    const matchesPlan =
+      planFilter === "all" || company.subscription.plan === planFilter;
 
-    return matchesSearch && matchesStatus && matchesPlan
-  })
+    return matchesSearch && matchesStatus && matchesPlan;
+  });
 
   const getStatusColor = (status: SubscriptionStatus) => {
     switch (status) {
       case "active":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case "past_due":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       case "canceled":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
       case "unpaid":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
       case "trialing":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
-  }
+  };
 
   const getStatusLabel = (status: SubscriptionStatus) => {
     switch (status) {
       case "active":
-        return "Activo"
+        return "Activo";
       case "past_due":
-        return "Vencido"
+        return "Vencido";
       case "canceled":
-        return "Cancelado"
+        return "Cancelado";
       case "unpaid":
-        return "Sin Pagar"
+        return "Sin Pagar";
       case "trialing":
-        return "Prueba"
+        return "Prueba";
       default:
-        return status
+        return status;
     }
-  }
+  };
 
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case "basic":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
       case "professional":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
       case "enterprise":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
-  }
+  };
 
   const getPlanLabel = (plan: string) => {
     switch (plan) {
       case "basic":
-        return "Básico"
+        return "Básico";
       case "professional":
-        return "Profesional"
+        return "Profesional";
       case "enterprise":
-        return "Empresarial"
+        return "Empresarial";
       default:
-        return plan
+        return plan;
     }
-  }
+  };
 
   const handleMarkAsPaid = () => {
-    if (!selectedCompany) return
+    if (!selectedCompany) return;
 
     // Actualizar la suscripción
     const updatedCompanies = companies.map((company) => {
       if (company.id === selectedCompany.id) {
-        const currentDate = new Date()
-        const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate())
+        const currentDate = new Date();
+        const nextMonth = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          currentDate.getDate(),
+        );
 
         return {
           ...company,
@@ -304,14 +333,14 @@ export default function AdminPageClient() {
             nextBillingDate: nextMonth.toISOString().split("T")[0],
             updatedAt: new Date().toISOString(),
           },
-        }
+        };
       }
-      return company
-    })
+      return company;
+    });
 
-    setCompanies(updatedCompanies)
-    setIsPaymentModalOpen(false)
-    setSelectedCompany(null)
+    setCompanies(updatedCompanies);
+    setIsPaymentModalOpen(false);
+    setSelectedCompany(null);
     setPaymentData({
       companyId: "",
       amount: 0,
@@ -319,41 +348,41 @@ export default function AdminPageClient() {
       paymentMethod: "credit_card",
       transactionId: "",
       notes: "",
-    })
-  }
+    });
+  };
 
   const openPaymentModal = (company: Company) => {
-    setSelectedCompany(company)
+    setSelectedCompany(company);
     setPaymentData({
       ...paymentData,
       companyId: company.id,
       amount: company.subscription.amount,
-    })
-    setIsPaymentModalOpen(true)
-  }
+    });
+    setIsPaymentModalOpen(true);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-GT", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    })
-  }
+    });
+  };
 
   const getDaysUntilDue = (dueDate: string) => {
-    const today = new Date()
-    const due = new Date(dueDate)
-    const diffTime = due.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
-  }
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -378,29 +407,43 @@ export default function AdminPageClient() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Empresas</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Empresas
+                  </CardTitle>
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics.totalCompanies}</div>
-                  <p className="text-xs text-muted-foreground">{metrics.activeCompanies} activas</p>
+                  <div className="text-2xl font-bold">
+                    {metrics.totalCompanies}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {metrics.activeCompanies} activas
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Ingresos Mensuales
+                  </CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(metrics.monthlyRevenue)}</div>
-                  <p className="text-xs text-muted-foreground">Total: {formatCurrency(metrics.totalRevenue)}</p>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(metrics.monthlyRevenue)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Total: {formatCurrency(metrics.totalRevenue)}
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Nuevos Registros</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Nuevos Registros
+                  </CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -411,12 +454,18 @@ export default function AdminPageClient() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pagos Vencidos</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Pagos Vencidos
+                  </CardTitle>
                   <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{metrics.overduePayments}</div>
-                  <p className="text-xs text-muted-foreground">Requieren atención</p>
+                  <div className="text-2xl font-bold text-red-600">
+                    {metrics.overduePayments}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Requieren atención
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -443,9 +492,12 @@ export default function AdminPageClient() {
                             <Building2 className="h-5 w-5 text-red-600 dark:text-red-400" />
                           </div>
                           <div>
-                            <h3 className="font-medium text-foreground">{company.name}</h3>
+                            <h3 className="font-medium text-foreground">
+                              {company.name}
+                            </h3>
                             <p className="text-sm text-muted-foreground">
-                              Vencido desde: {formatDate(company.subscription.nextBillingDate)}
+                              Vencido desde:{" "}
+                              {formatDate(company.subscription.nextBillingDate)}
                             </p>
                           </div>
                         </div>
@@ -488,7 +540,10 @@ export default function AdminPageClient() {
                         className="pl-10 w-full sm:w-64"
                       />
                     </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={setStatusFilter}
+                    >
                       <SelectTrigger className="w-full sm:w-40">
                         <SelectValue placeholder="Estado" />
                       </SelectTrigger>
@@ -507,7 +562,9 @@ export default function AdminPageClient() {
                       <SelectContent>
                         <SelectItem value="all">Todos los planes</SelectItem>
                         <SelectItem value="basic">Básico</SelectItem>
-                        <SelectItem value="professional">Profesional</SelectItem>
+                        <SelectItem value="professional">
+                          Profesional
+                        </SelectItem>
                         <SelectItem value="enterprise">Empresarial</SelectItem>
                       </SelectContent>
                     </Select>
@@ -530,7 +587,9 @@ export default function AdminPageClient() {
                     </TableHeader>
                     <TableBody>
                       {filteredCompanies.map((company) => {
-                        const daysUntilDue = getDaysUntilDue(company.subscription.nextBillingDate)
+                        const daysUntilDue = getDaysUntilDue(
+                          company.subscription.nextBillingDate,
+                        );
                         return (
                           <TableRow key={company.id}>
                             <TableCell>
@@ -539,24 +598,40 @@ export default function AdminPageClient() {
                                   <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div>
-                                  <p className="font-medium text-foreground">{company.name}</p>
-                                  <p className="text-sm text-muted-foreground">{company.contactEmail}</p>
+                                  <p className="font-medium text-foreground">
+                                    {company.name}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {company.contactEmail}
+                                  </p>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={getPlanColor(company.subscription.plan)}>
+                              <Badge
+                                className={getPlanColor(
+                                  company.subscription.plan,
+                                )}
+                              >
                                 {getPlanLabel(company.subscription.plan)}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge className={getStatusColor(company.subscription.status)}>
+                              <Badge
+                                className={getStatusColor(
+                                  company.subscription.status,
+                                )}
+                              >
                                 {getStatusLabel(company.subscription.status)}
                               </Badge>
                             </TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                <p className="text-foreground">{formatDate(company.subscription.nextBillingDate)}</p>
+                                <p className="text-foreground">
+                                  {formatDate(
+                                    company.subscription.nextBillingDate,
+                                  )}
+                                </p>
                                 <p
                                   className={`text-xs ${daysUntilDue < 0 ? "text-red-600" : daysUntilDue <= 7 ? "text-yellow-600" : "text-muted-foreground"}`}
                                 >
@@ -575,9 +650,15 @@ export default function AdminPageClient() {
                             </TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                <p className="text-foreground">{company.users.length} usuarios</p>
+                                <p className="text-foreground">
+                                  {company.users.length} usuarios
+                                </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {company.users.filter((u:any) => u.isActive).length} activos
+                                  {
+                                    company.users.filter((u: any) => u.isActive)
+                                      .length
+                                  }{" "}
+                                  activos
                                 </p>
                               </div>
                             </TableCell>
@@ -601,7 +682,7 @@ export default function AdminPageClient() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        )
+                        );
                       })}
                     </TableBody>
                   </Table>
@@ -622,9 +703,12 @@ export default function AdminPageClient() {
               <CardContent>
                 <div className="text-center py-8">
                   <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">Historial de Pagos</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    Historial de Pagos
+                  </h3>
                   <p className="text-muted-foreground">
-                    Aquí aparecerá el historial completo de todos los pagos realizados por las empresas.
+                    Aquí aparecerá el historial completo de todos los pagos
+                    realizados por las empresas.
                   </p>
                 </div>
               </CardContent>
@@ -641,7 +725,9 @@ export default function AdminPageClient() {
             {selectedCompany && (
               <div className="space-y-6">
                 <div className="p-4 bg-muted rounded-lg">
-                  <h3 className="font-medium text-foreground">{selectedCompany.name}</h3>
+                  <h3 className="font-medium text-foreground">
+                    {selectedCompany.name}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Plan: {getPlanLabel(selectedCompany.subscription.plan)}
                   </p>
@@ -655,7 +741,12 @@ export default function AdminPageClient() {
                         id="amount"
                         type="number"
                         value={paymentData.amount}
-                        onChange={(e) => setPaymentData({ ...paymentData, amount: Number(e.target.value) })}
+                        onChange={(e) =>
+                          setPaymentData({
+                            ...paymentData,
+                            amount: Number(e.target.value),
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -664,7 +755,12 @@ export default function AdminPageClient() {
                         id="paymentDate"
                         type="date"
                         value={paymentData.paymentDate}
-                        onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
+                        onChange={(e) =>
+                          setPaymentData({
+                            ...paymentData,
+                            paymentDate: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -673,14 +769,20 @@ export default function AdminPageClient() {
                     <Label htmlFor="paymentMethod">Método de Pago</Label>
                     <Select
                       value={paymentData.paymentMethod}
-                      onValueChange={(value) => setPaymentData({ ...paymentData, paymentMethod: value })}
+                      onValueChange={(value) =>
+                        setPaymentData({ ...paymentData, paymentMethod: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="credit_card">Tarjeta de Crédito</SelectItem>
-                        <SelectItem value="bank_transfer">Transferencia Bancaria</SelectItem>
+                        <SelectItem value="credit_card">
+                          Tarjeta de Crédito
+                        </SelectItem>
+                        <SelectItem value="bank_transfer">
+                          Transferencia Bancaria
+                        </SelectItem>
                         <SelectItem value="cash">Efectivo</SelectItem>
                         <SelectItem value="check">Cheque</SelectItem>
                       </SelectContent>
@@ -688,12 +790,19 @@ export default function AdminPageClient() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="transactionId">ID de Transacción (Opcional)</Label>
+                    <Label htmlFor="transactionId">
+                      ID de Transacción (Opcional)
+                    </Label>
                     <Input
                       id="transactionId"
                       placeholder="TXN123456789"
                       value={paymentData.transactionId}
-                      onChange={(e) => setPaymentData({ ...paymentData, transactionId: e.target.value })}
+                      onChange={(e) =>
+                        setPaymentData({
+                          ...paymentData,
+                          transactionId: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -703,16 +812,27 @@ export default function AdminPageClient() {
                       id="notes"
                       placeholder="Notas adicionales..."
                       value={paymentData.notes}
-                      onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
+                      onChange={(e) =>
+                        setPaymentData({
+                          ...paymentData,
+                          notes: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsPaymentModalOpen(false)}
+                  >
                     Cancelar
                   </Button>
-                  <Button onClick={handleMarkAsPaid} className="bg-green-600 hover:bg-green-700 text-white">
+                  <Button
+                    onClick={handleMarkAsPaid}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Confirmar Pago
                   </Button>
@@ -723,5 +843,5 @@ export default function AdminPageClient() {
         </Dialog>
       </main>
     </div>
-  )
+  );
 }

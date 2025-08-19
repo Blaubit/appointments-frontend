@@ -18,7 +18,6 @@ export async function updateUser({
   const session = await getSession();
   const User = await getUser();
   try {
-    
     const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
