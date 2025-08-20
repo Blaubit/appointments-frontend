@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { CircleAlert } from "lucide-react";
 import { ScheduleResponse, OccupiedSlot } from "@/types";
 
 type SlotWithDate = OccupiedSlot & { date: string };
@@ -64,6 +65,18 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
     return day.occupiedSlots.map((slot) => ({ ...slot, date: day.date }));
   }
 
+  // Helper to check if a day has working hours configured
+  function isWorkingDay(date: Date): boolean {
+    const dateStr = dateToStr(date);
+    const day = schedule.schedule.find((d) => d.date === dateStr);
+    return !!(day?.workingHours?.start && day?.workingHours?.end);
+  }
+
+  // Helper to get day schedule
+  function getDaySchedule(date: Date) {
+    const dateStr = dateToStr(date);
+    return schedule.schedule.find((d) => d.date === dateStr);
+  }
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -86,37 +99,89 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
           const isCurrentMonth = date.getMonth() === currentDate.getMonth();
           const isToday = date.toDateString() === new Date().toDateString();
           const slots = getSlotsForDate(date);
+          const isWorking = isWorkingDay(date);
+          const daySchedule = getDaySchedule(date);
+
           return (
             <div
               key={index}
-              className={`min-h-[120px] p-2 border rounded-lg cursor-pointer transition-colors ${
+              className={`min-h-[120px] p-2 border rounded-lg transition-colors relative ${
                 isCurrentMonth
-                  ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  ? isWorking
+                    ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                    : "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50"
                   : "bg-gray-50 dark:bg-gray-900 text-gray-400"
               } ${isToday ? "ring-2 ring-blue-500" : ""}`}
-              onClick={() => onDayClick && onDayClick(date)}
+              onClick={() => {
+                if (isWorking && onDayClick) {
+                  onDayClick(date);
+                }
+              }}
+              style={{
+                cursor: isWorking && isCurrentMonth ? "pointer" : "default",
+              }}
             >
-              <div
-                className={`text-sm font-medium mb-2 ${isToday ? "text-blue-600" : ""}`}
-              >
-                {date.getDate()}
-              </div>
-              <div className="space-y-1">
-                {slots.slice(0, 3).map((slot) => (
-                  <div
-                    key={slot.appointmentId}
-                    className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 bg-blue-100 text-blue-800 border-l-2 border-blue-500"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSlotClick && onSlotClick(slot);
-                    }}
-                  >
-                    {formatTime(slot.startTime)} - {slot.clientName}
+              {/* Patrón de líneas diagonales para días no laborables */}
+              {isCurrentMonth && !isWorking && (
+                <div 
+                  className="absolute inset-0 rounded-lg pointer-events-none"
+                  style={{
+                    background: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(239, 68, 68, 0.1) 8px, rgba(239, 68, 68, 0.1) 16px)"
+                  }}
+                />
+              )}
+
+              <div className="relative z-10">
+                <div className={`text-sm font-medium mb-2 flex items-center justify-between ${
+                  isToday ? "text-blue-600" : 
+                  !isWorking && isCurrentMonth ? "text-red-600 dark:text-red-400" :
+                  ""
+                }`}>
+                  <span>{date.getDate()}</span>
+                  {isCurrentMonth && !isWorking && (
+                    <CircleAlert className="w-4 h-4 text-red-500 dark:text-red-400" />
+                  )}
+                </div>
+
+                {/* Mostrar contenido según el tipo de día */}
+                {isCurrentMonth && !isWorking ? (
+                  // Día no laboral
+                  <div className="space-y-1">
+                    <div className="text-xs text-red-600 dark:text-red-400 font-medium text-center">
+                      Cerrado
+                    </div>
+                    <div className="text-xs text-red-500 dark:text-red-400 text-center">
+                      Día no laboral
+                    </div>
                   </div>
-                ))}
-                {slots.length > 3 && (
-                  <div className="text-xs text-gray-500">
-                    +{slots.length - 3} más
+                ) : (
+                  // Día laboral o fuera del mes actual
+                  <div className="space-y-1">
+                    {/* Horarios de trabajo para días laborables del mes actual */}
+                    {isCurrentMonth && isWorking && daySchedule?.workingHours?.start && daySchedule?.workingHours?.end && (
+                      <div className="text-xs text-gray-600 dark:text-white font-medium mb-1">
+                        {formatTime(daySchedule.workingHours.start)} - {formatTime(daySchedule.workingHours.end)}
+                      </div>
+                    )}
+                    
+                    {/* Citas programadas */}
+                    {slots.slice(0, 3).map((slot) => (
+                      <div
+                        key={slot.appointmentId}
+                        className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 bg-blue-100 text-blue-800 border-l-2 border-blue-500 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-400"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSlotClick && onSlotClick(slot);
+                        }}
+                      >
+                        {formatTime(slot.startTime)} - {slot.clientName}
+                      </div>
+                    ))}
+                    {slots.length > 3 && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        +{slots.length - 3} más
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

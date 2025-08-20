@@ -11,57 +11,56 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Clock,
-  User as UserIcon,
   Save,
-  UserPlus,
-  Search,
   CheckCircle,
   DollarSign,
   AlertCircle,
-  Users,
-  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
-import type { Service, Client, User } from "@/types";
+import type { Service, Client, User, SercviceProfessional } from "@/types";
 import { CalendarCard } from "@/components/calendar-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import create from "@/actions/appointments/create";
 import { create as createClient } from "@/actions/clients/create";
 import { appointmentSchema } from "@/lib/validations/appointments";
-import { set, z } from "zod";
+import { findPeriod } from "@/actions/calendar/findPeriod";
+import { z } from "zod";
 import { useSearchParams } from "next/navigation";
+import ProfessionalSelectorCard from "@/components/professional-selector";
+import { ClientSelectorCard } from "@/components/appointments/new/ClientSelector";
+import { AppointmentSuccessDialog } from "@/components/appointments/new/appointmentSuccesDialog";
+import { findProfessionalServices } from "@/actions/services/findProfessionalServices";
+
 type Props = {
-  services: Service[];
   clients: Client[];
   professionals?: User[];
   userSession?: User;
 };
 
 export default function PageClient({
-  services,
   clients,
   professionals,
   userSession,
 }: Props) {
   const searchParams = useSearchParams();
   const clientIdFromUrl = searchParams.get("clientId") ?? "";
+  const professionalIdFromUrl = searchParams.get("professionalId") ?? "";
+  const fechaHoraFromUrl = searchParams.get("fechaHora"); // Ej: "2025-09-01T14:30"
   const router = useRouter();
+  
+  // Estados existentes
   const [selectedClient, setSelectedClient] = useState(() => {
     if (!clientIdFromUrl) return null;
     return clients.find((client) => client.id === clientIdFromUrl) || null;
   });
 
-  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
-    null,
-  );
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(null);
   const [selectedService, setSelectedService] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -72,17 +71,196 @@ export default function PageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
+  // Nuevos estados para servicios del profesional
+  const [professionalServices, setProfessionalServices] = useState<Service[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [servicesError, setServicesError] = useState<string | null>(null);
+
+  // Nuevos estados para horarios disponibles
+  const [availableHours, setAvailableHours] = useState<string[]>([]);
+  const [isLoadingHours, setIsLoadingHours] = useState(false);
+  const [hoursError, setHoursError] = useState<string | null>(null);
+
+  // Estado para controlar si ya se procesaron los parámetros de URL
+  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
+
+  const [formData, setFormData] = useState({
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    professionalId: professionalIdFromUrl || "",
+    service: "",
+    date: "",
+    time: "",
+    duration: "",
+    price: "",
+    notes: "",
+    status: "pending" as const,
+  });
+
+  // Función para obtener servicios del profesional
+  const fetchProfessionalServices = async (professionalId: string) => {
+    if (!professionalId) {
+      setProfessionalServices([]);
+      return;
+    }
+
+    setIsLoadingServices(true);
+    setServicesError(null);
+    
+    try {
+      const result = await findProfessionalServices(professionalId);
+      
+      if ("data" in result && result.data) {
+        // Extraer los servicios del array de SercviceProfessional
+        const services = result.data.map((item: SercviceProfessional) => item.service);
+        setProfessionalServices(services);
+      } else {
+        setProfessionalServices([]);
+        setServicesError("Error al cargar los servicios del profesional");
+      }
+    } catch (error) {
+      console.error("Error fetching professional services:", error);
+      setProfessionalServices([]);
+      setServicesError("Error al cargar los servicios del profesional");
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
+
+  // Efecto principal para procesar parámetros de URL
+  useEffect(() => {
+    if (!professionals || urlParamsProcessed) return;
+
+    // 1. Primero seleccionar profesional si viene en la URL
+    let professionalToSelect: User | null = null;
+
+    if (professionalIdFromUrl) {
+      professionalToSelect = professionals.find(
+        (p) => p.id === professionalIdFromUrl || p.id.toString() === professionalIdFromUrl
+      ) || null;
+    } else if (
+      userSession &&
+      userSession.role?.name === "profesional"
+    ) {
+      // Auto-seleccionar si es profesional logueado y no hay professionalId en URL
+      professionalToSelect = userSession;
+    }
+
+    if (professionalToSelect) {
+      setSelectedProfessional(professionalToSelect);
+      setFormData(prev => ({
+        ...prev,
+        professionalId: professionalToSelect!.id.toString(),
+      }));
+
+      // 2. Después de seleccionar el profesional, procesar fecha/hora si vienen en URL
+      if (fechaHoraFromUrl) {
+        const [fecha, hora] = fechaHoraFromUrl.split("T");
+        if (fecha) {
+          setSelectedDate(fecha);
+          setFormData(prev => ({ ...prev, date: fecha }));
+          
+          // Marcar que los parámetros han sido procesados
+          setUrlParamsProcessed(true);
+          
+          // Fetch available hours y luego seleccionar la hora
+          fetchAvailableHours(professionalToSelect.id.toString(), fecha).then(() => {
+            if (hora) {
+              // Usar setTimeout para asegurar que availableHours se haya actualizado
+              setTimeout(() => {
+                setSelectedTime(hora);
+                setFormData(prev => ({ ...prev, time: hora }));
+              }, 100);
+            }
+          });
+        }
+      } else {
+        setUrlParamsProcessed(true);
+      }
+    } else {
+      setUrlParamsProcessed(true);
+    }
+  }, [professionals, professionalIdFromUrl, fechaHoraFromUrl, userSession, urlParamsProcessed]);
+
+  // Efecto para cargar servicios cuando cambia el profesional
+  useEffect(() => {
+    if (selectedProfessional) {
+      fetchProfessionalServices(selectedProfessional.id.toString());
+      // Limpiar servicios seleccionados cuando cambia el profesional
+      setSelectedServices([]);
+    } else {
+      setProfessionalServices([]);
+      setSelectedServices([]);
+    }
+  }, [selectedProfessional]);
+
+  // Función para obtener horarios disponibles
+  const fetchAvailableHours = async (professionalId: string, date: string) => {
+    if (!professionalId || !date) {
+      setAvailableHours([]);
+      return;
+    }
+
+    setIsLoadingHours(true);
+    setHoursError(null);
+    
+    try {
+      const result = await findPeriod(professionalId, date, "day");
+      
+      if ("data" in result && result.data) {
+        // Buscar el día específico en el schedule
+        const daySchedule = result.data.schedule.find(
+          (day: any) => day.date === date
+        );
+        
+        if (daySchedule && daySchedule.availableHours) {
+          setAvailableHours(daySchedule.availableHours);
+        } else {
+          setAvailableHours([]);
+          setHoursError("No hay horarios disponibles para este día");
+        }
+      } else {
+        setAvailableHours([]);
+        setHoursError("Error al cargar los horarios disponibles");
+      }
+    } catch (error) {
+      console.error("Error fetching available hours:", error);
+      setAvailableHours([]);
+      setHoursError("Error al cargar los horarios disponibles");
+    } finally {
+      setIsLoadingHours(false);
+    }
+  };
+
+  // Efecto para cargar horarios cuando cambia la fecha o el profesional (solo después del procesamiento inicial)
+  useEffect(() => {
+    if (!urlParamsProcessed) return; // Esperar a que se procesen los parámetros de URL
+    
+    if (selectedProfessional && selectedDate) {
+      fetchAvailableHours(selectedProfessional.id.toString(), selectedDate);
+    } else {
+      setAvailableHours([]);
+      if (urlParamsProcessed) {
+        // Solo limpiar la hora si ya se procesaron los parámetros iniciales
+        setSelectedTime("");
+      }
+    }
+  }, [selectedProfessional, selectedDate, urlParamsProcessed]);
+
+  // Resto de los estados y funciones existentes...
   const totalPrice = selectedServices.reduce((sum, id) => {
-    const service = services.find((s) => s.id === id);
+    const service = professionalServices.find((s) => s.id === id);
     return sum + (service ? Number(service.price) : 0);
   }, 0);
+  
   const totalDuration = selectedServices.reduce((sum, id) => {
-    const service = services.find((s) => s.id === id);
+    const service = professionalServices.find((s) => s.id === id);
     return sum + (service ? Number(service.durationMinutes) : 0);
   }, 0);
 
-  // Function to format duration in hours and minutes
   const formatDuration = (totalMinutes: number) => {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
@@ -96,40 +274,6 @@ export default function PageClient({
     }
   };
 
-  // Form data
-  const [formData, setFormData] = useState({
-    clientName: "",
-    clientEmail: "",
-    clientPhone: "",
-    professionalId: "",
-    service: "",
-    date: "",
-    time: "",
-    duration: "",
-    price: "",
-    notes: "",
-    status: "pending" as const,
-  });
-
-  const availableTimes = [
-    "08:00",
-    "08:30",
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "14:00",
-    "14:30",
-    "15:00",
-    "15:30",
-    "16:00",
-    "16:30",
-    "17:00",
-    "17:30",
-  ];
-
   const filteredClients = clients.filter((client) =>
     client.fullName.toLowerCase().includes(clientSearch.toLowerCase()),
   );
@@ -141,34 +285,15 @@ export default function PageClient({
         .includes(professionalSearch.toLowerCase()),
     ) || [];
 
-  const [selectedServicesData, setSelectedServicesData] = useState<string[]>(
-    [],
-  );
+  const [selectedServicesData, setSelectedServicesData] = useState<string[]>([]);
 
   useEffect(() => {
     const names = selectedServices.map(
-      (id) => services.find((s) => s.id.toString() === id)?.name || "",
+      (id) => professionalServices.find((s) => s.id.toString() === id)?.name || "",
     );
     setSelectedServicesData(names);
-  }, [selectedServices, services]);
+  }, [selectedServices, professionalServices]);
 
-  // Auto-seleccionar profesional si el usuario logueado es profesional
-  useEffect(() => {
-    if (
-      userSession &&
-      userSession.role?.name === "profesional" &&
-      !selectedProfessional
-    ) {
-      // Si el usuario logueado es profesional, auto-seleccionarlo
-      setSelectedProfessional(userSession);
-      setFormData((prev) => ({
-        ...prev,
-        professionalId: userSession.id.toString(),
-      }));
-    }
-  }, [userSession, selectedProfessional]);
-
-  // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
@@ -193,18 +318,22 @@ export default function PageClient({
     setClientSearch("");
   };
 
-  const handleProfessionalSelect = (professional: User) => {
+  const handleProfessionalSelect = (professional: User | null) => {
     setSelectedProfessional(professional);
     setFormData({
       ...formData,
-      professionalId: professional.id.toString(),
+      professionalId: professional ? professional.id.toString() : "",
     });
     setProfessionalSearch("");
+    
+    // Limpiar hora seleccionada cuando cambia el profesional
+    setSelectedTime("");
+    setFormData(prev => ({ ...prev, time: "" }));
   };
 
   const handleServiceSelect = (serviceId: string) => {
     setSelectedService(serviceId);
-    const service = services.find((s) => s.id.toString() === serviceId);
+    const service = professionalServices.find((s) => s.id.toString() === serviceId);
     if (service) {
       setFormData({
         ...formData,
@@ -218,13 +347,23 @@ export default function PageClient({
   const handleDateChange = (fecha: string) => {
     setSelectedDate(fecha);
     setFormData({ ...formData, date: fecha });
-    console.log("Fecha elegida:", fecha);
+    
+    // Limpiar hora seleccionada cuando cambia la fecha
+    setSelectedTime("");
+    setFormData(prev => ({ ...prev, time: "" }));
   };
 
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    setFormData({ ...formData, time });
+  };
+
+  // Resto del código de submit y otras funciones permanece igual...
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    
     const dataToValidate = {
       clientName: formData.clientName,
       clientEmail: formData.clientEmail,
@@ -241,7 +380,6 @@ export default function PageClient({
       appointmentSchema.parse(dataToValidate);
       let clientId = selectedClient?.id;
 
-      // Si no hay cliente seleccionado, crear uno nuevo
       if (!clientId || clientId === "temp") {
         const newClientData = {
           fullName: formData.clientName,
@@ -258,7 +396,6 @@ export default function PageClient({
         }
       }
 
-      // Validaciones
       if (!clientId || clientId === "temp") {
         throw new Error("Debe seleccionar o crear un cliente");
       }
@@ -279,7 +416,6 @@ export default function PageClient({
         throw new Error("Debe seleccionar una hora");
       }
 
-      // Crear las citas (una por cada servicio seleccionado)
       const appointmentPromises = selectedServices.map(async (serviceId) => {
         const appointmentData = {
           clientId: clientId.toString(),
@@ -287,8 +423,8 @@ export default function PageClient({
           serviceId: serviceId,
           appointmentDate: selectedDate,
           startTime: selectedTime,
-          status: "pending",
-          notes: formData.notes || "",
+          status: "confirmed",
+          notes: formData.notes || " ",
         };
         console.log("Creating appointment with data:", appointmentData);
         return await create(appointmentData);
@@ -296,21 +432,19 @@ export default function PageClient({
 
       const results = await Promise.all(appointmentPromises);
 
-      // Verificar si alguna cita falló
       const failedAppointments = results.filter(
         (result) => "message" in result,
       );
-      console.log("Appointment creation results:", results);
+      
       if (failedAppointments.length > 0) {
         throw new Error("Error creating some appointments");
       }
 
       setSuccess(true);
-
-      // Redirect after success
+      setOpenDialog(true);
       setTimeout(() => {
         router.push("/appointments");
-      }, 1500);
+      }, 1000);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         setError(error.errors.map((err: any) => err.message).join(", "));
@@ -339,7 +473,6 @@ export default function PageClient({
 
   const calendarDays = generateCalendarDays();
 
-  // Validación del formulario
   const isFormValid = () => {
     const hasClient =
       selectedClient ||
@@ -357,7 +490,6 @@ export default function PageClient({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <Header
         title="Nueva Cita"
         showBackButton={true}
@@ -366,7 +498,6 @@ export default function PageClient({
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Alert */}
         {error && (
           <Alert className="mb-6" variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -374,7 +505,6 @@ export default function PageClient({
           </Alert>
         )}
 
-        {/* Success Alert */}
         {success && (
           <Alert className="mb-6" variant="default">
             <CheckCircle className="h-4 w-4" />
@@ -385,367 +515,33 @@ export default function PageClient({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Client Selection */}
-          {/* Client Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <UserIcon className="h-5 w-5" />
-                <span>Seleccionar Cliente</span>
-              </CardTitle>
-              <CardDescription>
-                Busca un cliente existente o crea uno nuevo
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!selectedClient && !showNewClientForm && (
-                <>
-                  <div className="flex space-x-2">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar cliente por nombre..."
-                        value={clientSearch}
-                        onChange={(e) => setClientSearch(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowNewClientForm(true)}
-                      className="whitespace-nowrap"
-                    >
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Nuevo Cliente
-                    </Button>
-                  </div>
+          <ClientSelectorCard
+            clients={clients}
+            selectedClient={selectedClient}
+            onSelect={(client) => {
+              setSelectedClient(client);
+              setShowNewClientForm(false);
+              setClientSearch("");
+              setFormData({
+                ...formData,
+                clientName: client?.fullName || "",
+                clientEmail: client?.email || "",
+                clientPhone: client?.phone || "",
+              });
+            }}
+            clientIdFromUrl={clientIdFromUrl}
+          />
 
-                  {clientSearch && (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {filteredClients.map((client) => (
-                        <div
-                          key={client.id}
-                          className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                          onClick={() => handleClientSelect(client)}
-                        >
-                          <Avatar>
-                            <AvatarImage
-                              src={client.avatar || "/placeholder.svg"}
-                            />
-                            <AvatarFallback>
-                              {client.fullName
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {client.fullName}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {client.email}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {client.totalAppointments} citas • Última visita:{" "}
-                              {client.createdAt}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {filteredClients.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">
-                          No se encontraron clientes
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
+          <ProfessionalSelectorCard
+            professionals={filteredProfessionals}
+            selectedProfessional={selectedProfessional}
+            onSelectionChange={handleProfessionalSelect}
+            title="Seleccionar Profesional"
+            description="Elige el profesional que atenderá la cita"
+            className="mb-6 sm:mb-8"
+          />
 
-              {selectedClient && (
-                <div className="flex items-start sm:items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <Avatar className="flex-shrink-0">
-                    <AvatarImage
-                      src={selectedClient.avatar || "/placeholder.svg"}
-                    />
-                    <AvatarFallback>
-                      {selectedClient.fullName
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {selectedClient.fullName}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {selectedClient.email}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {selectedClient.phone}
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedClient(null);
-                        setFormData({
-                          ...formData,
-                          clientName: "",
-                          clientEmail: "",
-                          clientPhone: "",
-                        });
-                      }}
-                      className="text-xs px-2 py-1 h-auto"
-                    >
-                      Cambiar
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {showNewClientForm && (
-                <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                  <h4 className="font-medium text-gray-900 dark:text-white">
-                    Nuevo Cliente
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="clientName">Nombre completo *</Label>
-                      <Input
-                        id="clientName"
-                        value={formData.clientName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            clientName: e.target.value,
-                          })
-                        }
-                        placeholder="Nombre del cliente"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="clientPhone">Teléfono *</Label>
-                      <Input
-                        id="clientPhone"
-                        value={formData.clientPhone}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            clientPhone: e.target.value,
-                          })
-                        }
-                        placeholder="+1 (555) 123-4567"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="clientEmail">Email</Label>
-                    <Input
-                      id="clientEmail"
-                      type="email"
-                      value={formData.clientEmail}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          clientEmail: e.target.value,
-                        })
-                      }
-                      placeholder="cliente@email.com"
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowNewClientForm(false);
-                        setFormData({
-                          ...formData,
-                          clientName: "",
-                          clientEmail: "",
-                          clientPhone: "",
-                        });
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (
-                          formData.clientName.trim() &&
-                          formData.clientPhone.trim()
-                        ) {
-                          setShowNewClientForm(false);
-                        }
-                      }}
-                      disabled={
-                        !formData.clientName.trim() ||
-                        !formData.clientPhone.trim()
-                      }
-                    >
-                      Seleccionar Cliente
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Professional Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="h-5 w-5" />
-                <span>Seleccionar Profesional</span>
-              </CardTitle>
-              <CardDescription>
-                Elige el profesional que atenderá la cita
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!selectedProfessional && (
-                <div className="relative professional-dropdown-container">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
-                    <Input
-                      placeholder="Buscar profesional por nombre..."
-                      value={professionalSearch}
-                      onChange={(e) => setProfessionalSearch(e.target.value)}
-                      onFocus={() =>
-                        setProfessionalSearch(professionalSearch || " ")
-                      } // Activa el dropdown al hacer focus
-                      className="pl-10"
-                    />
-                  </div>
-
-                  {/* Dropdown de profesionales */}
-                  {(professionalSearch || professionalSearch === " ") && (
-                    <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                      {filteredProfessionals.length > 0 ? (
-                        <div className="py-2">
-                          {filteredProfessionals.map((professional) => (
-                            <div
-                              key={professional.id}
-                              className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                              onClick={() =>
-                                handleProfessionalSelect(professional)
-                              }
-                            >
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage
-                                  src={
-                                    professional.avatar || "/placeholder.svg"
-                                  }
-                                />
-                                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
-                                  {professional.fullName
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <p className="font-medium text-gray-900 dark:text-white text-sm">
-                                  {professional.fullName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {professional.email}
-                                </p>
-                                <div className="flex items-center mt-1">
-                                  <Star className="h-3 w-3 text-yellow-400 mr-1" />
-                                  <span className="text-xs text-gray-400">
-                                    Especialista
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="py-8 text-center">
-                          {professionalSearch === " " ? (
-                            <>
-                              <Users className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                              <p className="text-sm text-gray-500">
-                                No hay profesionales disponibles
-                              </p>
-                            </>
-                          ) : (
-                            <p className="text-sm text-gray-500">
-                              No se encontraron profesionales con "
-                              {professionalSearch}"
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedProfessional && (
-                <div className="flex items-start sm:items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <Avatar className="h-12 w-12 flex-shrink-0">
-                    <AvatarImage
-                      src={selectedProfessional.avatar || "/placeholder.svg"}
-                    />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                      {selectedProfessional.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {selectedProfessional.fullName}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {selectedProfessional.email}
-                    </p>
-                    <div className="flex items-center mt-1">
-                      <Star className="h-3 w-3 text-yellow-400 mr-1 flex-shrink-0" />
-                      <span className="text-xs text-gray-500">
-                        Profesional seleccionado
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedProfessional(null);
-                        setFormData({
-                          ...formData,
-                          professionalId: "",
-                        });
-                        setProfessionalSearch("");
-                      }}
-                      className="text-xs px-2 py-1 h-auto"
-                    >
-                      Cambiar
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Service Selection */}
+          {/* Sección de servicios modificada */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -753,102 +549,157 @@ export default function PageClient({
                 <span>Servicios</span>
               </CardTitle>
               <CardDescription>
-                Selecciona uno o más servicios para la cita
+                {!selectedProfessional 
+                  ? "Primero selecciona un profesional para ver sus servicios disponibles"
+                  : "Selecciona uno o más servicios para la cita"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {services.map((service) => {
-                  const isSelected = selectedServices.includes(
-                    service.id.toString(),
-                  );
-                  return (
-                    <div
-                      key={service.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
-                      }`}
-                      onClick={() => {
-                        const id = service.id.toString();
-                        if (isSelected) {
-                          setSelectedServices((prev) =>
-                            prev.filter((s) => s !== id),
-                          );
-                        } else {
-                          setSelectedServices((prev) => [...prev, id]);
-                        }
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
-                          {service.name}
-                        </h4>
-                        {isSelected && (
-                          <CheckCircle className="h-5 w-5 text-blue-600" />
-                        )}
+              {!selectedProfessional ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Selecciona un profesional para ver los servicios disponibles</p>
+                </div>
+              ) : isLoadingServices ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                  <p className="text-gray-500">Cargando servicios...</p>
+                </div>
+              ) : servicesError ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-2 text-red-500 opacity-50" />
+                  <p className="text-red-500">{servicesError}</p>
+                </div>
+              ) : professionalServices.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400 opacity-50" />
+                  <p className="text-gray-500">Este profesional no tiene servicios configurados</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {professionalServices.map((service) => {
+                    const isSelected = selectedServices.includes(
+                      service.id.toString(),
+                    );
+                    return (
+                      <div
+                        key={service.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
+                        }`}
+                        onClick={() => {
+                          const id = service.id.toString();
+                          if (isSelected) {
+                            setSelectedServices((prev) =>
+                              prev.filter((s) => s !== id),
+                            );
+                          } else {
+                            setSelectedServices((prev) => [...prev, id]);
+                          }
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {service.name}
+                          </h4>
+                          {isSelected && (
+                            <CheckCircle className="h-5 w-5 text-blue-600" />
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                          <span className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {formatDuration(service.durationMinutes)}
+                          </span>
+                          <span className="flex items-center font-medium">
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            {service.price}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                        <span className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {formatDuration(service.durationMinutes)}
-                        </span>
-                        <span className="flex items-center font-medium">
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          {service.price}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Date and Time Selection */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Date Selection */}
             <Card>
-              <CalendarCard onDateSelect={handleDateChange} />
+              <CalendarCard 
+                initialDate={selectedDate ? new Date(selectedDate) : new Date()}
+                onDateSelect={handleDateChange} 
+              />
             </Card>
 
-            {/* Time Selection */}
+            {/* Time Selection - MODIFICADO */}
             <Card>
               <CardHeader>
                 <CardTitle>Horario</CardTitle>
                 <CardDescription>
-                  Selecciona la hora para la cita
+                  {!selectedProfessional 
+                    ? "Primero selecciona un profesional"
+                    : !selectedDate 
+                    ? "Selecciona una fecha para ver los horarios disponibles"
+                    : "Selecciona la hora para la cita"
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-2">
-                  {availableTimes.map((time) => {
-                    const isSelected = selectedTime === time;
-                    return (
-                      <button
-                        key={time}
-                        type="button"
-                        className={`p-3 text-sm rounded-lg border transition-colors ${
-                          isSelected
-                            ? "border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300"
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => {
-                          setSelectedTime(time);
-                          setFormData({ ...formData, time });
-                        }}
-                      >
-                        {time}
-                      </button>
-                    );
-                  })}
-                </div>
+                {!selectedProfessional || !selectedDate ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>
+                      {!selectedProfessional 
+                        ? "Selecciona un profesional para ver horarios disponibles"
+                        : "Selecciona una fecha para ver horarios disponibles"
+                      }
+                    </p>
+                  </div>
+                ) : isLoadingHours ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                    <p className="text-gray-500">Cargando horarios...</p>
+                  </div>
+                ) : hoursError ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 mx-auto mb-2 text-red-500 opacity-50" />
+                    <p className="text-red-500">{hoursError}</p>
+                  </div>
+                ) : availableHours.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400 opacity-50" />
+                    <p className="text-gray-500">No hay horarios disponibles para esta fecha</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableHours.map((time) => {
+                      const isSelected = selectedTime === time;
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          className={`p-3 text-sm rounded-lg border transition-colors ${
+                            isSelected
+                              ? "border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300"
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                          }`}
+                          onClick={() => handleTimeSelect(time)}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Additional Information */}
+          {/* Resto del formulario permanece igual... */}
           <Card>
             <CardHeader>
               <CardTitle>Información Adicional</CardTitle>
@@ -884,7 +735,7 @@ export default function PageClient({
                         <span>{service}</span>
                         <span className="text-sm text-gray-500">
                           $
-                          {services.find((s) => s.name === service)?.price ||
+                          {professionalServices.find((s) => s.name === service)?.price ||
                             "0"}
                         </span>
                       </li>
@@ -909,7 +760,6 @@ export default function PageClient({
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
           <div className="flex justify-end space-x-4">
             <Link href="/appointments">
               <Button type="button" variant="outline" disabled={isLoading}>
@@ -934,6 +784,12 @@ export default function PageClient({
               )}
             </Button>
           </div>
+          
+          <AppointmentSuccessDialog
+            isOpen={openDialog}
+            onClose={() => setOpenDialog(false)}
+            onGoToAppointments={() => router.push("/appointments")}
+          />
         </form>
       </div>
     </div>

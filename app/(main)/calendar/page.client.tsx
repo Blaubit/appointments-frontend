@@ -6,13 +6,16 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MonthViewCalendar } from "@/components/calendar/monthViewCalendar";
 import { WeekViewCalendar } from "@/components/calendar/weekViewCalendar";
 import { DayViewCalendar } from "@/components/calendar/dayViewCalendar";
-import { ScheduleResponse, OccupiedSlot, Service } from "@/types";
+import { ScheduleResponse, OccupiedSlot, Service, User } from "@/types";
 import { findPeriod } from "@/actions/calendar/findPeriod";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+import ProfessionalSelectorCard from "@/components/professional-selector";
+import { redirect } from "next/navigation";
 
 interface CalendarPageClientProps {
   userId: string;
   services: Service[];
+  professionals: User[]; // Nueva prop
 }
 
 type ViewMode = "month" | "week" | "day";
@@ -30,6 +33,7 @@ const formatDateForPeriod = (date: Date, mode: ViewMode): string => {
 export default function CalendarPageClient({
   userId,
   services = [],
+  professionals = [], // Nueva prop
 }: CalendarPageClientProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -38,19 +42,29 @@ export default function CalendarPageClient({
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | undefined
   >(undefined);
-  // Fetch schedule cada vez que cambian fecha/mode/userId
+  
+  // Estado para el profesional seleccionado
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
+    // Encontrar el profesional por defecto basado en userId
+    professionals.find(p => p.id === userId) || null
+  );
+
+  // ID del profesional actual para usar en las consultas
+  const currentProfessionalId = selectedProfessional?.id || userId;
+
+  // Fetch schedule cada vez que cambian fecha/mode/profesional
   useEffect(() => {
     const fetchSchedule = async () => {
       setLoading(true);
       const dateStr = formatDateForPeriod(currentDate, viewMode);
-      const result = await findPeriod(userId, dateStr, viewMode);
+      const result = await findPeriod(currentProfessionalId, dateStr, viewMode);
       setSchedule(result?.data || null);
       setLoading(false);
     };
     fetchSchedule();
-  }, [userId, currentDate, viewMode]);
+  }, [currentProfessionalId, currentDate, viewMode]);
 
-  // Navigation helpers igual que antes
+  // Navigation helpers
   const navigateMonth = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
     direction === "prev"
@@ -84,10 +98,10 @@ export default function CalendarPageClient({
     setViewMode("day");
   };
   const handleHourClickDay = (time: string) => {
-    console.log("Clicked hour:", time, "on", currentDate);
+    redirect(`appointments/new?fechaHora=${currentDate.toISOString().split("T")[0]}T${time}&professionalId=${currentProfessionalId}`)
   };
   const handleSlotClick = (slot: OccupiedSlot & { date: string }) => {
-    console.log("Clicked slot:", slot);
+    setSelectedAppointmentId(slot.appointmentId);
   };
 
   // UI strings
@@ -117,6 +131,18 @@ export default function CalendarPageClient({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Professional Selector */}
+      {professionals.length > 1 && (
+        <ProfessionalSelectorCard
+          professionals={professionals}
+          selectedProfessional={selectedProfessional}
+          onSelectionChange={setSelectedProfessional}
+          title="Filtrar por Profesional"
+          description="Selecciona el profesional para ver su calendario"
+          className="mb-6"
+        />
+      )}
+
       {/* Calendar Controls */}
       <Card className="mb-8">
         <CardHeader>
@@ -158,6 +184,12 @@ export default function CalendarPageClient({
                   {viewMode === "day" &&
                     `${dayNamesLong[currentDate.getDay()]}, ${currentDate.getDate()} de ${monthNames[currentDate.getMonth()]}`}
                 </h2>
+                {/* Mostrar nombre del profesional actual */}
+                {selectedProfessional && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Calendario de {selectedProfessional.fullName}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -187,7 +219,7 @@ export default function CalendarPageClient({
         </CardHeader>
       </Card>
 
-      {/* Calendar Views - uses your new components */}
+      {/* Calendar Views */}
       <Card>
         <CardContent className="p-6">
           {loading ? (
@@ -201,18 +233,14 @@ export default function CalendarPageClient({
                   schedule={schedule}
                   currentDate={currentDate}
                   onDayClick={handleDayClick}
-                  onSlotClick={(slot) =>
-                    setSelectedAppointmentId(slot.appointmentId)
-                  }
+                  onSlotClick={handleSlotClick}
                 />
               )}
               {viewMode === "week" && (
                 <WeekViewCalendar
                   schedule={schedule}
                   weekDate={currentDate}
-                  onSlotClick={(slot) =>
-                    setSelectedAppointmentId(slot.appointmentId)
-                  }
+                  onSlotClick={handleSlotClick}
                   onDayColumnClick={handleHourClickWeek}
                 />
               )}
@@ -221,25 +249,24 @@ export default function CalendarPageClient({
                   schedule={schedule}
                   date={currentDate}
                   onHourClick={handleHourClickDay}
-                  onSlotClick={(slot) =>
-                    setSelectedAppointmentId(slot.appointmentId)
-                  }
+                  onSlotClick={handleSlotClick}
                 />
               )}
             </>
           ) : (
             <div className="text-center py-12 text-gray-500">
-              No hay datos de calendario
+              No hay datos de calendario para este profesional
             </div>
           )}
         </CardContent>
       </Card>
-      {/* Este es el dialog, debe ir aquí, fuera del Card, para que sea global y flotante */}
+
+      {/* Appointment Details Dialog */}
       <AppointmentDetailsDialog
         appointmentId={selectedAppointmentId}
         isOpen={!!selectedAppointmentId}
         onClose={() => setSelectedAppointmentId(undefined)}
-        onEdit={() => {}} // Puedes implementar la lógica aquí
+        onEdit={() => {}}
         onConfirm={() => {}}
         onCancel={() => {}}
         onDelete={() => {}}

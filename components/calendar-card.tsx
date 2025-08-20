@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -17,22 +17,44 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
   onDateSelect,
   initialDate,
 }) => {
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  // Valida initialDate para evitar NaN/Invalid Date
+  const validInitialDate =
+    initialDate && !isNaN(initialDate.getTime()) ? initialDate : undefined;
+
+  // Estado para fecha seleccionada y mes actual
+  const [selectedDate, setSelectedDate] = useState<string>(
+    validInitialDate ? validInitialDate.toISOString().split("T")[0] : ""
+  );
   const [currentMonth, setCurrentMonth] = useState<Date>(
-    initialDate || new Date(),
+    validInitialDate
+      ? new Date(validInitialDate.getFullYear(), validInitialDate.getMonth(), 1)
+      : new Date()
   );
 
+  // Sincroniza selectedDate y currentMonth si initialDate cambia
+  useEffect(() => {
+    if (validInitialDate) {
+      const dateStr = validInitialDate.toISOString().split("T")[0];
+      setSelectedDate(dateStr);
+      setCurrentMonth(
+        new Date(validInitialDate.getFullYear(), validInitialDate.getMonth(), 1)
+      );
+    }
+  }, [validInitialDate]);
+
+  // Genera la grilla de días del calendario (lunes como primer día)
   const getCalendarDays = (date: Date): Date[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
 
-    const startDay = firstDayOfMonth.getDay();
+    // Lunes = 0
+    const startDay = (firstDayOfMonth.getDay() + 6) % 7;
     const totalDays = lastDayOfMonth.getDate();
     const days: Date[] = [];
 
-    // Días del mes anterior para rellenar
+    // Días del mes anterior para rellenar la primera semana
     for (let i = startDay - 1; i >= 0; i--) {
       days.push(new Date(year, month, -i));
     }
@@ -42,7 +64,7 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
       days.push(new Date(year, month, i));
     }
 
-    // Rellenar hasta completar la grilla (6 semanas)
+    // Rellenar hasta completar la grilla (6 semanas x 7 días = 42)
     while (days.length < 42) {
       const nextDate = new Date(
         year,
@@ -64,6 +86,7 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
   };
 
   const handleDateSelect = (date: Date) => {
+    if (isNaN(date.getTime())) return;
     const dateStr = date.toISOString().split("T")[0];
     setSelectedDate(dateStr);
     if (onDateSelect) onDateSelect(dateStr);
@@ -80,6 +103,7 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
           <button
             onClick={() => changeMonth(-1)}
             className="hover:text-blue-600"
+            type="button"
           >
             <ChevronLeft />
           </button>
@@ -92,6 +116,7 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
           <button
             onClick={() => changeMonth(1)}
             className="hover:text-blue-600"
+            type="button"
           >
             <ChevronRight />
           </button>
@@ -110,6 +135,9 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
 
         <div className="grid grid-cols-7 gap-2">
           {calendarDays.map((date, index) => {
+            // Evita fechas inválidas
+            if (isNaN(date.getTime())) return <div key={index}></div>;
+
             const dateStr = date.toISOString().split("T")[0];
             const isSelected = selectedDate === dateStr;
             const isToday = date.toDateString() === new Date().toDateString();
