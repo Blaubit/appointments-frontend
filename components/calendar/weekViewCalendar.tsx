@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ScheduleResponse, OccupiedSlot } from "@/types";
+import { CircleAlert } from "lucide-react";
 
 type SlotWithDate = OccupiedSlot & { date: string };
 
@@ -23,7 +24,13 @@ function getWeekDays(weekDate: Date) {
   });
 }
 
-function generateHourLines(start = 8, end = 19, stepMinutes = 30) {
+// Función para convertir tiempo string a minutos desde medianoche
+function timeStringToMinutes(timeString: string): number {
+  const [hours, minutes] = timeString.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function generateHourLines(start: number, end: number, stepMinutes = 30) {
   const lines = [];
   for (let h = start; h < end; h++) {
     for (let m = 0; m < 60; m += stepMinutes) {
@@ -32,10 +39,12 @@ function generateHourLines(start = 8, end = 19, stepMinutes = 30) {
       );
     }
   }
+  // Agregar la hora final
+  lines.push(`${end.toString().padStart(2, "0")}:00`);
   return lines;
 }
 
-function timeToPosition(time: string, startHour = 8, endHour = 19) {
+function timeToPosition(time: string, startHour: number) {
   const [h, m] = time.split(":").map(Number);
   const totalMinutes = (h - startHour) * 60 + m;
   const slotHeight = 64;
@@ -92,7 +101,45 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 }) => {
   const [hoveredSlotId, setHoveredSlotId] = useState<string | null>(null);
   const days = getWeekDays(weekDate);
-  const hourLines = generateHourLines(8, 19, 30);
+
+  // Calcular el rango de horas dinámicamente basado en los horarios de trabajo de la semana
+  function getWeekHourRange() {
+    let earliestStart = 24; // Empezar con el valor máximo
+    let latestEnd = 0; // Empezar con el valor mínimo
+    
+    let hasAnyWorkingHours = false;
+    
+    days.forEach(date => {
+      const dateStr = date.toISOString().split("T")[0];
+      const daySchedule = schedule.schedule.find((d) => d.date === dateStr);
+      
+      if (daySchedule?.workingHours?.start && daySchedule?.workingHours?.end) {
+        hasAnyWorkingHours = true;
+        const startMinutes = timeStringToMinutes(daySchedule.workingHours.start);
+        const endMinutes = timeStringToMinutes(daySchedule.workingHours.end);
+        
+        const startHour = Math.floor(startMinutes / 60);
+        const endHour = Math.ceil(endMinutes / 60);
+        
+        earliestStart = Math.min(earliestStart, startHour);
+        latestEnd = Math.max(latestEnd, endHour);
+      }
+    });
+    
+    // Si no hay horarios de trabajo, usar valores por defecto
+    if (!hasAnyWorkingHours) {
+      earliestStart = 8;
+      latestEnd = 19;
+    }
+    
+    return { start: earliestStart, end: latestEnd };
+  }
+
+  const { start: visualStartHour, end: visualEndHour } = getWeekHourRange();
+  const hourLines = generateHourLines(visualStartHour, visualEndHour, 30);
+  
+  // Calcular altura exacta del contenedor
+  const containerHeight = Math.max((hourLines.length - 1) * 40, 600);
 
   function getSlotsForDate(date: Date): SlotWithDate[] {
     const dateStr = date.toISOString().split("T")[0];
@@ -104,33 +151,56 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
     }));
   }
 
+  function getDaySchedule(date: Date) {
+    const dateStr = date.toISOString().split("T")[0];
+    return schedule.schedule.find((d) => d.date === dateStr);
+  }
+
+  function isWorkingDay(date: Date): boolean {
+    const daySchedule = getDaySchedule(date);
+    return !!(daySchedule?.workingHours?.start && daySchedule?.workingHours?.end);
+  }
+
   return (
-    <div className="overflow-x-auto">
-      <div className="grid grid-cols-8 gap-2 mb-4">
-        <div className="py-2"></div>
-        {days.map((date, index) => {
-          const isToday = date.toDateString() === new Date().toDateString();
-          return (
-            <div
-              key={index}
-              className={`text-center py-2 ${
-                isToday
-                  ? "text-blue-600 dark:text-blue-400 font-bold"
-                  : "text-gray-700 dark:text-gray-200"
-              }`}
-            >
-              <div className="text-base font-semibold">
-                {dayNames[date.getDay()]}
+    <div className="overflow-hidden">
+      {/* Header con días de la semana */}
+      <div className="flex mb-4">
+        {/* Espacio para las horas */}
+        <div style={{ width: 56 }} className="py-2"></div>
+        {/* Días de la semana */}
+        <div className="flex-1 grid grid-cols-7 gap-2">
+          {days.map((date, index) => {
+            const isToday = date.toDateString() === new Date().toDateString();
+            const isWorking = isWorkingDay(date);
+            return (
+              <div
+                key={index}
+                className={`text-center py-2 ${
+                  isToday
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
+                    : isWorking
+                    ? "text-gray-700 dark:text-gray-200"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                <div className="text-base font-semibold">
+                  {dayNames[date.getDay()]}
+                </div>
+                <div className="text-xl">{date.getDate()}</div>
+                {!isWorking && (
+                  <div className="text-xs text-red-500 dark:text-red-400 mt-1">
+                    Cerrado
+                  </div>
+                )}
               </div>
-              <div className="text-xl">{date.getDate()}</div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <div
-        className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm"
-        style={{ height: `${hourLines.length * 40}px`, minHeight: "600px" }}
+        className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm flex"
+        style={{ height: `${containerHeight}px` }}
       >
         {/* Líneas de hora */}
         <div className="absolute left-0 w-full z-0 pointer-events-none">
@@ -160,24 +230,63 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
             </div>
           ))}
         </div>
-        {/* Celdas de días con columnas */}
-        <div className="grid grid-cols-8 gap-2 w-full h-full relative z-10">
-          <div className="h-full"></div>
+
+        {/* Columna de horas (fija) */}
+        <div style={{ width: 56 }} className="flex-shrink-0"></div>
+
+        {/* Contenedor de días */}
+        <div className="flex-1 grid grid-cols-7 gap-2 relative z-10">
           {days.map((date, dayIdx) => {
+            const isWorking = isWorkingDay(date);
             const slots = getSlotsForDate(date);
             const { slotColumns, totalColumns } = assignColumns(slots);
+            const daySchedule = getDaySchedule(date);
 
             return (
               <div
                 key={dayIdx}
-                className="relative h-full border-l border-gray-200 dark:border-gray-700"
-                style={{ background: "transparent", cursor: "pointer" }}
+                className={`relative h-full border-l border-gray-200 dark:border-gray-700 ${
+                  isWorking ? "cursor-pointer" : ""
+                }`}
+                style={{ 
+                  background: isWorking ? "transparent" : "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,0,0,0.05) 10px, rgba(255,0,0,0.05) 20px)"
+                }}
                 onClick={(e) => {
-                  if (onDayColumnClick) onDayColumnClick(date);
+                  if (isWorking && onDayColumnClick) {
+                    onDayColumnClick(date);
+                  }
                 }}
               >
-                {slots.map((slot) => {
-                  const top = timeToPosition(slot.startTime.slice(0, 5), 8, 19);
+                {/* Overlay para días no laborables - bloquea interacciones */}
+                {!isWorking && (
+                  <div className="absolute inset-0 bg-gray-100/80 dark:bg-gray-800/80 flex items-center justify-center z-50">
+                    <div className="text-center p-4">
+                      <div className="flex justify-center">
+                        <CircleAlert className="bg-red-500 text-white rounded-full p-1 my-5" />
+                      </div>
+
+                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Día no laboral
+                      </div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Clínica cerrada
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Horarios de trabajo para días laborables */}
+                {isWorking && daySchedule?.workingHours?.start && daySchedule?.workingHours?.end && (
+                  <div className="absolute top-2 left-1 right-1 z-20 pointer-events-none">
+                    <div className="text-xs text-center bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 shadow-sm">
+                      {daySchedule.workingHours.start.slice(0, 5)} - {daySchedule.workingHours.end.slice(0, 5)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Slots ocupados solo para días laborables */}
+                {isWorking && slots.map((slot) => {
+                  const top = timeToPosition(slot.startTime.slice(0, 5), visualStartHour);
                   const end = slot.endTime
                     ? slot.endTime.slice(0, 5)
                     : slot.startTime.slice(0, 5);
@@ -197,10 +306,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                       style={{
                         position: "absolute",
                         left: `calc(${colIdx * colWidth}% + 4px)`,
-                        top: `${top}px`,
+                        top: `${top + 30}px`, // Offset para el horario laboral
                         width: `calc(${colWidth}% - 8px)`,
                         height: `${slotHeight}px`,
-                        zIndex: 2,
+                        zIndex: 30,
                         overflow: "visible",
                         fontSize: "1.1rem",
                       }}
@@ -233,7 +342,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                       {hoveredSlotId === slot.appointmentId && (
                         <div
                           className="
-                            absolute left-1/2 bottom-full z-50 w-[240px] -translate-x-1/2 mb-3 px-4 py-3 rounded-lg shadow-xl
+                            absolute left-1/2 bottom-full z-[100] w-[240px] -translate-x-1/2 mb-3 px-4 py-3 rounded-lg shadow-xl
                             bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200
                             border border-gray-700 dark:border-gray-600 text-base
                             pointer-events-none

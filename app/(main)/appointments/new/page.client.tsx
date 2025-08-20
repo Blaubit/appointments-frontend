@@ -11,60 +11,47 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Clock,
-  User as UserIcon,
   Save,
-  UserPlus,
-  Search,
   CheckCircle,
   DollarSign,
   AlertCircle,
-  Users,
-  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
-import type { Service, Client, User } from "@/types";
+import type { Service, Client, User, SercviceProfessional } from "@/types";
 import { CalendarCard } from "@/components/calendar-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import create from "@/actions/appointments/create";
 import { create as createClient } from "@/actions/clients/create";
 import { appointmentSchema } from "@/lib/validations/appointments";
 import { findPeriod } from "@/actions/calendar/findPeriod";
-import { set, z } from "zod";
+import { z } from "zod";
 import { useSearchParams } from "next/navigation";
 import ProfessionalSelectorCard from "@/components/professional-selector";
 import { ClientSelectorCard } from "@/components/appointments/new/ClientSelector";
 import { AppointmentSuccessDialog } from "@/components/appointments/new/appointmentSuccesDialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogClose
-} from "@/components/ui/dialog";
+import { findProfessionalServices } from "@/actions/services/findProfessionalServices";
 
 type Props = {
-  services: Service[];
   clients: Client[];
   professionals?: User[];
   userSession?: User;
 };
 
 export default function PageClient({
-  services,
   clients,
   professionals,
   userSession,
 }: Props) {
   const searchParams = useSearchParams();
   const clientIdFromUrl = searchParams.get("clientId") ?? "";
+  const professionalIdFromUrl = searchParams.get("professionalId") ?? "";
+  const fechaHoraFromUrl = searchParams.get("fechaHora"); // Ej: "2025-09-01T14:30"
   const router = useRouter();
   
   // Estados existentes
@@ -86,38 +73,129 @@ export default function PageClient({
   const [success, setSuccess] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
 
+  // Nuevos estados para servicios del profesional
+  const [professionalServices, setProfessionalServices] = useState<Service[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [servicesError, setServicesError] = useState<string | null>(null);
+
   // Nuevos estados para horarios disponibles
   const [availableHours, setAvailableHours] = useState<string[]>([]);
   const [isLoadingHours, setIsLoadingHours] = useState(false);
   const [hoursError, setHoursError] = useState<string | null>(null);
 
-  const fechaHoraFromUrl = searchParams.get("fechaHora"); // Ej: "2025-09-01T14:30"
+  // Estado para controlar si ya se procesaron los parámetros de URL
+  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
 
-  useEffect(() => {
-    if (fechaHoraFromUrl) {
-      const [fecha, hora] = fechaHoraFromUrl.split("T");
-      setSelectedDate(fecha);
-      setFormData({ ...formData, date: fecha });
-      handleDateChange(fecha || "");
-      setSelectedTime(hora || "");
-      setFormData({ ...formData, time: hora });
+  const [formData, setFormData] = useState({
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    professionalId: professionalIdFromUrl || "",
+    service: "",
+    date: "",
+    time: "",
+    duration: "",
+    price: "",
+    notes: "",
+    status: "pending" as const,
+  });
+
+  // Función para obtener servicios del profesional
+  const fetchProfessionalServices = async (professionalId: string) => {
+    if (!professionalId) {
+      setProfessionalServices([]);
+      return;
     }
-  }, []);
 
-  // Auto-seleccionar profesional si el usuario logueado es profesional
+    setIsLoadingServices(true);
+    setServicesError(null);
+    
+    try {
+      const result = await findProfessionalServices(professionalId);
+      
+      if ("data" in result && result.data) {
+        // Extraer los servicios del array de SercviceProfessional
+        const services = result.data.map((item: SercviceProfessional) => item.service);
+        setProfessionalServices(services);
+      } else {
+        setProfessionalServices([]);
+        setServicesError("Error al cargar los servicios del profesional");
+      }
+    } catch (error) {
+      console.error("Error fetching professional services:", error);
+      setProfessionalServices([]);
+      setServicesError("Error al cargar los servicios del profesional");
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
+
+  // Efecto principal para procesar parámetros de URL
   useEffect(() => {
-    if (
+    if (!professionals || urlParamsProcessed) return;
+
+    // 1. Primero seleccionar profesional si viene en la URL
+    let professionalToSelect: User | null = null;
+
+    if (professionalIdFromUrl) {
+      professionalToSelect = professionals.find(
+        (p) => p.id === professionalIdFromUrl || p.id.toString() === professionalIdFromUrl
+      ) || null;
+    } else if (
       userSession &&
-      userSession.role?.name === "profesional" &&
-      !selectedProfessional
+      userSession.role?.name === "profesional"
     ) {
-      setSelectedProfessional(userSession);
-      setFormData((prev) => ({
-        ...prev,
-        professionalId: userSession.id.toString(),
-      }));
+      // Auto-seleccionar si es profesional logueado y no hay professionalId en URL
+      professionalToSelect = userSession;
     }
-  }, [userSession, selectedProfessional]);
+
+    if (professionalToSelect) {
+      setSelectedProfessional(professionalToSelect);
+      setFormData(prev => ({
+        ...prev,
+        professionalId: professionalToSelect!.id.toString(),
+      }));
+
+      // 2. Después de seleccionar el profesional, procesar fecha/hora si vienen en URL
+      if (fechaHoraFromUrl) {
+        const [fecha, hora] = fechaHoraFromUrl.split("T");
+        if (fecha) {
+          setSelectedDate(fecha);
+          setFormData(prev => ({ ...prev, date: fecha }));
+          
+          // Marcar que los parámetros han sido procesados
+          setUrlParamsProcessed(true);
+          
+          // Fetch available hours y luego seleccionar la hora
+          fetchAvailableHours(professionalToSelect.id.toString(), fecha).then(() => {
+            if (hora) {
+              // Usar setTimeout para asegurar que availableHours se haya actualizado
+              setTimeout(() => {
+                setSelectedTime(hora);
+                setFormData(prev => ({ ...prev, time: hora }));
+              }, 100);
+            }
+          });
+        }
+      } else {
+        setUrlParamsProcessed(true);
+      }
+    } else {
+      setUrlParamsProcessed(true);
+    }
+  }, [professionals, professionalIdFromUrl, fechaHoraFromUrl, userSession, urlParamsProcessed]);
+
+  // Efecto para cargar servicios cuando cambia el profesional
+  useEffect(() => {
+    if (selectedProfessional) {
+      fetchProfessionalServices(selectedProfessional.id.toString());
+      // Limpiar servicios seleccionados cuando cambia el profesional
+      setSelectedServices([]);
+    } else {
+      setProfessionalServices([]);
+      setSelectedServices([]);
+    }
+  }, [selectedProfessional]);
 
   // Función para obtener horarios disponibles
   const fetchAvailableHours = async (professionalId: string, date: string) => {
@@ -157,24 +235,29 @@ export default function PageClient({
     }
   };
 
-  // Efecto para cargar horarios cuando cambia la fecha o el profesional
+  // Efecto para cargar horarios cuando cambia la fecha o el profesional (solo después del procesamiento inicial)
   useEffect(() => {
+    if (!urlParamsProcessed) return; // Esperar a que se procesen los parámetros de URL
+    
     if (selectedProfessional && selectedDate) {
       fetchAvailableHours(selectedProfessional.id.toString(), selectedDate);
     } else {
       setAvailableHours([]);
-      setSelectedTime(""); // Limpiar hora seleccionada si no hay fecha o profesional
+      if (urlParamsProcessed) {
+        // Solo limpiar la hora si ya se procesaron los parámetros iniciales
+        setSelectedTime("");
+      }
     }
-  }, [selectedProfessional, selectedDate]);
+  }, [selectedProfessional, selectedDate, urlParamsProcessed]);
 
   // Resto de los estados y funciones existentes...
   const totalPrice = selectedServices.reduce((sum, id) => {
-    const service = services.find((s) => s.id === id);
+    const service = professionalServices.find((s) => s.id === id);
     return sum + (service ? Number(service.price) : 0);
   }, 0);
   
   const totalDuration = selectedServices.reduce((sum, id) => {
-    const service = services.find((s) => s.id === id);
+    const service = professionalServices.find((s) => s.id === id);
     return sum + (service ? Number(service.durationMinutes) : 0);
   }, 0);
 
@@ -191,20 +274,6 @@ export default function PageClient({
     }
   };
 
-  const [formData, setFormData] = useState({
-    clientName: "",
-    clientEmail: "",
-    clientPhone: "",
-    professionalId: "",
-    service: "",
-    date: "",
-    time: "",
-    duration: "",
-    price: "",
-    notes: "",
-    status: "pending" as const,
-  });
-
   const filteredClients = clients.filter((client) =>
     client.fullName.toLowerCase().includes(clientSearch.toLowerCase()),
   );
@@ -220,10 +289,10 @@ export default function PageClient({
 
   useEffect(() => {
     const names = selectedServices.map(
-      (id) => services.find((s) => s.id.toString() === id)?.name || "",
+      (id) => professionalServices.find((s) => s.id.toString() === id)?.name || "",
     );
     setSelectedServicesData(names);
-  }, [selectedServices, services]);
+  }, [selectedServices, professionalServices]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -264,7 +333,7 @@ export default function PageClient({
 
   const handleServiceSelect = (serviceId: string) => {
     setSelectedService(serviceId);
-    const service = services.find((s) => s.id.toString() === serviceId);
+    const service = professionalServices.find((s) => s.id.toString() === serviceId);
     if (service) {
       setFormData({
         ...formData,
@@ -472,6 +541,7 @@ export default function PageClient({
             className="mb-6 sm:mb-8"
           />
 
+          {/* Sección de servicios modificada */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -479,63 +549,88 @@ export default function PageClient({
                 <span>Servicios</span>
               </CardTitle>
               <CardDescription>
-                Selecciona uno o más servicios para la cita
+                {!selectedProfessional 
+                  ? "Primero selecciona un profesional para ver sus servicios disponibles"
+                  : "Selecciona uno o más servicios para la cita"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {services.map((service) => {
-                  const isSelected = selectedServices.includes(
-                    service.id.toString(),
-                  );
-                  return (
-                    <div
-                      key={service.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
-                      }`}
-                      onClick={() => {
-                        const id = service.id.toString();
-                        if (isSelected) {
-                          setSelectedServices((prev) =>
-                            prev.filter((s) => s !== id),
-                          );
-                        } else {
-                          setSelectedServices((prev) => [...prev, id]);
-                        }
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
-                          {service.name}
-                        </h4>
-                        {isSelected && (
-                          <CheckCircle className="h-5 w-5 text-blue-600" />
-                        )}
+              {!selectedProfessional ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Selecciona un profesional para ver los servicios disponibles</p>
+                </div>
+              ) : isLoadingServices ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                  <p className="text-gray-500">Cargando servicios...</p>
+                </div>
+              ) : servicesError ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-2 text-red-500 opacity-50" />
+                  <p className="text-red-500">{servicesError}</p>
+                </div>
+              ) : professionalServices.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400 opacity-50" />
+                  <p className="text-gray-500">Este profesional no tiene servicios configurados</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {professionalServices.map((service) => {
+                    const isSelected = selectedServices.includes(
+                      service.id.toString(),
+                    );
+                    return (
+                      <div
+                        key={service.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
+                        }`}
+                        onClick={() => {
+                          const id = service.id.toString();
+                          if (isSelected) {
+                            setSelectedServices((prev) =>
+                              prev.filter((s) => s !== id),
+                            );
+                          } else {
+                            setSelectedServices((prev) => [...prev, id]);
+                          }
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {service.name}
+                          </h4>
+                          {isSelected && (
+                            <CheckCircle className="h-5 w-5 text-blue-600" />
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                          <span className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {formatDuration(service.durationMinutes)}
+                          </span>
+                          <span className="flex items-center font-medium">
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            {service.price}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                        <span className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {formatDuration(service.durationMinutes)}
-                        </span>
-                        <span className="flex items-center font-medium">
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          {service.price}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card>
               <CalendarCard 
-                initialDate={new Date(selectedDate)}
+                initialDate={selectedDate ? new Date(selectedDate) : new Date()}
                 onDateSelect={handleDateChange} 
               />
             </Card>
@@ -640,7 +735,7 @@ export default function PageClient({
                         <span>{service}</span>
                         <span className="text-sm text-gray-500">
                           $
-                          {services.find((s) => s.name === service)?.price ||
+                          {professionalServices.find((s) => s.name === service)?.price ||
                             "0"}
                         </span>
                       </li>

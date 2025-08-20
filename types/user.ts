@@ -1,4 +1,5 @@
 import { Company } from "./company";
+import { Service } from "./services";
 type Role = {
   id: string;
   name: string;
@@ -14,6 +15,10 @@ type User = {
   company: Company;
   role: Role;
 };
+export interface SercviceProfessional{
+  professional: User;
+  service: Service;
+}
 export type FormDataType = {
   professionalId: string;
   clientName: string;
