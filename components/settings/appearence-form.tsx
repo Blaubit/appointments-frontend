@@ -151,51 +151,51 @@ export const AppearenceForm: React.FC<AppearanceSettingsProps> = ({
     });
   }, [theme, mounted]);
 
-  const handleSaveAppearance = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      // Simulate save delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  // const handleSaveAppearance = useCallback(async (): Promise<void> => {
+  //   setIsLoading(true);
+  //   try {
+  //     // Simulate save delay
+  //     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Save to localStorage for persistence
-      localStorage.setItem(
-        "appearance-settings",
-        JSON.stringify(appearanceSettings),
-      );
+  //     // Save to localStorage for persistence
+  //     localStorage.setItem(
+  //       "appearance-settings",
+  //       JSON.stringify(appearanceSettings),
+  //     );
 
-      onSave?.(appearanceSettings);
-      console.log("Configuración guardada:", appearanceSettings);
-    } catch (error) {
-      console.error("Error al guardar:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appearanceSettings, onSave]);
+  //     onSave?.(appearanceSettings);
+  //     console.log("Configuración guardada:", appearanceSettings);
+  //   } catch (error) {
+  //     console.error("Error al guardar:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [appearanceSettings, onSave]);
 
-  const handleExportData = useCallback((): void => {
-    try {
-      const dataToExport = {
-        appearanceSettings,
-        exportDate: new Date().toISOString(),
-        version: "1.0",
-      };
+  // const handleExportData = useCallback((): void => {
+  //   try {
+  //     const dataToExport = {
+  //       appearanceSettings,
+  //       exportDate: new Date().toISOString(),
+  //       version: "1.0",
+  //     };
 
-      const dataStr = JSON.stringify(dataToExport, null, 2);
-      const dataUri =
-        "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+  //     const dataStr = JSON.stringify(dataToExport, null, 2);
+  //     const dataUri =
+  //       "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
 
-      const exportFileDefaultName = `configuracion_${new Date().toISOString().split("T")[0]}.json`;
+  //     const exportFileDefaultName = `configuracion_${new Date().toISOString().split("T")[0]}.json`;
 
-      const linkElement = document.createElement("a");
-      linkElement.setAttribute("href", dataUri);
-      linkElement.setAttribute("download", exportFileDefaultName);
-      linkElement.click();
+  //     const linkElement = document.createElement("a");
+  //     linkElement.setAttribute("href", dataUri);
+  //     linkElement.setAttribute("download", exportFileDefaultName);
+  //     linkElement.click();
 
-      onExport?.();
-    } catch (error) {
-      console.error("Error al exportar datos:", error);
-    }
-  }, [appearanceSettings, onExport]);
+  //     onExport?.();
+  //   } catch (error) {
+  //     console.error("Error al exportar datos:", error);
+  //   }
+  // }, [appearanceSettings, onExport]);
 
   const handleThemeChange = useCallback(
     (newTheme: "light" | "dark" | "system") => {
@@ -371,30 +371,6 @@ export const AppearenceForm: React.FC<AppearanceSettingsProps> = ({
         </div>
 
         <Separator />
-
-        <div className="space-y-4">
-          <h4 className="font-medium">Exportar Datos</h4>
-          <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-            <div>
-              <h5 className="font-medium dark:text-gray-100">
-                Descargar Datos
-              </h5>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Exporta todos tus datos en formato JSON
-              </p>
-            </div>
-            <Button variant="outline" onClick={handleExportData}>
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button onClick={handleSaveAppearance} disabled={isLoading}>
-            {isLoading ? "Guardando..." : "Guardar Cambios"}
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
