@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,7 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Header } from "@/components/header";
-import { ServiceForm } from "@/components/service-form"; // Importa el nuevo componente
+import { ServiceForm } from "@/components/service-form";
+import { ServicePagination } from "@/components/service-pagination";
 import {
   Edit,
   Trash2,
@@ -51,62 +52,89 @@ import {
 } from "lucide-react";
 import type { Service as ServiceType } from "@/types";
 import deleteService from "@/actions/services/delete";
+
 interface Pagination {
-  totalItems: number;
+  currentPage: number;
   totalPages: number;
-  page: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage: number | null;
+  previousPage: number | null;
 }
 
 type Props = {
   services: ServiceType[];
-  pagination: Pagination;
+  pagination?: Pagination;
+  initialSearchParams?: {
+    page: number;
+    limit: number;
+    search: string;
+    status: string;
+  };
 };
 
-export default function PageClient({ services, pagination }: Props) {
+export default function PageClient({ 
+  services, 
+  pagination,
+  initialSearchParams 
+}: Props) {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const searchParams = useSearchParams();
+  
+  const [searchTerm, setSearchTerm] = useState(initialSearchParams?.search || "");
+  const [statusFilter, setStatusFilter] = useState(initialSearchParams?.status || "all");
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
 
   // Estados para los diálogos del formulario
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(
-    null,
-  );
+  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
-    if (value) params.set("search", value);
-    else params.delete("search");
-    router.push(`${url.pathname}?${params.toString()}`);
+  // Debounce para búsqueda
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateFilters({ search: searchTerm });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Función para actualizar filtros en la URL
+  const updateFilters = (newFilters: { search?: string; status?: string }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    // Resetear página cuando cambian los filtros
+    params.set('page', '1');
+    
+    if (newFilters.search !== undefined) {
+      if (newFilters.search.trim()) {
+        params.set('search', newFilters.search);
+      } else {
+        params.delete('search');
+      }
+    }
+    
+    if (newFilters.status !== undefined) {
+      if (newFilters.status !== 'all') {
+        params.set('status', newFilters.status);
+      } else {
+        params.delete('status');
+      }
+    }
+
+    router.push(`?${params.toString()}`);
   };
 
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value);
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
-    if (value !== "all") params.set("status", value);
-    else params.delete("status");
-    router.push(`${url.pathname}?${params.toString()}`);
+    updateFilters({ status: value });
   };
-
-  const filteredServices = services.filter((s) => {
-    const matchesSearch = s.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && s) ||
-      (statusFilter === "inactive" && !s);
-    return matchesSearch && matchesStatus;
-  });
 
   const handleDelete = (id: string) => {
     deleteService({ id });
-    // Aquí implementarías la lógica para eliminar
+    router.refresh();
   };
 
   const handleToggleStatus = (s: ServiceType) => {
@@ -115,12 +143,10 @@ export default function PageClient({ services, pagination }: Props) {
   };
 
   const handleCreateSuccess = () => {
-    // Refrescar la página o actualizar los datos
     router.refresh();
   };
 
   const handleEditSuccess = () => {
-    // Refrescar la página o actualizar los datos
     router.refresh();
   };
 
@@ -173,7 +199,7 @@ export default function PageClient({ services, pagination }: Props) {
                   className="pl-10"
                   placeholder="Buscar servicio..."
                   value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="w-full md:w-48">
@@ -204,136 +230,165 @@ export default function PageClient({ services, pagination }: Props) {
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-2">
-              Mostrando {filteredServices.length} de {services.length} servicios
+              Total de servicios: {pagination?.totalItems || 0}
             </p>
           </CardContent>
         </Card>
 
-        {filteredServices.length === 0 ? (
+        {services.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
-              No hay servicios
+              <div className="text-muted-foreground">
+                No se encontraron servicios
+              </div>
             </CardContent>
           </Card>
         ) : viewMode === "cards" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredServices.map((s) => (
-              <Card key={s.id} className="hover:shadow">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Star className="h-4 w-4 text-yellow-500" /> {s.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-4 w-4" /> {s.durationMinutes}{" "}
-                        minutos
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <DollarSign className="h-4 w-4" /> Q{s.price}
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        {s ? (
-                          <Eye className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        )}
-                        {s ? "Activo" : "Inactivo"}
-                      </p>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEdit(s)}>
-                          <Edit className="h-4 w-4 mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleStatus(s)}>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {services.map((s) => (
+                <Card key={s.id} className="hover:shadow">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500" /> {s.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-4 w-4" /> {s.durationMinutes} minutos
+                        </p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <DollarSign className="h-4 w-4" /> Q{s.price}
+                        </p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
                           {s ? (
-                            <>
-                              <EyeOff className="h-4 w-4 mr-2" /> Desactivar
-                            </>
+                            <Eye className="h-4 w-4 text-green-600" />
                           ) : (
-                            <>
-                              <Eye className="h-4 w-4 mr-2" /> Activar
-                            </>
+                            <EyeOff className="h-4 w-4 text-gray-400" />
                           )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(s.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                          {s ? "Activo" : "Inactivo"}
+                        </p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(s)}>
+                            <Edit className="h-4 w-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleStatus(s)}>
+                            {s ? (
+                              <>
+                                <EyeOff className="h-4 w-4 mr-2" /> Desactivar
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-4 w-4 mr-2" /> Activar
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(s.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Paginación para cards */}
+            {pagination && (
+              <ServicePagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                hasNextPage={pagination.hasNextPage}
+                hasPreviousPage={pagination.hasPreviousPage}
+                totalItems={pagination.totalItems}
+                itemsPerPage={pagination.itemsPerPage}
+              />
+            )}
+          </>
         ) : (
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Duración</TableHead>
-                    <TableHead>Precio</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredServices.map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell>{s.durationMinutes} min</TableCell>
-                      <TableCell>Q{s.price}</TableCell>
-                      <TableCell>{s ? "Activo" : "Inactivo"}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEdit(s)}>
-                              <Edit className="h-4 w-4 mr-2" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleToggleStatus(s)}
-                            >
-                              {s ? (
-                                <>
-                                  <EyeOff className="h-4 w-4 mr-2" /> Desactivar
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="h-4 w-4 mr-2" /> Activar
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(s.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" /> Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+          <>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Duración</TableHead>
+                      <TableHead>Precio</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {services.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell>{s.durationMinutes} min</TableCell>
+                        <TableCell>Q{s.price}</TableCell>
+                        <TableCell>{s ? "Activo" : "Inactivo"}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEdit(s)}>
+                                <Edit className="h-4 w-4 mr-2" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleToggleStatus(s)}
+                              >
+                                {s ? (
+                                  <>
+                                    <EyeOff className="h-4 w-4 mr-2" /> Desactivar
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye className="h-4 w-4 mr-2" /> Activar
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(s.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Paginación para tabla */}
+            {pagination && (
+              <ServicePagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                hasNextPage={pagination.hasNextPage}
+                hasPreviousPage={pagination.hasPreviousPage}
+                totalItems={pagination.totalItems}
+                itemsPerPage={pagination.itemsPerPage}
+              />
+            )}
+          </>
         )}
 
         {/* Diálogos del formulario */}
