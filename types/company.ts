@@ -1,7 +1,7 @@
 type Company = {
   id: string;
   name: string;
-  company_type: string;
+  companyType: string;
   address: string;
   city: string;
   state: string;
@@ -9,6 +9,6 @@ type Company = {
   country: string;
   description: string;
   createdAt: string;
-}
+};
 
 export type { Company };

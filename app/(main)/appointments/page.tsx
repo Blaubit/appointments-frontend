@@ -1,38 +1,51 @@
-import type { Appointment, AppointmentStats, Pagination } from "@/types";
+import type { Appointment, AppointmentStats, Pagination, User } from "@/types";
 import PageClient from "./page.client";
 import findAll from "@/actions/appointments/findAll";
 import { getUser } from "@/actions/auth/getUser";
+import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
+
 type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export default async function Page({ searchParams }: Props) {
-  // Opción 1: Crear URLSearchParams manualmente iterando sobre las entradas
-  const params = new URLSearchParams();
-  Object.entries(searchParams).forEach(([key, value]) => {
+  const params = await new URLSearchParams();
+  Object.entries(await searchParams).forEach(([key, value]) => {
     if (value !== undefined) {
       if (Array.isArray(value)) {
-        // Si es un array, agregar cada valor
-        value.forEach(v => params.append(key, v));
+        value.forEach((v) => params.append(key, v));
       } else {
         params.set(key, value);
       }
     }
   });
 
-  const response = await findAll({
-    searchParams: params
-  });
+  const response = await findAll({ searchParams: params });
+  const professionalsResponse = await findAllProfessionals();
   const user = await getUser();
+  if (!user) {
+    throw new Error("User not found");
+  }
   if (response.status !== 200 || !("data" in response)) {
     throw new Error("Failed to fetch appointments data");
   }
-  console.log("response", response);
+
+  if (
+    typeof professionalsResponse !== "object" ||
+    !("data" in professionalsResponse)
+  ) {
+    throw new Error("Failed to fetch professionals data");
+  }
+  // Si el usuario no es profesional, se envían los profesionales al cliente
+  const professionals: User[] =
+    user.role.name !== "profesional" ? professionalsResponse.data : [];
+
   return (
     <PageClient
       appointments={response.data}
       stats={response.stats}
       pagination={response.meta}
+      professionals={professionals}
     />
   );
 }

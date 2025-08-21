@@ -7,17 +7,17 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { ClientFormData } from "@/types";
 import { Client } from "@/types";
+import { getUser, getSession } from "@/actions/auth";
 
-export default async function create({
+export async function create({
   fullName,
   email,
   phone,
 }: ClientFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
+  const User = await getUser();
+  const session = await getSession();
   try {
-    const cookieStore = await cookies();
-    const User = cookieStore.get("user")?.value;
-    const companyId = User ? JSON.parse(User).companyId : null;
-    
+    const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -25,9 +25,7 @@ export default async function create({
         status: 401,
       };
     }
-
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients`;
-    const session = cookieStore.get("session")?.value;
 
     // Validar que tenemos session
     if (!session) {
@@ -46,14 +44,14 @@ export default async function create({
     const response = await axios.post<Client>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/Client");
-      
+
       return {
         data: response.data,
         status: response.status,
@@ -66,14 +64,13 @@ export default async function create({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-
   } catch (error) {
     console.error("Error creating client:", error);
-    
+
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;
       const errorStatus = error.response?.status;
-      
+
       return {
         message: errorMessage,
         code: error.code,

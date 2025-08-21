@@ -15,8 +15,9 @@ export interface Service {
   durationMinutes: number;
   price: string;
   createdAt: string;
-  company:Company;
+  company: Company;
 }
+
 
 export interface ServiceCategoryConfig {
   id: ServiceCategory;

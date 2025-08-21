@@ -1,15 +1,31 @@
-"use server"
-import axios, { isAxiosError } from "axios";
+"use server";
 import { cookies } from "next/headers";
-import { parsedEnv } from "@/app/env";
 import { User } from "@/types";
-import {logout} from "@/actions/auth/logout";
-export async function getUser() {
-   const cookieStore = await cookies();
-   const userCookie = cookieStore.get("user")?.value;
-   const UserObject:User = JSON.parse(userCookie? userCookie : "{}") as User;
-   if (!userCookie) {logout()}; // If no user cookie, logout
+import findMe from "../user/findMe";
+export type Payload = {
+  userId: string;
+  email: string;
+  companyId: string;
+  roleId: string;
+  // Si tu payload tiene más propiedades, añádelas aquí
+};
 
-   return UserObject;
+export async function getUser(): Promise<User | null> {
+  const cookieStore = await cookies();
+  const sessionJwt = cookieStore.get("session")?.value;
 
+  if (!sessionJwt) {
+    return null;
+  }
+
+  try {
+    const res = await findMe();
+    if ("data" in res && res.status === 200 && res.data) {
+      return res.data;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    return null;
+  }
 }

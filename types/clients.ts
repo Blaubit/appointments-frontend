@@ -1,18 +1,18 @@
+import { Company } from "./company";
 export interface Client {
   id: string;
   fullName: string;
-  email: string;
   phone: string;
-  status: "active" | "inactive" | "blocked";
-  avatar?: string;
-  totalAppointments: number;
-  totalSpent: number;
-  rating: number;
-  lastAppointment?: string;
+  email: string;
+  rating: string;
+  avatar: string;
   createdAt: string;
+  status?: 'active' | 'inactive' | 'blocked';
+  totalAppointments?: number;
+  totalSpent?: number;
+  lastAppointment?: string;
   tags?: string[];
-  notes?: string;
-  // ... otros campos que ya tengas
+  company?: Company;
 }
 export interface ClientStats {
   totalClients: number;
@@ -51,7 +51,7 @@ export interface ClientFormData {
   phone: string;
 }
 export interface ClientEditFormData {
-  id?:string;
+  id?: string;
   fullName: string;
   email: string;
   phone: string;

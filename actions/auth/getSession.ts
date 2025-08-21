@@ -3,13 +3,12 @@
 import { decodeJwt } from "jose";
 import { cookies } from "next/headers";
 
-type Payload = {
-  sub: string;
-  name: string;
-
-  iat: number;
-  role: string;
-  exp: number;
+export type Payload = {
+  userId: string;
+  email: string;
+  companyId: string;
+  roleId: string;
+  // Si tu payload tiene más propiedades, añádelas aquí
 };
 
 function decrypt(input: string) {
@@ -20,8 +19,8 @@ function decrypt(input: string) {
 export default async function getSession() {
   const cookieStore = await cookies(); // ← Agregar await aquí
   const session = cookieStore.get("session")?.value;
-  
+
   if (!session) return null;
-  
-  return decrypt(session);
+
+  return session;
 }
