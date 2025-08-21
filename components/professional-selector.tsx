@@ -42,7 +42,9 @@ export default function ProfessionalSelectorCard({
   // Locked mode: solo muestra la tarjeta del profesional seleccionado, sin input ni cambiar
   if (isLocked && selectedProfessional) {
     return (
-      <Card className={`mb-6 sm:mb-8 border-blue-200 dark:border-blue-800 ${className}`}>
+      <Card
+        className={`mb-6 sm:mb-8 border-blue-200 dark:border-blue-800 ${className}`}
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
             <Users className="h-5 w-5" />
@@ -55,7 +57,9 @@ export default function ProfessionalSelectorCard({
         <CardContent>
           <div className="flex items-start sm:items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-2">
             <Avatar className="h-12 w-12 flex-shrink-0">
-              <AvatarImage src={selectedProfessional.avatar || "/placeholder.svg"} />
+              <AvatarImage
+                src={selectedProfessional.avatar || "/placeholder.svg"}
+              />
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                 {getInitials(selectedProfessional.fullName || "")}
               </AvatarFallback>
@@ -69,7 +73,9 @@ export default function ProfessionalSelectorCard({
               </p>
               <div className="flex items-center mt-1">
                 <Star className="h-3 w-3 text-yellow-400 mr-1 flex-shrink-0" />
-                <span className="text-xs text-gray-500">Profesional seleccionado</span>
+                <span className="text-xs text-gray-500">
+                  Profesional seleccionado
+                </span>
               </div>
             </div>
             <CheckCircle className="h-5 w-5 text-blue-600" />
@@ -86,7 +92,7 @@ export default function ProfessionalSelectorCard({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filteredProfessionals = professionals.filter((professional) =>
-    professional.fullName.toLowerCase().includes(search.toLowerCase())
+    professional.fullName.toLowerCase().includes(search.toLowerCase()),
   );
 
   // Cierra el dropdown al hacer clic fuera
@@ -117,7 +123,9 @@ export default function ProfessionalSelectorCard({
   };
 
   return (
-    <Card className={`mb-6 sm:mb-8 border-blue-200 dark:border-blue-800 ${className}`}>
+    <Card
+      className={`mb-6 sm:mb-8 border-blue-200 dark:border-blue-800 ${className}`}
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
           <Users className="h-5 w-5" />
@@ -157,17 +165,25 @@ export default function ProfessionalSelectorCard({
                       onClick={() => handleSelectProfessional(professional)}
                     >
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={professional.avatar || "/placeholder.svg"} />
+                        <AvatarImage
+                          src={professional.avatar || "/placeholder.svg"}
+                        />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
                           {getInitials(professional.fullName || "")}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{professional.fullName}</p>
-                        <p className="text-xs text-gray-500 truncate">{professional.email}</p>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
+                          {professional.fullName}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {professional.email}
+                        </p>
                         <div className="flex items-center mt-1">
                           <Star className="h-3 w-3 text-yellow-400 mr-1" />
-                          <span className="text-xs text-gray-400">Especialista</span>
+                          <span className="text-xs text-gray-400">
+                            Especialista
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -189,7 +205,9 @@ export default function ProfessionalSelectorCard({
         {selectedProfessional && !isLocked && (
           <div className="flex items-start sm:items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-2">
             <Avatar className="h-12 w-12 flex-shrink-0">
-              <AvatarImage src={selectedProfessional.avatar || "/placeholder.svg"} />
+              <AvatarImage
+                src={selectedProfessional.avatar || "/placeholder.svg"}
+              />
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                 {getInitials(selectedProfessional.fullName || "")}
               </AvatarFallback>
@@ -203,7 +221,9 @@ export default function ProfessionalSelectorCard({
               </p>
               <div className="flex items-center mt-1">
                 <Star className="h-3 w-3 text-yellow-400 mr-1 flex-shrink-0" />
-                <span className="text-xs text-gray-500">Profesional seleccionado</span>
+                <span className="text-xs text-gray-500">
+                  Profesional seleccionado
+                </span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">

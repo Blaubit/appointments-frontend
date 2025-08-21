@@ -15,7 +15,7 @@ type User = {
   company: Company;
   role: Role;
 };
-export interface SercviceProfessional{
+export interface SercviceProfessional {
   professional: User;
   service: Service;
 }
@@ -31,7 +31,7 @@ export type FormDataType = {
   price: string;
   notes: string;
   status: string;
-}
+};
 // Roles predefinidos del sistema
 export const DEFAULT_ROLES: Role[] = [
   {

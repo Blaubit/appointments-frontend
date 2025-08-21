@@ -7,7 +7,7 @@ export interface Client {
   rating: string;
   avatar: string;
   createdAt: string;
-  status?: 'active' | 'inactive' | 'blocked';
+  status?: "active" | "inactive" | "blocked";
   totalAppointments?: number;
   totalSpent?: number;
   lastAppointment?: string;

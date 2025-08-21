@@ -33,7 +33,7 @@ export function ClientPagination({
 
   const updatePage = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', newPage.toString());
+    params.set("page", newPage.toString());
     router.push(`?${params.toString()}`);
   };
 
@@ -44,7 +44,7 @@ export function ClientPagination({
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       // Si hay pocas páginas, mostrar todas
       for (let i = 1; i <= totalPages; i++) {
@@ -57,27 +57,27 @@ export function ClientPagination({
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        if (totalPages > 5) pages.push('...');
+        if (totalPages > 5) pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         // Final: 1, ..., last-3, last-2, last-1, last
         pages.push(1);
-        if (totalPages > 5) pages.push('...');
+        if (totalPages > 5) pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         // Medio: 1, ..., current-1, current, current+1, ..., last
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -88,32 +88,36 @@ export function ClientPagination({
       <div className="text-sm text-muted-foreground">
         Mostrando {startItem} a {endItem} de {totalItems} resultados
       </div>
-      
+
       <Pagination>
         <PaginationContent>
           {/* Página anterior */}
           <PaginationItem>
-            <PaginationPrevious 
+            <PaginationPrevious
               href="#"
               onClick={(e) => {
                 e.preventDefault();
                 if (hasPreviousPage) updatePage(currentPage - 1);
               }}
-              className={!hasPreviousPage ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              className={
+                !hasPreviousPage
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
             />
           </PaginationItem>
 
           {/* Números de página */}
           {getPageNumbers().map((page, index) => (
             <PaginationItem key={index}>
-              {page === '...' ? (
+              {page === "..." ? (
                 <PaginationEllipsis />
               ) : (
                 <PaginationLink
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    if (typeof page === 'number') updatePage(page);
+                    if (typeof page === "number") updatePage(page);
                   }}
                   isActive={page === currentPage}
                   className="cursor-pointer"
@@ -126,13 +130,17 @@ export function ClientPagination({
 
           {/* Página siguiente */}
           <PaginationItem>
-            <PaginationNext 
+            <PaginationNext
               href="#"
               onClick={(e) => {
                 e.preventDefault();
                 if (hasNextPage) updatePage(currentPage + 1);
               }}
-              className={!hasNextPage ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              className={
+                !hasNextPage
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
             />
           </PaginationItem>
         </PaginationContent>

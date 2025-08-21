@@ -17,11 +17,11 @@ export async function findAll(
 ): Promise<SuccessReponse<Client[]> | ErrorResponse | any> {
   const session = await getSession();
   const User = await getUser();
-  
+
   try {
     const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients`;
-    
+
     // Convertir URLSearchParams a objeto para parsePaginationParams
     const searchParamsObject: Record<string, string> = {};
     if (props.searchParams) {
@@ -32,16 +32,16 @@ export async function findAll(
 
     // Construir parámetros para la API
     const params: Record<string, any> = {
-      page: searchParamsObject.page || '1',
-      limit: searchParamsObject.limit || '10',
+      page: searchParamsObject.page || "1",
+      limit: searchParamsObject.limit || "10",
     };
 
     // Agregar filtros opcionales
     if (searchParamsObject.search) {
       params.q = searchParamsObject.search;
     }
-    
-    if (searchParamsObject.status && searchParamsObject.status !== 'all') {
+
+    if (searchParamsObject.status && searchParamsObject.status !== "all") {
       params.status = searchParamsObject.status;
     }
 

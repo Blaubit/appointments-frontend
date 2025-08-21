@@ -54,7 +54,9 @@ export const ServiceSelector: React.FC<Props> = ({
                 }`}
                 onClick={() => {
                   if (isSelected) {
-                    setSelectedServices(selectedServices.filter((s) => s !== id));
+                    setSelectedServices(
+                      selectedServices.filter((s) => s !== id),
+                    );
                   } else {
                     setSelectedServices([...selectedServices, id]);
                   }

@@ -75,22 +75,28 @@ type Props = {
   };
 };
 
-export default function PageClient({ 
-  services, 
+export default function PageClient({
+  services,
   pagination,
-  initialSearchParams 
+  initialSearchParams,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  const [searchTerm, setSearchTerm] = useState(initialSearchParams?.search || "");
-  const [statusFilter, setStatusFilter] = useState(initialSearchParams?.status || "all");
+
+  const [searchTerm, setSearchTerm] = useState(
+    initialSearchParams?.search || "",
+  );
+  const [statusFilter, setStatusFilter] = useState(
+    initialSearchParams?.status || "all",
+  );
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
 
   // Estados para los diálogos del formulario
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceType | null>(
+    null,
+  );
 
   // Debounce para búsqueda
   useEffect(() => {
@@ -104,23 +110,23 @@ export default function PageClient({
   // Función para actualizar filtros en la URL
   const updateFilters = (newFilters: { search?: string; status?: string }) => {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     // Resetear página cuando cambian los filtros
-    params.set('page', '1');
-    
+    params.set("page", "1");
+
     if (newFilters.search !== undefined) {
       if (newFilters.search.trim()) {
-        params.set('search', newFilters.search);
+        params.set("search", newFilters.search);
       } else {
-        params.delete('search');
+        params.delete("search");
       }
     }
-    
+
     if (newFilters.status !== undefined) {
-      if (newFilters.status !== 'all') {
-        params.set('status', newFilters.status);
+      if (newFilters.status !== "all") {
+        params.set("status", newFilters.status);
       } else {
-        params.delete('status');
+        params.delete("status");
       }
     }
 
@@ -255,7 +261,8 @@ export default function PageClient({
                           <Star className="h-4 w-4 text-yellow-500" /> {s.name}
                         </h3>
                         <p className="text-sm text-muted-foreground flex items-center gap-2">
-                          <Clock className="h-4 w-4" /> {s.durationMinutes} minutos
+                          <Clock className="h-4 w-4" /> {s.durationMinutes}{" "}
+                          minutos
                         </p>
                         <p className="text-sm text-muted-foreground flex items-center gap-2">
                           <DollarSign className="h-4 w-4" /> Q{s.price}
@@ -279,7 +286,9 @@ export default function PageClient({
                           <DropdownMenuItem onClick={() => openEdit(s)}>
                             <Edit className="h-4 w-4 mr-2" /> Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleStatus(s)}>
+                          <DropdownMenuItem
+                            onClick={() => handleToggleStatus(s)}
+                          >
                             {s ? (
                               <>
                                 <EyeOff className="h-4 w-4 mr-2" /> Desactivar
@@ -353,7 +362,8 @@ export default function PageClient({
                               >
                                 {s ? (
                                   <>
-                                    <EyeOff className="h-4 w-4 mr-2" /> Desactivar
+                                    <EyeOff className="h-4 w-4 mr-2" />{" "}
+                                    Desactivar
                                   </>
                                 ) : (
                                   <>

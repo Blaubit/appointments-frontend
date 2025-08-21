@@ -123,20 +123,25 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
             >
               {/* Patrón de líneas diagonales para días no laborables */}
               {isCurrentMonth && !isWorking && (
-                <div 
+                <div
                   className="absolute inset-0 rounded-lg pointer-events-none"
                   style={{
-                    background: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(239, 68, 68, 0.1) 8px, rgba(239, 68, 68, 0.1) 16px)"
+                    background:
+                      "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(239, 68, 68, 0.1) 8px, rgba(239, 68, 68, 0.1) 16px)",
                   }}
                 />
               )}
 
               <div className="relative z-10">
-                <div className={`text-sm font-medium mb-2 flex items-center justify-between ${
-                  isToday ? "text-blue-600" : 
-                  !isWorking && isCurrentMonth ? "text-red-600 dark:text-red-400" :
-                  ""
-                }`}>
+                <div
+                  className={`text-sm font-medium mb-2 flex items-center justify-between ${
+                    isToday
+                      ? "text-blue-600"
+                      : !isWorking && isCurrentMonth
+                        ? "text-red-600 dark:text-red-400"
+                        : ""
+                  }`}
+                >
                   <span>{date.getDate()}</span>
                   {isCurrentMonth && !isWorking && (
                     <CircleAlert className="w-4 h-4 text-red-500 dark:text-red-400" />
@@ -158,12 +163,16 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
                   // Día laboral o fuera del mes actual
                   <div className="space-y-1">
                     {/* Horarios de trabajo para días laborables del mes actual */}
-                    {isCurrentMonth && isWorking && daySchedule?.workingHours?.start && daySchedule?.workingHours?.end && (
-                      <div className="text-xs text-gray-600 dark:text-white font-medium mb-1">
-                        {formatTime(daySchedule.workingHours.start)} - {formatTime(daySchedule.workingHours.end)}
-                      </div>
-                    )}
-                    
+                    {isCurrentMonth &&
+                      isWorking &&
+                      daySchedule?.workingHours?.start &&
+                      daySchedule?.workingHours?.end && (
+                        <div className="text-xs text-gray-600 dark:text-white font-medium mb-1">
+                          {formatTime(daySchedule.workingHours.start)} -{" "}
+                          {formatTime(daySchedule.workingHours.end)}
+                        </div>
+                      )}
+
                     {/* Citas programadas */}
                     {slots.slice(0, 3).map((slot) => (
                       <div
