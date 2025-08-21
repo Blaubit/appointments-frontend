@@ -69,18 +69,8 @@ export default async function SettingsPage({
 
   // Primero obtener los datos del usuario
   const profileData = await getUser();
-
-  // Buscar información de la empresa usando el company.id del usuario - VALIDAR QUE EXISTE
-  let companyData = null;
-  if (profileData?.company.id && typeof profileData.company.id === "string") {
-    const companyResult = await findCompany(profileData.company.id);
-    if ("data" in companyResult) {
-      companyData = companyResult.data;
-    } else {
-      console.error("Error fetching company data:", companyResult.message);
-    }
-  } else {
-    console.warn("No company.id found for user or company.id is not a string");
+  if (!profileData) {
+    throw new Error("No se pudo obtener la información del usuario");
   }
 
   // Fetch del resto de datos del servidor
@@ -103,15 +93,9 @@ export default async function SettingsPage({
     findAllRoles(),
   ]);
 
-  // Crear el objeto de usuario con la información de la empresa
-  const profileDataWithCompany: any = {
-    ...profileData,
-    company: companyData, // Agregar los datos completos de la empresa
-  };
-
   return (
     <SettingsPageClient
-      profileData={profileDataWithCompany}
+      profileData={profileData}
       scheduleSettings={scheduleSettings}
       securityData={securityData}
       appearanceSettings={appearanceSettings}

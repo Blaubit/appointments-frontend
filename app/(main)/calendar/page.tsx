@@ -3,7 +3,7 @@ import CalendarPageClient from "./page.client";
 import { Header } from "@/components/header";
 import { findAll as findAllServices } from "@/actions/services/findAll";
 import { getUser } from "@/actions/auth";
-import {User} from "@/types";
+import { User } from "@/types";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 // Forzar renderizado dinámico
 export const dynamic = "force-dynamic";

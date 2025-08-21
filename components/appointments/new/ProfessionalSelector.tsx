@@ -34,7 +34,7 @@ export const ProfessionalSelector: React.FC<Props> = ({
   const filteredProfessionals = professionals.filter((professional) =>
     professional.fullName
       .toLowerCase()
-      .includes(professionalSearch.trim().toLowerCase())
+      .includes(professionalSearch.trim().toLowerCase()),
   );
 
   useEffect(() => {
@@ -45,8 +45,7 @@ export const ProfessionalSelector: React.FC<Props> = ({
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setProfessionalSearch]);
 
   const handleProfessionalSelect = (professional: User) => {
@@ -78,9 +77,7 @@ export const ProfessionalSelector: React.FC<Props> = ({
                 placeholder="Buscar profesional por nombre..."
                 value={professionalSearch}
                 onChange={(e) => setProfessionalSearch(e.target.value)}
-                onFocus={() =>
-                  setProfessionalSearch(professionalSearch || " ")
-                }
+                onFocus={() => setProfessionalSearch(professionalSearch || " ")}
                 className="pl-10"
               />
             </div>
@@ -93,15 +90,11 @@ export const ProfessionalSelector: React.FC<Props> = ({
                       <div
                         key={professional.id}
                         className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                        onClick={() =>
-                          handleProfessionalSelect(professional)
-                        }
+                        onClick={() => handleProfessionalSelect(professional)}
                       >
                         <Avatar className="h-10 w-10">
                           <AvatarImage
-                            src={
-                              professional.avatar || "/placeholder.svg"
-                            }
+                            src={professional.avatar || "/placeholder.svg"}
                           />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
                             {professional.fullName

@@ -18,7 +18,6 @@ export interface Service {
   company: Company;
 }
 
-
 export interface ServiceCategoryConfig {
   id: ServiceCategory;
   name: string;

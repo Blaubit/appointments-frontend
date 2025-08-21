@@ -41,7 +41,7 @@ import { AppearenceForm } from "@/components/settings/appearence-form";
 import { Role, User, Company } from "@/types";
 
 interface SettingsPageClientProps {
-  profileData: User & { company?: Company };
+  profileData: User;
   scheduleSettings: {
     timezone: string;
     workingDays: {
@@ -277,14 +277,14 @@ export function SettingsPageClient({
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving business info:", companyData);
 
+      // Actualizar el estado con los datos de la empresa
+      // Como company es requerido en User, sabemos que profileData.company existe
       setProfileData((prev) => ({
         ...prev,
-        company: prev.company
-          ? {
-              ...prev.company,
-              ...companyData,
-            }
-          : undefined,
+        company: {
+          ...prev.company, // Esto preserva id y createdAt
+          ...companyData, // Esto actualiza el resto de campos
+        },
       }));
     } catch (error) {
       console.error("Error saving business info:", error);
@@ -365,6 +365,7 @@ export function SettingsPageClient({
       console.error("Error exporting data:", error);
     }
   };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -413,29 +414,12 @@ export function SettingsPageClient({
           {/* Business Tab */}
           {hasPermissionForTab("business") && (
             <TabsContent value="business" className="space-y-6">
-              {profileData.company ? (
-                <BusinessInfoForm
-                  company={profileData.company}
-                  onSave={handleSaveBusiness}
-                  isLoading={isLoading}
-                  canEdit={canEdit()} // <- Props agregada correctamente
-                />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Información del Negocio</CardTitle>
-                    <CardDescription>
-                      No se encontró información de la empresa asociada.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-500">
-                      Por favor, contacta al administrador para configurar la
-                      información de tu empresa.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <BusinessInfoForm
+                company={profileData.company}
+                onSave={handleSaveBusiness}
+                isLoading={isLoading}
+                canEdit={canEdit()}
+              />
             </TabsContent>
           )}
 
@@ -456,7 +440,7 @@ export function SettingsPageClient({
                 onPageChange={handlePageChange}
                 meta={usersMeta}
                 useBackendPagination={true}
-                canEdit={canEdit()} // <- Props agregada correctamente
+                canEdit={canEdit()}
               />
             </TabsContent>
           )}

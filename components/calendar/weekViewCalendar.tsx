@@ -26,7 +26,7 @@ function getWeekDays(weekDate: Date) {
 
 // Función para convertir tiempo string a minutos desde medianoche
 function timeStringToMinutes(timeString: string): number {
-  const [hours, minutes] = timeString.split(':').map(Number);
+  const [hours, minutes] = timeString.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
@@ -106,38 +106,40 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
   function getWeekHourRange() {
     let earliestStart = 24; // Empezar con el valor máximo
     let latestEnd = 0; // Empezar con el valor mínimo
-    
+
     let hasAnyWorkingHours = false;
-    
-    days.forEach(date => {
+
+    days.forEach((date) => {
       const dateStr = date.toISOString().split("T")[0];
       const daySchedule = schedule.schedule.find((d) => d.date === dateStr);
-      
+
       if (daySchedule?.workingHours?.start && daySchedule?.workingHours?.end) {
         hasAnyWorkingHours = true;
-        const startMinutes = timeStringToMinutes(daySchedule.workingHours.start);
+        const startMinutes = timeStringToMinutes(
+          daySchedule.workingHours.start,
+        );
         const endMinutes = timeStringToMinutes(daySchedule.workingHours.end);
-        
+
         const startHour = Math.floor(startMinutes / 60);
         const endHour = Math.ceil(endMinutes / 60);
-        
+
         earliestStart = Math.min(earliestStart, startHour);
         latestEnd = Math.max(latestEnd, endHour);
       }
     });
-    
+
     // Si no hay horarios de trabajo, usar valores por defecto
     if (!hasAnyWorkingHours) {
       earliestStart = 8;
       latestEnd = 19;
     }
-    
+
     return { start: earliestStart, end: latestEnd };
   }
 
   const { start: visualStartHour, end: visualEndHour } = getWeekHourRange();
   const hourLines = generateHourLines(visualStartHour, visualEndHour, 30);
-  
+
   // Calcular altura exacta del contenedor
   const containerHeight = Math.max((hourLines.length - 1) * 40, 600);
 
@@ -158,7 +160,9 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
   function isWorkingDay(date: Date): boolean {
     const daySchedule = getDaySchedule(date);
-    return !!(daySchedule?.workingHours?.start && daySchedule?.workingHours?.end);
+    return !!(
+      daySchedule?.workingHours?.start && daySchedule?.workingHours?.end
+    );
   }
 
   return (
@@ -179,8 +183,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                   isToday
                     ? "text-blue-600 dark:text-blue-400 font-bold"
                     : isWorking
-                    ? "text-gray-700 dark:text-gray-200"
-                    : "text-gray-400 dark:text-gray-500"
+                      ? "text-gray-700 dark:text-gray-200"
+                      : "text-gray-400 dark:text-gray-500"
                 }`}
               >
                 <div className="text-base font-semibold">
@@ -248,8 +252,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                 className={`relative h-full border-l border-gray-200 dark:border-gray-700 ${
                   isWorking ? "cursor-pointer" : ""
                 }`}
-                style={{ 
-                  background: isWorking ? "transparent" : "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,0,0,0.05) 10px, rgba(255,0,0,0.05) 20px)"
+                style={{
+                  background: isWorking
+                    ? "transparent"
+                    : "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,0,0,0.05) 10px, rgba(255,0,0,0.05) 20px)",
                 }}
                 onClick={(e) => {
                   if (isWorking && onDayColumnClick) {
@@ -276,44 +282,54 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                 )}
 
                 {/* Horarios de trabajo para días laborables */}
-                {isWorking && daySchedule?.workingHours?.start && daySchedule?.workingHours?.end && (
-                  <div className="absolute top-2 left-1 right-1 z-20 pointer-events-none">
-                    <div className="text-xs text-center bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 shadow-sm">
-                      {daySchedule.workingHours.start.slice(0, 5)} - {daySchedule.workingHours.end.slice(0, 5)}
+                {isWorking &&
+                  daySchedule?.workingHours?.start &&
+                  daySchedule?.workingHours?.end && (
+                    <div className="absolute top-2 left-1 right-1 z-20 pointer-events-none">
+                      <div className="text-xs text-center bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 shadow-sm">
+                        {daySchedule.workingHours.start.slice(0, 5)} -{" "}
+                        {daySchedule.workingHours.end.slice(0, 5)}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Slots ocupados solo para días laborables */}
-                {isWorking && slots.map((slot) => {
-                  const top = timeToPosition(slot.startTime.slice(0, 5), visualStartHour);
-                  const end = slot.endTime
-                    ? slot.endTime.slice(0, 5)
-                    : slot.startTime.slice(0, 5);
-                  const durationMinutes =
-                    parseInt(end.split(":")[0]) * 60 +
-                    parseInt(end.split(":")[1]) -
-                    (parseInt(slot.startTime.split(":")[0]) * 60 +
-                      parseInt(slot.startTime.split(":")[1]));
-                  const slotHeight = Math.max((durationMinutes / 60) * 64, 40);
+                {isWorking &&
+                  slots.map((slot) => {
+                    const top = timeToPosition(
+                      slot.startTime.slice(0, 5),
+                      visualStartHour,
+                    );
+                    const end = slot.endTime
+                      ? slot.endTime.slice(0, 5)
+                      : slot.startTime.slice(0, 5);
+                    const durationMinutes =
+                      parseInt(end.split(":")[0]) * 60 +
+                      parseInt(end.split(":")[1]) -
+                      (parseInt(slot.startTime.split(":")[0]) * 60 +
+                        parseInt(slot.startTime.split(":")[1]));
+                    const slotHeight = Math.max(
+                      (durationMinutes / 60) * 64,
+                      40,
+                    );
 
-                  const colIdx = slotColumns[slot.appointmentId];
-                  const colWidth = 100 / (totalColumns || 1);
+                    const colIdx = slotColumns[slot.appointmentId];
+                    const colWidth = 100 / (totalColumns || 1);
 
-                  return (
-                    <div
-                      key={slot.appointmentId}
-                      style={{
-                        position: "absolute",
-                        left: `calc(${colIdx * colWidth}% + 4px)`,
-                        top: `${top + 30}px`, // Offset para el horario laboral
-                        width: `calc(${colWidth}% - 8px)`,
-                        height: `${slotHeight}px`,
-                        zIndex: 30,
-                        overflow: "visible",
-                        fontSize: "1.1rem",
-                      }}
-                      className={`
+                    return (
+                      <div
+                        key={slot.appointmentId}
+                        style={{
+                          position: "absolute",
+                          left: `calc(${colIdx * colWidth}% + 4px)`,
+                          top: `${top + 30}px`, // Offset para el horario laboral
+                          width: `calc(${colWidth}% - 8px)`,
+                          height: `${slotHeight}px`,
+                          zIndex: 30,
+                          overflow: "visible",
+                          fontSize: "1.1rem",
+                        }}
+                        className={`
                         shadow-lg
                         transition
                         bg-blue-600 dark:bg-blue-700
@@ -328,42 +344,44 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                         relative
                         text-white dark:text-blue-100
                       `}
-                      onMouseEnter={() => setHoveredSlotId(slot.appointmentId)}
-                      onMouseLeave={() => setHoveredSlotId(null)}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Evita que el click en el slot cambie de vista
-                        if (onSlotClick) onSlotClick(slot);
-                      }}
-                      tabIndex={0}
-                    >
-                      <div className="font-bold text-lg truncate text-center w-full">
-                        {slot.clientName}
-                      </div>
-                      {hoveredSlotId === slot.appointmentId && (
-                        <div
-                          className="
+                        onMouseEnter={() =>
+                          setHoveredSlotId(slot.appointmentId)
+                        }
+                        onMouseLeave={() => setHoveredSlotId(null)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Evita que el click en el slot cambie de vista
+                          if (onSlotClick) onSlotClick(slot);
+                        }}
+                        tabIndex={0}
+                      >
+                        <div className="font-bold text-lg truncate text-center w-full">
+                          {slot.clientName}
+                        </div>
+                        {hoveredSlotId === slot.appointmentId && (
+                          <div
+                            className="
                             absolute left-1/2 bottom-full z-[100] w-[240px] -translate-x-1/2 mb-3 px-4 py-3 rounded-lg shadow-xl
                             bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200
                             border border-gray-700 dark:border-gray-600 text-base
                             pointer-events-none
                             animate-fadeIn
                           "
-                        >
-                          <div className="mb-1">
-                            <b>Paciente:</b> {slot.clientName}
+                          >
+                            <div className="mb-1">
+                              <b>Paciente:</b> {slot.clientName}
+                            </div>
+                            <div className="mb-1">
+                              <b>Servicio:</b> {slot.serviceName}
+                            </div>
+                            <div className="mb-1">
+                              <b>Horario:</b> {slot.startTime.slice(0, 5)} -{" "}
+                              {slot.endTime.slice(0, 5)}
+                            </div>
                           </div>
-                          <div className="mb-1">
-                            <b>Servicio:</b> {slot.serviceName}
-                          </div>
-                          <div className="mb-1">
-                            <b>Horario:</b> {slot.startTime.slice(0, 5)} -{" "}
-                            {slot.endTime.slice(0, 5)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             );
           })}

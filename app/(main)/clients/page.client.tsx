@@ -93,10 +93,14 @@ export default function ClientsPageClient({
 }: ClientsPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
-  const [searchTerm, setSearchTerm] = useState(initialSearchParams?.search || "");
-  const [statusFilter, setStatusFilter] = useState(initialSearchParams?.status || "all");
+  const [searchTerm, setSearchTerm] = useState(
+    initialSearchParams?.search || "",
+  );
+  const [statusFilter, setStatusFilter] = useState(
+    initialSearchParams?.status || "all",
+  );
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -113,23 +117,23 @@ export default function ClientsPageClient({
   // Función para actualizar filtros en la URL
   const updateFilters = (newFilters: { search?: string; status?: string }) => {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     // Resetear página cuando cambian los filtros
-    params.set('page', '1');
-    
+    params.set("page", "1");
+
     if (newFilters.search !== undefined) {
       if (newFilters.search.trim()) {
-        params.set('search', newFilters.search);
+        params.set("search", newFilters.search);
       } else {
-        params.delete('search');
+        params.delete("search");
       }
     }
-    
+
     if (newFilters.status !== undefined) {
-      if (newFilters.status !== 'all') {
-        params.set('status', newFilters.status);
+      if (newFilters.status !== "all") {
+        params.set("status", newFilters.status);
       } else {
-        params.delete('status');
+        params.delete("status");
       }
     }
 
@@ -472,7 +476,10 @@ export default function ClientsPageClient({
               />
             </div>
             <div className="w-full sm:w-48">
-              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+              <Select
+                value={statusFilter}
+                onValueChange={handleStatusFilterChange}
+              >
                 <SelectTrigger>
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
@@ -669,7 +676,9 @@ export default function ClientsPageClient({
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="font-medium">{client.fullName}</div>
+                              <div className="font-medium">
+                                {client.fullName}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
@@ -727,7 +736,9 @@ export default function ClientsPageClient({
                                 Enviar Email
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleScheduleAppointment(client)}
+                                onClick={() =>
+                                  handleScheduleAppointment(client)
+                                }
                               >
                                 <Calendar className="h-4 w-4 mr-2" />
                                 Programar Cita
@@ -823,7 +834,9 @@ export default function ClientsPageClient({
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium">Fecha de Registro</label>
+                    <label className="text-sm font-medium">
+                      Fecha de Registro
+                    </label>
                     <p className="mt-1">
                       {formatDate(selectedClient.createdAt)}
                     </p>
@@ -832,7 +845,6 @@ export default function ClientsPageClient({
                       <p className="mt-1">{selectedClient.company?.name}</p>
                     </div>
                   </div>
-                  
                 </div>
               </div>
             </div>

@@ -10,33 +10,43 @@ export default async function ClientsPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   // Extraer parámetros de búsqueda
-  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1;
-  const limit = typeof searchParams.limit === 'string' ? parseInt(searchParams.limit) : 10;
-  const search = typeof searchParams.search === 'string' ? searchParams.search : '';
-  const status = typeof searchParams.status === 'string' ? searchParams.status : 'all';
+  const page =
+    typeof searchParams.page === "string" ? parseInt(searchParams.page) : 1;
+  const limit =
+    typeof searchParams.limit === "string" ? parseInt(searchParams.limit) : 10;
+  const search =
+    typeof searchParams.search === "string" ? searchParams.search : "";
+  const status =
+    typeof searchParams.status === "string" ? searchParams.status : "all";
 
   // Crear URLSearchParams para enviar al backend
   const params = new URLSearchParams();
-  params.set('page', page.toString());
-  params.set('limit', limit.toString());
-  if (search) params.set('search', search);
-  if (status && status !== 'all') params.set('status', status);
+  params.set("page", page.toString());
+  params.set("limit", limit.toString());
+  if (search) params.set("search", search);
+  if (status && status !== "all") params.set("status", status);
 
   const clients = await findAll({ searchParams: params });
-  
+
   // Calcular estadísticas basadas en clientes filtrados
   const stats: ClientStats = {
     totalClients: clients.meta?.totalItems || 0,
-    activeClients: clients.data?.filter((c: Client) => c.status === 'active').length || 0,
-    newThisMonth: clients.data?.filter((c: Client) => {
-      const createdDate = new Date(c.createdAt);
-      const now = new Date();
-      return (
-        createdDate.getMonth() === now.getMonth() &&
-        createdDate.getFullYear() === now.getFullYear()
-      );
-    }).length || 0,
-    averageRating: clients.data?.reduce((acc: number, c: Client) => acc + (parseFloat(c.rating) || 0), 0) / (clients.data?.length || 1) || 0,
+    activeClients:
+      clients.data?.filter((c: Client) => c.status === "active").length || 0,
+    newThisMonth:
+      clients.data?.filter((c: Client) => {
+        const createdDate = new Date(c.createdAt);
+        const now = new Date();
+        return (
+          createdDate.getMonth() === now.getMonth() &&
+          createdDate.getFullYear() === now.getFullYear()
+        );
+      }).length || 0,
+    averageRating:
+      clients.data?.reduce(
+        (acc: number, c: Client) => acc + (parseFloat(c.rating) || 0),
+        0,
+      ) / (clients.data?.length || 1) || 0,
   };
 
   return (
@@ -58,7 +68,7 @@ export default async function ClientsPage({
             page,
             limit,
             search,
-            status
+            status,
           }}
         />
       </main>

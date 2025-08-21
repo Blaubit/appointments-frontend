@@ -42,9 +42,7 @@ export const DateTimeSelector: React.FC<Props> = ({
       <Card>
         <CardHeader>
           <CardTitle>Horario</CardTitle>
-          <CardDescription>
-            Selecciona la hora para la cita
-          </CardDescription>
+          <CardDescription>Selecciona la hora para la cita</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-2">

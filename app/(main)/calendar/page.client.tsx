@@ -42,11 +42,11 @@ export default function CalendarPageClient({
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | undefined
   >(undefined);
-  
+
   // Estado para el profesional seleccionado
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
     // Encontrar el profesional por defecto basado en userId
-    professionals.find(p => p.id === userId) || null
+    professionals.find((p) => p.id === userId) || null,
   );
 
   // ID del profesional actual para usar en las consultas
@@ -98,7 +98,9 @@ export default function CalendarPageClient({
     setViewMode("day");
   };
   const handleHourClickDay = (time: string) => {
-    redirect(`appointments/new?fechaHora=${currentDate.toISOString().split("T")[0]}T${time}&professionalId=${currentProfessionalId}`)
+    redirect(
+      `appointments/new?fechaHora=${currentDate.toISOString().split("T")[0]}T${time}&professionalId=${currentProfessionalId}`,
+    );
   };
   const handleSlotClick = (slot: OccupiedSlot & { date: string }) => {
     setSelectedAppointmentId(slot.appointmentId);
