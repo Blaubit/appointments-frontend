@@ -37,6 +37,7 @@ import {
 import { ClientForm } from "@/components/client-form";
 import { ClientPagination } from "@/components/ui/client-pagination";
 import { create } from "@/actions/clients/create";
+import deleteClient from "@/actions/clients/delete";
 import edit from "@/actions/clients/edit";
 import {
   Users,
@@ -164,10 +165,9 @@ export default function ClientsPageClient({
       email: data.email,
       phone: data.phone,
     };
-
     edit(data2)
       .then((response) => {
-        if (response.status === 201) {
+        if (response.status === 200) {
           router.refresh();
         }
       })
@@ -177,6 +177,13 @@ export default function ClientsPageClient({
   };
 
   const handleDeleteClient = (client: Client) => {
+    deleteClient({ id: client.id })
+      .then((response) => {
+        if (response.status === 200) {
+          router.refresh();
+        }
+      })
+      .catch((error) => console.error(error));
     console.log("Eliminar cliente:", client.id);
   };
 
