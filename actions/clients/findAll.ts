@@ -44,10 +44,6 @@ export async function findAll(
     if (searchParamsObject.status && searchParamsObject.status !== "all") {
       params.status = searchParamsObject.status;
     }
-
-    console.log("API URL:", url);
-    console.log("API Params:", params);
-
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
