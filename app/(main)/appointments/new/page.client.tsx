@@ -136,9 +136,15 @@ export default function PageClient({
     }
   };
 
-  // Efecto principal para procesar parámetros de URL
+  // Efecto principal para procesar parámetros de URL y preseleccionar profesional
   useEffect(() => {
     if (!professionals || urlParamsProcessed) return;
+
+    // Debug: Imprimir información de la sesión del usuario
+    console.log("UserSession:", userSession);
+    console.log("UserSession role:", userSession?.role);
+    console.log("UserSession role name:", userSession?.role?.name);
+    console.log("Professionals array:", professionals);
 
     // 1. Primero seleccionar profesional si viene en la URL
     let professionalToSelect: User | null = null;
@@ -150,12 +156,18 @@ export default function PageClient({
             p.id === professionalIdFromUrl ||
             p.id.toString() === professionalIdFromUrl,
         ) || null;
+      console.log("Professional selected from URL:", professionalToSelect);
     } else if (userSession && userSession.role?.name === "profesional") {
       // Auto-seleccionar si es profesional logueado y no hay professionalId en URL
-      professionalToSelect = userSession;
+      // Primero intentamos encontrar el usuario en la lista de profesionales
+      professionalToSelect = professionals.find(
+        (p) => p.id === userSession.id || p.id.toString() === userSession.id.toString()
+      ) || userSession;
+      console.log("Professional auto-selected from session:", professionalToSelect);
     }
 
     if (professionalToSelect) {
+      console.log("Setting selected professional:", professionalToSelect);
       setSelectedProfessional(professionalToSelect);
       setFormData((prev) => ({
         ...prev,
@@ -189,6 +201,7 @@ export default function PageClient({
         setUrlParamsProcessed(true);
       }
     } else {
+      console.log("No professional was selected");
       setUrlParamsProcessed(true);
     }
   }, [
@@ -507,6 +520,9 @@ export default function PageClient({
     );
   };
 
+  // Determinar si el selector debe estar bloqueado
+  const isProfessionalUser = userSession?.role?.name === "profesional";
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header
@@ -558,8 +574,10 @@ export default function PageClient({
             title="Seleccionar Profesional"
             description="Elige el profesional que atenderá la cita"
             className="mb-6 sm:mb-8"
+            isLocked={isProfessionalUser}
           />
 
+          {/* Resto del código permanece igual... */}
           {/* Sección de servicios modificada */}
           <Card>
             <CardHeader>
