@@ -538,10 +538,9 @@ export function UserForm({
   };
 
   // Obtener el rol de secretaria para mostrar asignaciones de doctores
-  const secretaryRole = roles.find(
-    (role) =>
-      role.name.toLowerCase().includes("secretaria") ||
-      role.id === "548c89d1-9169-430f-8f2a-24d52dbba880",
+  console.log("roles", roles);
+  const secretaryRole = roles.find((role) =>
+    role.name.toLowerCase().includes("secretaria"),
   );
 
   // Componente para mostrar errores de validación

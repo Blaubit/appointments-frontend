@@ -45,15 +45,11 @@ export const SelectedServicesSummary: React.FC<Props> = ({
       <div className="mt-4 border-t pt-2">
         <div className="flex items-center justify-between">
           <span className="font-medium">Total:</span>
-          <span className="font-bold text-lg">
-            ${totalPrice.toFixed(2)}
-          </span>
+          <span className="font-bold text-lg">${totalPrice.toFixed(2)}</span>
         </div>
         <div className="flex items-center justify-between mt-1">
           <span>Duración Total:</span>
-          <span className="font-medium">
-            {formatDuration(totalDuration)}
-          </span>
+          <span className="font-medium">{formatDuration(totalDuration)}</span>
         </div>
       </div>
     </div>

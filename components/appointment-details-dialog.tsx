@@ -63,7 +63,6 @@ export function AppointmentDetailsDialog({
   onCall,
   onEmail,
 }: AppointmentDetailsDialogProps) {
-
   console.log("Appointment ID:", appointmentId);
   const router = useRouter();
   const [appointment, setAppointment] = useState<Appointment | null>(null);

@@ -53,14 +53,16 @@ export default function PageClient({
   const professionalIdFromUrl = searchParams.get("professionalId") ?? "";
   const fechaHoraFromUrl = searchParams.get("fechaHora"); // Ej: "2025-09-01T14:30"
   const router = useRouter();
-  
+
   // Estados existentes
   const [selectedClient, setSelectedClient] = useState(() => {
     if (!clientIdFromUrl) return null;
     return clients.find((client) => client.id === clientIdFromUrl) || null;
   });
 
-  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
+    null,
+  );
   const [selectedService, setSelectedService] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -74,7 +76,9 @@ export default function PageClient({
   const [openDialog, setOpenDialog] = useState(false);
 
   // Nuevos estados para servicios del profesional
-  const [professionalServices, setProfessionalServices] = useState<Service[]>([]);
+  const [professionalServices, setProfessionalServices] = useState<Service[]>(
+    [],
+  );
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
 
@@ -109,13 +113,15 @@ export default function PageClient({
 
     setIsLoadingServices(true);
     setServicesError(null);
-    
+
     try {
       const result = await findProfessionalServices(professionalId);
-      
+
       if ("data" in result && result.data) {
         // Extraer los servicios del array de SercviceProfessional
-        const services = result.data.map((item: SercviceProfessional) => item.service);
+        const services = result.data.map(
+          (item: SercviceProfessional) => item.service,
+        );
         setProfessionalServices(services);
       } else {
         setProfessionalServices([]);
@@ -138,20 +144,20 @@ export default function PageClient({
     let professionalToSelect: User | null = null;
 
     if (professionalIdFromUrl) {
-      professionalToSelect = professionals.find(
-        (p) => p.id === professionalIdFromUrl || p.id.toString() === professionalIdFromUrl
-      ) || null;
-    } else if (
-      userSession &&
-      userSession.role?.name === "profesional"
-    ) {
+      professionalToSelect =
+        professionals.find(
+          (p) =>
+            p.id === professionalIdFromUrl ||
+            p.id.toString() === professionalIdFromUrl,
+        ) || null;
+    } else if (userSession && userSession.role?.name === "profesional") {
       // Auto-seleccionar si es profesional logueado y no hay professionalId en URL
       professionalToSelect = userSession;
     }
 
     if (professionalToSelect) {
       setSelectedProfessional(professionalToSelect);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         professionalId: professionalToSelect!.id.toString(),
       }));
@@ -161,21 +167,23 @@ export default function PageClient({
         const [fecha, hora] = fechaHoraFromUrl.split("T");
         if (fecha) {
           setSelectedDate(fecha);
-          setFormData(prev => ({ ...prev, date: fecha }));
-          
+          setFormData((prev) => ({ ...prev, date: fecha }));
+
           // Marcar que los parámetros han sido procesados
           setUrlParamsProcessed(true);
-          
+
           // Fetch available hours y luego seleccionar la hora
-          fetchAvailableHours(professionalToSelect.id.toString(), fecha).then(() => {
-            if (hora) {
-              // Usar setTimeout para asegurar que availableHours se haya actualizado
-              setTimeout(() => {
-                setSelectedTime(hora);
-                setFormData(prev => ({ ...prev, time: hora }));
-              }, 100);
-            }
-          });
+          fetchAvailableHours(professionalToSelect.id.toString(), fecha).then(
+            () => {
+              if (hora) {
+                // Usar setTimeout para asegurar que availableHours se haya actualizado
+                setTimeout(() => {
+                  setSelectedTime(hora);
+                  setFormData((prev) => ({ ...prev, time: hora }));
+                }, 100);
+              }
+            },
+          );
         }
       } else {
         setUrlParamsProcessed(true);
@@ -183,7 +191,13 @@ export default function PageClient({
     } else {
       setUrlParamsProcessed(true);
     }
-  }, [professionals, professionalIdFromUrl, fechaHoraFromUrl, userSession, urlParamsProcessed]);
+  }, [
+    professionals,
+    professionalIdFromUrl,
+    fechaHoraFromUrl,
+    userSession,
+    urlParamsProcessed,
+  ]);
 
   // Efecto para cargar servicios cuando cambia el profesional
   useEffect(() => {
@@ -206,16 +220,16 @@ export default function PageClient({
 
     setIsLoadingHours(true);
     setHoursError(null);
-    
+
     try {
       const result = await findPeriod(professionalId, date, "day");
-      
+
       if ("data" in result && result.data) {
         // Buscar el día específico en el schedule
         const daySchedule = result.data.schedule.find(
-          (day: any) => day.date === date
+          (day: any) => day.date === date,
         );
-        
+
         if (daySchedule && daySchedule.availableHours) {
           setAvailableHours(daySchedule.availableHours);
         } else {
@@ -238,7 +252,7 @@ export default function PageClient({
   // Efecto para cargar horarios cuando cambia la fecha o el profesional (solo después del procesamiento inicial)
   useEffect(() => {
     if (!urlParamsProcessed) return; // Esperar a que se procesen los parámetros de URL
-    
+
     if (selectedProfessional && selectedDate) {
       fetchAvailableHours(selectedProfessional.id.toString(), selectedDate);
     } else {
@@ -255,7 +269,7 @@ export default function PageClient({
     const service = professionalServices.find((s) => s.id === id);
     return sum + (service ? Number(service.price) : 0);
   }, 0);
-  
+
   const totalDuration = selectedServices.reduce((sum, id) => {
     const service = professionalServices.find((s) => s.id === id);
     return sum + (service ? Number(service.durationMinutes) : 0);
@@ -285,11 +299,14 @@ export default function PageClient({
         .includes(professionalSearch.toLowerCase()),
     ) || [];
 
-  const [selectedServicesData, setSelectedServicesData] = useState<string[]>([]);
+  const [selectedServicesData, setSelectedServicesData] = useState<string[]>(
+    [],
+  );
 
   useEffect(() => {
     const names = selectedServices.map(
-      (id) => professionalServices.find((s) => s.id.toString() === id)?.name || "",
+      (id) =>
+        professionalServices.find((s) => s.id.toString() === id)?.name || "",
     );
     setSelectedServicesData(names);
   }, [selectedServices, professionalServices]);
@@ -325,15 +342,17 @@ export default function PageClient({
       professionalId: professional ? professional.id.toString() : "",
     });
     setProfessionalSearch("");
-    
+
     // Limpiar hora seleccionada cuando cambia el profesional
     setSelectedTime("");
-    setFormData(prev => ({ ...prev, time: "" }));
+    setFormData((prev) => ({ ...prev, time: "" }));
   };
 
   const handleServiceSelect = (serviceId: string) => {
     setSelectedService(serviceId);
-    const service = professionalServices.find((s) => s.id.toString() === serviceId);
+    const service = professionalServices.find(
+      (s) => s.id.toString() === serviceId,
+    );
     if (service) {
       setFormData({
         ...formData,
@@ -347,10 +366,10 @@ export default function PageClient({
   const handleDateChange = (fecha: string) => {
     setSelectedDate(fecha);
     setFormData({ ...formData, date: fecha });
-    
+
     // Limpiar hora seleccionada cuando cambia la fecha
     setSelectedTime("");
-    setFormData(prev => ({ ...prev, time: "" }));
+    setFormData((prev) => ({ ...prev, time: "" }));
   };
 
   const handleTimeSelect = (time: string) => {
@@ -363,7 +382,7 @@ export default function PageClient({
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    
+
     const dataToValidate = {
       clientName: formData.clientName,
       clientEmail: formData.clientEmail,
@@ -435,7 +454,7 @@ export default function PageClient({
       const failedAppointments = results.filter(
         (result) => "message" in result,
       );
-      
+
       if (failedAppointments.length > 0) {
         throw new Error("Error creating some appointments");
       }
@@ -549,17 +568,18 @@ export default function PageClient({
                 <span>Servicios</span>
               </CardTitle>
               <CardDescription>
-                {!selectedProfessional 
+                {!selectedProfessional
                   ? "Primero selecciona un profesional para ver sus servicios disponibles"
-                  : "Selecciona uno o más servicios para la cita"
-                }
+                  : "Selecciona uno o más servicios para la cita"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {!selectedProfessional ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Selecciona un profesional para ver los servicios disponibles</p>
+                  <p>
+                    Selecciona un profesional para ver los servicios disponibles
+                  </p>
                 </div>
               ) : isLoadingServices ? (
                 <div className="text-center py-8">
@@ -574,7 +594,9 @@ export default function PageClient({
               ) : professionalServices.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400 opacity-50" />
-                  <p className="text-gray-500">Este profesional no tiene servicios configurados</p>
+                  <p className="text-gray-500">
+                    Este profesional no tiene servicios configurados
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -629,9 +651,9 @@ export default function PageClient({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card>
-              <CalendarCard 
+              <CalendarCard
                 initialDate={selectedDate ? new Date(selectedDate) : new Date()}
-                onDateSelect={handleDateChange} 
+                onDateSelect={handleDateChange}
               />
             </Card>
 
@@ -640,12 +662,11 @@ export default function PageClient({
               <CardHeader>
                 <CardTitle>Horario</CardTitle>
                 <CardDescription>
-                  {!selectedProfessional 
+                  {!selectedProfessional
                     ? "Primero selecciona un profesional"
-                    : !selectedDate 
-                    ? "Selecciona una fecha para ver los horarios disponibles"
-                    : "Selecciona la hora para la cita"
-                  }
+                    : !selectedDate
+                      ? "Selecciona una fecha para ver los horarios disponibles"
+                      : "Selecciona la hora para la cita"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -653,10 +674,9 @@ export default function PageClient({
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p>
-                      {!selectedProfessional 
+                      {!selectedProfessional
                         ? "Selecciona un profesional para ver horarios disponibles"
-                        : "Selecciona una fecha para ver horarios disponibles"
-                      }
+                        : "Selecciona una fecha para ver horarios disponibles"}
                     </p>
                   </div>
                 ) : isLoadingHours ? (
@@ -672,7 +692,9 @@ export default function PageClient({
                 ) : availableHours.length === 0 ? (
                   <div className="text-center py-8">
                     <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400 opacity-50" />
-                    <p className="text-gray-500">No hay horarios disponibles para esta fecha</p>
+                    <p className="text-gray-500">
+                      No hay horarios disponibles para esta fecha
+                    </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
@@ -735,8 +757,8 @@ export default function PageClient({
                         <span>{service}</span>
                         <span className="text-sm text-gray-500">
                           $
-                          {professionalServices.find((s) => s.name === service)?.price ||
-                            "0"}
+                          {professionalServices.find((s) => s.name === service)
+                            ?.price || "0"}
                         </span>
                       </li>
                     ))}
@@ -784,7 +806,7 @@ export default function PageClient({
               )}
             </Button>
           </div>
-          
+
           <AppointmentSuccessDialog
             isOpen={openDialog}
             onClose={() => setOpenDialog(false)}

@@ -45,8 +45,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   roles = [],
   canEdit = true,
 }) => {
-
- 
   const [profileData, setProfileData] = useState<Partial<User>>({
     id: "",
     fullName: "",
@@ -54,7 +52,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     bio: "",
     avatar: "",
     createdAt: "",
-    company:undefined,
+    company: undefined,
     role: {
       id: "",
       name: "",

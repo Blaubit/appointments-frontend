@@ -23,12 +23,12 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
 
   // Estado para fecha seleccionada y mes actual
   const [selectedDate, setSelectedDate] = useState<string>(
-    validInitialDate ? validInitialDate.toISOString().split("T")[0] : ""
+    validInitialDate ? validInitialDate.toISOString().split("T")[0] : "",
   );
   const [currentMonth, setCurrentMonth] = useState<Date>(
     validInitialDate
       ? new Date(validInitialDate.getFullYear(), validInitialDate.getMonth(), 1)
-      : new Date()
+      : new Date(),
   );
 
   // Sincroniza selectedDate y currentMonth si initialDate cambia
@@ -37,7 +37,11 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
       const dateStr = validInitialDate.toISOString().split("T")[0];
       setSelectedDate(dateStr);
       setCurrentMonth(
-        new Date(validInitialDate.getFullYear(), validInitialDate.getMonth(), 1)
+        new Date(
+          validInitialDate.getFullYear(),
+          validInitialDate.getMonth(),
+          1,
+        ),
       );
     }
   }, [validInitialDate]);

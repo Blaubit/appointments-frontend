@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -44,7 +43,7 @@ export function ClientSelectorCard({
   }, []);
 
   const filteredClients = clients.filter((client) =>
-    client.fullName.toLowerCase().includes(search.toLowerCase())
+    client.fullName.toLowerCase().includes(search.toLowerCase()),
   );
 
   // Crear cliente y seleccionarlo automáticamente
@@ -115,14 +114,20 @@ export function ClientSelectorCard({
                     <Avatar>
                       <AvatarImage src={client.avatar || "/placeholder.svg"} />
                       <AvatarFallback>
-                        {client.fullName.split(" ").map((n) => n[0]).join("")}
+                        {client.fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900 dark:text-white">{client.fullName}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {client.fullName}
+                      </p>
                       <p className="text-sm text-gray-500">{client.email}</p>
                       <p className="text-xs text-gray-400">
-                        {client.totalAppointments} citas • Última visita: {client.createdAt}
+                        {client.totalAppointments} citas • Última visita:{" "}
+                        {client.createdAt}
                       </p>
                     </div>
                   </div>
@@ -142,13 +147,22 @@ export function ClientSelectorCard({
             <Avatar className="flex-shrink-0">
               <AvatarImage src={selectedClient.avatar || "/placeholder.svg"} />
               <AvatarFallback>
-                {selectedClient.fullName.split(" ").map((n: string) => n[0]).join("")}
+                {selectedClient.fullName
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 dark:text-white truncate">{selectedClient.fullName}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{selectedClient.email}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{selectedClient.phone}</p>
+              <p className="font-medium text-gray-900 dark:text-white truncate">
+                {selectedClient.fullName}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {selectedClient.email}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {selectedClient.phone}
+              </p>
             </div>
             <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
               <CheckCircle className="h-5 w-5 text-green-600" />
@@ -167,14 +181,18 @@ export function ClientSelectorCard({
         {/* Formulario nuevo cliente */}
         {showNewClientForm && (
           <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-            <h4 className="font-medium text-gray-900 dark:text-white">Nuevo Cliente</h4>
+            <h4 className="font-medium text-gray-900 dark:text-white">
+              Nuevo Cliente
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="clientName">Nombre completo *</Label>
                 <Input
                   id="clientName"
                   value={form.fullName}
-                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, fullName: e.target.value })
+                  }
                   placeholder="Nombre del cliente"
                   required
                 />
@@ -211,7 +229,9 @@ export function ClientSelectorCard({
               <Button
                 type="button"
                 onClick={handleCreateClient}
-                disabled={!form.fullName.trim() || !form.phone.trim() || isCreating}
+                disabled={
+                  !form.fullName.trim() || !form.phone.trim() || isCreating
+                }
               >
                 {isCreating ? "Creando..." : "Seleccionar Cliente"}
               </Button>
