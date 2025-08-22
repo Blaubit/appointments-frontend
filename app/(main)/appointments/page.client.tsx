@@ -426,7 +426,7 @@ export default function PageClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-4 mb-6">
+            <div className="space-y-4 mb-6">
               {/* Search */}
               <div className="w-full">
                 <Label htmlFor="search" className="sr-only">
@@ -444,88 +444,89 @@ export default function PageClient({
                 </div>
               </div>
 
-              {/* Filters Row */}
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Status Filter */}
-                <div className="w-full md:w-48">
-                  <Select
-                    value={statusFilter}
-                    onValueChange={handleStatusFilter}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="confirmed">Confirmada</SelectItem>
-                      <SelectItem value="scheduled">Agendada</SelectItem>
-                      <SelectItem value="completed">Completada</SelectItem>
-                      <SelectItem value="in_progress">En progreso</SelectItem>
-                      <SelectItem value="cancelled">Cancelada</SelectItem>
-                      <SelectItem value="no_show">No asistió</SelectItem>
-                      <SelectItem value="expired">Expirada</SelectItem>
-                      <SelectItem value="rescheduled">Reagendada</SelectItem>
-                      <SelectItem value="waitlist">Lista de espera</SelectItem>
-                    </SelectContent>
-                  </Select>
+              {/* Filters Row - All in one line */}
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                {/* Left side - Filters */}
+                <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                  {/* Status Filter */}
+                  <div className="w-full sm:w-48">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={handleStatusFilter}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los estados</SelectItem>
+                        <SelectItem value="confirmed">Confirmada</SelectItem>
+                        <SelectItem value="scheduled">Agendada</SelectItem>
+                        <SelectItem value="completed">Completada</SelectItem>
+                        <SelectItem value="in_progress">En progreso</SelectItem>
+                        <SelectItem value="cancelled">Cancelada</SelectItem>
+                        <SelectItem value="no_show">No asistió</SelectItem>
+                        <SelectItem value="expired">Expirada</SelectItem>
+                        <SelectItem value="rescheduled">Reagendada</SelectItem>
+                        <SelectItem value="waitlist">Lista de espera</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date Filter */}
+                  <div className="w-full sm:w-48">
+                    <Select value={dateFilter} onValueChange={handleDateFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Fecha" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas las fechas</SelectItem>
+                        <SelectItem value="today">Hoy</SelectItem>
+                        <SelectItem value="tomorrow">Mañana</SelectItem>
+                        <SelectItem value="week">Esta semana</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Professional Filter - Only show if not a professional */}
+                  {!isProfessional && professionals && (
+                    <div className="w-full sm:w-64">
+                      <Select
+                        value={selectedProfessionalId}
+                        onValueChange={handleProfessionalFilter}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filtrar por profesional" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            Todos los profesionales
+                          </SelectItem>
+                          {professionals.map((professional) => (
+                            <SelectItem
+                              key={professional.id}
+                              value={professional.id}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage
+                                    src={professional.avatar || "/Avatar1.png"}
+                                    alt={professional.fullName}
+                                  />
+                                  <AvatarFallback>
+                                    {getInitials(professional.fullName)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{professional.fullName}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
-                {/* Date Filter */}
-                <div className="w-full md:w-48">
-                  <Select value={dateFilter} onValueChange={handleDateFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Fecha" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las fechas</SelectItem>
-                      <SelectItem value="today">Hoy</SelectItem>
-                      <SelectItem value="tomorrow">Mañana</SelectItem>
-                      <SelectItem value="week">Esta semana</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Professional Filter - Only show if not a professional */}
-              {!isProfessional && professionals && (
-                <div className="w-full md:w-64">
-                  <Select
-                    value={selectedProfessionalId}
-                    onValueChange={handleProfessionalFilter}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Filtrar por profesional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        Todos los profesionales
-                      </SelectItem>
-                      {professionals.map((professional) => (
-                        <SelectItem
-                          key={professional.id}
-                          value={professional.id}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage
-                                src={professional.avatar || "/Avatar1.png"}
-                                alt={professional.fullName}
-                              />
-                              <AvatarFallback>
-                                {getInitials(professional.fullName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{professional.fullName}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* View Mode Toggle - Moved to bottom on mobile */}
-              <div className="flex justify-center md:justify-end">
+                {/* Right side - View Mode Toggle */}
                 <div className="flex border rounded-lg">
                   <Button
                     variant={viewMode === "cards" ? "default" : "ghost"}
@@ -547,7 +548,7 @@ export default function PageClient({
               </div>
 
               {/* Results count */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Mostrando {clientFilteredAppointments.length} de{" "}
                   {appointments.length} citas
