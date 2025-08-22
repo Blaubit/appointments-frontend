@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ClientForm } from "@/components/client-form";
 import { ClientPagination } from "@/components/ui/client-pagination";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { create } from "@/actions/clients/create";
 import deleteClient from "@/actions/clients/delete";
 import edit from "@/actions/clients/edit";
@@ -106,6 +107,23 @@ export default function ClientsPageClient({
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
+  // Estados para los diálogos de confirmación
+  const [confirmationDialogs, setConfirmationDialogs] = useState({
+    deleteClient: {
+      open: false,
+      client: null as Client | null,
+    },
+    editClient: {
+      open: false,
+      data: null as ClientFormData | null,
+    },
+    success: {
+      open: false,
+      message: "",
+      title: "",
+    },
+  });
+
   // Debounce para búsqueda
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -114,6 +132,17 @@ export default function ClientsPageClient({
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
+
+  // Auto-cerrar diálogo de éxito después de 1000ms
+  useEffect(() => {
+    if (confirmationDialogs.success.open) {
+      const timer = setTimeout(() => {
+        closeDialog("success");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [confirmationDialogs.success.open]);
 
   // Función para actualizar filtros en la URL
   const updateFilters = (newFilters: { search?: string; status?: string }) => {
@@ -148,43 +177,111 @@ export default function ClientsPageClient({
 
   const hasClients = clients && clients.length > 0;
 
-  const handleCreateClient = (data: ClientFormData) => {
-    create(data)
-      .then((response) => {
-        if (response.status === 201) {
-          router.refresh();
-        }
-      })
-      .catch((error) => console.error(error));
+  // Función para mostrar diálogo de éxito (auto-cierre)
+  const showSuccessDialog = (title: string, message: string) => {
+    setConfirmationDialogs(prev => ({
+      ...prev,
+      success: {
+        open: true,
+        title,
+        message,
+      },
+    }));
   };
 
+  // Función para cerrar diálogos
+  const closeDialog = (dialogType: keyof typeof confirmationDialogs) => {
+    setConfirmationDialogs(prev => ({
+      ...prev,
+      [dialogType]: {
+        ...prev[dialogType],
+        open: false,
+      },
+    }));
+  };
+
+  // Handler para crear cliente (SIN CONFIRMACIÓN)
+  const handleCreateClient = async (data: ClientFormData) => {
+    try {
+      const response = await create(data);
+      if (response.status === 201) {
+        router.refresh();
+        showSuccessDialog(
+          "¡Cliente creado exitosamente!",
+          `El cliente ${data.fullName} ha sido registrado correctamente en el sistema.`
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Handler para preparar edición de cliente
   const handleEditClient = (data: ClientFormData) => {
+    setConfirmationDialogs(prev => ({
+      ...prev,
+      editClient: {
+        open: true,
+        data,
+      },
+    }));
+  };
+
+  // Handler para confirmar edición de cliente
+  const confirmEditClient = async () => {
+    const { data } = confirmationDialogs.editClient;
+    if (!data || !editingClient) return;
+
     const data2: ClientEditFormData = {
       id: editingClient?.id,
       fullName: data.fullName,
       email: data.email,
       phone: data.phone,
     };
-    edit(data2)
-      .then((response) => {
-        if (response.status === 200) {
-          router.refresh();
-        }
-      })
-      .catch((error) => console.error(error));
 
-    setEditingClient(null);
+    try {
+      const response = await edit(data2);
+      if (response.status === 200) {
+        router.refresh();
+        setEditingClient(null);
+        showSuccessDialog(
+          "¡Cliente editado exitosamente!",
+          `Los datos de ${data.fullName} han sido actualizados correctamente.`
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
+  // Handler para preparar eliminación de cliente
   const handleDeleteClient = (client: Client) => {
-    deleteClient({ id: client.id })
-      .then((response) => {
-        if (response.status === 200) {
-          router.refresh();
-        }
-      })
-      .catch((error) => console.error(error));
-    console.log("Eliminar cliente:", client.id);
+    setConfirmationDialogs(prev => ({
+      ...prev,
+      deleteClient: {
+        open: true,
+        client,
+      },
+    }));
+  };
+
+  // Handler para confirmar eliminación de cliente
+  const confirmDeleteClient = async () => {
+    const { client } = confirmationDialogs.deleteClient;
+    if (!client) return;
+
+    try {
+      const response = await deleteClient({ id: client.id });
+      if (response.status === 200) {
+        router.refresh();
+        showSuccessDialog(
+          "¡Cliente eliminado exitosamente!",
+          `El cliente ${client.fullName} ha sido eliminado del sistema.`
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleViewClient = (client: Client) => {
@@ -357,6 +454,17 @@ export default function ClientsPageClient({
             />
           </CardContent>
         </Card>
+
+        {/* Dialog de notificación de éxito (auto-cierre) */}
+        <ConfirmationDialog
+          open={confirmationDialogs.success.open}
+          onOpenChange={() => {}} // No permitir cierre manual
+          variant="success"
+          type="notification"
+          title={confirmationDialogs.success.title}
+          description={confirmationDialogs.success.message}
+          showCancel={false}
+        />
       </div>
     );
   }
@@ -858,6 +966,44 @@ export default function ClientsPageClient({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Diálogos de Confirmación */}
+      
+      {/* Dialog de confirmación para editar cliente */}
+      <ConfirmationDialog
+        open={confirmationDialogs.editClient.open}
+        onOpenChange={(open) => !open && closeDialog("editClient")}
+        variant="edit"
+        type="confirmation"
+        title="Guardar cambios del cliente"
+        description="¿Deseas guardar los cambios realizados en la información del cliente?"
+        confirmText="Guardar cambios"
+        onConfirm={confirmEditClient}
+      />
+
+      {/* Dialog de confirmación para eliminar cliente */}
+      <ConfirmationDialog
+        open={confirmationDialogs.deleteClient.open}
+        onOpenChange={(open) => !open && closeDialog("deleteClient")}
+        variant="delete"
+        type="confirmation"
+        title="Eliminar cliente"
+        description={`Esta acción no se puede deshacer. El cliente ${confirmationDialogs.deleteClient.client?.fullName || ''} será eliminado permanentemente del sistema junto con todo su historial.`}
+        confirmText="Sí, eliminar"
+        cancelText="No, mantener"
+        onConfirm={confirmDeleteClient}
+      />
+
+      {/* Dialog de notificación de éxito (auto-cierre en 1000ms) */}
+      <ConfirmationDialog
+        open={confirmationDialogs.success.open}
+        onOpenChange={() => {}} // No permitir cierre manual
+        variant="success"
+        type="notification"
+        title={confirmationDialogs.success.title}
+        description={confirmationDialogs.success.message}
+        showCancel={false}
+      />
     </div>
   );
 }
