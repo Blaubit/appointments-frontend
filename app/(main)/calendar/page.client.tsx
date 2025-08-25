@@ -57,6 +57,8 @@ export default function CalendarPageClient({
 
   // Determinar si el selector debe estar bloqueado
   const isProfessionalLocked = ((selectedProfessional?.role?.name === "profesional") && selectedProfessional.id === userId);
+  console.log("isProfessionalLocked:", isProfessionalLocked);
+  console.log("selectedProfessional:", selectedProfessional);
   // Fetch schedule cada vez que cambian fecha/mode/profesional
   useEffect(() => {
     const fetchSchedule = async () => {
