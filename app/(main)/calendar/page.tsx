@@ -42,7 +42,7 @@ export default async function CalendarPage() {
         }
       >
         <CalendarPageClient
-          userId="23708ceb-4c17-4771-b59f-4958179bc7c5"
+          userId={user.id}
           services={services}
           professionals={professionals} // Pasar profesionales
         />
