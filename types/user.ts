@@ -15,9 +15,9 @@ type User = {
   company: Company;
   role: Role;
 };
-export interface SercviceProfessional {
+export interface ServiceProfessional {
   professional: User;
-  service: Service;
+  services: Service[];
 }
 export type FormDataType = {
   professionalId: string;

@@ -21,6 +21,7 @@ export async function findPeriod(
   }
   try {
     const url = `${parsedEnv.API_URL}/availabilities/professional/${userId}/schedule/${periodtype}/${date}`;
+    console.log(`findPeriod: ${url}`);
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
