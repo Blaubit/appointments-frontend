@@ -4,25 +4,25 @@ import { CalendarCard } from "@/components/calendar-card";
 import { Clock, AlertCircle } from "lucide-react";
 import { findPeriod } from "@/actions/calendar/findPeriod";
 
-// Props solo para saber el profesional y notificar selección
 type Props = {
   selectedProfessional: any;
-  initialDate?: string;
+  selectedDate: string;
+  initialTime?: string;
   onChange: (date: string, time: string) => void;
 };
 
 export function DateTimeSelectorCard({
   selectedProfessional,
-  initialDate = "",
+  selectedDate,
+  initialTime = "",
   onChange,
 }: Props) {
-  const [selectedDate, setSelectedDate] = useState(initialDate);
   const [availableHours, setAvailableHours] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState("");
   const [isLoadingHours, setIsLoadingHours] = useState(false);
   const [hoursError, setHoursError] = useState<string | null>(null);
 
-  // Cuando cambia fecha/profesional, cargar horarios
+  // Cargar horarios disponibles cuando cambian profesional/fecha
   useEffect(() => {
     if (!selectedProfessional || !selectedDate) {
       setAvailableHours([]);
@@ -58,24 +58,47 @@ export function DateTimeSelectorCard({
       });
   }, [selectedProfessional, selectedDate]);
 
-  // Notificar al padre cuando ambos estén listos
+  // Preselección automática de hora solo si no hay ninguna seleccionada
+  useEffect(() => {
+    if (
+      initialTime &&
+      availableHours.includes(initialTime) &&
+      !selectedTime // Solo si aún no hay una hora seleccionada
+    ) {
+      setSelectedTime(initialTime);
+    }
+    // Limpiar si la hora seleccionada ya no está disponible
+    if (selectedTime && !availableHours.includes(selectedTime)) {
+      setSelectedTime("");
+    }
+  }, [availableHours, initialTime, selectedTime]);
+
+  // Notificar cambios al padre
   useEffect(() => {
     if (selectedDate && selectedTime) {
       onChange(selectedDate, selectedTime);
     } else {
-      onChange("", "");
+      onChange(selectedDate || "", "");
     }
   }, [selectedDate, selectedTime, onChange]);
+
+  // Cuando el usuario selecciona una fecha, limpiamos hora
+  const handleDateSelect = (fecha: string) => {
+    setSelectedTime("");
+    onChange(fecha, "");
+  };
+
+  // Cuando el usuario selecciona una hora
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <Card>
         <CalendarCard
           initialDate={selectedDate ? new Date(selectedDate) : new Date()}
-          onDateSelect={(fecha: string) => {
-            setSelectedDate(fecha);
-            setSelectedTime(""); // Limpiar hora si cambia fecha
-          }}
+          onDateSelect={handleDateSelect}
         />
       </Card>
       <Card>
@@ -129,7 +152,7 @@ export function DateTimeSelectorCard({
                         ? "border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300"
                         : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
                     }`}
-                    onClick={() => setSelectedTime(time)}
+                    onClick={() => handleTimeSelect(time)}
                   >
                     {time}
                   </button>

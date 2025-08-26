@@ -50,6 +50,7 @@ export default function PageClient({
   const professionalIdFromUrl = searchParams.get("professionalId") ?? "";
   const fechaHoraFromUrl = searchParams.get("fechaHora"); // Ej: "2025-09-01T14:30"
   const router = useRouter();
+  const horaFromUrl = fechaHoraFromUrl?.split("T")[1] ?? "";
 
   // Estados principales
   const [selectedClient, setSelectedClient] = useState(() => {
@@ -67,12 +68,11 @@ export default function PageClient({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-
+  const [initialTimeFromUrl, setInitialTimeFromUrl] = useState(horaFromUrl);
   // Servicios del profesional
   const [professionalServices, setProfessionalServices] = useState<Service[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
-
   // Control de parámetros de URL
   const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
 
@@ -113,7 +113,7 @@ export default function PageClient({
     }
   };
 
-  // Procesamiento de parámetros de URL y auto-selección profesional
+  // Procesamiento de parámetros de URL y auto-selección profesional y fecha/hora
   useEffect(() => {
     if (!professionals || urlParamsProcessed) return;
     let professionalToSelect: User | null = null;
@@ -260,7 +260,7 @@ export default function PageClient({
     setFormData((prev) => ({ ...prev, date, time }));
   }, []);
 
-  // Submit
+  // Submit (enviar todos los serviceId juntos!)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -310,23 +310,21 @@ export default function PageClient({
         throw new Error("Debe seleccionar una hora");
       }
 
-      const appointmentPromises = selectedServices.map(async (serviceId) => {
-        const appointmentData = {
-          clientId: clientId.toString(),
-          professionalId: selectedProfessional.id.toString(),
-          serviceId: serviceId,
-          appointmentDate: selectedDate,
-          startTime: selectedTime,
-          status: "confirmed",
-          notes: formData.notes || " ",
-        };
-        return await create(appointmentData);
-      });
+      // Enviar UN solo objeto con todos los IDs de servicio
+      const appointmentData = {
+        clientId: clientId.toString(),
+        professionalId: selectedProfessional.id.toString(),
+        serviceId: selectedServices, // <-- Array aquí
+        appointmentDate: selectedDate,
+        startTime: selectedTime,
+        status: "confirmed",
+        notes: formData.notes || " ",
+      };
 
-      const results = await Promise.all(appointmentPromises);
-      const failedAppointments = results.filter((result) => "message" in result);
-      if (failedAppointments.length > 0) {
-        throw new Error("Error creating some appointments");
+      const result = await create(appointmentData);
+
+      if ("message" in result) {
+        throw new Error(result.message || "Error creando la cita");
       }
       setSuccess(true);
       setOpenDialog(true);
@@ -412,7 +410,8 @@ export default function PageClient({
 
           <DateTimeSelectorCard
             selectedProfessional={selectedProfessional}
-            initialDate={selectedDate}
+            selectedDate={selectedDate}
+            initialTime={initialTimeFromUrl}
             onChange={handleDateTimeChange}
           />
 
