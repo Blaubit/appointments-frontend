@@ -57,6 +57,7 @@ import {
   MoreHorizontal,
   Grid3X3,
   List,
+  History
 } from "lucide-react";
 import type {
   Client,
@@ -294,7 +295,7 @@ export default function ClientsPageClient({
   };
 
   const handleEmailClient = (client: Client) => {
-    window.open(`mailto:${client.email}`, "_self");
+    window.open(`clients/${client.id}/history`);
   };
 
   const handleScheduleAppointment = (client: Client) => {
@@ -683,8 +684,8 @@ export default function ClientsPageClient({
                             <DropdownMenuItem
                               onClick={() => handleEmailClient(client)}
                             >
-                              <Mail className="h-4 w-4 mr-2" />
-                              Enviar Email
+                              <History className="h-4 w-4 mr-2" />
+                              Ver historial
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
