@@ -68,7 +68,7 @@ type Props = {
   stats: AppointmentStats;
   pagination: Pagination;
   professionals?: User[];
-  currentUser?: User; // Add current user prop to check role
+  currentUser?: User;
 };
 
 export default function PageClient({
@@ -85,7 +85,6 @@ export default function PageClient({
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState("all");
 
   // Check if current user is a professional
@@ -104,7 +103,6 @@ export default function PageClient({
 
     const appointmentDateObj = new Date(appointmentDate);
 
-    // Normalize dates to compare only the date part (not time)
     const normalizeDate = (date: Date) => {
       return new Date(date.getFullYear(), date.getMonth(), date.getDate());
     };
@@ -134,7 +132,9 @@ export default function PageClient({
       appointment.client.fullName
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      appointment.service.name.toLowerCase().includes(searchTerm.toLowerCase());
+      appointment.services?.some((service: any) =>
+        service.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
 
     // Status filter
     const matchesStatus =
@@ -156,7 +156,6 @@ export default function PageClient({
 
   const handleProfessionalFilter = (value: string) => {
     setSelectedProfessionalId(value);
-    // Optionally update URL for server-side filtering
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
 
@@ -169,7 +168,6 @@ export default function PageClient({
     router.push(`${url.pathname}?${params.toString()}`);
   };
 
-  // Handle search with URL update for server-side filtering
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     const url = new URL(window.location.href);
@@ -184,7 +182,6 @@ export default function PageClient({
     router.push(`${url.pathname}?${params.toString()}`);
   };
 
-  // Handle status filter with URL update
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value);
     const url = new URL(window.location.href);
@@ -199,7 +196,6 @@ export default function PageClient({
     router.push(`${url.pathname}?${params.toString()}`);
   };
 
-  // Handle date filter with URL update
   const handleDateFilter = (value: string) => {
     setDateFilter(value);
     const url = new URL(window.location.href);
@@ -214,39 +210,29 @@ export default function PageClient({
     router.push(`${url.pathname}?${params.toString()}`);
   };
 
-  // Action handlers - ready for backend integration
+  // Action handlers
   const handleEditAppointment = (appointment: Appointment) => {
     console.log("Edit appointment:", appointment);
-
-    // TODO: Open edit dialog or navigate to edit page
     // router.push(`/appointments/${appointment.id}/edit`)
   };
 
   const handleConfirmAppointment = (appointment: Appointment) => {
     console.log("Confirm appointment:", appointment);
-    // TODO: Call API to confirm appointment
-    // await confirmAppointment(appointment.id)
   };
 
   const handleCancelAppointment = (appointment: Appointment) => {
     console.log("Cancel appointment:", appointment);
-    // TODO: Call API to cancel appointment
-    // await cancelAppointment(appointment.id)
   };
 
   const handleDeleteAppointment = (appointment: Appointment) => {
     console.log("Delete appointment:", appointment);
-    // TODO: Show confirmation dialog and call API
-    // if (confirm("¿Estás seguro?")) await deleteAppointment(appointment.id)
   };
 
   const handleCallClient = (appointment: Appointment) => {
-    console.log("Call client:", appointment.client.phone);
     window.open(`tel:${appointment.client.phone}`);
   };
 
   const handleEmailClient = (appointment: Appointment) => {
-    console.log("Email client:", appointment.client.email);
     window.open(`mailto:${appointment.client.email}`);
   };
 
@@ -255,7 +241,6 @@ export default function PageClient({
   };
 
   const handleCreateAppointment = () => {
-    console.log("Create new appointment");
     redirect("/appointments/new");
   };
 
@@ -265,8 +250,6 @@ export default function PageClient({
 
   const handleExportAppointments = () => {
     console.log("Export appointments");
-    // TODO: Generate and download CSV/PDF export
-    // await exportAppointments(appointments)
   };
 
   const getStatusBadge = (status: string) => {
@@ -338,6 +321,18 @@ export default function PageClient({
     });
   };
 
+  // Suma total de duración y precio
+  const getTotalDuration = (services: any[]) =>
+    services?.reduce(
+      (acc: number, service: any) => acc + (Number(service.durationMinutes) || 0),
+      0,
+    ) || 0;
+  const getTotalPrice = (services: any[]) =>
+    services?.reduce(
+      (acc: number, service: any) => acc + (Number(service.price) || 0),
+      0,
+    ) || 0;
+
   const statsCards = [
     { title: "Total Citas", value: stats.todayCount, color: "text-blue-600" },
     {
@@ -359,17 +354,13 @@ export default function PageClient({
 
   // Format time
   const formatTime = (timeString: string) => {
-    // timeString viene como "14:00:00" o "14:00"
     if (!timeString) return "00:00";
-
-    // Tomar solo las primeras dos partes (horas y minutos)
     const timeParts = timeString.split(":");
     return `${timeParts[0]}:${timeParts[1]}`;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <Header
         title="Todas las Citas"
         showBackButton={true}
@@ -378,7 +369,6 @@ export default function PageClient({
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards - Responsive grid for mobile */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
           {statsCards.map((stat, index) => (
             <Card key={index}>
@@ -400,7 +390,6 @@ export default function PageClient({
           ))}
         </div>
 
-        {/* Filters and Actions */}
         <Card className="mb-8">
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
@@ -427,7 +416,6 @@ export default function PageClient({
           </CardHeader>
           <CardContent>
             <div className="space-y-4 mb-6">
-              {/* Search */}
               <div className="w-full">
                 <Label htmlFor="search" className="sr-only">
                   Buscar
@@ -444,11 +432,8 @@ export default function PageClient({
                 </div>
               </div>
 
-              {/* Filters Row - All in one line */}
               <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-                {/* Left side - Filters */}
                 <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                  {/* Status Filter */}
                   <div className="w-full sm:w-48">
                     <Select
                       value={statusFilter}
@@ -471,8 +456,6 @@ export default function PageClient({
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* Date Filter */}
                   <div className="w-full sm:w-48">
                     <Select value={dateFilter} onValueChange={handleDateFilter}>
                       <SelectTrigger>
@@ -486,8 +469,6 @@ export default function PageClient({
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* Professional Filter - Only show if not a professional */}
                   {!isProfessional && professionals && (
                     <div className="w-full sm:w-64">
                       <Select
@@ -525,8 +506,6 @@ export default function PageClient({
                     </div>
                   )}
                 </div>
-
-                {/* Right side - View Mode Toggle */}
                 <div className="flex border rounded-lg">
                   <Button
                     variant={viewMode === "cards" ? "default" : "ghost"}
@@ -546,8 +525,6 @@ export default function PageClient({
                   </Button>
                 </div>
               </div>
-
-              {/* Results count */}
               <div className="flex items-center justify-between pt-2">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Mostrando {clientFilteredAppointments.length} de{" "}
@@ -558,7 +535,6 @@ export default function PageClient({
           </CardContent>
         </Card>
 
-        {/* Appointments List */}
         {clientFilteredAppointments.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -599,9 +575,13 @@ export default function PageClient({
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                           {appointment.client.fullName}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {appointment.service.name}
-                        </p>
+                        <ul className="text-sm text-gray-500 dark:text-gray-400">
+                          {appointment.services?.map((service: any, idx: number) => (
+                            <li key={service.id || idx}>
+                              {service.name} ({service.durationMinutes} min, {formatCurrency(Number(service.price) || 0)})
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -685,10 +665,18 @@ export default function PageClient({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Duración:
+                        Duración total:
                       </span>
                       <span className="text-sm font-medium">
-                        {appointment.service.durationMinutes} min
+                        {getTotalDuration(appointment.services)} min
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Precio total:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {formatCurrency(getTotalPrice(appointment.services))}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -718,10 +706,11 @@ export default function PageClient({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cliente</TableHead>
-                      <TableHead>Servicio</TableHead>
+                      <TableHead>Servicios</TableHead>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Hora</TableHead>
                       <TableHead>Duración</TableHead>
+                      <TableHead>Precio</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
@@ -752,7 +741,15 @@ export default function PageClient({
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{appointment.service.name}</TableCell>
+                        <TableCell>
+                          <ul className="text-xs">
+                            {appointment.services?.map((service: any, idx: number) => (
+                              <li key={service.id || idx}>
+                                {service.name} ({service.durationMinutes} min, {formatCurrency(Number(service.price) || 0)})
+                              </li>
+                            ))}
+                          </ul>
+                        </TableCell>
                         <TableCell>
                           {new Date(
                             appointment.appointmentDate,
@@ -762,7 +759,10 @@ export default function PageClient({
                           {formatTime(appointment.startTime)}
                         </TableCell>
                         <TableCell>
-                          {appointment.service.durationMinutes} min
+                          {getTotalDuration(appointment.services)} min
+                        </TableCell>
+                        <TableCell>
+                          {formatCurrency(getTotalPrice(appointment.services))}
                         </TableCell>
                         <TableCell>
                           {getStatusBadge(appointment.status)}
@@ -844,7 +844,6 @@ export default function PageClient({
           </Card>
         )}
 
-        {/* Pagination */}
         {appointments.length > 0 && (
           <div className="mt-8 flex items-center justify-between">
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -882,7 +881,6 @@ export default function PageClient({
         )}
       </div>
 
-      {/* Appointment Details Dialog */}
       <AppointmentDetailsDialog
         appointmentId={selectedAppointment?.id}
         isOpen={selectedAppointment !== null}
