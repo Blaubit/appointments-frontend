@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import ProfessionalSelectorCard from "@/components/professional-selector";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,24 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  ScheduleFormProps,
-  ScheduleSettings,
-  TimezoneOption,
-  WorkingDaySettings,
-} from "@/types";
+import { updateSchedule } from "@/actions/user/updateSchedule";
+import findAvailabilities from "@/actions/user/findAvailabilities";
+import type { ScheduleSettings, WorkingDaySettings, User } from "@/types";
+import update from "@/actions/services/update";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 // Configuración por defecto
 const defaultScheduleSettings: ScheduleSettings = {
@@ -42,27 +35,6 @@ const defaultScheduleSettings: ScheduleSettings = {
   },
 };
 
-// Opciones de zona horaria
-const timezones: TimezoneOption[] = [
-  { value: "America/Guatemala", label: "Guatemala (GMT-6)" },
-  { value: "America/Mexico_City", label: "México (GMT-6)" },
-  { value: "America/Costa_Rica", label: "Costa Rica (GMT-6)" },
-  { value: "America/El_Salvador", label: "El Salvador (GMT-6)" },
-  { value: "America/Honduras", label: "Honduras (GMT-6)" },
-  { value: "America/Nicaragua", label: "Nicaragua (GMT-6)" },
-  { value: "America/Panama", label: "Panamá (GMT-5)" },
-  { value: "America/Bogota", label: "Colombia (GMT-5)" },
-  { value: "America/Lima", label: "Perú (GMT-5)" },
-  { value: "America/Santiago", label: "Chile (GMT-3)" },
-  { value: "America/Argentina/Buenos_Aires", label: "Argentina (GMT-3)" },
-  { value: "America/Sao_Paulo", label: "Brasil (GMT-3)" },
-  { value: "America/New_York", label: "Nueva York (GMT-5)" },
-  { value: "America/Los_Angeles", label: "Los Ángeles (GMT-8)" },
-  { value: "Europe/Madrid", label: "Madrid (GMT+1)" },
-  { value: "Europe/London", label: "Londres (GMT+0)" },
-];
-
-// Nombres de días en español
 const dayNames = {
   monday: "Lunes",
   tuesday: "Martes",
@@ -73,31 +45,106 @@ const dayNames = {
   sunday: "Domingo",
 };
 
+interface ScheduleFormProps {
+  professionals: User[];
+  initialSettings?: ScheduleSettings;
+  userSession?: User;
+}
+
+// Helper para adaptar availabilities del backend a la UI
+function formatHour(hour: string | null | undefined, fallback: string): string {
+  if (!hour) return fallback;
+  return hour.slice(0, 5);
+}
+
+// Mapea los nombres reales de las propiedades
+function mapAvailabilitiesToScheduleSettings(avail: any): ScheduleSettings {
+  const getDaySettings = (
+    day: string,
+    defaultStart: string,
+    defaultEnd: string
+  ): WorkingDaySettings => {
+    const start = avail[`${day}Start`];
+    const end = avail[`${day}End`];
+    return {
+      enabled: !!(start && end),
+      start: formatHour(start, defaultStart),
+      end: formatHour(end, defaultEnd),
+    };
+  };
+
+  return {
+    timezone: avail.timezone || defaultScheduleSettings.timezone,
+    appointmentDuration: avail.appointmentDuration || defaultScheduleSettings.appointmentDuration,
+    bufferTime: avail.bufferTime || defaultScheduleSettings.bufferTime,
+    maxAdvanceBooking: avail.maxAdvanceBooking || defaultScheduleSettings.maxAdvanceBooking,
+    workingDays: {
+      monday: getDaySettings("monday", "09:00", "17:00"),
+      tuesday: getDaySettings("tuesday", "09:00", "17:00"),
+      wednesday: getDaySettings("wednesday", "09:00", "17:00"),
+      thursday: getDaySettings("thursday", "09:00", "17:00"),
+      friday: getDaySettings("friday", "09:00", "17:00"),
+      saturday: getDaySettings("saturday", "09:00", "13:00"),
+      sunday: getDaySettings("sunday", "09:00", "13:00"),
+    },
+  };
+}
+
 export function ScheduleForm({
+  professionals,
   initialSettings = defaultScheduleSettings,
-  onSave,
-  isLoading = false,
+  userSession,
 }: ScheduleFormProps) {
-  const [scheduleSettings, setScheduleSettings] =
-    useState<ScheduleSettings>(initialSettings);
+  const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>(initialSettings);
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const handleSaveSchedule = async () => {
-    try {
-      await onSave(scheduleSettings);
-    } catch (error) {
-      console.error("Error saving schedule:", error);
+  // Estado para el dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Cierra el diálogo automáticamente después de 1 segundo
+  useEffect(() => {
+    if (dialogOpen) {
+      const timer = setTimeout(() => {
+        setDialogOpen(false);
+        setIsEditing(false);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [dialogOpen]);
 
-  const updateBasicSetting = (
-    key: keyof Omit<ScheduleSettings, "workingDays">,
-    value: string | number,
-  ) => {
-    setScheduleSettings((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  // Preselecciona profesional si el usuario es profesional
+  useEffect(() => {
+    if (!userSession) return;
+    if (userSession.role?.name === "profesional") {
+      const professional = professionals.find(
+        (p) => p.id === userSession.id || p.id.toString() === userSession.id.toString()
+      );
+      if (professional) setSelectedProfessional(professional);
+    }
+  }, [userSession, professionals]);
+
+  // Cuando seleccionas un profesional, busca sus horarios y preselecciona
+  useEffect(() => {
+    const fetchAvailabilities = async () => {
+      if (!selectedProfessional) return;
+      setIsLoading(true);
+
+      const result = await findAvailabilities(selectedProfessional.id);
+
+      setIsLoading(false);
+
+      if ("data" in result) {
+        setScheduleSettings(mapAvailabilitiesToScheduleSettings(result.data));
+      } else {
+        setScheduleSettings(defaultScheduleSettings);
+      }
+    };
+
+    fetchAvailabilities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProfessional]);
 
   const updateWorkingDay = (
     day: keyof ScheduleSettings["workingDays"],
@@ -115,6 +162,42 @@ export function ScheduleForm({
     }));
   };
 
+  function mapToDto(settings: ScheduleSettings, professionalId: string) {
+    return {
+      professionalId,
+      mondayStart: settings.workingDays.monday.enabled ? settings.workingDays.monday.start : null,
+      mondayEnd: settings.workingDays.monday.enabled ? settings.workingDays.monday.end : null,
+      tuesdayStart: settings.workingDays.tuesday.enabled ? settings.workingDays.tuesday.start : null,
+      tuesdayEnd: settings.workingDays.tuesday.enabled ? settings.workingDays.tuesday.end : null,
+      wednesdayStart: settings.workingDays.wednesday.enabled ? settings.workingDays.wednesday.start : null,
+      wednesdayEnd: settings.workingDays.wednesday.enabled ? settings.workingDays.wednesday.end : null,
+      thursdayStart: settings.workingDays.thursday.enabled ? settings.workingDays.thursday.start : null,
+      thursdayEnd: settings.workingDays.thursday.enabled ? settings.workingDays.thursday.end : null,
+      fridayStart: settings.workingDays.friday.enabled ? settings.workingDays.friday.start : null,
+      fridayEnd: settings.workingDays.friday.enabled ? settings.workingDays.friday.end : null,
+      saturdayStart: settings.workingDays.saturday.enabled ? settings.workingDays.saturday.start : null,
+      saturdayEnd: settings.workingDays.saturday.enabled ? settings.workingDays.saturday.end : null,
+      sundayStart: settings.workingDays.sunday.enabled ? settings.workingDays.sunday.start : null,
+      sundayEnd: settings.workingDays.sunday.enabled ? settings.workingDays.sunday.end : null
+    };
+  }
+
+  const handleSaveSchedule = async () => {
+    if (!selectedProfessional) {
+      alert("Selecciona primero un profesional");
+      return;
+    }
+    setIsLoading(true);
+    const dto = mapToDto(scheduleSettings, selectedProfessional.id);
+    const result = await updateSchedule(dto);
+    setIsLoading(false);
+
+    // Si result.status === 200 o como lo manejes en tu backend
+    if ("data" in result) {
+      setDialogOpen(true); // Muestra el dialog de éxito
+    }
+  };
+
   return (
     <Card className="w-full max-w-none">
       <CardHeader className="pb-4">
@@ -122,90 +205,28 @@ export function ScheduleForm({
           Configuración de Horarios
         </CardTitle>
         <CardDescription className="text-sm">
-          Define tus horarios de trabajo y disponibilidad
+          Selecciona el profesional y define sus horarios de trabajo y disponibilidad
         </CardDescription>
       </CardHeader>
       <CardContent className="px-4 sm:px-6">
         <div className="space-y-6">
-          {/* Configuración básica */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="timezone" className="text-sm font-medium">
-                Zona Horaria
-              </Label>
-              <Select
-                value={scheduleSettings.timezone}
-                onValueChange={(value) => updateBasicSetting("timezone", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timezones.map((tz) => (
-                    <SelectItem key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <ProfessionalSelectorCard
+            professionals={professionals}
+            selectedProfessional={selectedProfessional}
+            onSelectionChange={setSelectedProfessional}
+            isLocked={userSession?.role.name == "profesional"}
+          />
 
-            <div className="space-y-2">
-              <Label
-                htmlFor="appointmentDuration"
-                className="text-sm font-medium"
-              >
-                Duración por Defecto (min)
-              </Label>
-              <Input
-                id="appointmentDuration"
-                type="number"
-                value={scheduleSettings.appointmentDuration}
-                onChange={(e) =>
-                  updateBasicSetting(
-                    "appointmentDuration",
-                    parseInt(e.target.value),
-                  )
-                }
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bufferTime" className="text-sm font-medium">
-                Tiempo de Descanso (min)
-              </Label>
-              <Input
-                id="bufferTime"
-                type="number"
-                value={scheduleSettings.bufferTime}
-                onChange={(e) =>
-                  updateBasicSetting("bufferTime", parseInt(e.target.value))
-                }
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="maxAdvanceBooking"
-                className="text-sm font-medium"
-              >
-                Reserva Máxima (días)
-              </Label>
-              <Input
-                id="maxAdvanceBooking"
-                type="number"
-                value={scheduleSettings.maxAdvanceBooking}
-                onChange={(e) =>
-                  updateBasicSetting(
-                    "maxAdvanceBooking",
-                    parseInt(e.target.value),
-                  )
-                }
-                className="w-full"
-              />
-            </div>
+          {/* Botón para editar horarios */}
+          <div className="flex justify-end mb-2">
+            <Button
+              variant={isEditing ? "secondary" : "default"}
+              onClick={() => setIsEditing((prev) => !prev)}
+              disabled={!selectedProfessional}
+              className="w-full sm:w-auto"
+            >
+              {isEditing ? "Cancelar edición" : "Editar horarios"}
+            </Button>
           </div>
 
           <Separator />
@@ -224,11 +245,13 @@ export function ScheduleForm({
                           <Switch
                             checked={settings.enabled}
                             onCheckedChange={(checked) =>
+                              isEditing &&
                               updateWorkingDay(
                                 day as keyof ScheduleSettings["workingDays"],
                                 { enabled: checked },
                               )
                             }
+                            disabled={!isEditing}
                           />
                           <span className="text-sm font-medium">
                             {dayNames[day as keyof typeof dayNames]}
@@ -242,24 +265,28 @@ export function ScheduleForm({
                             type="time"
                             value={settings.start}
                             onChange={(e) =>
+                              isEditing &&
                               updateWorkingDay(
                                 day as keyof ScheduleSettings["workingDays"],
                                 { start: e.target.value },
                               )
                             }
                             className="flex-1"
+                            disabled={!isEditing}
                           />
                           <span className="text-gray-500 text-sm">a</span>
                           <Input
                             type="time"
                             value={settings.end}
                             onChange={(e) =>
+                              isEditing &&
                               updateWorkingDay(
                                 day as keyof ScheduleSettings["workingDays"],
                                 { end: e.target.value },
                               )
                             }
                             className="flex-1"
+                            disabled={!isEditing}
                           />
                         </div>
                       )}
@@ -271,11 +298,13 @@ export function ScheduleForm({
                         <Switch
                           checked={settings.enabled}
                           onCheckedChange={(checked) =>
+                            isEditing &&
                             updateWorkingDay(
                               day as keyof ScheduleSettings["workingDays"],
                               { enabled: checked },
                             )
                           }
+                          disabled={!isEditing}
                         />
                       </div>
                       <div className="w-20 text-sm font-medium flex-shrink-0">
@@ -286,12 +315,13 @@ export function ScheduleForm({
                           type="time"
                           value={settings.start}
                           onChange={(e) =>
+                            isEditing &&
                             updateWorkingDay(
                               day as keyof ScheduleSettings["workingDays"],
                               { start: e.target.value },
                             )
                           }
-                          disabled={!settings.enabled}
+                          disabled={!isEditing || !settings.enabled}
                           className="w-32"
                         />
                         <span className="text-gray-500">a</span>
@@ -299,12 +329,13 @@ export function ScheduleForm({
                           type="time"
                           value={settings.end}
                           onChange={(e) =>
+                            isEditing &&
                             updateWorkingDay(
                               day as keyof ScheduleSettings["workingDays"],
                               { end: e.target.value },
                             )
                           }
-                          disabled={!settings.enabled}
+                          disabled={!isEditing || !settings.enabled}
                           className="w-32"
                         />
                       </div>
@@ -316,17 +347,34 @@ export function ScheduleForm({
           </div>
 
           {/* Botón de guardar */}
-          <div className="flex justify-end pt-4">
-            <Button
-              onClick={handleSaveSchedule}
-              disabled={isLoading}
-              className="w-full sm:w-auto"
-            >
-              {isLoading ? "Guardando..." : "Guardar Cambios"}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={handleSaveSchedule}
+                disabled={isLoading || !selectedProfessional}
+                className="w-full sm:w-auto"
+              >
+                {isLoading
+                  ? "Guardando..."
+                  : !selectedProfessional
+                  ? "Selecciona un profesional"
+                  : "Guardar Cambios"}
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        variant="success"
+        type="notification"
+        title="Horario actualizado"
+        description="¡Los cambios en el horario se guardaron correctamente!"
+        showCancel={false} // Oculta el botón cancelar
+      />
     </Card>
   );
 }

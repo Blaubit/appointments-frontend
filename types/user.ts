@@ -32,6 +32,28 @@ export type FormDataType = {
   notes: string;
   status: string;
 };
+
+export type ScheduleResponse = {
+  id: string;
+  mondayStart: string | null;
+  mondayEnd: string | null;
+  tuesdayStart: string | null;
+  tuesdayEnd: string | null;
+  wednesdayStart: string | null;
+  wednesdayEnd: string | null;
+  thursdayStart: string | null;
+  thursdayEnd: string | null;
+  fridayStart: string | null;
+  fridayEnd: string | null;
+  saturdayStart: string | null;
+  saturdayEnd: string | null;
+  sundayStart: string | null;
+  sundayEnd: string | null;
+  createdAt: string;
+  professional: User;
+};
+
+
 // Roles predefinidos del sistema
 export const DEFAULT_ROLES: Role[] = [
   {
