@@ -63,7 +63,6 @@ export function AppointmentDetailsDialog({
   onCall,
   onEmail,
 }: AppointmentDetailsDialogProps) {
-  console.log("Appointment ID:", appointmentId);
   const router = useRouter();
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [loading, setLoading] = useState(false);
@@ -194,8 +193,8 @@ export function AppointmentDetailsDialog({
 
   const handleRescheduleAppointment = () => {
     // Implementar lógica de reprogramación
-    console.log("Reprogramar cita:", appointment.id);
     // Aquí podrías abrir un modal de reprogramación o redirigir
+    console.log("Reprogramar cita:", appointment.id);
   };
 
   const handleAttendAppointment = () => {
@@ -207,6 +206,16 @@ export function AppointmentDetailsDialog({
     onClose();
     router.push(`/clients/${appointment.client.id}/history`);
   };
+
+  // Suma total de precios y duración
+  const totalPrice = appointment.services?.reduce(
+    (acc: number, service: any) => acc + (Number(service.price) || 0),
+    0,
+  );
+  const totalDuration = appointment.services?.reduce(
+    (acc: number, service: any) => acc + (Number(service.durationMinutes) || 0),
+    0,
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -243,7 +252,6 @@ export function AppointmentDetailsDialog({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Mobile: Stack avatar and info vertically */}
               <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                 <div className="flex items-center sm:flex-col sm:items-center gap-3 sm:gap-2">
                   <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
@@ -355,15 +363,39 @@ export function AppointmentDetailsDialog({
                 <div className="space-y-3 sm:space-y-4">
                   <div>
                     <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Servicio
+                      Servicios
                     </Label>
-                    <p className="text-sm font-medium truncate">
-                      {appointment.service.name}
-                    </p>
+                    <ul className="space-y-2">
+                      {appointment.services?.length > 0 ? (
+                        appointment.services.map(
+                          (service: any, idx: number) => (
+                            <li
+                              key={service.id || idx}
+                              className="border-b pb-2 mb-2 last:border-none last:pb-0 last:mb-0"
+                            >
+                              <div className="font-medium text-sm truncate">
+                                {service.name}
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-2">
+                                <Clock className="h-3 w-3 flex-shrink-0" />
+                                {service.durationMinutes} min
+                                <span>•</span>
+                                {formatCurrency(Number(service.price) || 0)}
+                              </div>
+                            </li>
+                          ),
+                        )
+                      ) : (
+                        <li className="text-xs text-gray-500">
+                          Sin servicios asignados
+                        </li>
+                      )}
+                    </ul>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Servicio profesional de calidad
                     </p>
                   </div>
+
                   <div>
                     <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                       Fecha y Hora
@@ -377,12 +409,12 @@ export function AppointmentDetailsDialog({
                   </div>
                   <div>
                     <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Duración
+                      Duración Total
                     </Label>
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3 flex-shrink-0" />
                       <p className="text-xs sm:text-sm">
-                        {appointment.service.durationMinutes} minutos
+                        {totalDuration || 0} minutos
                       </p>
                     </div>
                   </div>
@@ -411,10 +443,10 @@ export function AppointmentDetailsDialog({
                   </div>
                   <div>
                     <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Precio
+                      Precio Total
                     </Label>
                     <p className="text-sm font-medium">
-                      {formatCurrency(Number(appointment.service.price) || 0)}
+                      {formatCurrency(totalPrice || 0)}
                     </p>
                   </div>
                   <div>

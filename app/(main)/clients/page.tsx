@@ -11,16 +11,24 @@ export default async function ClientsPage({
 }) {
   // Await searchParams before using its properties
   const resolvedSearchParams = await searchParams;
-  
+
   // Extraer parámetros de búsqueda
   const page =
-    typeof resolvedSearchParams.page === "string" ? parseInt(resolvedSearchParams.page) : 1;
+    typeof resolvedSearchParams.page === "string"
+      ? parseInt(resolvedSearchParams.page)
+      : 1;
   const limit =
-    typeof resolvedSearchParams.limit === "string" ? parseInt(resolvedSearchParams.limit) : 10;
+    typeof resolvedSearchParams.limit === "string"
+      ? parseInt(resolvedSearchParams.limit)
+      : 10;
   const search =
-    typeof resolvedSearchParams.search === "string" ? resolvedSearchParams.search : "";
+    typeof resolvedSearchParams.search === "string"
+      ? resolvedSearchParams.search
+      : "";
   const status =
-    typeof resolvedSearchParams.status === "string" ? resolvedSearchParams.status : "all";
+    typeof resolvedSearchParams.status === "string"
+      ? resolvedSearchParams.status
+      : "all";
 
   // Crear URLSearchParams para enviar al backend
   const params = new URLSearchParams();

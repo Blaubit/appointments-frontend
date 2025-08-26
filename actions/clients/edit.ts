@@ -17,7 +17,7 @@ export default async function edit({
 }: ClientEditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
   const session = await getSession();
   const User = await getUser();
-  
+
   try {
     const companyId = User?.company.id;
 

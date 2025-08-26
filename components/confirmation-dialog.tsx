@@ -10,21 +10,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  Info, 
-  XCircle, 
+import {
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  XCircle,
   Edit3,
   Trash2,
-  Plus
+  Plus,
 } from "lucide-react";
 
-type DialogVariant = 
-  | "success" 
-  | "warning" 
-  | "danger" 
-  | "info" 
+type DialogVariant =
+  | "success"
+  | "warning"
+  | "danger"
+  | "info"
   | "confirmation"
   | "create"
   | "edit"
@@ -49,60 +49,68 @@ interface ConfirmationDialogProps {
 const variantConfig = {
   success: {
     icon: CheckCircle,
-    colorClasses: "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
+    colorClasses:
+      "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
     buttonVariant: "default" as const,
     defaultTitle: "¡Éxito!",
-    defaultConfirmText: "Entendido"
+    defaultConfirmText: "Entendido",
   },
   warning: {
     icon: AlertTriangle,
-    colorClasses: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400",
+    colorClasses:
+      "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400",
     buttonVariant: "default" as const,
     defaultTitle: "Advertencia",
-    defaultConfirmText: "Continuar"
+    defaultConfirmText: "Continuar",
   },
   danger: {
     icon: XCircle,
-    colorClasses: "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400",
+    colorClasses:
+      "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400",
     buttonVariant: "destructive" as const,
     defaultTitle: "¡Atención!",
-    defaultConfirmText: "Continuar"
+    defaultConfirmText: "Continuar",
   },
   info: {
     icon: Info,
-    colorClasses: "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+    colorClasses:
+      "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
     buttonVariant: "default" as const,
     defaultTitle: "Información",
-    defaultConfirmText: "Entendido"
+    defaultConfirmText: "Entendido",
   },
   confirmation: {
     icon: AlertTriangle,
-    colorClasses: "bg-gray-100 text-gray-600 dark:bg-gray-900/20 dark:text-gray-400",
+    colorClasses:
+      "bg-gray-100 text-gray-600 dark:bg-gray-900/20 dark:text-gray-400",
     buttonVariant: "default" as const,
     defaultTitle: "Confirmar acción",
-    defaultConfirmText: "Confirmar"
+    defaultConfirmText: "Confirmar",
   },
   create: {
     icon: Plus,
-    colorClasses: "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
+    colorClasses:
+      "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
     buttonVariant: "default" as const,
     defaultTitle: "Crear cliente",
-    defaultConfirmText: "Crear"
+    defaultConfirmText: "Crear",
   },
   edit: {
     icon: Edit3,
-    colorClasses: "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+    colorClasses:
+      "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
     buttonVariant: "default" as const,
     defaultTitle: "Editar cliente",
-    defaultConfirmText: "Guardar cambios"
+    defaultConfirmText: "Guardar cambios",
   },
   delete: {
     icon: Trash2,
-    colorClasses: "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400",
+    colorClasses:
+      "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400",
     buttonVariant: "destructive" as const,
     defaultTitle: "Eliminar cliente",
-    defaultConfirmText: "Eliminar"
-  }
+    defaultConfirmText: "Eliminar",
+  },
 };
 
 export function ConfirmationDialog({
@@ -120,11 +128,10 @@ export function ConfirmationDialog({
 }: ConfirmationDialogProps) {
   const config = variantConfig[variant];
   const Icon = config.icon;
-  
+
   // Determinar si mostrar botón cancelar
-  const shouldShowCancel = showCancel !== undefined 
-    ? showCancel 
-    : type === "confirmation";
+  const shouldShowCancel =
+    showCancel !== undefined ? showCancel : type === "confirmation";
 
   const handleConfirm = () => {
     if (onConfirm) {
@@ -164,10 +171,7 @@ export function ConfirmationDialog({
               {cancelText}
             </Button>
           )}
-          <Button
-            variant={config.buttonVariant}
-            onClick={handleConfirm}
-          >
+          <Button variant={config.buttonVariant} onClick={handleConfirm}>
             {confirmText || config.defaultConfirmText}
           </Button>
         </DialogFooter>

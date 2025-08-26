@@ -10,45 +10,69 @@ type Props = {
 };
 
 export default async function DashboardPage({ searchParams }: Props) {
-  const response = await upcomingAppointments();
-  if ("message" in response) {
-    // ErrorResponse
-    console.error("message", response.message);
-    throw new Error(response.message);
+  let upcomingAppointmentsData: Appointment[] = [];
+  let stats: AppointmentStats | undefined = undefined;
+  let user: User | null = null;
+  let companyInfo: Company | undefined = undefined;
+  let errorMessage: string | undefined = undefined;
+
+  // Obtener citas próximas y estadísticas
+  try {
+    const response = await upcomingAppointments();
+    if ("message" in response) {
+      errorMessage = response.message || "Error al cargar citas próximas.";
+    } else {
+      upcomingAppointmentsData = response.data ?? [];
+      stats = response.stats;
+    }
+  } catch (err) {
+    errorMessage = "Error inesperado al cargar citas próximas.";
   }
 
-  const upcomingAppointmentsData: Appointment[] = response.data;
-  const stats: AppointmentStats = response.stats;
-
-  const user = await getUser();
-
-  if (!user) {
-    throw new Error("User not found");
+  // Obtener usuario
+  if (!errorMessage) {
+    try {
+      user = await getUser();
+      if (!user) {
+        errorMessage = "No se encontró el usuario.";
+      }
+    } catch (err) {
+      errorMessage = "Error inesperado al obtener usuario.";
+    }
   }
 
-  let companyInfo: Company = {
-    id: "default",
-    name: "CitasFácil",
-    companyType: "default",
-    address: "Calle Falsa 123",
-    city: "Ciudad",
-    state: "Estado",
-    postal_code: "12345",
-    country: "País",
-    description: "Empresa de citas por defecto",
-    createdAt: "2023-01-01T00:00:00Z",
-  };
-  const companyResponse = await findOne(user.company.id);
-  if (companyResponse.status === 200 && "data" in companyResponse) {
-    companyInfo = companyResponse.data;
+  // Obtener información del consultorio/empresa
+  if (!errorMessage && user) {
+    companyInfo = {
+      id: "default",
+      name: "CitasFácil",
+      companyType: "default",
+      address: "Calle Falsa 123",
+      city: "Ciudad",
+      state: "Estado",
+      postal_code: "12345",
+      country: "País",
+      description: "Empresa de citas por defecto",
+      createdAt: "2023-01-01T00:00:00Z",
+    };
+    try {
+      const companyResponse = await findOne(user.company?.id);
+      if (companyResponse?.status === 200 && "data" in companyResponse) {
+        companyInfo = companyResponse.data;
+      }
+    } catch (err) {
+      // Si falla, se mantiene el valor por defecto
+    }
   }
 
+  // Renderizar DashboardClient con props + error
   return (
     <DashboardClient
       upcomingAppointments={upcomingAppointmentsData}
       appointmentStats={stats}
       user={user}
       clinicInfo={companyInfo}
+      errorMessage={errorMessage}
     />
   );
 }

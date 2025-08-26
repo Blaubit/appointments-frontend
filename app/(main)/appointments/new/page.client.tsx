@@ -12,11 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Save,
-  CheckCircle,
-  AlertCircle,
-} from "lucide-react";
+import { Save, CheckCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
@@ -58,7 +54,9 @@ export default function PageClient({
     return clients.find((client) => client.id === clientIdFromUrl) || null;
   });
 
-  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
+    null,
+  );
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -70,7 +68,9 @@ export default function PageClient({
   const [openDialog, setOpenDialog] = useState(false);
   const [initialTimeFromUrl, setInitialTimeFromUrl] = useState(horaFromUrl);
   // Servicios del profesional
-  const [professionalServices, setProfessionalServices] = useState<Service[]>([]);
+  const [professionalServices, setProfessionalServices] = useState<Service[]>(
+    [],
+  );
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
   // Control de parámetros de URL
@@ -99,7 +99,11 @@ export default function PageClient({
     setServicesError(null);
     try {
       const result = await findProfessionalServices(professionalId);
-      if ("data" in result && result.data && Array.isArray(result.data.services)) {
+      if (
+        "data" in result &&
+        result.data &&
+        Array.isArray(result.data.services)
+      ) {
         setProfessionalServices(result.data.services);
       } else {
         setProfessionalServices([]);
@@ -125,11 +129,12 @@ export default function PageClient({
             p.id.toString() === professionalIdFromUrl,
         ) || null;
     } else if (userSession && userSession.role?.name === "profesional") {
-      professionalToSelect = professionals.find(
-        (p) =>
-          p.id === userSession.id ||
-          p.id.toString() === userSession.id.toString(),
-      ) || userSession;
+      professionalToSelect =
+        professionals.find(
+          (p) =>
+            p.id === userSession.id ||
+            p.id.toString() === userSession.id.toString(),
+        ) || userSession;
     }
     if (professionalToSelect) {
       setSelectedProfessional(professionalToSelect);
