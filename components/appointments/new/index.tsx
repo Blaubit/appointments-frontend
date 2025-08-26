@@ -4,7 +4,6 @@ import { DateTimeSelectorCard } from "./DateTimeSelector";
 import { ProfessionalSelector } from "./ProfessionalSelector";
 import { SelectedServicesSummary } from "./SelectedServicesSummary";
 
-
 export {
   AdditionalInfo,
   ClientSelectorCard,

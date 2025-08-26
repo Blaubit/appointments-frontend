@@ -37,7 +37,6 @@ export default function CalendarPageClient({
   professionals = [],
   userSession, // Nueva prop
 }: CalendarPageClientProps) {
-  
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
@@ -56,7 +55,9 @@ export default function CalendarPageClient({
   const currentProfessionalId = selectedProfessional?.id || userId;
 
   // Determinar si el selector debe estar bloqueado
-  const isProfessionalLocked = ((selectedProfessional?.role?.name === "profesional") && selectedProfessional.id === userId);
+  const isProfessionalLocked =
+    selectedProfessional?.role?.name === "profesional" &&
+    selectedProfessional.id === userId;
   console.log("isProfessionalLocked:", isProfessionalLocked);
   console.log("selectedProfessional:", selectedProfessional);
   // Fetch schedule cada vez que cambian fecha/mode/profesional

@@ -179,7 +179,7 @@ export default function ClientsPageClient({
 
   // Función para mostrar diálogo de éxito (auto-cierre)
   const showSuccessDialog = (title: string, message: string) => {
-    setConfirmationDialogs(prev => ({
+    setConfirmationDialogs((prev) => ({
       ...prev,
       success: {
         open: true,
@@ -191,7 +191,7 @@ export default function ClientsPageClient({
 
   // Función para cerrar diálogos
   const closeDialog = (dialogType: keyof typeof confirmationDialogs) => {
-    setConfirmationDialogs(prev => ({
+    setConfirmationDialogs((prev) => ({
       ...prev,
       [dialogType]: {
         ...prev[dialogType],
@@ -208,7 +208,7 @@ export default function ClientsPageClient({
         router.refresh();
         showSuccessDialog(
           "¡Cliente creado exitosamente!",
-          `El cliente ${data.fullName} ha sido registrado correctamente en el sistema.`
+          `El cliente ${data.fullName} ha sido registrado correctamente en el sistema.`,
         );
       }
     } catch (error) {
@@ -218,7 +218,7 @@ export default function ClientsPageClient({
 
   // Handler para preparar edición de cliente
   const handleEditClient = (data: ClientFormData) => {
-    setConfirmationDialogs(prev => ({
+    setConfirmationDialogs((prev) => ({
       ...prev,
       editClient: {
         open: true,
@@ -246,7 +246,7 @@ export default function ClientsPageClient({
         setEditingClient(null);
         showSuccessDialog(
           "¡Cliente editado exitosamente!",
-          `Los datos de ${data.fullName} han sido actualizados correctamente.`
+          `Los datos de ${data.fullName} han sido actualizados correctamente.`,
         );
       }
     } catch (error) {
@@ -256,7 +256,7 @@ export default function ClientsPageClient({
 
   // Handler para preparar eliminación de cliente
   const handleDeleteClient = (client: Client) => {
-    setConfirmationDialogs(prev => ({
+    setConfirmationDialogs((prev) => ({
       ...prev,
       deleteClient: {
         open: true,
@@ -276,7 +276,7 @@ export default function ClientsPageClient({
         router.refresh();
         showSuccessDialog(
           "¡Cliente eliminado exitosamente!",
-          `El cliente ${client.fullName} ha sido eliminado del sistema.`
+          `El cliente ${client.fullName} ha sido eliminado del sistema.`,
         );
       }
     } catch (error) {
@@ -968,7 +968,7 @@ export default function ClientsPageClient({
       </Dialog>
 
       {/* Diálogos de Confirmación */}
-      
+
       {/* Dialog de confirmación para editar cliente */}
       <ConfirmationDialog
         open={confirmationDialogs.editClient.open}
@@ -988,7 +988,7 @@ export default function ClientsPageClient({
         variant="delete"
         type="confirmation"
         title="Eliminar cliente"
-        description={`Esta acción no se puede deshacer. El cliente ${confirmationDialogs.deleteClient.client?.fullName || ''} será eliminado permanentemente del sistema junto con todo su historial.`}
+        description={`Esta acción no se puede deshacer. El cliente ${confirmationDialogs.deleteClient.client?.fullName || ""} será eliminado permanentemente del sistema junto con todo su historial.`}
         confirmText="Sí, eliminar"
         cancelText="No, mantener"
         onConfirm={confirmDeleteClient}

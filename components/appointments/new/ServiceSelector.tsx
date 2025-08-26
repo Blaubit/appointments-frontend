@@ -9,7 +9,6 @@ import {
 import { CheckCircle, Clock, DollarSign, AlertCircle } from "lucide-react";
 import { Service } from "@/types";
 
-
 type Props = {
   services: Service[];
   selectedServices: string[];
@@ -73,7 +72,9 @@ export const ServiceSelectorCard: React.FC<Props> = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {services.map((service) => {
-              const isSelected = selectedServices.includes(service.id.toString());
+              const isSelected = selectedServices.includes(
+                service.id.toString(),
+              );
               return (
                 <div
                   key={service.id}
@@ -82,8 +83,12 @@ export const ServiceSelectorCard: React.FC<Props> = ({
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                       : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
                   }`}
-                  onClick={() => !isLocked && onSelectService(service.id.toString())}
-                  style={isLocked ? { pointerEvents: "none", opacity: 0.6 } : {}}
+                  onClick={() =>
+                    !isLocked && onSelectService(service.id.toString())
+                  }
+                  style={
+                    isLocked ? { pointerEvents: "none", opacity: 0.6 } : {}
+                  }
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-gray-900 dark:text-white">

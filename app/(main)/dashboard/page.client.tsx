@@ -47,7 +47,7 @@ import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 type Props = {
   upcomingAppointments?: Appointment[];
   appointmentStats?: AppointmentStats;
-  user: User|null;
+  user: User | null;
   clinicInfo?: Company;
   errorMessage?: string;
 };
@@ -107,15 +107,25 @@ export default function DashboardClient({
   const handleCloseDialog = () => {
     setSelectedAppointment(null);
   };
-  const handleEditAppointment = (_appointment: Appointment) => { setSelectedAppointment(null); };
-  const handleConfirmAppointment = (_appointment: Appointment) => { setSelectedAppointment(null); };
-  const handleCancelAppointment = (_appointment: Appointment) => { setSelectedAppointment(null); };
-  const handleDeleteAppointment = (_appointment: Appointment) => { setSelectedAppointment(null); };
+  const handleEditAppointment = (_appointment: Appointment) => {
+    setSelectedAppointment(null);
+  };
+  const handleConfirmAppointment = (_appointment: Appointment) => {
+    setSelectedAppointment(null);
+  };
+  const handleCancelAppointment = (_appointment: Appointment) => {
+    setSelectedAppointment(null);
+  };
+  const handleDeleteAppointment = (_appointment: Appointment) => {
+    setSelectedAppointment(null);
+  };
   const handleCallClient = (appointment: Appointment) => {
-    if (appointment?.client?.phone) window.open(`tel:${appointment.client.phone}`);
+    if (appointment?.client?.phone)
+      window.open(`tel:${appointment.client.phone}`);
   };
   const handleEmailClient = (appointment: Appointment) => {
-    if (appointment?.client?.email) window.open(`mailto:${appointment.client.email}`);
+    if (appointment?.client?.email)
+      window.open(`mailto:${appointment.client.email}`);
   };
 
   // Función para determinar si no hay actividad
@@ -222,7 +232,10 @@ export default function DashboardClient({
 
   // No bloquea toda la página, solo muestra errores en stats y tabla
   const showStatsError = !!errorMessage || !appointmentStats;
-  const showAppointmentsError = !!errorMessage || !upcomingAppointments || !Array.isArray(upcomingAppointments);
+  const showAppointmentsError =
+    !!errorMessage ||
+    !upcomingAppointments ||
+    !Array.isArray(upcomingAppointments);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -234,8 +247,8 @@ export default function DashboardClient({
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             ¡Buen día, {user?.fullName?.split(" ")[0] || ""}! 👋
           </h2>
-          {!showStatsError && (
-            hasNoActivity() ? (
+          {!showStatsError &&
+            (hasNoActivity() ? (
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Hoy parece ser un día tranquilo. ¿Qué tal si aprovechas para
                 organizarte o descansar?
@@ -248,8 +261,7 @@ export default function DashboardClient({
                   : "citas programadas"}{" "}
                 para hoy. Aquí tienes un resumen de tu jornada.
               </p>
-            )
-          )}
+            ))}
         </div>
         {/* Mensaje de baja actividad */}
         {!showStatsError && <LowActivityMessage />}
@@ -265,7 +277,8 @@ export default function DashboardClient({
                     Error al cargar las estadísticas
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    {errorMessage ?? "No se pudieron cargar las estadísticas de citas."}
+                    {errorMessage ??
+                      "No se pudieron cargar las estadísticas de citas."}
                   </p>
                 </CardContent>
               </Card>
@@ -369,7 +382,9 @@ export default function DashboardClient({
                     Próximas Citas
                   </CardTitle>
                   <CardDescription className="text-sm">
-                    {!showAppointmentsError && upcomingAppointments && upcomingAppointments.length > 0
+                    {!showAppointmentsError &&
+                    upcomingAppointments &&
+                    upcomingAppointments.length > 0
                       ? "Tus citas programadas"
                       : "No hay citas programadas"}
                   </CardDescription>
@@ -389,7 +404,8 @@ export default function DashboardClient({
                       Error al cargar las próximas citas
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      {errorMessage ?? "No se pudo cargar la lista de próximas citas."}
+                      {errorMessage ??
+                        "No se pudo cargar la lista de próximas citas."}
                     </p>
                   </div>
                 ) : upcomingAppointments.length === 0 ? (
@@ -434,16 +450,21 @@ export default function DashboardClient({
                               </div>
                               {/* Mostrar todos los servicios (services[]) */}
                               <ul className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {Array.isArray(appointment.services) && appointment.services.length > 0
-                                  ? appointment.services.map((service: any, idx: number) => (
+                                {Array.isArray(appointment.services) &&
+                                appointment.services.length > 0 ? (
+                                  appointment.services.map(
+                                    (service: any, idx: number) => (
                                       <li key={service.id || idx}>
                                         {service.name || "Servicio"}
                                         {service.durationMinutes
                                           ? ` (${service.durationMinutes} min)`
                                           : ""}
                                       </li>
-                                    ))
-                                  : <li>No hay servicios</li>}
+                                    ),
+                                  )
+                                ) : (
+                                  <li>No hay servicios</li>
+                                )}
                               </ul>
                               <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
                                 <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
@@ -453,7 +474,8 @@ export default function DashboardClient({
                                 <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                                   <Calendar className="h-3 w-3 mr-1" />
                                   {formatDate(
-                                    appointment?.appointmentDate?.toLocaleString?.() || ''
+                                    appointment?.appointmentDate?.toLocaleString?.() ||
+                                      "",
                                   )}
                                 </span>
                               </div>
@@ -480,7 +502,9 @@ export default function DashboardClient({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (appointment?.client?.phone) {
-                                  window.open(`tel:${appointment.client.phone}`);
+                                  window.open(
+                                    `tel:${appointment.client.phone}`,
+                                  );
                                 }
                               }}
                             >
@@ -493,7 +517,10 @@ export default function DashboardClient({
                               className="text-xs"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (appointment?.client?.phone && appointment?.professional?.fullName) {
+                                if (
+                                  appointment?.client?.phone &&
+                                  appointment?.professional?.fullName
+                                ) {
                                   openWhatsApp(
                                     appointment.client.phone,
                                     `Hola, le saluda la clínica del Dr. ${encodeURIComponent(

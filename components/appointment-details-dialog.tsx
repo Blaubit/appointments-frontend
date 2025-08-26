@@ -367,19 +367,28 @@ export function AppointmentDetailsDialog({
                     </Label>
                     <ul className="space-y-2">
                       {appointment.services?.length > 0 ? (
-                        appointment.services.map((service: any, idx: number) => (
-                          <li key={service.id || idx} className="border-b pb-2 mb-2 last:border-none last:pb-0 last:mb-0">
-                            <div className="font-medium text-sm truncate">{service.name}</div>
-                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-2">
-                              <Clock className="h-3 w-3 flex-shrink-0" />
-                              {service.durationMinutes} min
-                              <span>•</span>
-                              {formatCurrency(Number(service.price) || 0)}
-                            </div>
-                          </li>
-                        ))
+                        appointment.services.map(
+                          (service: any, idx: number) => (
+                            <li
+                              key={service.id || idx}
+                              className="border-b pb-2 mb-2 last:border-none last:pb-0 last:mb-0"
+                            >
+                              <div className="font-medium text-sm truncate">
+                                {service.name}
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-2">
+                                <Clock className="h-3 w-3 flex-shrink-0" />
+                                {service.durationMinutes} min
+                                <span>•</span>
+                                {formatCurrency(Number(service.price) || 0)}
+                              </div>
+                            </li>
+                          ),
+                        )
                       ) : (
-                        <li className="text-xs text-gray-500">Sin servicios asignados</li>
+                        <li className="text-xs text-gray-500">
+                          Sin servicios asignados
+                        </li>
                       )}
                     </ul>
                     <p className="text-xs text-gray-500 dark:text-gray-400">

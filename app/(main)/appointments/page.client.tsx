@@ -324,7 +324,8 @@ export default function PageClient({
   // Suma total de duración y precio
   const getTotalDuration = (services: any[]) =>
     services?.reduce(
-      (acc: number, service: any) => acc + (Number(service.durationMinutes) || 0),
+      (acc: number, service: any) =>
+        acc + (Number(service.durationMinutes) || 0),
       0,
     ) || 0;
   const getTotalPrice = (services: any[]) =>
@@ -452,7 +453,9 @@ export default function PageClient({
                         <SelectItem value="no_show">No asistió</SelectItem>
                         <SelectItem value="expired">Expirada</SelectItem>
                         <SelectItem value="rescheduled">Reagendada</SelectItem>
-                        <SelectItem value="waitlist">Lista de espera</SelectItem>
+                        <SelectItem value="waitlist">
+                          Lista de espera
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -576,11 +579,14 @@ export default function PageClient({
                           {appointment.client.fullName}
                         </h3>
                         <ul className="text-sm text-gray-500 dark:text-gray-400">
-                          {appointment.services?.map((service: any, idx: number) => (
-                            <li key={service.id || idx}>
-                              {service.name} ({service.durationMinutes} min, {formatCurrency(Number(service.price) || 0)})
-                            </li>
-                          ))}
+                          {appointment.services?.map(
+                            (service: any, idx: number) => (
+                              <li key={service.id || idx}>
+                                {service.name} ({service.durationMinutes} min,{" "}
+                                {formatCurrency(Number(service.price) || 0)})
+                              </li>
+                            ),
+                          )}
                         </ul>
                       </div>
                     </div>
@@ -743,11 +749,14 @@ export default function PageClient({
                         </TableCell>
                         <TableCell>
                           <ul className="text-xs">
-                            {appointment.services?.map((service: any, idx: number) => (
-                              <li key={service.id || idx}>
-                                {service.name} ({service.durationMinutes} min, {formatCurrency(Number(service.price) || 0)})
-                              </li>
-                            ))}
+                            {appointment.services?.map(
+                              (service: any, idx: number) => (
+                                <li key={service.id || idx}>
+                                  {service.name} ({service.durationMinutes} min,{" "}
+                                  {formatCurrency(Number(service.price) || 0)})
+                                </li>
+                              ),
+                            )}
                           </ul>
                         </TableCell>
                         <TableCell>
