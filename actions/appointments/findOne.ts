@@ -15,7 +15,7 @@ export default async function findOne(
   try {
     const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${id}`;
-    console.log(`findOne: ${url}`);
+
     const response = await axios.get<Appointment>(url, {
       headers: {
         Authorization: `Bearer ${session}`,

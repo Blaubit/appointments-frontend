@@ -12,7 +12,6 @@ export async function findProfessionalServices(
   const session = await getSession();
   try {
     const url = `${parsedEnv.API_URL}/professional-services/professional/${id}`;
-    console.log(`findOne: ${url}`);
     const response = await axios.get<ServiceProfessional>(url, {
       headers: {
         Authorization: `Bearer ${session}`,

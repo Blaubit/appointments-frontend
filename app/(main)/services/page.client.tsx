@@ -144,7 +144,7 @@ export default function PageClient({
   };
 
   const handleToggleStatus = (s: ServiceType) => {
-    console.log("Toggle", s.id);
+   
     // Aquí implementarías la lógica para cambiar estado
   };
 
