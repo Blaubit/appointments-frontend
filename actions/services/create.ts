@@ -24,8 +24,6 @@ export default async function create({
       durationMinutes,
       price,
     };
-    console.log("Creating service at:", url);
-    console.log("Request body:", body);
     const response = await axios.post<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,

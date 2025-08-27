@@ -49,7 +49,7 @@ export async function updateAvatar({
       avatar: avatar.trim(),
     };
 
-    console.log("Updating user avatar:", { userId, avatar: body.avatar });
+
 
     const response = await axios.patch<User>(url, body, {
       headers: {

@@ -212,8 +212,7 @@ export default function PageClient({
 
   // Action handlers
   const handleEditAppointment = (appointment: Appointment) => {
-    console.log("Edit appointment:", appointment);
-    // router.push(`/appointments/${appointment.id}/edit`)
+    router.push(`/appointments/${appointment.id}/edit`)
   };
 
   const handleConfirmAppointment = (appointment: Appointment) => {

@@ -188,7 +188,6 @@ export default function RegisterClient({
         return;
       }
 
-      console.log("Rol admin encontrado:", adminRole);
 
       // 2. PASO 1: Crear la empresa primero usando la función del servidor
       console.log("Creando empresa...");
