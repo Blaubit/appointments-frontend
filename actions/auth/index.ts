@@ -1,3 +1,3 @@
 import getSession from "./getSession";
-import { getUser } from "./getUser";
-export { getSession, getUser };
+import { getUser, invalidateUserCache, clearAllUserCache } from "./getUser";
+export { getSession, getUser, invalidateUserCache, clearAllUserCache };

@@ -7,7 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { UpdateUserAvatarDto } from "@/types/dto/User/updateUserAvatarDto";
 import { User } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getUser, getSession, invalidateUserCache } from "@/actions/auth";
 
 export async function updateAvatar({
   userId,
@@ -62,6 +62,8 @@ export async function updateAvatar({
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/profile");
       revalidatePath("/users");
+      // Invalidate user cache since avatar data has changed
+      await invalidateUserCache();
 
       return {
         data: response.data,
