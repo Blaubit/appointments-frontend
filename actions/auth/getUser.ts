@@ -22,6 +22,20 @@ const CACHE_DURATION = 5 * 60 * 1000;
 // Global cache object - using session token as key
 const userCache = new Map<string, CacheEntry>();
 
+/**
+ * Retrieves the current user data with intelligent caching
+ * 
+ * This function implements in-memory caching to reduce API calls to the backend.
+ * Each user session gets its own cache entry based on the JWT token.
+ * 
+ * Cache behavior:
+ * - First call: Fetches from API and caches for 5 minutes
+ * - Subsequent calls: Returns cached data if still fresh
+ * - Cache invalidation: Manual invalidation after user updates
+ * - Different sessions: Separate cache entries per user
+ * 
+ * @returns Promise<User | null> The user data or null if not authenticated
+ */
 export async function getUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const sessionJwt = cookieStore.get("session")?.value;
@@ -66,7 +80,10 @@ export async function getUser(): Promise<User | null> {
   }
 }
 
-// Helper function to invalidate cache for current session
+/**
+ * Invalidates the cached user data for the current session
+ * Call this after user profile updates to ensure fresh data on next getUser() call
+ */
 export async function invalidateUserCache(): Promise<void> {
   const cookieStore = await cookies();
   const sessionJwt = cookieStore.get("session")?.value;
@@ -76,7 +93,10 @@ export async function invalidateUserCache(): Promise<void> {
   }
 }
 
-// Helper function to clear all cached user data (for cleanup)
+/**
+ * Clears all cached user data (for cleanup or debugging)
+ * Use sparingly as it affects all user sessions
+ */
 export function clearAllUserCache(): void {
   userCache.clear();
 }
