@@ -7,7 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { UpdateUserDto } from "@/types/dto/User/updateUserDto";
 import { User } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getUser, getSession, invalidateUserCache } from "@/actions/auth";
 
 export async function updateUser({
   userId,
@@ -188,6 +188,8 @@ export async function updateProfile({
 
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/profile");
+      // Invalidate user cache since profile data may have changed
+      await invalidateUserCache();
 
       return {
         data: response.data,
