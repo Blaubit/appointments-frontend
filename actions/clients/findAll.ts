@@ -1,12 +1,12 @@
 "use server";
 
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Client } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
+import { getCompanyId } from "@/actions/user/getCompanyId";
 
 type Props = {
   searchParams?: URLSearchParams;
@@ -16,37 +16,18 @@ export async function findAll(
   props: Props = {},
 ): Promise<SuccessReponse<Client[]> | ErrorResponse | any> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
 
   try {
-    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/clients`;
 
-    // Convertir URLSearchParams a objeto para parsePaginationParams
-    const searchParamsObject: Record<string, string> = {};
-    if (props.searchParams) {
-      props.searchParams.forEach((value, key) => {
-        searchParamsObject[key] = value;
-      });
-    }
+    const parsedParams = parsePaginationParams(props.searchParams);
 
-    // Construir parámetros para la API
-    const params: Record<string, any> = {
-      page: searchParamsObject.page || "1",
-      limit: searchParamsObject.limit || "10",
-    };
-
-    // Agregar filtros opcionales
-    if (searchParamsObject.search) {
-      params.q = searchParamsObject.search;
-    }
-
-    if (searchParamsObject.status && searchParamsObject.status !== "all") {
-      params.status = searchParamsObject.status;
-    }
-
-    console.log("API URL:", url);
-    console.log("API Params:", params);
+    // Solo page y q para el backend (puedes agregar limit según tu paginación)
+    const params: Record<string, any> = {};
+    if (parsedParams.page) params.page = parsedParams.page;
+    if (parsedParams.q) params.q = parsedParams.q;
+    if (1) params.limit = 6; // Solo si lo usas
 
     const response = await axios.get(url, {
       headers: {
@@ -55,51 +36,24 @@ export async function findAll(
       params,
     });
 
+    // La respuesta ya viene en el formato correcto
     return {
       data: response.data.data,
+      meta: response.data.meta,
+      searchInfo: response.data.searchInfo,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.meta,
-      stats: {
-        total: response.data.meta.totalItems,
-        confirmed: 10,
-        pending: 5,
-        cancelled: 2,
-      },
     };
   } catch (error) {
-    console.log("Error in findAll:", error);
     if (isAxiosError(error)) {
       return {
         message: error.message,
         code: error.code,
         status: error.response?.status,
-        data: [],
-        meta: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPreviousPage: false,
-          nextPage: null,
-          previousPage: null,
-        },
       };
     } else {
       return {
         message: "An unexpected error occurred.",
-        data: [],
-        meta: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPreviousPage: false,
-          nextPage: null,
-          previousPage: null,
-        },
       };
     }
   }

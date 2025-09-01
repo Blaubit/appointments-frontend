@@ -8,15 +8,14 @@ import { revalidatePath } from "next/cache";
 import { UpdateUserAvatarDto } from "@/types/dto/User/updateUserAvatarDto";
 import { User } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function updateAvatar({
   userId,
   avatar,
 }: UpdateUserAvatarDto): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
 
     // Validar que tenemos companyId
     if (!companyId) {
@@ -49,7 +48,7 @@ export async function updateAvatar({
       avatar: avatar.trim(),
     };
 
-    console.log("Updating user avatar:", { userId, avatar: body.avatar });
+
 
     const response = await axios.patch<User>(url, body, {
       headers: {

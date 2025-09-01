@@ -175,6 +175,31 @@ export default function ClientHistoryPageClient({
     window.open(`mailto:${client.email}`);
   };
 
+  // Helpers para tabla y detalles: mostrar servicios
+  const renderServicesSummary = (services: any[]) => {
+    if (!Array.isArray(services) || services.length === 0) return "Sin servicios";
+    return services.map((service, idx) =>
+      <span key={service.id || idx}>
+        {service.name} ({service.durationMinutes} min)
+        {idx < services.length - 1 ? ', ' : ''}
+      </span>
+    );
+  };
+
+  const renderServicesDetails = (services: any[]) => {
+    if (!Array.isArray(services) || services.length === 0)
+      return <span>Sin servicios</span>;
+    return (
+      <ul className="space-y-1">
+        {services.map((service, idx) => (
+          <li key={service.id || idx}>
+            <strong>{service.name}</strong> - {service.durationMinutes} min - €{service.price}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header del Cliente */}
@@ -285,7 +310,7 @@ export default function ClientHistoryPageClient({
               </div>
             ) : (
               <div className="relative">
-                {/* Línea vertical continua - mejorada para modo oscuro */}
+                {/* Línea vertical continua */}
                 <div className="absolute left-4 sm:left-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 z-0" />
 
                 <div className="space-y-4 sm:space-y-6">
@@ -297,7 +322,7 @@ export default function ClientHistoryPageClient({
                     return (
                       <div key={appointment.id} className="relative z-10">
                         <div className="flex gap-3 sm:gap-4">
-                          {/* Icono del timeline con línea conectada - mejorado z-index */}
+                          {/* Icono del timeline */}
                           <div className="relative flex-shrink-0 z-20">
                             <div
                               className={`w-8 h-8 sm:w-12 sm:h-12 ${bg} border-2 border-white dark:border-gray-800 rounded-full flex items-center justify-center shadow-sm`}
@@ -308,7 +333,7 @@ export default function ClientHistoryPageClient({
                             </div>
                           </div>
 
-                          {/* Contenido de la cita - con línea siempre visible y mejor hover */}
+                          {/* Contenido de la cita */}
                           <div className="flex-1 min-w-0 pb-4 sm:pb-6 relative z-10">
                             <Card
                               className="
@@ -330,10 +355,9 @@ export default function ClientHistoryPageClient({
                                 <div className="flex items-start justify-between mb-2 sm:mb-3">
                                   <div className="flex-1 min-w-0">
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">
-                                      {appointment.service.name}
+                                      {renderServicesSummary(appointment.services)}
                                     </h3>
-
-                                    {/* Información principal - Stack en móvil */}
+                                    {/* Información principal */}
                                     <div className="space-y-1 sm:space-y-0 sm:flex sm:items-center sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                       <div className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -357,8 +381,7 @@ export default function ClientHistoryPageClient({
                                         </span>
                                       </div>
                                     </div>
-
-                                    {/* Dirección en línea separada en móvil */}
+                                    {/* Dirección */}
                                     {appointment.company.address && (
                                       <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 sm:mt-0">
                                         <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -368,8 +391,7 @@ export default function ClientHistoryPageClient({
                                       </div>
                                     )}
                                   </div>
-
-                                  {/* Lado derecho - Stack en móvil */}
+                                  {/* Lado derecho */}
                                   <div className="flex flex-col items-end gap-2 ml-2 sm:ml-3">
                                     <span className="text-xs text-gray-500 whitespace-nowrap">
                                       {formatDate(
@@ -379,7 +401,6 @@ export default function ClientHistoryPageClient({
                                     {getStatusBadge(appointment.status)}
                                   </div>
                                 </div>
-
                                 {/* Notas */}
                                 {appointment.notes && (
                                   <div className="mb-2 sm:mb-3">
@@ -391,21 +412,17 @@ export default function ClientHistoryPageClient({
                                     </div>
                                   </div>
                                 )}
-
-                                {/* Footer con precio */}
+                                {/* Footer con precio total y duración */}
                                 <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                                      €{appointment.service.price}
+                                      €{Array.isArray(appointment.services) ? appointment.services.reduce((sum, s) => sum + Number(s.price || 0), 0) : 0}
                                     </span>
                                     <span className="text-xs text-gray-500">
-                                      • {appointment.service.durationMinutes}{" "}
-                                      min
+                                      • {Array.isArray(appointment.services) ? appointment.services.reduce((sum, s) => sum + Number(s.durationMinutes || 0), 0) : 0} min
                                     </span>
                                   </div>
-                                  <span className="text-xs text-gray-500">
-                                    #{appointment.id}
-                                  </span>
+                                  
                                 </div>
                               </CardContent>
                             </Card>
@@ -420,7 +437,7 @@ export default function ClientHistoryPageClient({
           </CardContent>
         </Card>
 
-        {/* Modal de Detalles - Optimizado para móvil */}
+        {/* Modal de Detalles - Servicios[] */}
         <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-3 sm:mx-auto">
             <DialogHeader>
@@ -449,17 +466,9 @@ export default function ClientHistoryPageClient({
                   </CardHeader>
                   <CardContent className="space-y-3 sm:space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Servicio:</span>
-                        <p className="font-medium">
-                          {selectedAppointment.service.name}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Duración:</span>
-                        <p className="font-medium">
-                          {selectedAppointment.service.durationMinutes} min
-                        </p>
+                      <div className="sm:col-span-2">
+                        <span className="text-gray-500">Servicios:</span>
+                        {renderServicesDetails(selectedAppointment.services)}
                       </div>
                       <div>
                         <span className="text-gray-500">Fecha:</span>
@@ -494,9 +503,15 @@ export default function ClientHistoryPageClient({
                         </div>
                       </div>
                       <div>
-                        <span className="text-gray-500">Precio:</span>
+                        <span className="text-gray-500">Precio total:</span>
                         <p className="font-medium">
-                          €{selectedAppointment.service.price}
+                          €{Array.isArray(selectedAppointment.services) ? selectedAppointment.services.reduce((sum, s) => sum + Number(s.price || 0), 0) : 0}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Duración total:</span>
+                        <p className="font-medium">
+                          {Array.isArray(selectedAppointment.services) ? selectedAppointment.services.reduce((sum, s) => sum + Number(s.durationMinutes || 0), 0) : 0} min
                         </p>
                       </div>
                     </div>

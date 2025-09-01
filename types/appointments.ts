@@ -14,7 +14,7 @@ export interface Appointment {
   company: Company;
   client: Client; // Client is defined in ./clients
   professional: User; // User is defined in ./user
-  service: Service; // Service is defined in ./services
+  services: Service[]; // Service is defined in ./services
 }
 
 export interface AppointmentStats {

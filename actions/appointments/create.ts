@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { appointmentDto } from "@/types/dto/appointment/appointmentDto";
 import { Appointment } from "@/types/";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export default async function create({
   clientId,
   professionalId,
@@ -18,10 +18,10 @@ export default async function create({
   status,
   notes = "",
 }: appointmentDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
-  const User = await getUser();
   const session = await getSession();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
+    
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments`;
     const body = {
       clientId,

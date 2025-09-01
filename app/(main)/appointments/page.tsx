@@ -1,7 +1,7 @@
-import type { Appointment, AppointmentStats, Pagination, User } from "@/types";
+import type {  User } from "@/types";
 import PageClient from "./page.client";
 import findAll from "@/actions/appointments/findAll";
-import { getUser } from "@/actions/auth/getUser";
+import { getRoleName } from "@/actions/user/getRoleName";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 
 type Props = {
@@ -22,10 +22,7 @@ export default async function Page({ searchParams }: Props) {
 
   const response = await findAll({ searchParams: params });
   const professionalsResponse = await findAllProfessionals();
-  const user = await getUser();
-  if (!user) {
-    throw new Error("User not found");
-  }
+  const roleName = await getRoleName();
   if (response.status !== 200 || !("data" in response)) {
     throw new Error("Failed to fetch appointments data");
   }
@@ -38,7 +35,7 @@ export default async function Page({ searchParams }: Props) {
   }
   // Si el usuario no es profesional, se envían los profesionales al cliente
   const professionals: User[] =
-    user.role.name !== "profesional" ? professionalsResponse.data : [];
+    roleName !== "profesional" ? professionalsResponse.data : [];
 
   return (
     <PageClient

@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { ClientEditFormData } from "@/types";
 import { Client } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export default async function edit({
   id,
   fullName,
@@ -16,10 +16,9 @@ export default async function edit({
   phone,
 }: ClientEditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
-  try {
-    const companyId = User?.company.id;
+  const companyId = await getCompanyId();
 
+  try {
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -28,7 +27,8 @@ export default async function edit({
       };
     }
 
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/:${id}`;
+    // ✅ Fixed: Removed the extra colon before id
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/${id}`;
 
     // Validar que tenemos session
     if (!session) {
@@ -44,7 +44,8 @@ export default async function edit({
       phone,
     };
 
-    const response = await axios.post<Client>(url, body, {
+    // ✅ Changed from POST to PUT for update operations
+    const response = await axios.patch<Client>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
@@ -53,7 +54,7 @@ export default async function edit({
 
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
-      revalidatePath("/Client");
+      revalidatePath("/clients"); // ✅ Fixed path (was "/Client")
 
       return {
         data: response.data,
@@ -68,7 +69,7 @@ export default async function edit({
       status: response.status,
     };
   } catch (error) {
-    console.error("Error creating client:", error);
+    console.error("Error editing client:", error); // ✅ Updated error message
 
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;

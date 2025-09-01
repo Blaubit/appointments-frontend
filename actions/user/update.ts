@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { UpdateUserDto } from "@/types/dto/User/updateUserDto";
 import { User } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function updateUser({
   userId,
   email,
@@ -16,9 +16,8 @@ export async function updateUser({
   avatar,
 }: UpdateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+    const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -121,10 +120,8 @@ export async function updateProfile({
   roleId,
 }: UpdateProfileParams): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
-
     if (!companyId) {
       return {
         message: "Company ID not found. Please log in again.",

@@ -2,17 +2,17 @@
 
 import axios, { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
+import { ScheduleResponse } from "@/types";
+import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
-import { ServiceProfessional } from "@/types";
 import { getSession } from "@/actions/auth";
-
-export async function findProfessionalServices(
+export default async function findAvailabilities(
   id: string,
-): Promise<SuccessReponse<ServiceProfessional> | ErrorResponse> {
+): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse> {
   const session = await getSession();
   try {
-    const url = `${parsedEnv.API_URL}/professional-services/professional/${id}`;
-    const response = await axios.get<ServiceProfessional>(url, {
+    const url = `${parsedEnv.API_URL}/availabilities/professional/${id}`;
+    const response = await axios.get<ScheduleResponse>(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },

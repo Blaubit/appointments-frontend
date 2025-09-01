@@ -46,6 +46,7 @@ import {
 import Link from "next/link";
 import type { Appointment } from "@/types";
 import { Header } from "@/components/header";
+import { number } from "zod";
 
 interface ConsultationPageClientProps {
   appointment: Appointment;
@@ -64,7 +65,8 @@ export default function ConsultationPageClient({
   const [startTime] = useState(new Date());
 
   const client = appointment.client;
-  const service = appointment.service;
+  // services is now an array
+  const services = appointment.services || [];
 
   const getInitials = (name: string) => {
     return name
@@ -117,8 +119,8 @@ export default function ConsultationPageClient({
 
     console.log("Consulta completada:", {
       appointmentId: appointment.id,
-      serviceId: service.id,
-      serviceName: service.name,
+      servicesIds: services.map(s => s.id),
+      servicesNames: services.map(s => s.name),
       notes: consultationNotes,
       diagnosis,
       treatment,
@@ -156,6 +158,29 @@ export default function ConsultationPageClient({
     );
   };
 
+  // Helpers para mostrar los servicios
+  const renderServicesSummary = (services: any[]) => {
+    if (!Array.isArray(services) || services.length === 0) return "Sin servicios";
+    return services.map((service, idx) =>
+      <span key={service.id || idx}>
+        {service.name}{service.durationMinutes ? ` (${service.durationMinutes} min)` : ""}
+        {idx < services.length - 1 ? ', ' : ''}
+      </span>
+    );
+  };
+  const renderServicesDetails = (services: any[]) => {
+    if (!Array.isArray(services) || services.length === 0) return <span>Sin servicios</span>;
+    return (
+      <ul className="space-y-1">
+        {services.map((service, idx) => (
+          <li key={service.id || idx}>
+            <strong>{service.name}</strong> - {service.durationMinutes} min - €{service.price}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header de la Consulta */}
@@ -170,49 +195,47 @@ export default function ConsultationPageClient({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contenido Principal - Consulta Activa */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Información del Servicio y Cita Actual */}
+            {/* Información de los Servicios y Cita Actual */}
             <Card className="border-l-4 border-l-blue-500">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Stethoscope className="h-5 w-5 text-blue-600" />
-                      {service.name}
+                      {renderServicesSummary(services)}
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      descripcion de servicio
+                      {services.map((s) => (
+                        <span key={s.id} className="block text-xs">{ "descripcion de servicio"}</span>
+                      ))}
                     </CardDescription>
                   </div>
+                  {/* Si tienes categoría en el servicio puedes mostrarla aquí */}
                   <Badge className={getServiceCategoryColor("General")}>
                     {"General"}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Detalles del Servicio */}
+                {/* Detalles de los Servicios */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                        Duración
-                      </p>
-                      <p className="text-xs text-blue-700 dark:text-blue-300">
-                        {service.durationMinutes} min
-                      </p>
+                  {services.map((service, idx) => (
+                    <div className="flex items-center gap-2" key={service.id || idx}>
+                      <Clock className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          {service.name}
+                        </p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          {service.durationMinutes} min
+                        </p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          Precio: €{service.price || "N/A"}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                        Precio
-                      </p>
-                      <p className="text-xs text-blue-700 dark:text-blue-300">
-                        €{service.price || "N/A"}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
+                  {/* Ubicación y Doctor, solo una vez */}
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-blue-600" />
                     <div>
@@ -258,7 +281,7 @@ export default function ConsultationPageClient({
                       Tiempo estimado
                     </p>
                     <p className="font-medium text-green-900 dark:text-green-100">
-                      {service.durationMinutes} min
+                      {services.reduce((sum, s) => sum + (s.durationMinutes || 0), 0)} min
                     </p>
                   </div>
                 </div>
@@ -272,10 +295,6 @@ export default function ConsultationPageClient({
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <span>{appointment.startTime}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-gray-500" />
-                    <span>ID: #{appointment.id}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-gray-500" />
@@ -295,8 +314,7 @@ export default function ConsultationPageClient({
                   Registro de la Consulta
                 </CardTitle>
                 <CardDescription>
-                  Documenta los detalles específicos de esta consulta de{" "}
-                  {service.name}
+                  Documenta los detalles específicos de esta consulta
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -306,7 +324,7 @@ export default function ConsultationPageClient({
                   </Label>
                   <Textarea
                     id="consultation-notes"
-                    placeholder={`Registra los hallazgos específicos para ${service.name}: síntomas, signos vitales, observaciones durante el examen, etc.`}
+                    placeholder={`Registra los hallazgos específicos: síntomas, signos vitales, observaciones durante el examen, etc.`}
                     value={consultationNotes}
                     onChange={(e) => setConsultationNotes(e.target.value)}
                     rows={4}
@@ -347,38 +365,32 @@ export default function ConsultationPageClient({
                   />
                 </div>
 
-                {/* Resumen del Servicio */}
+                {/* Resumen de los Servicios */}
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
                     <Zap className="h-4 w-4" />
                     Resumen de la Consulta
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
+                    <div className="col-span-2">
                       <span className="text-gray-600 dark:text-gray-400">
-                        Servicio:
+                        Servicios:
                       </span>
-                      <p className="font-medium">{service.name}</p>
+                      {renderServicesDetails(services)}
                     </div>
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">
-                        Categoría:
-                      </span>
-                      <p className="font-medium">{"General"}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">
-                        Duración Programada:
+                        Duración Total Programada:
                       </span>
                       <p className="font-medium">
-                        {service.durationMinutes} minutos
+                        {services.reduce((sum, s) => sum + (s.durationMinutes || 0), 0)} minutos
                       </p>
                     </div>
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">
-                        Precio:
+                        Precio Total:
                       </span>
-                      <p className="font-medium">€{service.price || "N/A"}</p>
+                      <p className="font-medium">€{services.reduce((sum, s) => sum + (Number(s.price) || 0), 0)}</p>
                     </div>
                   </div>
                 </div>
@@ -434,7 +446,7 @@ export default function ConsultationPageClient({
                   <div>
                     <p className="font-semibold">{client.fullName}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {`0 años`}
+                      { `0`} años
                     </p>
                   </div>
                 </div>
@@ -506,17 +518,18 @@ export default function ConsultationPageClient({
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div>
+                        {/* Mostrar todos los servicios en la cita pasada */}
                         <p className="font-medium text-sm">
-                          {pastAppointment.service.name}
+                          {renderServicesSummary(pastAppointment.services)}
                         </p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
                           {formatDate(pastAppointment.appointmentDate)}
                         </p>
                         <Badge
                           variant="outline"
-                          className={`text-xs mt-1 ${getServiceCategoryColor(pastAppointment.service.name || "General")}`}
+                          className={`text-xs mt-1 ${getServiceCategoryColor( "General")}`}
                         >
-                          {"General"}
+                          
                         </Badge>
                       </div>
                     </div>

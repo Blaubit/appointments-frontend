@@ -12,15 +12,23 @@ export type Payload = {
 
 export async function getUser(): Promise<User | null> {
   const cookieStore = await cookies();
-  const sessionJwt = cookieStore.get("session")?.value;
+  const userCookie = cookieStore.get("user")?.value;
 
-  if (!sessionJwt) {
-    return null;
+  if (userCookie) {
+    try {
+      // Si existe el usuario en las cookies, devolverlo
+      return JSON.parse(userCookie) as User;
+    } catch (error) {
+      // Si hay error al parsear, continuar con findMe
+    }
   }
 
+  // Si no existe el usuario en las cookies, buscarlo con findMe
   try {
     const res = await findMe();
     if ("data" in res && res.status === 200 && res.data) {
+      // Guardar el usuario en las cookies
+      cookieStore.set("user", JSON.stringify(res.data));
       return res.data;
     } else {
       return null;

@@ -15,7 +15,8 @@ import { redirect } from "next/navigation";
 interface CalendarPageClientProps {
   userId: string;
   services: Service[];
-  professionals: User[]; // Nueva prop
+  professionals: User[];
+  userSession?: User; // Nueva prop para la sesión del usuario
 }
 
 type ViewMode = "month" | "week" | "day";
@@ -33,7 +34,8 @@ const formatDateForPeriod = (date: Date, mode: ViewMode): string => {
 export default function CalendarPageClient({
   userId,
   services = [],
-  professionals = [], // Nueva prop
+  professionals = [],
+  userSession, // Nueva prop
 }: CalendarPageClientProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -52,6 +54,10 @@ export default function CalendarPageClient({
   // ID del profesional actual para usar en las consultas
   const currentProfessionalId = selectedProfessional?.id || userId;
 
+  // Determinar si el selector debe estar bloqueado
+  const isProfessionalLocked =
+    selectedProfessional?.role?.name === "profesional" &&
+    selectedProfessional.id === userId;
   // Fetch schedule cada vez que cambian fecha/mode/profesional
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -133,7 +139,7 @@ export default function CalendarPageClient({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Professional Selector */}
+      {/* Professional Selector - Modificado para agregar isLocked */}
       {professionals.length > 1 && (
         <ProfessionalSelectorCard
           professionals={professionals}
@@ -142,6 +148,7 @@ export default function CalendarPageClient({
           title="Filtrar por Profesional"
           description="Selecciona el profesional para ver su calendario"
           className="mb-6"
+          isLocked={isProfessionalLocked}
         />
       )}
 

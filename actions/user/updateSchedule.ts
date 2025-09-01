@@ -2,30 +2,32 @@
 
 import { parsedEnv } from "@/app/env";
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { ClientFormData } from "@/types";
-import { Client } from "@/types";
+import { CreateScheduleDto } from "@/types/dto/User/createSchedule.dto";
+import { ScheduleResponse } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-import { getCompanyId } from "@/actions/user/getCompanyId";
-export async function create({
-  fullName,
-  email,
-  phone,
-}: ClientFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
-  const companyId = await getCompanyId();
+
+export async function updateSchedule({
+  professionalId,
+  mondayStart,
+  mondayEnd,
+  tuesdayStart,
+  tuesdayEnd,
+  wednesdayStart,
+  wednesdayEnd,
+  thursdayStart,
+  thursdayEnd,
+  fridayStart,
+  fridayEnd,
+  saturdayStart,
+  saturdayEnd,
+  sundayStart,
+  sundayEnd
+}: CreateScheduleDto): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse> {
   const session = await getSession();
   try {
-    // Validar que tenemos companyId
-    if (!companyId) {
-      return {
-        message: "Company ID not found. Please log in again.",
-        status: 401,
-      };
-    }
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients`;
-
+    const url = `${parsedEnv.API_URL}/availabilities/professional/${professionalId}`;
     // Validar que tenemos session
     if (!session) {
       return {
@@ -35,21 +37,32 @@ export async function create({
     }
 
     const body = {
-      fullName,
-      email,
-      phone,
+        mondayStart,
+        mondayEnd,
+        tuesdayStart,
+        tuesdayEnd,
+        wednesdayStart,
+        wednesdayEnd,
+        thursdayStart,
+        thursdayEnd,
+        fridayStart,
+        fridayEnd,
+        saturdayStart,
+        saturdayEnd,
+        sundayStart,
+        sundayEnd
     };
 
-    const response = await axios.post<Client>(url, body, {
+    const response = await axios.patch<ScheduleResponse>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
-        "Content-Type": "application/json",
+        
       },
     });
-
+    console.log("Response from update User:", response);
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
-      revalidatePath("/Client");
+      revalidatePath("/settings?tab=schedule");
 
       return {
         data: response.data,
@@ -64,7 +77,7 @@ export async function create({
       status: response.status,
     };
   } catch (error) {
-    console.error("Error creating client:", error);
+    console.error("Error creating User:", error);
 
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;

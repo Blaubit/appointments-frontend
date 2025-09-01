@@ -1,40 +1,37 @@
 "use server";
 
+import { parsedEnv } from "@/app/env";
 import axios, { isAxiosError } from "axios";
 import { cookies } from "next/headers";
-import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import parsePaginationParams from "@/utils/functions/parsePaginationParams";
-import { Appointment } from "@/types";
+import { revalidatePath } from "next/cache";
+import { Client } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
-export async function findHistory(
-  id: string,
-): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
-  const companyId = await getCompanyId();
-  const session = await getSession();
-  try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
+type DeleteClientRequest = {
+  id: string;
+};
 
-    const response = await axios.get(url, {
+export default async function deleteClient({
+  id,
+}: DeleteClientRequest): Promise<SuccessReponse<Client> | ErrorResponse> {
+  const session = await getSession();
+  const companyId = await getCompanyId();
+  try {
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/Clients/${id}`;
+
+    const response = await axios.delete(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
+    revalidatePath("/Clients");
     return {
-      data: response.data.data,
+      data: response.data,
       status: 200,
       statusText: response.statusText,
-      meta: response.data.meta,
-      stats: {
-        total: response.data.meta.totalItems,
-        confirmed: 10,
-        pending: 5,
-        cancelled: 2,
-      },
     };
   } catch (error) {
-    console.log(error);
     if (isAxiosError(error)) {
       return {
         message: error.message,

@@ -449,10 +449,10 @@ export function SettingsPageClient({
           {hasPermissionForTab("schedule") && (
             <TabsContent value="schedule" className="space-y-6">
               <ScheduleForm
-                initialSettings={scheduleSettings}
-                onSave={handleSaveSchedule}
-                isLoading={isLoading}
-              />
+              professionals={doctors}
+              initialSettings={scheduleSettings}
+              userSession={profileData}
+            />
             </TabsContent>
           )}
 

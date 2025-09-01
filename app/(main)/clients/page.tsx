@@ -7,24 +7,29 @@ import { findAll } from "@/actions/clients/findAll";
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const resolvedSearchParams = await searchParams;
+
   // Extraer parámetros de búsqueda
   const page =
-    typeof searchParams.page === "string" ? parseInt(searchParams.page) : 1;
+    typeof resolvedSearchParams.page === "string"
+      ? parseInt(resolvedSearchParams.page)
+      : 1;
   const limit =
-    typeof searchParams.limit === "string" ? parseInt(searchParams.limit) : 10;
+    typeof resolvedSearchParams.limit === "string"
+      ? parseInt(resolvedSearchParams.limit)
+      : 10;
   const search =
-    typeof searchParams.search === "string" ? searchParams.search : "";
-  const status =
-    typeof searchParams.status === "string" ? searchParams.status : "all";
+    typeof resolvedSearchParams.search === "string"
+      ? resolvedSearchParams.search
+      : "";
 
-  // Crear URLSearchParams para enviar al backend
+  // Crear URLSearchParams con paginación y búsqueda
   const params = new URLSearchParams();
   params.set("page", page.toString());
-  params.set("limit", limit.toString());
-  if (search) params.set("search", search);
-  if (status && status !== "all") params.set("status", status);
+  params.set("limit", limit.toString()); // Opcional, si tu backend lo usa
+  if (search && search.length >= 2) params.set("q", search);
 
   const clients = await findAll({ searchParams: params });
 
@@ -68,7 +73,6 @@ export default async function ClientsPage({
             page,
             limit,
             search,
-            status,
           }}
         />
       </main>

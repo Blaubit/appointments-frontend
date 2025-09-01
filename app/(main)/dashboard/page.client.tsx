@@ -12,7 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Bot,
   Calendar,
   Clock,
   Users,
@@ -30,7 +29,6 @@ import {
   Smile,
   Coffee,
   Sparkles,
-  FileText,
   Globe,
   Building2,
 } from "lucide-react";
@@ -47,10 +45,11 @@ import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 
 type Props = {
-  upcomingAppointments: Appointment[];
-  appointmentStats: AppointmentStats;
-  user: User;
-  clinicInfo: Company;
+  upcomingAppointments?: Appointment[];
+  appointmentStats?: AppointmentStats;
+  user: User | null;
+  clinicInfo?: Company;
+  errorMessage?: string;
 };
 
 export default function DashboardClient({
@@ -58,12 +57,14 @@ export default function DashboardClient({
   appointmentStats,
   user,
   clinicInfo,
+  errorMessage,
 }: Props) {
   // Estado para manejar el dialog
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
 
-  const getInitials = (name: string) => {
+  // Helpers seguros
+  const getInitials = (name?: string) => {
     if (!name) return "";
     return name
       .split(" ")
@@ -73,7 +74,8 @@ export default function DashboardClient({
       .slice(0, 2);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
     const today = new Date();
     const tomorrow = new Date(today);
@@ -84,7 +86,6 @@ export default function DashboardClient({
     } else if (date.toDateString() === tomorrow.toDateString()) {
       return "Mañana";
     } else {
-      // Formato dd/mm/aaaa
       return date.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "2-digit",
@@ -93,16 +94,12 @@ export default function DashboardClient({
     }
   };
 
-  const formatTime = (timeString: string) => {
-    // timeString viene como "14:00:00" o "14:00"
+  const formatTime = (timeString?: string) => {
     if (!timeString) return "00:00";
-
-    // Tomar solo las primeras dos partes (horas y minutos)
     const timeParts = timeString.split(":");
-    return `${timeParts[0]}:${timeParts[1]}`;
+    return `${timeParts[0] || "00"}:${timeParts[1] || "00"}`;
   };
 
-  // Funciones para manejar las acciones del dialog
   const handleViewAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
   };
@@ -110,46 +107,30 @@ export default function DashboardClient({
   const handleCloseDialog = () => {
     setSelectedAppointment(null);
   };
-
-  const handleEditAppointment = (appointment: Appointment) => {
-    console.log("Edit appointment:", appointment);
-    // TODO: Navegar a la página de edición
-    // window.location.href = `/appointments/${appointment.id}/edit`;
-  };
-
-  const handleConfirmAppointment = (appointment: Appointment) => {
-    console.log("Confirm appointment:", appointment);
-    // TODO: Llamar API para confirmar cita
-    // await confirmAppointment(appointment.id);
+  const handleEditAppointment = (_appointment: Appointment) => {
     setSelectedAppointment(null);
   };
-
-  const handleCancelAppointment = (appointment: Appointment) => {
-    console.log("Cancel appointment:", appointment);
-    // TODO: Llamar API para cancelar cita
-    // await cancelAppointment(appointment.id);
+  const handleConfirmAppointment = (_appointment: Appointment) => {
     setSelectedAppointment(null);
   };
-
-  const handleDeleteAppointment = (appointment: Appointment) => {
-    console.log("Delete appointment:", appointment);
-    // TODO: Mostrar confirmación y llamar API
-    // if (confirm("¿Estás seguro?")) await deleteAppointment(appointment.id);
+  const handleCancelAppointment = (_appointment: Appointment) => {
     setSelectedAppointment(null);
   };
-
+  const handleDeleteAppointment = (_appointment: Appointment) => {
+    setSelectedAppointment(null);
+  };
   const handleCallClient = (appointment: Appointment) => {
-    console.log("Call client:", appointment.client.phone);
-    window.open(`tel:${appointment.client.phone}`);
+    if (appointment?.client?.phone)
+      window.open(`tel:${appointment.client.phone}`);
   };
-
   const handleEmailClient = (appointment: Appointment) => {
-    console.log("Email client:", appointment.client.email);
-    window.open(`mailto:${appointment.client.email}`);
+    if (appointment?.client?.email)
+      window.open(`mailto:${appointment.client.email}`);
   };
 
   // Función para determinar si no hay actividad
   const hasNoActivity = () => {
+    if (!appointmentStats) return true;
     return (
       appointmentStats.todayCount === 0 &&
       appointmentStats.confirmedCount === 0 &&
@@ -170,11 +151,9 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
-
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
         ¡No hay citas programadas!
       </h3>
-
       {hasNoActivity() ? (
         <div className="space-y-3 mb-6">
           <p className="text-gray-600 dark:text-gray-400">
@@ -196,7 +175,6 @@ export default function DashboardClient({
           Todas tus próximas citas están más adelante en la semana.
         </p>
       )}
-
       <div className="space-y-3">
         <Link href="/appointments/new">
           <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
@@ -204,7 +182,6 @@ export default function DashboardClient({
             Programar Nueva Cita
           </Button>
         </Link>
-
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
           <Link href="/calendar">
             <Button variant="outline" size="sm">
@@ -223,9 +200,13 @@ export default function DashboardClient({
     </div>
   );
 
-  // Componente para mostrar mensaje motivacional cuando hay pocas citas
+  // Componente para mensaje motivacional cuando hay pocas citas
   const LowActivityMessage = () => {
-    if (appointmentStats.todayCount > 0 && appointmentStats.todayCount <= 2) {
+    if (
+      appointmentStats &&
+      appointmentStats.todayCount > 0 &&
+      appointmentStats.todayCount <= 2
+    ) {
       return (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
           <div className="flex items-center space-x-3">
@@ -249,128 +230,148 @@ export default function DashboardClient({
     return null;
   };
 
+  // No bloquea toda la página, solo muestra errores en stats y tabla
+  const showStatsError = !!errorMessage || !appointmentStats;
+  const showAppointmentsError =
+    !!errorMessage ||
+    !upcomingAppointments ||
+    !Array.isArray(upcomingAppointments);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <Header title="Dashboard" subtitle="Panel de Control" />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            ¡Buen día, {user.fullName.split(" ")[0]}! 👋
+            ¡Buen día, {user?.fullName?.split(" ")[0] || ""}! 👋
           </h2>
-
-          {hasNoActivity() ? (
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Hoy parece ser un día tranquilo. ¿Qué tal si aprovechas para
-              organizarte o descansar?
-            </p>
-          ) : (
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Tienes {appointmentStats.todayCount}{" "}
-              {appointmentStats.todayCount === 1
-                ? "cita programada"
-                : "citas programadas"}{" "}
-              para hoy. Aquí tienes un resumen de tu jornada.
-            </p>
-          )}
+          {!showStatsError &&
+            (hasNoActivity() ? (
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                Hoy parece ser un día tranquilo. ¿Qué tal si aprovechas para
+                organizarte o descansar?
+              </p>
+            ) : (
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                Tienes {appointmentStats?.todayCount}{" "}
+                {appointmentStats?.todayCount === 1
+                  ? "cita programada"
+                  : "citas programadas"}{" "}
+                para hoy. Aquí tienes un resumen de tu jornada.
+              </p>
+            ))}
         </div>
-
         {/* Mensaje de baja actividad */}
-        <LowActivityMessage />
+        {!showStatsError && <LowActivityMessage />}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-          <Card className="hover:shadow-lg transition-shadow">
-            <Link href="/appointments">
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                      Citas Hoy
-                    </p>
-                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.todayCount}
-                    </p>
-                  </div>
-                  <div
-                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-blue-600 flex-shrink-0`}
-                  >
-                    <CalendarCheck className="h-4 w-4 sm:h-6 sm:w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Link>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <Link href="/appointments">
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                      Confirmadas
-                    </p>
-                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.confirmedCount}
-                    </p>
-                  </div>
-                  <div
-                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-green-600 flex-shrink-0`}
-                  >
-                    <UserRoundCheck className="h-4 w-4 sm:h-6 sm:w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Link>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <Link href="/appointments">
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                      Pendientes
-                    </p>
-                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.pendingCount}
-                    </p>
-                  </div>
-                  <div
-                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-yellow-600 flex-shrink-0`}
-                  >
-                    <OctagonPause className="h-4 w-4 sm:h-6 sm:w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Link>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <Link href="/appointments">
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                      Canceladas
-                    </p>
-                    <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
-                      {appointmentStats.cancelledCount}
-                    </p>
-                  </div>
-                  <div
-                    className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-red-600 flex-shrink-0`}
-                  >
-                    <BookX className="h-4 w-4 sm:h-6 sm:w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Link>
-          </Card>
+          {showStatsError ? (
+            <div className="col-span-2 lg:col-span-4">
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <CalendarX className="mx-auto mb-4 h-12 w-12 text-red-500" />
+                  <h2 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">
+                    Error al cargar las estadísticas
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {errorMessage ??
+                      "No se pudieron cargar las estadísticas de citas."}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <>
+              <Card className="hover:shadow-lg transition-shadow">
+                <Link href="/appointments">
+                  <CardContent className="p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                          Citas Hoy
+                        </p>
+                        <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                          {appointmentStats?.todayCount ?? 0}
+                        </p>
+                      </div>
+                      <div
+                        className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-blue-600 flex-shrink-0`}
+                      >
+                        <CalendarCheck className="h-4 w-4 sm:h-6 sm:w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+              <Card className="hover:shadow-lg transition-shadow">
+                <Link href="/appointments">
+                  <CardContent className="p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                          Confirmadas
+                        </p>
+                        <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                          {appointmentStats?.confirmedCount ?? 0}
+                        </p>
+                      </div>
+                      <div
+                        className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-green-600 flex-shrink-0`}
+                      >
+                        <UserRoundCheck className="h-4 w-4 sm:h-6 sm:w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+              <Card className="hover:shadow-lg transition-shadow">
+                <Link href="/appointments">
+                  <CardContent className="p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                          Pendientes
+                        </p>
+                        <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                          {appointmentStats?.pendingCount ?? 0}
+                        </p>
+                      </div>
+                      <div
+                        className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-yellow-600 flex-shrink-0`}
+                      >
+                        <OctagonPause className="h-4 w-4 sm:h-6 sm:w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+              <Card className="hover:shadow-lg transition-shadow">
+                <Link href="/appointments">
+                  <CardContent className="p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                          Canceladas
+                        </p>
+                        <p className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white">
+                          {appointmentStats?.cancelledCount ?? 0}
+                        </p>
+                      </div>
+                      <div
+                        className={`p-2 sm:p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-red-600 flex-shrink-0`}
+                      >
+                        <BookX className="h-4 w-4 sm:h-6 sm:w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+            </>
+          )}
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Upcoming Appointments */}
           <div className="lg:col-span-2">
@@ -381,7 +382,9 @@ export default function DashboardClient({
                     Próximas Citas
                   </CardTitle>
                   <CardDescription className="text-sm">
-                    {upcomingAppointments.length > 0
+                    {!showAppointmentsError &&
+                    upcomingAppointments &&
+                    upcomingAppointments.length > 0
                       ? "Tus citas programadas"
                       : "No hay citas programadas"}
                   </CardDescription>
@@ -394,7 +397,18 @@ export default function DashboardClient({
                 </Link>
               </CardHeader>
               <CardContent>
-                {upcomingAppointments.length === 0 ? (
+                {showAppointmentsError ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <CalendarX className="h-12 w-12 text-red-500 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      Error al cargar las próximas citas
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      {errorMessage ??
+                        "No se pudo cargar la lista de próximas citas."}
+                    </p>
+                  </div>
+                ) : upcomingAppointments.length === 0 ? (
                   <EmptyAppointmentsState />
                 ) : (
                   <>
@@ -410,19 +424,18 @@ export default function DashboardClient({
                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                               <AvatarImage
                                 src={
-                                  appointment.client.avatar || "/Avatar1.png"
+                                  appointment?.client?.avatar || "/Avatar1.png"
                                 }
-                                alt={appointment.client.fullName}
+                                alt={appointment?.client?.fullName || ""}
                               />
                               <AvatarFallback className="text-xs sm:text-sm">
-                                {getInitials(appointment.client.fullName)}
+                                {getInitials(appointment?.client?.fullName)}
                               </AvatarFallback>
                             </Avatar>
-
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between mb-1">
                                 <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate pr-2">
-                                  {appointment.client.fullName}
+                                  {appointment?.client?.fullName || ""}
                                 </p>
                                 <Badge
                                   className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
@@ -435,24 +448,39 @@ export default function DashboardClient({
                                   </div>
                                 </Badge>
                               </div>
-                              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {appointment.service.name}
-                              </p>
+                              {/* Mostrar todos los servicios (services[]) */}
+                              <ul className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                                {Array.isArray(appointment.services) &&
+                                appointment.services.length > 0 ? (
+                                  appointment.services.map(
+                                    (service: any, idx: number) => (
+                                      <li key={service.id || idx}>
+                                        {service.name || "Servicio"}
+                                        {service.durationMinutes
+                                          ? ` (${service.durationMinutes} min)`
+                                          : ""}
+                                      </li>
+                                    ),
+                                  )
+                                ) : (
+                                  <li>No hay servicios</li>
+                                )}
+                              </ul>
                               <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
                                 <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                                   <Clock className="h-3 w-3 mr-1" />
-                                  {formatTime(appointment.startTime)}
+                                  {formatTime(appointment?.startTime)}
                                 </span>
                                 <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                                   <Calendar className="h-3 w-3 mr-1" />
                                   {formatDate(
-                                    appointment.appointmentDate.toLocaleString(),
+                                    appointment?.appointmentDate?.toLocaleString?.() ||
+                                      "",
                                   )}
                                 </span>
                               </div>
                             </div>
                           </div>
-
                           {/* Action buttons */}
                           <div className="flex space-x-2 sm:flex-shrink-0">
                             <Button
@@ -473,7 +501,11 @@ export default function DashboardClient({
                               className="text-xs"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(`tel:${appointment.client.phone}`);
+                                if (appointment?.client?.phone) {
+                                  window.open(
+                                    `tel:${appointment.client.phone}`,
+                                  );
+                                }
                               }}
                             >
                               <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -485,12 +517,17 @@ export default function DashboardClient({
                               className="text-xs"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                openWhatsApp(
-                                  appointment.client.phone,
-                                  `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                                    appointment.professional.fullName,
-                                  )}`,
-                                );
+                                if (
+                                  appointment?.client?.phone &&
+                                  appointment?.professional?.fullName
+                                ) {
+                                  openWhatsApp(
+                                    appointment.client.phone,
+                                    `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
+                                      appointment.professional.fullName,
+                                    )}`,
+                                  );
+                                }
                               }}
                             >
                               <WhatsappIcon
@@ -504,7 +541,6 @@ export default function DashboardClient({
                         </div>
                       ))}
                     </div>
-
                     <div className="mt-4 sm:mt-6 text-center">
                       <Link href="/appointments">
                         <Button variant="outline" className="w-full text-sm">
@@ -517,7 +553,6 @@ export default function DashboardClient({
               </CardContent>
             </Card>
           </div>
-
           {/* Quick Actions & Info */}
           <div className="space-y-4 sm:space-y-6">
             {/* Quick Actions */}
@@ -564,10 +599,9 @@ export default function DashboardClient({
                     Reportes
                   </Button>
                 </Link>
-                {/*AQUI DEBERIA IR UN BOTON DE BOT CUANDO EXISTA LA FUNCIONALIDAD */}
+                {/* Aquí el botón de Bot cuando exista la funcionalidad */}
               </CardContent>
             </Card>
-
             {/* Profile Info */}
             <Card>
               <Link href="/settings?tab=business">
@@ -583,29 +617,28 @@ export default function DashboardClient({
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Nombre</p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo.name}
+                        {clinicInfo?.name || ""}
                       </p>
                     </div>
                   </div>
-
                   {/* Dirección completa */}
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Dirección</p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo.address}, {clinicInfo.city}
+                        {clinicInfo?.address || ""}
+                        {clinicInfo?.city ? `, ${clinicInfo.city}` : ""}
                       </p>
                     </div>
                   </div>
-
                   {/* Ciudad y Código postal */}
                   <div className="flex items-start space-x-3">
                     <Globe className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Telefono</p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo.postal_code}
+                        {clinicInfo?.postal_code || ""}
                       </p>
                     </div>
                   </div>
@@ -615,7 +648,6 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
-
       {/* Dialog de detalles de la cita */}
       <AppointmentDetailsDialog
         appointmentId={selectedAppointment?.id}

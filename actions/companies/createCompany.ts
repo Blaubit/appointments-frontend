@@ -31,7 +31,6 @@ export default async function createCompany({
   try {
     const url = `${parsedEnv.API_URL}/companies`;
 
-    console.log("Creating company with URL:", url);
 
     // Para crear una empresa nueva, NO necesitamos session ni companyId
     // Esto debería ser un endpoint público para registro
@@ -47,15 +46,11 @@ export default async function createCompany({
       description: description?.trim() || "",
     };
 
-    console.log("Company creation payload:", body);
-
     const response = await axios.post<Company>(url, body, {
       headers: {
         "Content-Type": "application/json",
       },
     });
-
-    console.log("Company created successfully:", response.data);
 
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/dashboard");

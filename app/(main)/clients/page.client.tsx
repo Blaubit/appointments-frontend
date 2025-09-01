@@ -5,13 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -36,7 +29,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ClientForm } from "@/components/client-form";
 import { ClientPagination } from "@/components/ui/client-pagination";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { create } from "@/actions/clients/create";
+import deleteClient from "@/actions/clients/delete";
 import edit from "@/actions/clients/edit";
 import {
   Users,
@@ -44,7 +39,6 @@ import {
   UserPlus,
   Star,
   Search,
-  Filter,
   Edit,
   Trash2,
   Eye,
@@ -55,6 +49,7 @@ import {
   MoreHorizontal,
   Grid3X3,
   List,
+  History,
 } from "lucide-react";
 import type {
   Client,
@@ -74,7 +69,6 @@ interface ClientsPageClientProps {
     page: number;
     limit: number;
     search: string;
-    status: string;
   };
 }
 
@@ -95,69 +89,140 @@ export default function ClientsPageClient({
   const searchParams = useSearchParams();
 
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
-  const [searchTerm, setSearchTerm] = useState(
-    initialSearchParams?.search || "",
-  );
-  const [statusFilter, setStatusFilter] = useState(
-    initialSearchParams?.status || "all",
-  );
+  const [searchTerm, setSearchTerm] = useState(initialSearchParams?.search || "");
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  // Debounce para búsqueda
+  // Estados para los diálogos de confirmación
+  const [confirmationDialogs, setConfirmationDialogs] = useState({
+    deleteClient: {
+      open: false,
+      client: null as Client | null,
+    },
+    editClient: {
+      open: false,
+      data: null as ClientFormData | null,
+    },
+    success: {
+      open: false,
+      message: "",
+      title: "",
+    },
+  });
+
+  // Pagination states
+  const currentPage = initialSearchParams?.page || 1;
+  const itemsPerPage = initialSearchParams?.limit || 10;
+
+  // Debounce para búsqueda, solo dispara si hay 2 caracteres o más
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      updateFilters({ search: searchTerm });
+      if (searchTerm.length >= 2 || searchTerm.length === 0) {
+        updateFilters({ search: searchTerm, page: 1 });
+      }
     }, 500);
 
     return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
-  // Función para actualizar filtros en la URL
-  const updateFilters = (newFilters: { search?: string; status?: string }) => {
+  // Auto-cerrar diálogo de éxito después de 1000ms
+  useEffect(() => {
+    if (confirmationDialogs.success.open) {
+      const timer = setTimeout(() => {
+        closeDialog("success");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [confirmationDialogs.success.open]);
+
+  // Función para actualizar filtros en la URL (búsqueda y paginación)
+  const updateFilters = (newFilters: { search?: string; page?: number }) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Resetear página cuando cambian los filtros
-    params.set("page", "1");
-
+    // Search filter
     if (newFilters.search !== undefined) {
-      if (newFilters.search.trim()) {
+      if (newFilters.search.trim() && newFilters.search.length >= 2) {
         params.set("search", newFilters.search);
       } else {
         params.delete("search");
       }
+      // When changing search, reset page to 1
+      params.set("page", "1");
     }
 
-    if (newFilters.status !== undefined) {
-      if (newFilters.status !== "all") {
-        params.set("status", newFilters.status);
-      } else {
-        params.delete("status");
-      }
+    // Pagination filter
+    if (newFilters.page !== undefined) {
+      params.set("page", String(newFilters.page));
     }
 
     router.push(`?${params.toString()}`);
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    updateFilters({ status: value });
+  // Handler for changing the page
+  const handlePageChange = (newPage: number) => {
+    updateFilters({ page: newPage });
   };
 
   const hasClients = clients && clients.length > 0;
 
-  const handleCreateClient = (data: ClientFormData) => {
-    create(data)
-      .then((response) => {
-        if (response.status === 201) {
-          router.refresh();
-        }
-      })
-      .catch((error) => console.error(error));
+  // Función para mostrar diálogo de éxito (auto-cierre)
+  const showSuccessDialog = (title: string, message: string) => {
+    setConfirmationDialogs((prev) => ({
+      ...prev,
+      success: {
+        open: true,
+        title,
+        message,
+      },
+    }));
   };
 
+  // Función para cerrar diálogos
+  const closeDialog = (dialogType: keyof typeof confirmationDialogs) => {
+    setConfirmationDialogs((prev) => ({
+      ...prev,
+      [dialogType]: {
+        ...prev[dialogType],
+        open: false,
+      },
+    }));
+  };
+
+  // Handler para crear cliente (SIN CONFIRMACIÓN)
+  const handleCreateClient = async (data: ClientFormData) => {
+    try {
+      const response = await create(data);
+      if (response.status === 201) {
+        router.refresh();
+        showSuccessDialog(
+          "¡Cliente creado exitosamente!",
+          `El cliente ${data.fullName} ha sido registrado correctamente en el sistema.`,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Handler para preparar edición de cliente
   const handleEditClient = (data: ClientFormData) => {
+    setConfirmationDialogs((prev) => ({
+      ...prev,
+      editClient: {
+        open: true,
+        data,
+      },
+    }));
+  };
+
+  // Handler para confirmar edición de cliente
+  const confirmEditClient = async () => {
+    const { data } = confirmationDialogs.editClient;
+    if (!data || !editingClient) return;
+
     const data2: ClientEditFormData = {
       id: editingClient?.id,
       fullName: data.fullName,
@@ -165,19 +230,49 @@ export default function ClientsPageClient({
       phone: data.phone,
     };
 
-    edit(data2)
-      .then((response) => {
-        if (response.status === 201) {
-          router.refresh();
-        }
-      })
-      .catch((error) => console.error(error));
-
-    setEditingClient(null);
+    try {
+      const response = await edit(data2);
+      if (response.status === 200) {
+        router.refresh();
+        setEditingClient(null);
+        showSuccessDialog(
+          "¡Cliente editado exitosamente!",
+          `Los datos de ${data.fullName} han sido actualizados correctamente.`,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
+  // Handler para preparar eliminación de cliente
   const handleDeleteClient = (client: Client) => {
-    console.log("Eliminar cliente:", client.id);
+    setConfirmationDialogs((prev) => ({
+      ...prev,
+      deleteClient: {
+        open: true,
+        client,
+      },
+    }));
+  };
+
+  // Handler para confirmar eliminación de cliente
+  const confirmDeleteClient = async () => {
+    const { client } = confirmationDialogs.deleteClient;
+    if (!client) return;
+
+    try {
+      const response = await deleteClient({ id: client.id });
+      if (response.status === 200) {
+        router.refresh();
+        showSuccessDialog(
+          "¡Cliente eliminado exitosamente!",
+          `El cliente ${client.fullName} ha sido eliminado del sistema.`,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleViewClient = (client: Client) => {
@@ -190,7 +285,7 @@ export default function ClientsPageClient({
   };
 
   const handleEmailClient = (client: Client) => {
-    window.open(`mailto:${client.email}`, "_self");
+    window.open(`clients/${client.id}/history`);
   };
 
   const handleScheduleAppointment = (client: Client) => {
@@ -204,30 +299,6 @@ export default function ClientsPageClient({
       .join("")
       .toUpperCase()
       .slice(0, 2);
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: {
-        label: "Activo",
-        className:
-          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      },
-      inactive: {
-        label: "Inactivo",
-        className:
-          "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-      },
-      blocked: {
-        label: "Bloqueado",
-        className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-      },
-    };
-
-    const config =
-      statusConfig[status as keyof typeof statusConfig] ||
-      statusConfig.inactive;
-    return <Badge className={config.className}>{config.label}</Badge>;
-  };
 
   const renderStars = (rating: number) =>
     [...Array(5)].map((_, i) => (
@@ -350,6 +421,17 @@ export default function ClientsPageClient({
             />
           </CardContent>
         </Card>
+
+        {/* Dialog de notificación de éxito (auto-cierre) */}
+        <ConfirmationDialog
+          open={confirmationDialogs.success.open}
+          onOpenChange={() => {}} // No permitir cierre manual
+          variant="success"
+          type="notification"
+          title={confirmationDialogs.success.title}
+          description={confirmationDialogs.success.message}
+          showCancel={false}
+        />
       </div>
     );
   }
@@ -462,7 +544,7 @@ export default function ClientsPageClient({
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Filtros</CardTitle>
+          <CardTitle className="text-base">Filtro</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -474,23 +556,6 @@ export default function ClientsPageClient({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
-            </div>
-            <div className="w-full sm:w-48">
-              <Select
-                value={statusFilter}
-                onValueChange={handleStatusFilterChange}
-              >
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="inactive">Inactivos</SelectItem>
-                  <SelectItem value="blocked">Bloqueados</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>
@@ -510,7 +575,7 @@ export default function ClientsPageClient({
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No hay clientes</h3>
               <p className="text-muted-foreground mb-4">
-                No se encontraron clientes que coincidan con los filtros.
+                No se encontraron clientes que coincidan con la búsqueda.
               </p>
             </div>
           ) : viewMode === "cards" ? (
@@ -568,8 +633,8 @@ export default function ClientsPageClient({
                             <DropdownMenuItem
                               onClick={() => handleEmailClient(client)}
                             >
-                              <Mail className="h-4 w-4 mr-2" />
-                              Enviar Email
+                              <History className="h-4 w-4 mr-2" />
+                              Ver historial
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
@@ -645,6 +710,7 @@ export default function ClientsPageClient({
                   hasPreviousPage={pagination.hasPreviousPage}
                   totalItems={pagination.totalItems}
                   itemsPerPage={pagination.itemsPerPage}
+                  
                 />
               )}
             </>
@@ -768,6 +834,7 @@ export default function ClientsPageClient({
                   hasPreviousPage={pagination.hasPreviousPage}
                   totalItems={pagination.totalItems}
                   itemsPerPage={pagination.itemsPerPage}
+                
                 />
               )}
             </>
@@ -851,6 +918,44 @@ export default function ClientsPageClient({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Diálogos de Confirmación */}
+
+      {/* Dialog de confirmación para editar cliente */}
+      <ConfirmationDialog
+        open={confirmationDialogs.editClient.open}
+        onOpenChange={(open) => !open && closeDialog("editClient")}
+        variant="edit"
+        type="confirmation"
+        title="Guardar cambios del cliente"
+        description="¿Deseas guardar los cambios realizados en la información del cliente?"
+        confirmText="Guardar cambios"
+        onConfirm={confirmEditClient}
+      />
+
+      {/* Dialog de confirmación para eliminar cliente */}
+      <ConfirmationDialog
+        open={confirmationDialogs.deleteClient.open}
+        onOpenChange={(open) => !open && closeDialog("deleteClient")}
+        variant="delete"
+        type="confirmation"
+        title="Eliminar cliente"
+        description={`Esta acción no se puede deshacer. El cliente ${confirmationDialogs.deleteClient.client?.fullName || ""} será eliminado permanentemente del sistema junto con todo su historial.`}
+        confirmText="Sí, eliminar"
+        cancelText="No, mantener"
+        onConfirm={confirmDeleteClient}
+      />
+
+      {/* Dialog de notificación de éxito (auto-cierre en 1000ms) */}
+      <ConfirmationDialog
+        open={confirmationDialogs.success.open}
+        onOpenChange={() => {}} // No permitir cierre manual
+        variant="success"
+        type="notification"
+        title={confirmationDialogs.success.title}
+        description={confirmationDialogs.success.message}
+        showCancel={false}
+      />
     </div>
   );
 }
