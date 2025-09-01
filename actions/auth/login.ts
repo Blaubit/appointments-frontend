@@ -24,7 +24,7 @@ export async function Login({
     // Cookie de sesión segura
     cookieStore.set("session", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, //process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
       // No maxAge ni expires para que se borre al cerrar el navegador

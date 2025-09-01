@@ -36,29 +36,41 @@ export default function PageEditClient({
   const router = useRouter();
 
   // Cliente
-  const initialClient = clients.find((c) => c.id === appointment.client.id) || null;
-  const [selectedClient, setSelectedClient] = useState<Client | null>(initialClient);
+  const initialClient =
+    clients.find((c) => c.id === appointment.client.id) || null;
+  const [selectedClient, setSelectedClient] = useState<Client | null>(
+    initialClient,
+  );
 
   // Profesional
   const initialProfessional =
     professionals.find((p) => p.id === appointment.professional.id) || null;
-  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(initialProfessional);
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
+    initialProfessional,
+  );
 
   // Servicios (array de IDs)
   const initialServiceIds = Array.isArray(appointment.services)
     ? appointment.services.map((s) => String(s.id))
     : [];
-  const [selectedServices, setSelectedServices] = useState<string[]>(initialServiceIds);
+  const [selectedServices, setSelectedServices] =
+    useState<string[]>(initialServiceIds);
 
   // Fecha y hora: usa los types de tu modelo (string)
-  const [selectedDate, setSelectedDate] = useState<string>(appointment.appointmentDate.toLocaleString() || "");
-  const [selectedTime, setSelectedTime] = useState<string>(appointment.startTime || "");
+  const [selectedDate, setSelectedDate] = useState<string>(
+    appointment.appointmentDate.toLocaleString() || "",
+  );
+  const [selectedTime, setSelectedTime] = useState<string>(
+    appointment.startTime || "",
+  );
 
   // Notas
   const [notes, setNotes] = useState<string>(appointment.notes || "");
 
   // Servicios del profesional
-  const [professionalServices, setProfessionalServices] = useState<Service[]>([]);
+  const [professionalServices, setProfessionalServices] = useState<Service[]>(
+    [],
+  );
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
 
@@ -72,7 +84,9 @@ export default function PageEditClient({
       setIsLoadingServices(true);
       setServicesError(null);
       try {
-        const result = await findProfessionalServices(selectedProfessional.id.toString());
+        const result = await findProfessionalServices(
+          selectedProfessional.id.toString(),
+        );
         if (
           "data" in result &&
           result.data &&
@@ -95,7 +109,7 @@ export default function PageEditClient({
 
   // Helpers para UI
   const selectedServicesData = selectedServices.map(
-    (id) => professionalServices.find((s) => String(s.id) === id)?.name || ""
+    (id) => professionalServices.find((s) => String(s.id) === id)?.name || "",
   );
   const totalPrice = selectedServices.reduce((sum, id) => {
     const service = professionalServices.find((s) => String(s.id) === id);
@@ -128,7 +142,7 @@ export default function PageEditClient({
     setSelectedServices((prev) =>
       prev.includes(serviceId)
         ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId]
+        : [...prev, serviceId],
     );
   };
 

@@ -144,7 +144,6 @@ export default function PageClient({
   };
 
   const handleToggleStatus = (s: ServiceType) => {
-   
     // Aquí implementarías la lógica para cambiar estado
   };
 
@@ -177,14 +176,14 @@ export default function PageClient({
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <CardTitle>Gestión de Servicios</CardTitle>
                 <CardDescription>
                   Administra todos tus servicios
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline">
                   <Download className="h-4 w-4 mr-2" /> Exportar
                 </Button>
