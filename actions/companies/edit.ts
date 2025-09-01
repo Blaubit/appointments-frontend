@@ -7,6 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Company } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
+import { getCompanyId } from "@/actions/user/getCompanyId";
 // Interface para los parámetros de edición usando los nombres correctos del tipo Company
 interface EditCompanyParams {
   id: string;
@@ -32,10 +33,8 @@ export default async function edit({
   description,
 }: EditCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
-
     // Validar que tenemos companyId
     if (!companyId) {
       return {

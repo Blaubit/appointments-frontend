@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { CreateUserDto } from "@/types/dto/User/createUserDto";
 import { User } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function create({
   roleId,
   fullName,
@@ -16,10 +16,9 @@ export async function create({
   password,
   bio,
 }: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
-  const User = await getUser();
+  const companyId = await getCompanyId();
   const session = await getSession();
-  try {
-    const companyId = User?.company.id;
+  try {  const companyId = await getCompanyId();
     // Validar que tenemos companyId
     if (!companyId) {
       return {

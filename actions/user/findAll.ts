@@ -7,7 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { User } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 type Props = {
   searchParams?: URLSearchParams;
   page?: number;
@@ -19,10 +19,8 @@ export async function findAll(
   props: Props = {},
 ): Promise<SuccessReponse<User[]> | ErrorResponse | any> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
-
     // Combinar parámetros de searchParams y props directos
     const parsedParams = parsePaginationParams(props.searchParams);
 

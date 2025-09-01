@@ -167,9 +167,9 @@ export default function WhatsAppBotClient({
     const params = new URLSearchParams(url.search);
 
     if (value) {
-      params.set("search", value);
+      params.set("q", value);
     } else {
-      params.delete("search");
+      params.delete("q");
     }
 
     router.push(`${url.pathname}?${params.toString()}`);

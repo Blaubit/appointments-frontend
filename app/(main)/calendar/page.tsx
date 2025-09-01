@@ -2,23 +2,22 @@ import { Suspense } from "react";
 import CalendarPageClient from "./page.client";
 import { Header } from "@/components/header";
 import { findAll as findAllServices } from "@/actions/services/findAll";
-import { getUser } from "@/actions/auth";
 import { User } from "@/types";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
+import { getUserId } from "@/actions/user/getUserId";
 // Forzar renderizado dinámico
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   // Obtener datos del servidor
-  const [servicesResult, user, professionalsResult] = await Promise.all([
+  const [servicesResult, userId] = await Promise.all([
     findAllServices(),
-    getUser(),
-    findAllProfessionals(), // Nueva función para obtener profesionales
+    getUserId(),
   ]);
 
   const services = servicesResult?.data || [];
   const professionals: User[] = (await findAllProfessionals()).data;
-  if (!user) {
+  if (!userId) {
     // Manejar caso donde no hay usuario
     return <div>No tienes permisos para ver este calendario</div>;
   }
@@ -42,7 +41,7 @@ export default async function CalendarPage() {
         }
       >
         <CalendarPageClient
-          userId={user.id}
+          userId={userId}
           services={services}
           professionals={professionals} // Pasar profesionales
         />

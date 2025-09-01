@@ -7,7 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Role } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 type Props = {
   searchParams?: URLSearchParams;
 };
@@ -16,7 +16,6 @@ export async function findAll(
   props: Props = {},
 ): Promise<SuccessReponse<Role[]> | ErrorResponse | any> {
   const session = await getSession();
-  const user = await getUser();
   try {
     const url = `${parsedEnv.API_URL}/roles`;
     const parsedParams = parsePaginationParams(props.searchParams);

@@ -8,16 +8,15 @@ import { revalidatePath } from "next/cache";
 import { ClientFormData } from "@/types";
 import { Client } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function create({
   fullName,
   email,
   phone,
 }: ClientFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
-  const User = await getUser();
+  const companyId = await getCompanyId();
   const session = await getSession();
   try {
-    const companyId = User?.company.id;
     // Validar que tenemos companyId
     if (!companyId) {
       return {

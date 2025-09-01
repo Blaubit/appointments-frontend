@@ -7,6 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Service } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
+import { getCompanyId } from "@/actions/user/getCompanyId";
 
 type Props = {
   searchParams?: URLSearchParams;
@@ -16,10 +17,9 @@ export async function findAll(
   props: Props = {},
 ): Promise<SuccessReponse<Service[]> | ErrorResponse | any> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
 
   try {
-    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services`;
 
     // Convertir URLSearchParams a objeto para parsePaginationParams

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,7 +35,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import {
   Calendar,
   Search,
@@ -79,7 +78,15 @@ export default function PageClient({
   currentUser,
 }: Props) {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
+  const searchParams = useSearchParams();
+
+  const qValue = searchParams.get("q") || "";
+  const [searchTerm, setSearchTerm] = useState(qValue);
+
+  useEffect(() => {
+    setSearchTerm(qValue);
+  }, [qValue]);
+
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
@@ -87,30 +94,21 @@ export default function PageClient({
     useState<Appointment | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState("all");
 
-  // Check if current user is a professional
   const isProfessional = currentUser?.role?.name === "profesional";
 
-  // Helper function to check if date matches filter
   const doesDateMatchFilter = (
     appointmentDate: string | Date,
     filter: string,
   ) => {
     if (filter === "all") return true;
-
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-
     const appointmentDateObj = new Date(appointmentDate);
-
-    const normalizeDate = (date: Date) => {
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    };
-
+    const normalizeDate = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const normalizedToday = normalizeDate(today);
     const normalizedTomorrow = normalizeDate(tomorrow);
     const normalizedAppointment = normalizeDate(appointmentDateObj);
-
     switch (filter) {
       case "today":
         return normalizedAppointment.getTime() === normalizedToday.getTime();
@@ -125,238 +123,99 @@ export default function PageClient({
     }
   };
 
-  // Client-side filtering for immediate UI feedback
+  // FILTROS LOCALES (estado, fecha, profesional) sobre appointments que ya viene filtrado por texto y paginación
   const clientFilteredAppointments = appointments.filter((appointment) => {
-    // Search filter
-    const matchesSearch =
-      appointment.client.fullName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      appointment.services?.some((service: any) =>
-        service.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
-
-    // Status filter
     const matchesStatus =
       statusFilter === "all" || appointment.status === statusFilter;
-
-    // Date filter
     const matchesDate = doesDateMatchFilter(
       appointment.appointmentDate,
       dateFilter,
     );
-
-    // Professional filter
     const matchesProfessional =
       selectedProfessionalId === "all" ||
       appointment.professional?.id === selectedProfessionalId;
-
-    return matchesSearch && matchesStatus && matchesDate && matchesProfessional;
+    return matchesStatus && matchesDate && matchesProfessional;
   });
 
-  const handleProfessionalFilter = (value: string) => {
-    setSelectedProfessionalId(value);
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
-
-    if (value !== "all") {
-      params.set("professional", value);
-    } else {
-      params.delete("professional");
-    }
-
-    router.push(`${url.pathname}?${params.toString()}`);
-  };
-
+  // Handler de búsqueda: solo busca si hay 2+ caracteres, borra si menos
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
 
-    if (value) {
-      params.set("search", value);
-    } else {
-      params.delete("search");
+    if (!value || value.length < 2) {
+      params.delete("q");
+      params.delete("page");
+      router.push(`${url.pathname}?${params.toString()}`);
+      return;
     }
 
+    params.set("q", value);
+    params.delete("page"); // reset page al buscar
     router.push(`${url.pathname}?${params.toString()}`);
   };
 
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
+  const handleStatusFilter = (value: string) => setStatusFilter(value);
+  const handleDateFilter = (value: string) => setDateFilter(value);
+  const handleProfessionalFilter = (value: string) => setSelectedProfessionalId(value);
 
-    if (value !== "all") {
-      params.set("status", value);
-    } else {
-      params.delete("status");
-    }
-
-    router.push(`${url.pathname}?${params.toString()}`);
-  };
-
-  const handleDateFilter = (value: string) => {
-    setDateFilter(value);
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
-
-    if (value !== "all") {
-      params.set("date", value);
-    } else {
-      params.delete("date");
-    }
-
-    router.push(`${url.pathname}?${params.toString()}`);
-  };
-
-  // Action handlers
   const handleEditAppointment = (appointment: Appointment) => {
     router.push(`/appointments/${appointment.id}/edit`)
   };
+  const handleConfirmAppointment = (appointment: Appointment) => console.log("Confirm appointment:", appointment);
+  const handleCancelAppointment = (appointment: Appointment) => console.log("Cancel appointment:", appointment);
+  const handleDeleteAppointment = (appointment: Appointment) => console.log("Delete appointment:", appointment);
+  const handleCallClient = (appointment: Appointment) => window.open(`tel:${appointment.client.phone}`);
+  const handleEmailClient = (appointment: Appointment) => window.open(`mailto:${appointment.client.email}`);
+  const handleViewAppointment = (appointment: Appointment) => setSelectedAppointment(appointment);
+  const handleCreateAppointment = () => redirect("/appointments/new");
+  const handleCloseDialog = () => setSelectedAppointment(null);
+  const handleExportAppointments = () => console.log("Export appointments");
 
-  const handleConfirmAppointment = (appointment: Appointment) => {
-    console.log("Confirm appointment:", appointment);
-  };
-
-  const handleCancelAppointment = (appointment: Appointment) => {
-    console.log("Cancel appointment:", appointment);
-  };
-
-  const handleDeleteAppointment = (appointment: Appointment) => {
-    console.log("Delete appointment:", appointment);
-  };
-
-  const handleCallClient = (appointment: Appointment) => {
-    window.open(`tel:${appointment.client.phone}`);
-  };
-
-  const handleEmailClient = (appointment: Appointment) => {
-    window.open(`mailto:${appointment.client.email}`);
-  };
-
-  const handleViewAppointment = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
-  };
-
-  const handleCreateAppointment = () => {
-    redirect("/appointments/new");
-  };
-
-  const handleCloseDialog = () => {
-    setSelectedAppointment(null);
-  };
-
-  const handleExportAppointments = () => {
-    console.log("Export appointments");
-  };
-
-  const getStatusBadge = (status: string) => {
-    return (
-      <Badge className={getStatusColor(status)}>
-        <div className="flex items-center space-x-1">
-          {getStatusIcon(status)}
-          <span className="text-xs">{getStatusText(status)}</span>
-        </div>
-      </Badge>
-    );
-  };
-
-  const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: {
-        color:
-          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-        label: "Pendiente",
-      },
-      paid: {
-        color:
-          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-        label: "Pagado",
-      },
-      refunded: {
-        color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-        label: "Reembolsado",
-      },
-    };
-
-    const config =
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-
-    return (
-      <Badge variant="outline" className={config.color}>
-        <span className="text-xs">{config.label}</span>
-      </Badge>
-    );
-  };
-
+  const getStatusBadge = (status: string) => (
+    <Badge className={getStatusColor(status)}>
+      <div className="flex items-center space-x-1">
+        {getStatusIcon(status)}
+        <span className="text-xs">{getStatusText(status)}</span>
+      </div>
+    </Badge>
+  );
   const getInitials = (name: string) => {
     if (!name) return "";
-
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "GTQ",
-    }).format(amount);
-  };
-
-  const formatDateTime = (date: string, time: string) => {
-    const dateObj = new Date(`${date}T${time}`);
-    return dateObj.toLocaleString("es-ES", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  // Suma total de duración y precio
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("es-ES", { style: "currency", currency: "GTQ" }).format(amount);
   const getTotalDuration = (services: any[]) =>
-    services?.reduce(
-      (acc: number, service: any) =>
-        acc + (Number(service.durationMinutes) || 0),
-      0,
-    ) || 0;
+    services?.reduce((acc: number, service: any) => acc + (Number(service.durationMinutes) || 0), 0) || 0;
   const getTotalPrice = (services: any[]) =>
-    services?.reduce(
-      (acc: number, service: any) => acc + (Number(service.price) || 0),
-      0,
-    ) || 0;
-
-  const statsCards = [
-    { title: "Total Citas", value: stats.todayCount, color: "text-blue-600" },
-    {
-      title: "Confirmadas",
-      value: stats.confirmedCount,
-      color: "text-green-600",
-    },
-    {
-      title: "Pendientes",
-      value: stats.pendingCount,
-      color: "text-yellow-600",
-    },
-    {
-      title: "Canceladas",
-      value: stats.cancelledCount,
-      color: "text-red-600",
-    },
-  ];
-
-  // Format time
+    services?.reduce((acc: number, service: any) => acc + (Number(service.price) || 0), 0) || 0;
   const formatTime = (timeString: string) => {
     if (!timeString) return "00:00";
     const timeParts = timeString.split(":");
     return `${timeParts[0]}:${timeParts[1]}`;
+  };
+
+  const statsCards = [
+    { title: "Total Citas", value: stats.todayCount, color: "text-blue-600" },
+    { title: "Confirmadas", value: stats.confirmedCount, color: "text-green-600" },
+    { title: "Pendientes", value: stats.pendingCount, color: "text-yellow-600" },
+    { title: "Canceladas", value: stats.cancelledCount, color: "text-red-600" },
+  ];
+
+  const handlePrevPage = () => {
+    if (!pagination.hasPreviousPage) return;
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    params.set("page", String(pagination.currentPage - 1));
+    router.push(`${url.pathname}?${params.toString()}`);
+  };
+  const handleNextPage = () => {
+    if (!pagination.hasNextPage) return;
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    params.set("page", String(pagination.currentPage + 1));
+    router.push(`${url.pathname}?${params.toString()}`);
   };
 
   return (
@@ -378,9 +237,7 @@ export default function PageClient({
                     <p className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">
                       {stat.title}
                     </p>
-                    <p
-                      className={`text-lg md:text-2xl font-bold ${stat.color}`}
-                    >
+                    <p className={`text-lg md:text-2xl font-bold ${stat.color}`}>
                       {stat.value}
                     </p>
                   </div>
@@ -530,7 +387,7 @@ export default function PageClient({
               <div className="flex items-center justify-between pt-2">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Mostrando {clientFilteredAppointments.length} de{" "}
-                  {appointments.length} citas
+                  {pagination.totalItems ?? appointments.length} citas
                 </p>
               </div>
             </div>
@@ -852,7 +709,7 @@ export default function PageClient({
           </Card>
         )}
 
-        {appointments.length > 0 && (
+        {pagination.totalPages > 1 && (
           <div className="mt-8 flex items-center justify-between">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Página {pagination.currentPage} de {pagination.totalPages}
@@ -861,26 +718,14 @@ export default function PageClient({
               <Button
                 variant="outline"
                 disabled={!pagination.hasPreviousPage}
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  const params = new URLSearchParams(url.search);
-                  const nextPage = pagination.currentPage - 1;
-                  params.set("page", nextPage.toString());
-                  router.push(`${url.pathname}?${params.toString()}`);
-                }}
+                onClick={handlePrevPage}
               >
                 Anterior
               </Button>
               <Button
                 variant="outline"
                 disabled={!pagination.hasNextPage}
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  const params = new URLSearchParams(url.search);
-                  const nextPage = pagination.currentPage + 1;
-                  params.set("page", nextPage.toString());
-                  router.push(`${url.pathname}?${params.toString()}`);
-                }}
+                onClick={handleNextPage}
               >
                 Siguiente
               </Button>

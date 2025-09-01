@@ -7,7 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Client } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 type DeleteClientRequest = {
   id: string;
 };
@@ -16,9 +16,8 @@ export default async function deleteClient({
   id,
 }: DeleteClientRequest): Promise<SuccessReponse<Client> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/Clients/${id}`;
 
     const response = await axios.delete(url, {

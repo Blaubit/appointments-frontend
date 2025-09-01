@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { CreateSecretaryProfessionalDto } from "@/types/dto/User/SecretaryProfessional/createSecretaryProfesionalDto";
 import { User } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function create({
   secretaryId,
   professionalId,
@@ -17,9 +17,8 @@ export async function create({
   SuccessReponse<User> | ErrorResponse
 > {
   const session = await getSession();
-  const User = await getUser();
+    const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
 
     // Validar que tenemos companyId
     if (!companyId) {
