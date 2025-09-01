@@ -25,14 +25,12 @@ import { DateTimeSelectorCard } from "@/components/appointments/new/DateTimeSele
 type Props = {
   clients: Client[];
   professionals: User[];
-  userSession: User;
   appointment: Appointment;
 };
 
 export default function PageEditClient({
   clients,
   professionals,
-  userSession,
   appointment,
 }: Props) {
   const router = useRouter();

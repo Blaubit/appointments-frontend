@@ -7,14 +7,13 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function findHistory(
   id: string,
 ): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
-  const User = await getUser();
+  const companyId = await getCompanyId();
   const session = await getSession();
   try {
-    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
 
     const response = await axios.get(url, {

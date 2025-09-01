@@ -9,6 +9,7 @@ import { serviceDto } from "@/types/dto/service/serviceDto";
 import { Appointment } from "@/types/";
 import { updateServiceDto } from "@/types/dto/service/updateServiceDto";
 import { getUser, getSession } from "@/actions/auth";
+import { getCompanyId } from "@/actions/user/getCompanyId";
 
 export default async function update({
   id,
@@ -17,9 +18,8 @@ export default async function update({
   price,
 }: updateServiceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services/${id}`;
 
     const body = {

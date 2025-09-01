@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { ClientEditFormData } from "@/types";
 import { Client } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export default async function edit({
   id,
   fullName,
@@ -16,11 +16,9 @@ export default async function edit({
   phone,
 }: ClientEditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
 
   try {
-    const companyId = User?.company.id;
-
     // Validar que tenemos companyId
     if (!companyId) {
       return {

@@ -9,7 +9,6 @@ export default async function ClientsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  // Await searchParams before using its properties
   const resolvedSearchParams = await searchParams;
 
   // Extraer parámetros de búsqueda
@@ -25,17 +24,12 @@ export default async function ClientsPage({
     typeof resolvedSearchParams.search === "string"
       ? resolvedSearchParams.search
       : "";
-  const status =
-    typeof resolvedSearchParams.status === "string"
-      ? resolvedSearchParams.status
-      : "all";
 
-  // Crear URLSearchParams para enviar al backend
+  // Crear URLSearchParams con paginación y búsqueda
   const params = new URLSearchParams();
   params.set("page", page.toString());
-  params.set("limit", limit.toString());
-  if (search) params.set("search", search);
-  if (status && status !== "all") params.set("status", status);
+  params.set("limit", limit.toString()); // Opcional, si tu backend lo usa
+  if (search && search.length >= 2) params.set("q", search);
 
   const clients = await findAll({ searchParams: params });
 
@@ -79,7 +73,6 @@ export default async function ClientsPage({
             page,
             limit,
             search,
-            status,
           }}
         />
       </main>

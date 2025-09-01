@@ -7,7 +7,7 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment, AppointmentStats } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
-
+import { getCompanyId } from "@/actions/user/getCompanyId";
 type Props = {
   searchParams?: URLSearchParams;
 };
@@ -20,10 +20,9 @@ type UpcomingAppointmentsResponse = SuccessReponse<Appointment[]> & {
 export async function upcomingAppointments(
   props: Props = {},
 ): Promise<UpcomingAppointmentsResponse | ErrorResponse> {
-  const User = await getUser();
+  const companyId = await getCompanyId();
   const session = await getSession();
   try {
-    const companyId = User?.company.id;
     if (!companyId) {
       return {
         message: "Company ID not found in cookies",

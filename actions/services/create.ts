@@ -9,15 +9,15 @@ import { serviceDto } from "@/types/dto/service/serviceDto";
 import { Appointment } from "@/types/";
 import { getUser } from "@/actions/auth/getUser";
 import { getSession } from "@/actions/auth";
+import { getCompanyId } from "@/actions/user/getCompanyId";
 export default async function create({
   name,
   durationMinutes,
   price,
 }: serviceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const session = await getSession();
-  const User = await getUser();
+  const companyId = await getCompanyId();
   try {
-    const companyId = User?.company.id;
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services`;
     const body = {
       name,
