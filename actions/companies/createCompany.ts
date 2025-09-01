@@ -31,7 +31,6 @@ export default async function createCompany({
   try {
     const url = `${parsedEnv.API_URL}/companies`;
 
-
     // Para crear una empresa nueva, NO necesitamos session ni companyId
     // Esto debería ser un endpoint público para registro
 
