@@ -46,7 +46,6 @@ export default async function edit({
     // Corregir la URL - no debería tener `:` antes del id
     const url = `${parsedEnv.API_URL}/companies/${id}`;
 
-
     // Validar que tenemos session
     if (!session) {
       return {

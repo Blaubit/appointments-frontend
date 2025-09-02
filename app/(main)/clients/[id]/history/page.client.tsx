@@ -177,13 +177,14 @@ export default function ClientHistoryPageClient({
 
   // Helpers para tabla y detalles: mostrar servicios
   const renderServicesSummary = (services: any[]) => {
-    if (!Array.isArray(services) || services.length === 0) return "Sin servicios";
-    return services.map((service, idx) =>
+    if (!Array.isArray(services) || services.length === 0)
+      return "Sin servicios";
+    return services.map((service, idx) => (
       <span key={service.id || idx}>
         {service.name} ({service.durationMinutes} min)
-        {idx < services.length - 1 ? ', ' : ''}
+        {idx < services.length - 1 ? ", " : ""}
       </span>
-    );
+    ));
   };
 
   const renderServicesDetails = (services: any[]) => {
@@ -193,7 +194,8 @@ export default function ClientHistoryPageClient({
       <ul className="space-y-1">
         {services.map((service, idx) => (
           <li key={service.id || idx}>
-            <strong>{service.name}</strong> - {service.durationMinutes} min - €{service.price}
+            <strong>{service.name}</strong> - {service.durationMinutes} min - €
+            {service.price}
           </li>
         ))}
       </ul>
@@ -355,7 +357,9 @@ export default function ClientHistoryPageClient({
                                 <div className="flex items-start justify-between mb-2 sm:mb-3">
                                   <div className="flex-1 min-w-0">
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">
-                                      {renderServicesSummary(appointment.services)}
+                                      {renderServicesSummary(
+                                        appointment.services,
+                                      )}
                                     </h3>
                                     {/* Información principal */}
                                     <div className="space-y-1 sm:space-y-0 sm:flex sm:items-center sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -416,13 +420,28 @@ export default function ClientHistoryPageClient({
                                 <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                                      €{Array.isArray(appointment.services) ? appointment.services.reduce((sum, s) => sum + Number(s.price || 0), 0) : 0}
+                                      €
+                                      {Array.isArray(appointment.services)
+                                        ? appointment.services.reduce(
+                                            (sum, s) =>
+                                              sum + Number(s.price || 0),
+                                            0,
+                                          )
+                                        : 0}
                                     </span>
                                     <span className="text-xs text-gray-500">
-                                      • {Array.isArray(appointment.services) ? appointment.services.reduce((sum, s) => sum + Number(s.durationMinutes || 0), 0) : 0} min
+                                      •{" "}
+                                      {Array.isArray(appointment.services)
+                                        ? appointment.services.reduce(
+                                            (sum, s) =>
+                                              sum +
+                                              Number(s.durationMinutes || 0),
+                                            0,
+                                          )
+                                        : 0}{" "}
+                                      min
                                     </span>
                                   </div>
-                                  
                                 </div>
                               </CardContent>
                             </Card>
@@ -505,13 +524,26 @@ export default function ClientHistoryPageClient({
                       <div>
                         <span className="text-gray-500">Precio total:</span>
                         <p className="font-medium">
-                          €{Array.isArray(selectedAppointment.services) ? selectedAppointment.services.reduce((sum, s) => sum + Number(s.price || 0), 0) : 0}
+                          €
+                          {Array.isArray(selectedAppointment.services)
+                            ? selectedAppointment.services.reduce(
+                                (sum, s) => sum + Number(s.price || 0),
+                                0,
+                              )
+                            : 0}
                         </p>
                       </div>
                       <div>
                         <span className="text-gray-500">Duración total:</span>
                         <p className="font-medium">
-                          {Array.isArray(selectedAppointment.services) ? selectedAppointment.services.reduce((sum, s) => sum + Number(s.durationMinutes || 0), 0) : 0} min
+                          {Array.isArray(selectedAppointment.services)
+                            ? selectedAppointment.services.reduce(
+                                (sum, s) =>
+                                  sum + Number(s.durationMinutes || 0),
+                                0,
+                              )
+                            : 0}{" "}
+                          min
                         </p>
                       </div>
                     </div>

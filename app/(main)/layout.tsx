@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "Planit - Sistema de Gestión de Citas",
   description:
     "Plataforma profesional para gestionar citas médicas, peluquerías y servicios",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

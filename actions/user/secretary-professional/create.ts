@@ -17,9 +17,8 @@ export async function create({
   SuccessReponse<User> | ErrorResponse
 > {
   const session = await getSession();
-    const companyId = await getCompanyId();
+  const companyId = await getCompanyId();
   try {
-
     // Validar que tenemos companyId
     if (!companyId) {
       return {

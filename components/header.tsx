@@ -110,9 +110,12 @@ export function Header({
 
             {/* Logo and Title */}
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <div className="p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex-shrink-0">
-                <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
-              </div>
+              <img
+                src="/favicon.png"
+                alt="Logo Planit"
+                className="h-7 w-7 sm:h-8 sm:w-8 object-contain"
+              />
+
               <div className="min-w-0 flex-1">
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                   {title}

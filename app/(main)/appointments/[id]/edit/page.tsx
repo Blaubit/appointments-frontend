@@ -1,5 +1,5 @@
 import PageEditClient from "@/app/(main)/appointments/[id]/edit/page.client";
-import findOne  from "@/actions/appointments/findOne";
+import findOne from "@/actions/appointments/findOne";
 import { findAll as findAllClients } from "@/actions/clients/findAll";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import type { Client, User } from "@/types";

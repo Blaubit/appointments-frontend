@@ -62,7 +62,7 @@ function mapAvailabilitiesToScheduleSettings(avail: any): ScheduleSettings {
   const getDaySettings = (
     day: string,
     defaultStart: string,
-    defaultEnd: string
+    defaultEnd: string,
   ): WorkingDaySettings => {
     const start = avail[`${day}Start`];
     const end = avail[`${day}End`];
@@ -75,9 +75,11 @@ function mapAvailabilitiesToScheduleSettings(avail: any): ScheduleSettings {
 
   return {
     timezone: avail.timezone || defaultScheduleSettings.timezone,
-    appointmentDuration: avail.appointmentDuration || defaultScheduleSettings.appointmentDuration,
+    appointmentDuration:
+      avail.appointmentDuration || defaultScheduleSettings.appointmentDuration,
     bufferTime: avail.bufferTime || defaultScheduleSettings.bufferTime,
-    maxAdvanceBooking: avail.maxAdvanceBooking || defaultScheduleSettings.maxAdvanceBooking,
+    maxAdvanceBooking:
+      avail.maxAdvanceBooking || defaultScheduleSettings.maxAdvanceBooking,
     workingDays: {
       monday: getDaySettings("monday", "09:00", "17:00"),
       tuesday: getDaySettings("tuesday", "09:00", "17:00"),
@@ -95,8 +97,11 @@ export function ScheduleForm({
   initialSettings = defaultScheduleSettings,
   userSession,
 }: ScheduleFormProps) {
-  const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>(initialSettings);
-  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(null);
+  const [scheduleSettings, setScheduleSettings] =
+    useState<ScheduleSettings>(initialSettings);
+  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -119,7 +124,9 @@ export function ScheduleForm({
     if (!userSession) return;
     if (userSession.role?.name === "profesional") {
       const professional = professionals.find(
-        (p) => p.id === userSession.id || p.id.toString() === userSession.id.toString()
+        (p) =>
+          p.id === userSession.id ||
+          p.id.toString() === userSession.id.toString(),
       );
       if (professional) setSelectedProfessional(professional);
     }
@@ -165,20 +172,48 @@ export function ScheduleForm({
   function mapToDto(settings: ScheduleSettings, professionalId: string) {
     return {
       professionalId,
-      mondayStart: settings.workingDays.monday.enabled ? settings.workingDays.monday.start : null,
-      mondayEnd: settings.workingDays.monday.enabled ? settings.workingDays.monday.end : null,
-      tuesdayStart: settings.workingDays.tuesday.enabled ? settings.workingDays.tuesday.start : null,
-      tuesdayEnd: settings.workingDays.tuesday.enabled ? settings.workingDays.tuesday.end : null,
-      wednesdayStart: settings.workingDays.wednesday.enabled ? settings.workingDays.wednesday.start : null,
-      wednesdayEnd: settings.workingDays.wednesday.enabled ? settings.workingDays.wednesday.end : null,
-      thursdayStart: settings.workingDays.thursday.enabled ? settings.workingDays.thursday.start : null,
-      thursdayEnd: settings.workingDays.thursday.enabled ? settings.workingDays.thursday.end : null,
-      fridayStart: settings.workingDays.friday.enabled ? settings.workingDays.friday.start : null,
-      fridayEnd: settings.workingDays.friday.enabled ? settings.workingDays.friday.end : null,
-      saturdayStart: settings.workingDays.saturday.enabled ? settings.workingDays.saturday.start : null,
-      saturdayEnd: settings.workingDays.saturday.enabled ? settings.workingDays.saturday.end : null,
-      sundayStart: settings.workingDays.sunday.enabled ? settings.workingDays.sunday.start : null,
-      sundayEnd: settings.workingDays.sunday.enabled ? settings.workingDays.sunday.end : null
+      mondayStart: settings.workingDays.monday.enabled
+        ? settings.workingDays.monday.start
+        : null,
+      mondayEnd: settings.workingDays.monday.enabled
+        ? settings.workingDays.monday.end
+        : null,
+      tuesdayStart: settings.workingDays.tuesday.enabled
+        ? settings.workingDays.tuesday.start
+        : null,
+      tuesdayEnd: settings.workingDays.tuesday.enabled
+        ? settings.workingDays.tuesday.end
+        : null,
+      wednesdayStart: settings.workingDays.wednesday.enabled
+        ? settings.workingDays.wednesday.start
+        : null,
+      wednesdayEnd: settings.workingDays.wednesday.enabled
+        ? settings.workingDays.wednesday.end
+        : null,
+      thursdayStart: settings.workingDays.thursday.enabled
+        ? settings.workingDays.thursday.start
+        : null,
+      thursdayEnd: settings.workingDays.thursday.enabled
+        ? settings.workingDays.thursday.end
+        : null,
+      fridayStart: settings.workingDays.friday.enabled
+        ? settings.workingDays.friday.start
+        : null,
+      fridayEnd: settings.workingDays.friday.enabled
+        ? settings.workingDays.friday.end
+        : null,
+      saturdayStart: settings.workingDays.saturday.enabled
+        ? settings.workingDays.saturday.start
+        : null,
+      saturdayEnd: settings.workingDays.saturday.enabled
+        ? settings.workingDays.saturday.end
+        : null,
+      sundayStart: settings.workingDays.sunday.enabled
+        ? settings.workingDays.sunday.start
+        : null,
+      sundayEnd: settings.workingDays.sunday.enabled
+        ? settings.workingDays.sunday.end
+        : null,
     };
   }
 
@@ -205,7 +240,8 @@ export function ScheduleForm({
           Configuración de Horarios
         </CardTitle>
         <CardDescription className="text-sm">
-          Selecciona el profesional y define sus horarios de trabajo y disponibilidad
+          Selecciona el profesional y define sus horarios de trabajo y
+          disponibilidad
         </CardDescription>
       </CardHeader>
       <CardContent className="px-4 sm:px-6">
@@ -357,8 +393,8 @@ export function ScheduleForm({
                 {isLoading
                   ? "Guardando..."
                   : !selectedProfessional
-                  ? "Selecciona un profesional"
-                  : "Guardar Cambios"}
+                    ? "Selecciona un profesional"
+                    : "Guardar Cambios"}
               </Button>
             </div>
           )}

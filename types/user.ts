@@ -53,7 +53,6 @@ export type ScheduleResponse = {
   professional: User;
 };
 
-
 // Roles predefinidos del sistema
 export const DEFAULT_ROLES: Role[] = [
   {

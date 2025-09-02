@@ -23,8 +23,10 @@ export async function create({
   saturdayStart,
   saturdayEnd,
   sundayStart,
-  sundayEnd
-}: CreateScheduleDto): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse> {
+  sundayEnd,
+}: CreateScheduleDto): Promise<
+  SuccessReponse<ScheduleResponse> | ErrorResponse
+> {
   const session = await getSession();
   try {
     const url = `${parsedEnv.API_URL}/availabilities`;
@@ -37,27 +39,26 @@ export async function create({
     }
 
     const body = {
-        professionalId,
-        mondayStart,
-        mondayEnd,
-        tuesdayStart,
-        tuesdayEnd,
-        wednesdayStart,
-        wednesdayEnd,
-        thursdayStart,
-        thursdayEnd,
-        fridayStart,
-        fridayEnd,
-        saturdayStart,
-        saturdayEnd,
-        sundayStart,
-        sundayEnd
+      professionalId,
+      mondayStart,
+      mondayEnd,
+      tuesdayStart,
+      tuesdayEnd,
+      wednesdayStart,
+      wednesdayEnd,
+      thursdayStart,
+      thursdayEnd,
+      fridayStart,
+      fridayEnd,
+      saturdayStart,
+      saturdayEnd,
+      sundayStart,
+      sundayEnd,
     };
 
     const response = await axios.post<ScheduleResponse>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
-        
       },
     });
     console.log("Response from create User:", response);

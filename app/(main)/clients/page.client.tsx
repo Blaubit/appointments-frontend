@@ -89,7 +89,9 @@ export default function ClientsPageClient({
   const searchParams = useSearchParams();
 
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
-  const [searchTerm, setSearchTerm] = useState(initialSearchParams?.search || "");
+  const [searchTerm, setSearchTerm] = useState(
+    initialSearchParams?.search || "",
+  );
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -710,7 +712,6 @@ export default function ClientsPageClient({
                   hasPreviousPage={pagination.hasPreviousPage}
                   totalItems={pagination.totalItems}
                   itemsPerPage={pagination.itemsPerPage}
-                  
                 />
               )}
             </>
@@ -834,7 +835,6 @@ export default function ClientsPageClient({
                   hasPreviousPage={pagination.hasPreviousPage}
                   totalItems={pagination.totalItems}
                   itemsPerPage={pagination.itemsPerPage}
-                
                 />
               )}
             </>

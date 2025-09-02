@@ -105,7 +105,8 @@ export default function PageClient({
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
     const appointmentDateObj = new Date(appointmentDate);
-    const normalizeDate = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const normalizeDate = (date: Date) =>
+      new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const normalizedToday = normalizeDate(today);
     const normalizedTomorrow = normalizeDate(tomorrow);
     const normalizedAppointment = normalizeDate(appointmentDateObj);
@@ -157,17 +158,24 @@ export default function PageClient({
 
   const handleStatusFilter = (value: string) => setStatusFilter(value);
   const handleDateFilter = (value: string) => setDateFilter(value);
-  const handleProfessionalFilter = (value: string) => setSelectedProfessionalId(value);
+  const handleProfessionalFilter = (value: string) =>
+    setSelectedProfessionalId(value);
 
   const handleEditAppointment = (appointment: Appointment) => {
-    router.push(`/appointments/${appointment.id}/edit`)
+    router.push(`/appointments/${appointment.id}/edit`);
   };
-  const handleConfirmAppointment = (appointment: Appointment) => console.log("Confirm appointment:", appointment);
-  const handleCancelAppointment = (appointment: Appointment) => console.log("Cancel appointment:", appointment);
-  const handleDeleteAppointment = (appointment: Appointment) => console.log("Delete appointment:", appointment);
-  const handleCallClient = (appointment: Appointment) => window.open(`tel:${appointment.client.phone}`);
-  const handleEmailClient = (appointment: Appointment) => window.open(`mailto:${appointment.client.email}`);
-  const handleViewAppointment = (appointment: Appointment) => setSelectedAppointment(appointment);
+  const handleConfirmAppointment = (appointment: Appointment) =>
+    console.log("Confirm appointment:", appointment);
+  const handleCancelAppointment = (appointment: Appointment) =>
+    console.log("Cancel appointment:", appointment);
+  const handleDeleteAppointment = (appointment: Appointment) =>
+    console.log("Delete appointment:", appointment);
+  const handleCallClient = (appointment: Appointment) =>
+    window.open(`tel:${appointment.client.phone}`);
+  const handleEmailClient = (appointment: Appointment) =>
+    window.open(`mailto:${appointment.client.email}`);
+  const handleViewAppointment = (appointment: Appointment) =>
+    setSelectedAppointment(appointment);
   const handleCreateAppointment = () => redirect("/appointments/new");
   const handleCloseDialog = () => setSelectedAppointment(null);
   const handleExportAppointments = () => console.log("Export appointments");
@@ -182,14 +190,29 @@ export default function PageClient({
   );
   const getInitials = (name: string) => {
     if (!name) return "";
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("es-ES", { style: "currency", currency: "GTQ" }).format(amount);
+    new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: "GTQ",
+    }).format(amount);
   const getTotalDuration = (services: any[]) =>
-    services?.reduce((acc: number, service: any) => acc + (Number(service.durationMinutes) || 0), 0) || 0;
+    services?.reduce(
+      (acc: number, service: any) =>
+        acc + (Number(service.durationMinutes) || 0),
+      0,
+    ) || 0;
   const getTotalPrice = (services: any[]) =>
-    services?.reduce((acc: number, service: any) => acc + (Number(service.price) || 0), 0) || 0;
+    services?.reduce(
+      (acc: number, service: any) => acc + (Number(service.price) || 0),
+      0,
+    ) || 0;
   const formatTime = (timeString: string) => {
     if (!timeString) return "00:00";
     const timeParts = timeString.split(":");
@@ -198,8 +221,16 @@ export default function PageClient({
 
   const statsCards = [
     { title: "Total Citas", value: stats.todayCount, color: "text-blue-600" },
-    { title: "Confirmadas", value: stats.confirmedCount, color: "text-green-600" },
-    { title: "Pendientes", value: stats.pendingCount, color: "text-yellow-600" },
+    {
+      title: "Confirmadas",
+      value: stats.confirmedCount,
+      color: "text-green-600",
+    },
+    {
+      title: "Pendientes",
+      value: stats.pendingCount,
+      color: "text-yellow-600",
+    },
     { title: "Canceladas", value: stats.cancelledCount, color: "text-red-600" },
   ];
 
@@ -237,7 +268,9 @@ export default function PageClient({
                     <p className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">
                       {stat.title}
                     </p>
-                    <p className={`text-lg md:text-2xl font-bold ${stat.color}`}>
+                    <p
+                      className={`text-lg md:text-2xl font-bold ${stat.color}`}
+                    >
                       {stat.value}
                     </p>
                   </div>

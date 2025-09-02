@@ -21,7 +21,6 @@ export default async function create({
   const session = await getSession();
   const companyId = await getCompanyId();
   try {
-    
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments`;
     const body = {
       clientId,

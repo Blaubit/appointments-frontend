@@ -119,8 +119,8 @@ export default function ConsultationPageClient({
 
     console.log("Consulta completada:", {
       appointmentId: appointment.id,
-      servicesIds: services.map(s => s.id),
-      servicesNames: services.map(s => s.name),
+      servicesIds: services.map((s) => s.id),
+      servicesNames: services.map((s) => s.name),
       notes: consultationNotes,
       diagnosis,
       treatment,
@@ -160,21 +160,25 @@ export default function ConsultationPageClient({
 
   // Helpers para mostrar los servicios
   const renderServicesSummary = (services: any[]) => {
-    if (!Array.isArray(services) || services.length === 0) return "Sin servicios";
-    return services.map((service, idx) =>
+    if (!Array.isArray(services) || services.length === 0)
+      return "Sin servicios";
+    return services.map((service, idx) => (
       <span key={service.id || idx}>
-        {service.name}{service.durationMinutes ? ` (${service.durationMinutes} min)` : ""}
-        {idx < services.length - 1 ? ', ' : ''}
+        {service.name}
+        {service.durationMinutes ? ` (${service.durationMinutes} min)` : ""}
+        {idx < services.length - 1 ? ", " : ""}
       </span>
-    );
+    ));
   };
   const renderServicesDetails = (services: any[]) => {
-    if (!Array.isArray(services) || services.length === 0) return <span>Sin servicios</span>;
+    if (!Array.isArray(services) || services.length === 0)
+      return <span>Sin servicios</span>;
     return (
       <ul className="space-y-1">
         {services.map((service, idx) => (
           <li key={service.id || idx}>
-            <strong>{service.name}</strong> - {service.durationMinutes} min - €{service.price}
+            <strong>{service.name}</strong> - {service.durationMinutes} min - €
+            {service.price}
           </li>
         ))}
       </ul>
@@ -206,7 +210,9 @@ export default function ConsultationPageClient({
                     </CardTitle>
                     <CardDescription className="mt-1">
                       {services.map((s) => (
-                        <span key={s.id} className="block text-xs">{ "descripcion de servicio"}</span>
+                        <span key={s.id} className="block text-xs">
+                          {"descripcion de servicio"}
+                        </span>
                       ))}
                     </CardDescription>
                   </div>
@@ -220,7 +226,10 @@ export default function ConsultationPageClient({
                 {/* Detalles de los Servicios */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
                   {services.map((service, idx) => (
-                    <div className="flex items-center gap-2" key={service.id || idx}>
+                    <div
+                      className="flex items-center gap-2"
+                      key={service.id || idx}
+                    >
                       <Clock className="h-4 w-4 text-blue-600" />
                       <div>
                         <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
@@ -281,7 +290,11 @@ export default function ConsultationPageClient({
                       Tiempo estimado
                     </p>
                     <p className="font-medium text-green-900 dark:text-green-100">
-                      {services.reduce((sum, s) => sum + (s.durationMinutes || 0), 0)} min
+                      {services.reduce(
+                        (sum, s) => sum + (s.durationMinutes || 0),
+                        0,
+                      )}{" "}
+                      min
                     </p>
                   </div>
                 </div>
@@ -383,14 +396,24 @@ export default function ConsultationPageClient({
                         Duración Total Programada:
                       </span>
                       <p className="font-medium">
-                        {services.reduce((sum, s) => sum + (s.durationMinutes || 0), 0)} minutos
+                        {services.reduce(
+                          (sum, s) => sum + (s.durationMinutes || 0),
+                          0,
+                        )}{" "}
+                        minutos
                       </p>
                     </div>
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">
                         Precio Total:
                       </span>
-                      <p className="font-medium">€{services.reduce((sum, s) => sum + (Number(s.price) || 0), 0)}</p>
+                      <p className="font-medium">
+                        €
+                        {services.reduce(
+                          (sum, s) => sum + (Number(s.price) || 0),
+                          0,
+                        )}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -446,7 +469,7 @@ export default function ConsultationPageClient({
                   <div>
                     <p className="font-semibold">{client.fullName}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      { `0`} años
+                      {`0`} años
                     </p>
                   </div>
                 </div>
@@ -527,10 +550,8 @@ export default function ConsultationPageClient({
                         </p>
                         <Badge
                           variant="outline"
-                          className={`text-xs mt-1 ${getServiceCategoryColor( "General")}`}
-                        >
-                          
-                        </Badge>
+                          className={`text-xs mt-1 ${getServiceCategoryColor("General")}`}
+                        ></Badge>
                       </div>
                     </div>
                   </div>
