@@ -3,9 +3,9 @@ import type { NextRequest } from "next/server";
 
 // Rutas restringidas por rol
 const ROLE_RESTRICTIONS = {
-  secretaria: ["/bot", "/consultation", "/reports", "/services"],
-  profesional: ["/bot"],
-  admin_empresa: ["/bot"],
+  secretaria: ["/bot", "/consultation", "/reports", "/services", "/register"],
+  profesional: ["/bot", " /register"],
+  admin_empresa: ["/bot", " /register"],
   super_admin: [],
 };
 
@@ -49,7 +49,7 @@ export function middleware(request: NextRequest) {
     ROLE_RESTRICTIONS[userRole as keyof typeof ROLE_RESTRICTIONS];
   if (restrictedRoutes && restrictedRoutes.length > 0) {
     const isRestricted = restrictedRoutes.some((restrictedRoute) =>
-      pathname.startsWith(restrictedRoute),
+      pathname.startsWith(restrictedRoute)
     );
     if (isRestricted) {
       console.log(`Acceso denegado: ${userRole} intentó acceder a ${pathname}`);

@@ -14,6 +14,8 @@ export * from "./support";
 export * from "./saas";
 export * from "./user";
 export * from "./calendar";
+export * from "./subscription";
+export * from "./company";
 // Re-export commonly used types for convenience
 export type { Notification, Pagination } from "./common";
 export type { Appointment, AppointmentStats } from "./appointments";
