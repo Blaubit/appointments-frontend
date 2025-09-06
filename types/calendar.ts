@@ -36,9 +36,3 @@ export interface ScheduleDay {
   occupiedSlots: OccupiedSlot[];
   workingHours: WorkingHours;
 }
-
-export interface ScheduleResponse {
-  professional: User;
-  period: Period;
-  schedule: ScheduleDay[];
-}

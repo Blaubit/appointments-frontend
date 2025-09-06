@@ -395,3 +395,11 @@ input[type="radio"]:checked {
   background-color: hsl(var(--primary) / 0.2);
   color: hsl(var(--primary-foreground));
 }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
