@@ -10,5 +10,26 @@ type Company = {
   description: string;
   createdAt: string;
 };
+interface CompanyRegistrationPayload {
+  // Company data
+  companyName: string;
+  companyType: string;
+  companyAddress: string;
+  companyCity: string;
+  companyState: string;
+  companyPostalCode: string;
+  companyCountry: string;
+  companyDescription: string;
+  // Admin data
+  adminFullName: string;
+  adminEmail: string;
+  adminPassword: string;
+  adminBio: string;
+  // Subscription data
+  planId: string;
+  startDate: string;
+  endDate: string;
+  createdById: string;
+}
 
-export type { Company };
+export type { Company, CompanyRegistrationPayload };

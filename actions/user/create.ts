@@ -18,7 +18,8 @@ export async function create({
 }: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();
-  try {  const companyId = await getCompanyId();
+  try {
+    const companyId = await getCompanyId();
     // Validar que tenemos companyId
     if (!companyId) {
       return {

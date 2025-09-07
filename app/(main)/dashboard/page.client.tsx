@@ -416,7 +416,7 @@ export default function DashboardClient({
                       {upcomingAppointments.map((appointment) => (
                         <div
                           key={appointment.id}
-                          className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
+                          className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-1s sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
                           onClick={() => handleViewAppointment(appointment)}
                         >
                           {/* Avatar and main info */}
@@ -535,7 +535,7 @@ export default function DashboardClient({
                                 width={16}
                                 height={16}
                               />
-                              <span className="ml-1 sm:hidden">WhatsApp</span>
+                              <span className="sm:hidden">WhatsApp</span>
                             </Button>
                           </div>
                         </div>
