@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
@@ -60,6 +59,7 @@ import type {
 } from "@/types";
 import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
+import { useDebounceSearch } from "@/hooks/useDebounce";
 
 interface ClientsPageClientProps {
   clients?: Client[];
@@ -89,7 +89,18 @@ export default function ClientsPageClient({
   const searchParams = useSearchParams();
 
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
-  const [searchTerm, setSearchTerm] = useState(initialSearchParams?.search || "");
+  const { searchTerm, setSearchTerm } = useDebounceSearch(
+    initialSearchParams?.search || "",
+    {
+      delay: 500,
+      minLength: 2,
+      skipInitialSearch: true,
+      onSearch: (value) => {
+        // Only call updateFilters when user actually searches
+        updateFilters({ search: value, page: 1 });
+      },
+    }
+  );
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -114,18 +125,6 @@ export default function ClientsPageClient({
   // Pagination states
   const currentPage = initialSearchParams?.page || 1;
   const itemsPerPage = initialSearchParams?.limit || 10;
-
-  // Debounce para búsqueda, solo dispara si hay 2 caracteres o más
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchTerm.length >= 2 || searchTerm.length === 0) {
-        updateFilters({ search: searchTerm, page: 1 });
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
 
   // Auto-cerrar diálogo de éxito después de 1000ms
   useEffect(() => {
@@ -199,7 +198,7 @@ export default function ClientsPageClient({
         router.refresh();
         showSuccessDialog(
           "¡Cliente creado exitosamente!",
-          `El cliente ${data.fullName} ha sido registrado correctamente en el sistema.`,
+          `El cliente ${data.fullName} ha sido registrado correctamente en el sistema.`
         );
       }
     } catch (error) {
@@ -237,7 +236,7 @@ export default function ClientsPageClient({
         setEditingClient(null);
         showSuccessDialog(
           "¡Cliente editado exitosamente!",
-          `Los datos de ${data.fullName} han sido actualizados correctamente.`,
+          `Los datos de ${data.fullName} han sido actualizados correctamente.`
         );
       }
     } catch (error) {
@@ -267,7 +266,7 @@ export default function ClientsPageClient({
         router.refresh();
         showSuccessDialog(
           "¡Cliente eliminado exitosamente!",
-          `El cliente ${client.fullName} ha sido eliminado del sistema.`,
+          `El cliente ${client.fullName} ha sido eliminado del sistema.`
         );
       }
     } catch (error) {
@@ -710,7 +709,6 @@ export default function ClientsPageClient({
                   hasPreviousPage={pagination.hasPreviousPage}
                   totalItems={pagination.totalItems}
                   itemsPerPage={pagination.itemsPerPage}
-                  
                 />
               )}
             </>
@@ -834,7 +832,6 @@ export default function ClientsPageClient({
                   hasPreviousPage={pagination.hasPreviousPage}
                   totalItems={pagination.totalItems}
                   itemsPerPage={pagination.itemsPerPage}
-                
                 />
               )}
             </>
