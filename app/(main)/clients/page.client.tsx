@@ -89,6 +89,7 @@ export default function ClientsPageClient({
   const searchParams = useSearchParams();
 
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
+
   const { searchTerm, setSearchTerm } = useDebounceSearch(
     initialSearchParams?.search || "",
     {

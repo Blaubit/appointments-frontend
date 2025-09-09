@@ -196,12 +196,12 @@ export default function PageClient({
     services?.reduce(
       (acc: number, service: any) =>
         acc + (Number(service.durationMinutes) || 0),
-      0
+      0,
     ) || 0;
   const getTotalPrice = (services: any[]) =>
     services?.reduce(
       (acc: number, service: any) => acc + (Number(service.price) || 0),
-      0
+      0,
     ) || 0;
   const formatTime = (timeString: string) => {
     if (!timeString) return "00:00";

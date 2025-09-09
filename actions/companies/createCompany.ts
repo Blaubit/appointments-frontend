@@ -54,7 +54,6 @@ export default async function createCompany({
   const session = await getSession();
   try {
     const url = `${parsedEnv.API_URL}/registration/register`;
-
     // Para crear una empresa nueva, NO necesitamos session ni companyId
     // Esto debería ser un endpoint público para registro
 
