@@ -18,3 +18,13 @@ export type Subscription = {
   company: Company;
   plan: Plan;
 };
+
+export type Payment = {
+  id: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: string;
+  status: string;
+  reference: string;
+  subscription: Subscription;
+};
