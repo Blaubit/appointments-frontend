@@ -1,12 +1,8 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -14,58 +10,97 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Calendar,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Building2,
-  MapPin,
   ArrowLeft,
-  ArrowRight,
   CheckCircle,
   Star,
   Shield,
   Clock,
   Users,
+  Building2,
   User,
+  Mail,
+  ArrowRight,
+  AlertCircle,
+  RefreshCw,
+  WifiOff,
+  ServerCrash,
+  Lock,
+  Ban,
 } from "lucide-react";
 import Link from "next/link";
-import { CompanyTypes, Role } from "@/types";
-import { type RegistrationData } from "@/types/user";
+import { CompanyTypes, Role, Plan, CompanyRegistrationPayload } from "@/types";
+import {
+  UserRegistrationCard,
+  CompanyRegistrationCard,
+  PlanSelectionCard,
+  useUserValidation,
+  useCompanyValidation,
+  usePlanSelection,
+  TermsAndConditionsCard,
+  useTermsValidation,
+} from "@/components/registration";
 
 interface RegisterClientProps {
   companyTypes: CompanyTypes[];
   roles: Role[];
-  onCreateCompany: (companyData: any) => Promise<any>;
-  onCreateUser: (userData: any) => Promise<any>;
+  plans?: Plan[];
+  onRegisterCompanyComplete: (
+    payload: CompanyRegistrationPayload
+  ) => Promise<any>;
+  onFetchPlans?: () => Promise<Plan[]>;
+  currentUserId?: string;
 }
 
 export default function RegisterClient({
   companyTypes = [],
   roles = [],
-  onCreateCompany,
-  onCreateUser,
+  plans = [],
+  onRegisterCompanyComplete,
+  onFetchPlans,
+  currentUserId,
 }: RegisterClientProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Form data
-  const [formData, setFormData] = useState<RegistrationData>({
+  // ✅ Estado actualizado para manejar ErrorResponse específicamente
+  const [registrationError, setRegistrationError] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    details?: string;
+    code?: string;
+    statusCode?: number;
+    canRetry: boolean;
+    icon: React.ReactNode;
+    actions?: Array<{
+      label: string;
+      action: () => void;
+      variant?: "default" | "outline" | "destructive";
+    }>;
+  }>({
+    show: false,
+    title: "",
+    message: "",
+    details: "",
+    code: "",
+    statusCode: undefined,
+    canRetry: false,
+    icon: <AlertCircle className="h-6 w-6" />,
+    actions: [],
+  });
+
+  // Hooks de validación
+  const { validateCompany } = useCompanyValidation();
+  const { validateUser } = useUserValidation();
+  const { validateTerms } = useTermsValidation();
+  const { selectedPlan, handlePlanSelect } = usePlanSelection();
+
+  // Form data estructurado según el payload final
+  const [formData, setFormData] = useState({
     company: {
       name: "",
       companyType: "",
@@ -73,10 +108,8 @@ export default function RegisterClient({
       city: "",
       state: "",
       postal_code: "",
-      country: "Guatemala",
+      country: "España",
       description: "",
-      id: "",
-      createdAt: "",
     },
     user: {
       email: "",
@@ -87,106 +120,483 @@ export default function RegisterClient({
     },
   });
 
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [acceptMarketing, setAcceptMarketing] = useState(false);
+  // Términos y condiciones (obligatorios para avanzar)
+  const [termsData, setTermsData] = useState({
+    acceptTerms: false,
+    acceptPrivacy: false,
+    acceptMarketing: false,
+    acceptCookies: false,
+  });
 
-  const validateStep = (step: number): boolean => {
-    const newErrors: Record<string, string> = {};
+  // Plan seleccionado
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
-    if (step === 1) {
-      // Validar datos de la empresa
-      if (!formData.company.name.trim()) {
-        newErrors.companyName = "El nombre de la empresa es requerido";
-      }
-      if (!formData.company.companyType) {
-        newErrors.companyType = "Selecciona el tipo de empresa";
-      }
-      if (!formData.company.address.trim()) {
-        newErrors.address = "La dirección es requerida";
-      }
-      if (!formData.company.city.trim()) {
-        newErrors.city = "La ciudad es requerida";
-      }
-      if (!formData.company.state.trim()) {
-        newErrors.state = "El departamento es requerido";
-      }
-    }
+  // Datos de registro exitoso
+  const [registrationResult, setRegistrationResult] = useState<any>(null);
 
-    if (step === 2) {
-      // Validar datos del usuario
-      if (!formData.user.fullName.trim()) {
-        newErrors.fullName = "El nombre completo es requerido";
-      } else if (formData.user.fullName.trim().length < 3) {
-        newErrors.fullName =
-          "El nombre completo debe tener al menos 3 caracteres";
-      }
-
-      if (!formData.user.email.trim()) {
-        newErrors.email = "El email es requerido";
-      } else if (!/\S+@\S+\.\S+/.test(formData.user.email)) {
-        newErrors.email = "Email inválido";
-      }
-
-      if (!formData.user.password) {
-        newErrors.password = "La contraseña es requerida";
-      } else if (formData.user.password.length < 8) {
-        newErrors.password = "La contraseña debe tener al menos 8 caracteres";
-      }
-
-      if (formData.user.password !== formData.user.confirmPassword) {
-        newErrors.confirmPassword = "Las contraseñas no coinciden";
-      }
-
-      // Validar biografía (mínimo 10 caracteres según el DTO)
-      if (
-        (formData.user.bio ?? "").trim().length > 0 &&
-        (formData.user.bio ?? "").trim().length < 10
-      ) {
-        newErrors.bio = "La biografía debe tener al menos 10 caracteres";
-      }
-    }
-
-    if (step === 3) {
-      if (!acceptTerms) {
-        newErrors.acceptTerms = "Debes aceptar los términos y condiciones";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // ✅ Función para limpiar errores de registro
+  const clearRegistrationError = () => {
+    setRegistrationError({
+      show: false,
+      title: "",
+      message: "",
+      details: "",
+      code: "",
+      statusCode: undefined,
+      canRetry: false,
+      icon: <AlertCircle className="h-6 w-6" />,
+      actions: [],
+    });
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.submit;
+      return newErrors;
+    });
   };
 
-  const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(currentStep + 1);
+  // ✅ Función mejorada para manejar ErrorResponse específicamente
+  const handleRegistrationError = (errorResponse: any) => {
+    const statusCode = errorResponse?.status || errorResponse?.statusCode;
+    const errorCode = errorResponse?.code;
+    const message = errorResponse?.message || "Error desconocido";
+
+    let errorConfig;
+
+    // ✅ Primero verificar por código de error específico del backend
+    switch (errorCode) {
+      case "COMPANY_NAME_EXISTS":
+        errorConfig = {
+          title: "Nombre de Empresa Duplicado",
+          message: "Ya existe una empresa con este nombre",
+          details: "Por favor, elige un nombre diferente para tu empresa.",
+          icon: <Ban className="h-6 w-6 text-orange-600" />,
+          canRetry: true,
+          actions: [
+            {
+              label: "Cambiar Nombre",
+              action: () => {
+                clearRegistrationError();
+                setCurrentStep(1);
+              },
+              variant: "outline" as const,
+            },
+          ],
+        };
+        break;
+
+      case "EMAIL_EXISTS":
+        errorConfig = {
+          title: "Email Ya Registrado",
+          message: "Este email ya está asociado a otra cuenta",
+          details:
+            "Por favor, usa un email diferente o recupera tu cuenta existente.",
+          icon: <Ban className="h-6 w-6 text-orange-600" />,
+          canRetry: true,
+          actions: [
+            {
+              label: "Cambiar Email",
+              action: () => {
+                clearRegistrationError();
+                setCurrentStep(2);
+              },
+              variant: "outline" as const,
+            },
+            {
+              label: "Recuperar Cuenta",
+              action: () => (window.location.href = "/forgot-password"),
+              variant: "default" as const,
+            },
+          ],
+        };
+        break;
+
+      case "VALIDATION_ERROR":
+        errorConfig = {
+          title: "Error de Validación",
+          message: message,
+          details:
+            "Algunos campos contienen errores. Por favor, revisa la información.",
+          icon: <AlertCircle className="h-6 w-6 text-yellow-600" />,
+          canRetry: true,
+          actions: [
+            {
+              label: "Revisar Datos",
+              action: () => {
+                clearRegistrationError();
+                setCurrentStep(1);
+              },
+              variant: "outline" as const,
+            },
+          ],
+        };
+        break;
+
+      case "PLAN_NOT_FOUND":
+        errorConfig = {
+          title: "Plan No Válido",
+          message: "El plan seleccionado no está disponible",
+          details: "Por favor, selecciona un plan diferente.",
+          icon: <AlertCircle className="h-6 w-6 text-yellow-600" />,
+          canRetry: true,
+          actions: [
+            {
+              label: "Seleccionar Plan",
+              action: () => {
+                clearRegistrationError();
+                setCurrentStep(3);
+              },
+              variant: "outline" as const,
+            },
+          ],
+        };
+        break;
+
+      case "USER_UNAUTHORIZED":
+        errorConfig = {
+          title: "Sesión Expirada",
+          message: "Tu sesión ha expirado",
+          details: "Por favor, inicia sesión nuevamente para continuar.",
+          icon: <Lock className="h-6 w-6 text-red-600" />,
+          canRetry: false,
+          actions: [
+            {
+              label: "Iniciar Sesión",
+              action: () => (window.location.href = "/login"),
+              variant: "default" as const,
+            },
+          ],
+        };
+        break;
+
+      case "DATABASE_ERROR":
+        errorConfig = {
+          title: "Error de Base de Datos",
+          message: "Problema temporal con la base de datos",
+          details:
+            "Estamos experimentando problemas técnicos. Por favor, inténtalo de nuevo en unos minutos.",
+          icon: <ServerCrash className="h-6 w-6 text-red-600" />,
+          canRetry: true,
+        };
+        break;
+
+      case "RATE_LIMIT_EXCEEDED":
+        errorConfig = {
+          title: "Demasiados Intentos",
+          message: "Has excedido el límite de intentos",
+          details: "Por favor, espera unos minutos antes de intentar de nuevo.",
+          icon: <Clock className="h-6 w-6 text-yellow-600" />,
+          canRetry: false,
+        };
+        break;
+
+      default:
+        // ✅ Si no hay código específico, usar el status HTTP
+        switch (statusCode) {
+          case 400:
+            errorConfig = {
+              title: "Solicitud Inválida",
+              message: message,
+              details:
+                "Los datos enviados no son válidos. Verifica la información e inténtalo de nuevo.",
+              icon: <Ban className="h-6 w-6 text-orange-600" />,
+              canRetry: true,
+            };
+            break;
+
+          case 401:
+            errorConfig = {
+              title: "No Autorizado",
+              message: message,
+              details:
+                "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+              icon: <Lock className="h-6 w-6 text-red-600" />,
+              canRetry: false,
+              actions: [
+                {
+                  label: "Iniciar Sesión",
+                  action: () => (window.location.href = "/login"),
+                  variant: "default" as const,
+                },
+              ],
+            };
+            break;
+
+          case 403:
+            errorConfig = {
+              title: "Acceso Denegado",
+              message: message,
+              details: "No tienes permisos para realizar esta operación.",
+              icon: <Shield className="h-6 w-6 text-red-600" />,
+              canRetry: false,
+              actions: [
+                {
+                  label: "Contactar Soporte",
+                  action: () => (window.location.href = "/contact"),
+                  variant: "outline" as const,
+                },
+              ],
+            };
+            break;
+
+          case 409:
+            errorConfig = {
+              title: "Conflicto de Datos",
+              message: message,
+              details:
+                "Ya existe un registro con estos datos. Por favor, usa información diferente.",
+              icon: <Ban className="h-6 w-6 text-orange-600" />,
+              canRetry: true,
+            };
+            break;
+
+          case 422:
+            errorConfig = {
+              title: "Error de Validación",
+              message: message,
+              details: "Los datos no cumplen con los requisitos de validación.",
+              icon: <AlertCircle className="h-6 w-6 text-yellow-600" />,
+              canRetry: true,
+            };
+            break;
+
+          case 500:
+            errorConfig = {
+              title: "Error Interno del Servidor",
+              message: "Ocurrió un problema en nuestros servidores",
+              details:
+                "Nuestro equipo ha sido notificado. Por favor, inténtalo de nuevo en unos minutos.",
+              icon: <ServerCrash className="h-6 w-6 text-red-600" />,
+              canRetry: true,
+            };
+            break;
+
+          case 502:
+            errorConfig = {
+              title: "Servidor No Disponible",
+              message: "El servidor no está respondiendo",
+              details:
+                "Este es un problema temporal. Por favor, inténtalo de nuevo en unos minutos.",
+              icon: <ServerCrash className="h-6 w-6 text-red-600" />,
+              canRetry: true,
+            };
+            break;
+
+          case 503:
+            errorConfig = {
+              title: "Servicio No Disponible",
+              message: "El servicio está temporalmente fuera de línea",
+              details:
+                "Estamos realizando mantenimiento. El servicio estará disponible pronto.",
+              icon: <Clock className="h-6 w-6 text-yellow-600" />,
+              canRetry: true,
+            };
+            break;
+
+          default:
+            // ✅ Error genérico
+            errorConfig = {
+              title: "Error Inesperado",
+              message: message,
+              details:
+                "Si el problema persiste, contacta con nuestro equipo de soporte.",
+              icon: <AlertCircle className="h-6 w-6 text-red-600" />,
+              canRetry: true,
+              actions: [
+                {
+                  label: "Contactar Soporte",
+                  action: () => (window.location.href = "/contact"),
+                  variant: "outline" as const,
+                },
+              ],
+            };
+            break;
+        }
+        break;
+    }
+
+    setRegistrationError({
+      show: true,
+      code: errorCode,
+      statusCode,
+      ...errorConfig,
+    });
+  };
+
+  // Handlers para cada paso
+  const handleCompanyDataChange = (companyData: any) => {
+    setFormData({
+      ...formData,
+      company: companyData,
+    });
+    clearRelevantErrors([
+      "companyName",
+      "companyType",
+      "address",
+      "city",
+      "state",
+    ]);
+    clearRegistrationError();
+  };
+
+  const handleUserDataChange = (userData: any) => {
+    setFormData({
+      ...formData,
+      user: userData,
+    });
+    clearRelevantErrors([
+      "fullName",
+      "email",
+      "password",
+      "confirmPassword",
+      "bio",
+    ]);
+    clearRegistrationError();
+  };
+
+  const handleTermsDataChange = (data: any) => {
+    setTermsData(data);
+    clearRelevantErrors(["acceptTerms", "acceptPrivacy"]);
+    clearRegistrationError();
+  };
+
+  const handlePlanSelectionChange = (plan: Plan) => {
+    handlePlanSelect(plan);
+    setSelectedPlanId(plan.id);
+    clearRelevantErrors(["plan"]);
+    clearRegistrationError();
+  };
+
+  // Función auxiliar para limpiar errores específicos
+  const clearRelevantErrors = (errorKeys: string[]) => {
+    const hasRelevantErrors = errorKeys.some((key) => errors[key]);
+    if (hasRelevantErrors) {
+      const newErrors = { ...errors };
+      errorKeys.forEach((key) => delete newErrors[key]);
+      setErrors(newErrors);
     }
   };
 
-  const prevStep = () => {
-    setCurrentStep(currentStep - 1);
+  // Navegación entre pasos con validación
+  const handleNextFromCompany = () => {
+    const companyErrors = validateCompany(formData.company);
+    if (Object.keys(companyErrors).length === 0) {
+      setCurrentStep(2);
+      setErrors({});
+      clearRegistrationError();
+    } else {
+      setErrors(companyErrors);
+    }
+  };
+
+  const handleNextFromUser = () => {
+    const isAdminRole = true;
+    const userErrors = validateUser(formData.user, isAdminRole);
+    if (Object.keys(userErrors).length === 0) {
+      setCurrentStep(3);
+      setErrors({});
+      clearRegistrationError();
+    } else {
+      setErrors(userErrors);
+    }
+  };
+
+  const handleNextFromPlans = () => {
+    if (!selectedPlanId) {
+      setErrors({ plan: "Debes seleccionar un plan para continuar" });
+      return;
+    }
+    setCurrentStep(4);
     setErrors({});
+    clearRegistrationError();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleNextFromTerms = () => {
+    const termsErrors = validateTerms(termsData);
+    if (Object.keys(termsErrors).length === 0) {
+      handleSubmit();
+    } else {
+      setErrors(termsErrors);
+    }
+  };
 
-    if (!validateStep(currentStep)) {
+  // Navegación hacia atrás
+  const handlePrevious = (targetStep: number) => {
+    setCurrentStep(targetStep);
+    setErrors({});
+    clearRegistrationError();
+  };
+
+  // Función para calcular fechas de suscripción
+  const calculateSubscriptionDates = (planId: string) => {
+    const selectedPlanData = plans.find((p) => p.id === planId) || selectedPlan;
+    const startDate = new Date();
+    const endDate = new Date();
+
+    // Calcular fecha de fin basada en el ciclo de facturación del plan (en días)
+    const billingCycleDays = selectedPlanData?.billingCycle || 1;
+    endDate.setDate(endDate.getDate() + billingCycleDays);
+
+    return {
+      startDate: startDate.toISOString().split("T")[0], // YYYY-MM-DD
+      endDate: endDate.toISOString().split("T")[0], // YYYY-MM-DD
+    };
+  };
+
+  // Construir el payload final según la estructura requerida
+  const buildRegistrationPayload = (): CompanyRegistrationPayload => {
+    const { startDate, endDate } = calculateSubscriptionDates(selectedPlanId);
+
+    return {
+      // Company data
+      companyName: formData.company.name.trim(),
+      companyType: formData.company.companyType,
+      companyAddress: formData.company.address.trim(),
+      companyCity: formData.company.city.trim(),
+      companyState: formData.company.state.trim(),
+      companyPostalCode: formData.company.postal_code.trim() || "00000",
+      companyCountry: formData.company.country.trim(),
+      companyDescription: formData.company.description?.trim() || "",
+
+      // Admin data
+      adminFullName: formData.user.fullName.trim(),
+      adminEmail: formData.user.email.trim(),
+      adminPassword: formData.user.password,
+      adminBio:
+        formData.user.bio?.trim() ||
+        "Administrador de empresa médica con experiencia en gestión y atención al paciente.",
+
+      // Subscription data
+      planId: selectedPlanId,
+      startDate,
+      endDate,
+      createdById: currentUserId || "{{userId}}",
+    };
+  };
+
+  // ✅ Envío final del formulario con manejo específico de SuccessResponse/ErrorResponse
+  const handleSubmit = async () => {
+    if (!termsData.acceptTerms || !termsData.acceptPrivacy) {
+      setErrors({
+        acceptTerms: !termsData.acceptTerms
+          ? "Debes aceptar los términos y condiciones"
+          : "",
+        acceptPrivacy: !termsData.acceptPrivacy
+          ? "Debes aceptar la política de privacidad"
+          : "",
+      });
       return;
     }
 
     setIsLoading(true);
+    clearRegistrationError();
 
     try {
-      // 1. Buscar el rol admin_empresa
-      const adminRole = roles.find((role) => role.name === "admin_empresa");
+      console.log("Iniciando registro completo de empresa...");
+      const payload = buildRegistrationPayload();
+      console.log("Payload a enviar:", payload);
 
-      if (!adminRole) {
-        setErrors({
-          submit:
-            "No se pudo encontrar el rol de administrador. Contacta con soporte.",
-        });
-        return;
-      }
+      const response = await onRegisterCompanyComplete(payload);
+      console.log("Respuesta del servidor:", response);
 
       // 2. PASO 1: Crear la empresa primero usando la función del servidor
       console.log("Creando empresa...");
@@ -210,65 +620,58 @@ export default function RegisterClient({
             companyResponse.message ||
             "Error al crear la empresa. Inténtalo de nuevo.",
         });
+
         return;
       }
 
-      console.log("Empresa creada exitosamente:", companyResponse.data);
-      const createdCompany = companyResponse.data;
-
-      // 3. PASO 2: Crear el usuario admin con el ID de la empresa creada usando la función del servidor
-      console.log("Creando usuario administrador...");
-
-      // Validar que la biografía tenga al menos 10 caracteres (requerido por el DTO)
-      let bio = (formData.user.bio ?? "").trim();
-      if (bio.length === 0) {
-        bio =
-          "Administrador de empresa médica con experiencia en gestión y atención al paciente.";
-      } else if (bio.length < 10) {
-        bio = bio + " Experiencia en gestión médica.";
-      }
-
-      const userPayload = {
-        roleId: adminRole.id, // ID real del rol
-        fullName: formData.user.fullName.trim(),
-        email: formData.user.email.trim(),
-        password: formData.user.password,
-        bio: bio,
-        companyId: createdCompany.id, // ID de la empresa recién creada
-      };
-
-      const userResponse = await onCreateUser(userPayload);
-
-      if (userResponse.status !== 200 && userResponse.status !== 201) {
-        console.error("Error creando usuario:", userResponse);
-        setErrors({
-          submit:
-            userResponse.message ||
-            "Error al crear el usuario administrador. Inténtalo de nuevo.",
-        });
+      // ✅ Verificar si es una SuccessResponse<Company>
+      if (response && "data" in response && response.data) {
+        console.log("Success Response recibido:", response);
+        setRegistrationResult(response);
+        setCurrentStep(5);
         return;
       }
 
-      console.log(
-        "Usuario administrador creado exitosamente:",
-        userResponse.data,
-      );
-
-      // 4. Si llegamos aquí, todo fue exitoso
-      console.log("Registro completo exitoso:", {
-        empresa: createdCompany,
-        usuario: userResponse.data,
+      // ✅ Si no coincide con ninguna estructura esperada
+      console.error("Respuesta inesperada del servidor:", response);
+      handleRegistrationError({
+        message: "Respuesta inesperada del servidor",
+        status: 500,
+        code: "UNEXPECTED_RESPONSE",
       });
-
-      setCurrentStep(4); // Success step
     } catch (error) {
-      console.error("Error en el registro:", error);
-      setErrors({
-        submit: "Error inesperado al crear la cuenta. Inténtalo de nuevo.",
-      });
+      console.error("Error inesperado en el registro:", error);
+
+      // ✅ Manejar errores de red/conexión
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        handleRegistrationError({
+          message: "Error de conexión con el servidor",
+          status: 0,
+          code: "NETWORK_ERROR",
+        });
+      } else if (error instanceof Error) {
+        handleRegistrationError({
+          message: error.message,
+          status: 500,
+          code: "UNEXPECTED_ERROR",
+        });
+      } else {
+        handleRegistrationError({
+          message: "Error inesperado al procesar la solicitud",
+          status: 500,
+          code: "UNKNOWN_ERROR",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // ✅ Función para reintentar el registro
+  const handleRetryRegistration = () => {
+    clearRegistrationError();
+    handleRetryFromStart();
+    handleSubmit();
   };
 
   const getStepTitle = () => {
@@ -276,10 +679,12 @@ export default function RegisterClient({
       case 1:
         return "Información de la Empresa";
       case 2:
-        return "Datos del Administrador";
+        return "Cuenta de Administrador";
       case 3:
-        return "Términos y Condiciones";
+        return "Selecciona tu Plan";
       case 4:
+        return "Términos y Condiciones";
+      case 5:
         return "¡Registro Exitoso!";
       default:
         return "Registro";
@@ -291,17 +696,22 @@ export default function RegisterClient({
       case 1:
         return "Registra tu clínica, consultorio o centro médico";
       case 2:
-        return "Crea tu cuenta de administrador para gestionar la empresa";
+        return "Esta será tu cuenta principal para gestionar la empresa";
       case 3:
-        return "Revisa y acepta nuestros términos para completar el registro";
+        return "Elige el plan que mejor se adapte a tu empresa";
       case 4:
+        return "Revisa y acepta nuestros términos para completar el registro";
+      case 5:
         return "Tu empresa y cuenta de administrador han sido creadas exitosamente";
       default:
         return "Completa el proceso de registro";
     }
   };
-
-  const totalSteps = 3;
+  const handleRetryFromStart = () => {
+    clearRegistrationError();
+    setCurrentStep(1);
+  };
+  const totalSteps = 4;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
@@ -317,719 +727,353 @@ export default function RegisterClient({
           <ThemeToggle className="rounded-full" />
         </div>
 
-        <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-          <CardHeader className="text-center space-y-4 px-4 sm:px-6">
-            <div className="flex justify-center">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full">
-                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-              </div>
-            </div>
-            <div>
-              <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                CitasFácil
-              </CardTitle>
-              <CardDescription className="text-base sm:text-lg text-muted-foreground mt-2 px-2">
-                Registra tu empresa y comienza a gestionar citas de forma
-                profesional
-              </CardDescription>
-            </div>
+        {/* ✅ Componente de Error mejorado para mostrar ErrorResponse */}
+        {registrationError.show && (
+          <Card className="shadow-2xl border-0 bg-red-50 dark:bg-red-900/20 backdrop-blur-sm mb-6 border-red-200 dark:border-red-800">
+            <CardContent className="p-6">
+              <div className="flex items-start space-x-4">
+                <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-full flex-shrink-0">
+                  {registrationError.icon}
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 flex items-center gap-2">
+                      {registrationError.title}
+                      <div className="flex gap-1">
+                        {registrationError.statusCode && (
+                          <span className="text-xs px-2 py-1 bg-red-200 dark:bg-red-800 rounded-full">
+                            {registrationError.statusCode}
+                          </span>
+                        )}
+                        {registrationError.code && (
+                          <span className="text-xs px-2 py-1 bg-red-300 dark:bg-red-700 rounded-full">
+                            {registrationError.code}
+                          </span>
+                        )}
+                      </div>
+                    </h3>
+                    <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                      {registrationError.message}
+                    </p>
+                  </div>
 
-            {/* Progress Bar */}
-            {currentStep <= totalSteps && (
+                  {registrationError.details && (
+                    <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                      <p className="text-xs text-red-600 dark:text-red-400">
+                        {registrationError.details}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {/* Botón de reintentar si está disponible */}
+                    {registrationError.canRetry && currentStep === 4 && (
+                      <Button
+                        onClick={handleRetryRegistration}
+                        disabled={isLoading}
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        {isLoading ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Reintentando...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Reintentar
+                          </>
+                        )}
+                      </Button>
+                    )}
+
+                    {/* Acciones específicas del error */}
+                    {registrationError.actions?.map((action, index) => (
+                      <Button
+                        key={index}
+                        variant={action.variant || "outline"}
+                        size="sm"
+                        onClick={action.action}
+                        className={
+                          action.variant === "outline"
+                            ? "border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                            : ""
+                        }
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+
+                    {/* Botón cerrar siempre disponible */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearRegistrationError}
+                      className="text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      Cerrar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Header con progreso - Solo mostrar en pasos 1-4 */}
+        {currentStep <= totalSteps && (
+          <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mb-6">
+            <CardHeader className="text-center space-y-4 px-4 sm:px-6">
+              <div className="flex justify-center">
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full">
+                  <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+                </div>
+              </div>
+              <div>
+                <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  CitasFácil
+                </CardTitle>
+                <CardDescription className="text-base sm:text-lg text-muted-foreground mt-2 px-2">
+                  Registra tu empresa y comienza a gestionar citas de forma
+                  profesional
+                </CardDescription>
+              </div>
+
+              {/* Progress Bar */}
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                 />
               </div>
+
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+                  {getStepTitle()}
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 px-2">
+                  {getStepDescription()}
+                </p>
+              </div>
+            </CardHeader>
+          </Card>
+        )}
+
+        {/* Step 1: Company Information */}
+        {currentStep === 1 && (
+          <CompanyRegistrationCard
+            companyData={formData.company}
+            onCompanyDataChange={handleCompanyDataChange}
+            companyTypes={companyTypes}
+            errors={errors}
+            onNext={handleNextFromCompany}
+            showPreviousButton={false}
+            showNextButton={true}
+            className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+          />
+        )}
+
+        {/* Step 2: User Registration */}
+        {currentStep === 2 && (
+          <UserRegistrationCard
+            userData={formData.user}
+            onUserDataChange={handleUserDataChange}
+            roles={roles}
+            errors={errors}
+            onNext={handleNextFromUser}
+            onPrevious={() => handlePrevious(1)}
+            showRoleSelector={false}
+            defaultRole={roles.find((role) => role.name === "admin_empresa")}
+            title="Cuenta de Administrador"
+            description="Esta será tu cuenta principal para gestionar la empresa"
+            className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+          />
+        )}
+
+        {/* Step 3: Plan Selection */}
+        {currentStep === 3 && (
+          <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <PlanSelectionCard
+              plans={plans}
+              onFetchPlans={onFetchPlans}
+              selectedPlanId={selectedPlanId}
+              onPlanSelect={handlePlanSelectionChange}
+              recommendedPlanId={
+                plans.find((p) => p.name.toLowerCase().includes("pro"))?.id
+              }
+              showConfirmButton={false}
+              className="border-0 shadow-none bg-transparent"
+            />
+
+            {/* Error de selección de plan */}
+            {errors.plan && (
+              <CardContent className="px-4 sm:px-6 pt-0">
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.plan}
+                  </p>
+                </div>
+              </CardContent>
             )}
 
-            <div>
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-                {getStepTitle()}
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 px-2">
-                {getStepDescription()}
-              </p>
-            </div>
-          </CardHeader>
+            {/* Botones dentro de la card */}
+            <CardContent className="px-4 sm:px-6 pt-0">
+              <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handlePrevious(2)}
+                  className="order-2 sm:order-1"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Anterior
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleNextFromPlans}
+                  disabled={!selectedPlanId}
+                  className="order-1 sm:order-2"
+                >
+                  Continuar
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          <CardContent className="space-y-6 px-4 sm:px-6">
-            <form onSubmit={handleSubmit}>
-              {/* Step 1: Company Information */}
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Nombre de la Empresa *</Label>
-                    <div className="relative">
-                      <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="companyName"
-                        value={formData.company.name}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            company: {
-                              ...formData.company,
-                              name: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Clínica San Rafael"
-                        className={`pl-10 ${errors.companyName ? "border-red-500" : ""}`}
-                      />
-                    </div>
-                    {errors.companyName && (
-                      <p className="text-sm text-red-600">
-                        {errors.companyName}
-                      </p>
-                    )}
-                  </div>
+        {/* Step 4: Terms and Conditions */}
+        {currentStep === 4 && (
+          <TermsAndConditionsCard
+            termsData={termsData}
+            onTermsDataChange={handleTermsDataChange}
+            errors={errors}
+            onNext={handleNextFromTerms}
+            onPrevious={() => handlePrevious(3)}
+            companyType={
+              companyTypes.find((t) => t.value === formData.company.companyType)
+                ?.label || "empresa médica"
+            }
+            companyName={formData.company.name}
+            nextButtonText={isLoading ? "Creando empresa..." : "Crear Empresa"}
+            nextButtonDisabled={
+              isLoading || !termsData.acceptTerms || !termsData.acceptPrivacy
+            }
+            className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+          />
+        )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="companyType">Tipo de Empresa *</Label>
-                    <Select
-                      value={formData.company.companyType}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          company: { ...formData.company, companyType: value },
-                        })
-                      }
-                    >
-                      <SelectTrigger
-                        className={errors.companyType ? "border-red-500" : ""}
-                      >
-                        <SelectValue placeholder="Selecciona el tipo de empresa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {companyTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            <div className="flex items-center space-x-2">
-                              <span>{type.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.companyType && (
-                      <p className="text-sm text-red-600">
-                        {errors.companyType}
-                      </p>
-                    )}
-                  </div>
+        {/* Step 5: Success */}
+        {currentStep === 5 && registrationResult && (
+          <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <CardContent className="text-center space-y-6 py-12">
+              <div className="space-y-4">
+                <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full w-fit mx-auto">
+                  <CheckCircle className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                    ¡Empresa Registrada Exitosamente!
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">
+                    Bienvenido a CitasFácil, {formData.user.fullName}
+                  </p>
+                </div>
+              </div>
 
-                  <Separator />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2 text-sm">
+                    <Building2 className="h-4 w-4 inline mr-2" />
+                    Empresa Creada
+                  </h4>
+                  <p className="text-sm text-blue-800 dark:text-blue-400">
+                    {formData.company.name}
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-500 mt-1">
+                    {
+                      companyTypes.find(
+                        (t) => t.value === formData.company.companyType
+                      )?.label
+                    }
+                  </p>
+                </div>
 
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      Dirección de la Empresa
-                    </h4>
+                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <h4 className="font-medium text-purple-900 dark:text-purple-300 mb-2 text-sm">
+                    <User className="h-4 w-4 inline mr-2" />
+                    Usuario Administrador
+                  </h4>
+                  <p className="text-sm text-purple-800 dark:text-purple-400">
+                    {formData.user.fullName}
+                  </p>
+                  <p className="text-xs text-purple-600 dark:text-purple-500 mt-1">
+                    Rol: Administrador de Empresa
+                  </p>
+                </div>
+              </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Dirección *</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="address"
-                          value={formData.company.address}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              company: {
-                                ...formData.company,
-                                address: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="6a Avenida 12-23, Zona 1"
-                          className={`pl-10 ${errors.address ? "border-red-500" : ""}`}
-                        />
-                      </div>
-                      {errors.address && (
-                        <p className="text-sm text-red-600">{errors.address}</p>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">Ciudad *</Label>
-                        <Input
-                          id="city"
-                          value={formData.company.city}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              company: {
-                                ...formData.company,
-                                city: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="Guatemala"
-                          className={errors.city ? "border-red-500" : ""}
-                        />
-                        {errors.city && (
-                          <p className="text-sm text-red-600">{errors.city}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="state">Departamento *</Label>
-                        <Input
-                          id="state"
-                          value={formData.company.state}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              company: {
-                                ...formData.company,
-                                state: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="Guatemala"
-                          className={errors.state ? "border-red-500" : ""}
-                        />
-                        {errors.state && (
-                          <p className="text-sm text-red-600">{errors.state}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="postalCode">Código Postal</Label>
-                        <Input
-                          id="postalCode"
-                          value={formData.company.postal_code}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              company: {
-                                ...formData.company,
-                                postal_code: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="01001"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="country">País</Label>
-                      <Input
-                        id="country"
-                        value={formData.company.country}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            company: {
-                              ...formData.company,
-                              country: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Guatemala"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">
-                      Descripción de la Empresa
-                    </Label>
-                    <Textarea
-                      id="description"
-                      value={formData.company.description}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          company: {
-                            ...formData.company,
-                            description: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="Describe tu empresa, servicios y especialidades..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="w-full sm:w-auto"
-                    >
-                      Continuar
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </div>
+              {/* Información del plan */}
+              {selectedPlan && (
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <h4 className="font-medium text-green-900 dark:text-green-300 mb-2 text-sm">
+                    <Star className="h-4 w-4 inline mr-2" />
+                    Plan Seleccionado
+                  </h4>
+                  <p className="text-sm text-green-800 dark:text-green-400">
+                    {selectedPlan.name} - ${selectedPlan.price}/
+                    {selectedPlan.billingCycle} días
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                    Suscripción activa
+                  </p>
                 </div>
               )}
 
-              {/* Step 2: Administrator User Information */}
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="text-center space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full w-fit mx-auto">
-                      <User className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Cuenta de Administrador
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm px-2">
-                        Esta será tu cuenta principal para gestionar la empresa
-                      </p>
-                    </div>
+              <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <h4 className="font-medium text-green-900 dark:text-green-300 mb-4 text-sm sm:text-base">
+                  ¿Qué sigue?
+                </h4>
+                <div className="space-y-3 text-xs sm:text-sm text-green-800 dark:text-green-400">
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 mr-3 flex-shrink-0" />
+                    <span>Revisa tu email para verificar tu cuenta</span>
                   </div>
-
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2 text-sm sm:text-base">
-                      Rol: Administrador de Empresa
-                    </h4>
-                    <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-400">
-                      Tendrás acceso completo para gestionar usuarios, citas,
-                      servicios y configuraciones de la empresa.
-                    </p>
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 mr-3 flex-shrink-0" />
+                    <span>Crea usuarios para doctores y secretarias</span>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Nombre Completo *</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="fullName"
-                        value={formData.user.fullName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            user: {
-                              ...formData.user,
-                              fullName: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Dr. Juan Carlos Pérez"
-                        className={`pl-10 ${errors.fullName ? "border-red-500" : ""}`}
-                      />
-                    </div>
-                    {errors.fullName && (
-                      <p className="text-sm text-red-600">{errors.fullName}</p>
-                    )}
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-3 flex-shrink-0" />
+                    <span>Configura servicios y horarios de trabajo</span>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Correo Electrónico *</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.user.email}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            user: { ...formData.user, email: e.target.value },
-                          })
-                        }
-                        placeholder="admin@clinica.com"
-                        className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
-                      />
-                    </div>
-                    {errors.email && (
-                      <p className="text-sm text-red-600">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Contraseña *</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          value={formData.user.password}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              user: {
-                                ...formData.user,
-                                password: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="Mínimo 8 caracteres"
-                          className={`pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      {errors.password && (
-                        <p className="text-sm text-red-600">
-                          {errors.password}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">
-                        Confirmar Contraseña *
-                      </Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={formData.user.confirmPassword}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              user: {
-                                ...formData.user,
-                                confirmPassword: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="Repite tu contraseña"
-                          className={`pl-10 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      {errors.confirmPassword && (
-                        <p className="text-sm text-red-600">
-                          {errors.confirmPassword}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">Biografía Profesional</Label>
-                    <Textarea
-                      id="bio"
-                      value={formData.user.bio}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          user: { ...formData.user, bio: e.target.value },
-                        })
-                      }
-                      placeholder="Describe tu experiencia profesional, especialidades, etc... (mínimo 10 caracteres si completas)"
-                      rows={3}
-                      className={errors.bio ? "border-red-500" : ""}
-                    />
-                    <p className="text-xs text-gray-500">
-                      {(formData.user.bio?.trim().length ?? 0) === 0
-                        ? "Campo opcional, pero si lo completas debe tener al menos 10 caracteres"
-                        : `${formData.user.bio?.trim().length ?? 0} caracteres`}
-                    </p>
-                    {errors.bio && (
-                      <p className="text-sm text-red-600">{errors.bio}</p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row justify-between gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={prevStep}
-                      className="order-2 sm:order-1"
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Anterior
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={nextStep}
-                      className="order-1 sm:order-2"
-                    >
-                      Continuar
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
+                  <div className="flex items-center">
+                    <Star className="h-4 w-4 mr-3 flex-shrink-0" />
+                    <span>Personaliza tu perfil empresarial</span>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Step 3: Terms and Conditions */}
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div className="text-center space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full w-fit mx-auto">
-                      <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Términos y Condiciones
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm px-2">
-                        Revisa y acepta nuestros términos para completar el
-                        registro
-                      </p>
-                    </div>
-                  </div>
+              <div className="space-y-4">
+                <Link href="/dashboard">
+                  <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                    Ir al Dashboard
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="outline" className="w-full bg-transparent">
+                    Iniciar Sesión Más Tarde
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-32 sm:max-h-40 overflow-y-auto">
-                      <h4 className="font-medium mb-2 text-sm sm:text-base">
-                        Términos de Servicio para Empresas
-                      </h4>
-                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                        <p>Al registrar tu empresa en CitasFácil, aceptas:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>
-                            Proporcionar información veraz sobre tu empresa
-                          </li>
-                          <li>Cumplir con las regulaciones locales de salud</li>
-                          <li>
-                            Gestionar responsablemente las citas de tus
-                            pacientes
-                          </li>
-                          <li>
-                            Mantener la confidencialidad de los datos médicos
-                          </li>
-                          <li>
-                            Usar la plataforma de manera ética y profesional
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-32 sm:max-h-40 overflow-y-auto">
-                      <h4 className="font-medium mb-2 text-sm sm:text-base">
-                        Política de Privacidad
-                      </h4>
-                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                        <p>
-                          Protegemos la información de tu empresa y pacientes:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>Encriptación de datos médicos sensibles</li>
-                          <li>Cumplimiento con normativas de privacidad</li>
-                          <li>Acceso controlado por roles y permisos</li>
-                          <li>Backups seguros y recuperación de datos</li>
-                          <li>Auditoría de accesos y cambios</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="acceptTerms"
-                        checked={acceptTerms}
-                        onCheckedChange={(checked) =>
-                          setAcceptTerms(checked as boolean)
-                        }
-                        className={errors.acceptTerms ? "border-red-500" : ""}
-                      />
-                      <div className="space-y-1 flex-1">
-                        <Label
-                          htmlFor="acceptTerms"
-                          className="text-xs sm:text-sm font-medium cursor-pointer"
-                        >
-                          Acepto los términos y condiciones *
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          Al marcar esta casilla, confirmas que has leído y
-                          aceptas nuestros términos de servicio y política de
-                          privacidad
-                        </p>
-                      </div>
-                    </div>
-                    {errors.acceptTerms && (
-                      <p className="text-sm text-red-600">
-                        {errors.acceptTerms}
-                      </p>
-                    )}
-
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="acceptMarketing"
-                        checked={acceptMarketing}
-                        onCheckedChange={(checked) =>
-                          setAcceptMarketing(checked as boolean)
-                        }
-                      />
-                      <div className="space-y-1 flex-1">
-                        <Label
-                          htmlFor="acceptMarketing"
-                          className="text-xs sm:text-sm font-medium cursor-pointer"
-                        >
-                          Recibir actualizaciones y ofertas especiales
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          Mantente informado sobre nuevas funcionalidades y
-                          promociones
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {errors.submit && (
-                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {errors.submit}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row justify-between gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={prevStep}
-                      className="order-2 sm:order-1"
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Anterior
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isLoading || !acceptTerms}
-                      className="order-1 sm:order-2"
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creando empresa...
-                        </>
-                      ) : (
-                        <>
-                          Crear Empresa
-                          <CheckCircle className="h-4 w-4 ml-2" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Success */}
-              {currentStep === 4 && (
-                <div className="text-center space-y-6">
-                  <div className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full w-fit mx-auto">
-                      <CheckCircle className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                        ¡Empresa Registrada Exitosamente!
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">
-                        Bienvenido a CitasFácil, {formData.user.fullName}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2 text-sm">
-                        <Building2 className="h-4 w-4 inline mr-2" />
-                        Empresa Creada
-                      </h4>
-                      <p className="text-sm text-blue-800 dark:text-blue-400">
-                        {formData.company.name}
-                      </p>
-                      <p className="text-xs text-blue-600 dark:text-blue-500 mt-1">
-                        {
-                          companyTypes.find(
-                            (t) => t.value === formData.company.companyType,
-                          )?.label
-                        }
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <h4 className="font-medium text-purple-900 dark:text-purple-300 mb-2 text-sm">
-                        <User className="h-4 w-4 inline mr-2" />
-                        Usuario Administrador
-                      </h4>
-                      <p className="text-sm text-purple-800 dark:text-purple-400">
-                        {formData.user.fullName}
-                      </p>
-                      <p className="text-xs text-purple-600 dark:text-purple-500 mt-1">
-                        Rol: Administrador de Empresa
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <h4 className="font-medium text-green-900 dark:text-green-300 mb-4 text-sm sm:text-base">
-                      ¿Qué sigue?
-                    </h4>
-                    <div className="space-y-3 text-xs sm:text-sm text-green-800 dark:text-green-400">
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-3 flex-shrink-0" />
-                        <span>Revisa tu email para verificar tu cuenta</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-3 flex-shrink-0" />
-                        <span>Crea usuarios para doctores y secretarias</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-3 flex-shrink-0" />
-                        <span>Configura servicios y horarios de trabajo</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 mr-3 flex-shrink-0" />
-                        <span>Personaliza tu perfil empresarial</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Link href="/dashboard">
-                      <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-                        Ir al Dashboard
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </Link>
-                    <Link href="/login">
-                      <Button
-                        variant="outline"
-                        className="w-full bg-transparent"
-                      >
-                        Iniciar Sesión Más Tarde
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Features Section */}
-        {currentStep <= 3 && (
+        {/* Features Section - Solo mostrar en pasos 1-4 */}
+        {currentStep <= totalSteps && (
           <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-4 text-center">
             <div className="p-2 sm:p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg backdrop-blur-sm">
               <Shield className="h-4 w-4 sm:h-6 sm:w-6 mx-auto mb-2 text-green-600" />
@@ -1048,29 +1092,31 @@ export default function RegisterClient({
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-6 text-center text-xs text-muted-foreground px-4">
-          <p>Al registrarte, aceptas nuestros</p>
-          <div className="flex justify-center space-x-4 mt-1">
-            <Link href="/terms">
-              <Button
-                variant="link"
-                className="p-0 h-auto text-xs text-muted-foreground hover:text-blue-600"
-              >
-                Términos de Servicio
-              </Button>
-            </Link>
-            <span>•</span>
-            <Link href="/privacy">
-              <Button
-                variant="link"
-                className="p-0 h-auto text-xs text-muted-foreground hover:text-blue-600"
-              >
-                Política de Privacidad
-              </Button>
-            </Link>
+        {/* Footer - Solo mostrar en pasos 1-4 */}
+        {currentStep <= totalSteps && (
+          <div className="mt-6 text-center text-xs text-muted-foreground px-4">
+            <p>Al registrarte, aceptas nuestros</p>
+            <div className="flex justify-center space-x-4 mt-1">
+              <Link href="/terms">
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-xs text-muted-foreground hover:text-blue-600"
+                >
+                  Términos de Servicio
+                </Button>
+              </Link>
+              <span>•</span>
+              <Link href="/privacy">
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-xs text-muted-foreground hover:text-blue-600"
+                >
+                  Política de Privacidad
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

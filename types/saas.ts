@@ -13,24 +13,7 @@ export interface Company {
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
-  subscription: Subscription;
   users: CompanyUser[];
-}
-
-export interface Subscription {
-  id: string;
-  companyId: string;
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  nextBillingDate: string;
-  amount: number;
-  currency: string;
-  paymentMethod: string;
-  lastPaymentDate?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CompanyUser {

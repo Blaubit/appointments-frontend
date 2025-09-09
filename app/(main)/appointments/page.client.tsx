@@ -61,6 +61,7 @@ import {
   getStatusText,
 } from "@/utils/functions/appointmentStatus";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+import { useDebounceSearch } from "@/hooks/useDebounce";
 
 type Props = {
   appointments: Appointment[];
@@ -81,7 +82,14 @@ export default function PageClient({
   const searchParams = useSearchParams();
 
   const qValue = searchParams.get("q") || "";
-  const [searchTerm, setSearchTerm] = useState(qValue);
+  const { searchTerm, setSearchTerm, handleSearch } = useDebounceSearch(
+    qValue,
+    {
+      delay: 500,
+      minLength: 2,
+      resetPage: true,
+    }
+  );
 
   useEffect(() => {
     setSearchTerm(qValue);
@@ -98,7 +106,7 @@ export default function PageClient({
 
   const doesDateMatchFilter = (
     appointmentDate: string | Date,
-    filter: string,
+    filter: string
   ) => {
     if (filter === "all") return true;
     const today = new Date();
@@ -130,31 +138,13 @@ export default function PageClient({
       statusFilter === "all" || appointment.status === statusFilter;
     const matchesDate = doesDateMatchFilter(
       appointment.appointmentDate,
-      dateFilter,
+      dateFilter
     );
     const matchesProfessional =
       selectedProfessionalId === "all" ||
       appointment.professional?.id === selectedProfessionalId;
     return matchesStatus && matchesDate && matchesProfessional;
   });
-
-  // Handler de búsqueda: solo busca si hay 2+ caracteres, borra si menos
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
-
-    if (!value || value.length < 2) {
-      params.delete("q");
-      params.delete("page");
-      router.push(`${url.pathname}?${params.toString()}`);
-      return;
-    }
-
-    params.set("q", value);
-    params.delete("page"); // reset page al buscar
-    router.push(`${url.pathname}?${params.toString()}`);
-  };
 
   const handleStatusFilter = (value: string) => setStatusFilter(value);
   const handleDateFilter = (value: string) => setDateFilter(value);
@@ -316,7 +306,7 @@ export default function PageClient({
                     id="search"
                     placeholder="Buscar por cliente o servicio..."
                     value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -474,7 +464,7 @@ export default function PageClient({
                                 {service.name} ({service.durationMinutes} min,{" "}
                                 {formatCurrency(Number(service.price) || 0)})
                               </li>
-                            ),
+                            )
                           )}
                         </ul>
                       </div>
@@ -546,7 +536,7 @@ export default function PageClient({
                       </span>
                       <span className="text-sm font-medium">
                         {new Date(
-                          appointment.appointmentDate,
+                          appointment.appointmentDate
                         ).toLocaleDateString()}
                       </span>
                     </div>
@@ -644,13 +634,13 @@ export default function PageClient({
                                   {service.name} ({service.durationMinutes} min,{" "}
                                   {formatCurrency(Number(service.price) || 0)})
                                 </li>
-                              ),
+                              )
                             )}
                           </ul>
                         </TableCell>
                         <TableCell>
                           {new Date(
-                            appointment.appointmentDate,
+                            appointment.appointmentDate
                           ).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
