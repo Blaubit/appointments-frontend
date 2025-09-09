@@ -43,17 +43,19 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
   const [dateRange, setDateRange] = useState<string>("all");
 
   const filteredPayments = payments.filter((payment) => {
+    // Filtro por estado
     const matchesStatus =
       statusFilter === "all" || payment.status === statusFilter;
 
+    // Filtro por método
     const matchesMethod =
       methodFilter === "all" || payment.paymentMethod === methodFilter;
 
+    // Filtro por fecha
     let matchesDate = true;
     if (dateRange !== "all") {
       const paymentDate = new Date(payment.paymentDate);
       const now = new Date();
-
       switch (dateRange) {
         case "today":
           matchesDate = paymentDate.toDateString() === now.toDateString();
@@ -73,7 +75,21 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
       }
     }
 
-    return matchesStatus && matchesMethod && matchesDate;
+    // Filtro por búsqueda
+    let matchesSearch = true;
+    if (searchTerm.trim() !== "") {
+      const normalizedSearch = searchTerm.trim().toLowerCase();
+      matchesSearch =
+        payment.reference?.toLowerCase().includes(normalizedSearch) ||
+        payment.subscription?.company?.name
+          ?.toLowerCase()
+          .includes(normalizedSearch) ||
+        payment.subscription?.plan?.name
+          ?.toLowerCase()
+          .includes(normalizedSearch);
+    }
+
+    return matchesStatus && matchesMethod && matchesDate && matchesSearch;
   });
 
   const getStatusColor = (status: string) => {
@@ -148,26 +164,21 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
         return "PayPal";
       case "stripe":
         return "Stripe";
+      case "debit_card":
+        return "Tarjeta de Débito";
       default:
         return method;
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("es-GT", {
       style: "currency",
-      currency: "USD",
+      currency: "GTQ",
+      currencyDisplay: "symbol", // fuerza a usar "Q"
+      minimumFractionDigits: 2, // asegura 2 decimales
+      maximumFractionDigits: 2,
     }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-GT", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const formatDateShort = (dateString: string) => {
@@ -180,7 +191,7 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
 
   // Calcular estadísticas
   const totalAmount = filteredPayments.reduce(
-    (sum, payment) => sum + payment.amount,
+    (sum, payment) => sum + (Number(payment.amount) || 0),
     0
   );
   const completedPayments = filteredPayments.filter(
@@ -354,7 +365,7 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
                           </div>
                           <div>
                             <p className="font-medium text-foreground">
-                              compania x{/*payment.subscription.company.name*/}
+                              {payment.subscription.company.name}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               Contacto Email
@@ -369,7 +380,7 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          plan x{/* {payment.subscription.plan.name} */}
+                          {payment.subscription.plan.name}
                         </Badge>
                       </TableCell>
                       <TableCell>

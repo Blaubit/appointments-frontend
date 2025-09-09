@@ -284,6 +284,9 @@ export default function AdminPageClient({
                         <SelectItem value="credit_card">
                           Tarjeta de Crédito
                         </SelectItem>
+                        <SelectItem value="debit_card">
+                          Tarjeta de Débito
+                        </SelectItem>
                         <SelectItem value="bank_transfer">
                           Transferencia Bancaria
                         </SelectItem>

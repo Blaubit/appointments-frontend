@@ -22,19 +22,36 @@ import {
 } from "@/components/ui/table";
 import { Building2, Search, CreditCard, Eye, Edit } from "lucide-react";
 import type { Subscription } from "@/types";
-
+import { PaymentDialog } from "@/components/admin/payment-dialog";
+import { ViewDialog } from "./viewSubscriptionDialog";
+import { create } from "@/actions/subscription/createPayment";
 interface CompaniesTabProps {
   subscriptions: Subscription[];
   onOpenPaymentModal: (subscription: Subscription) => void;
 }
 
-export function CompaniesTab({
-  subscriptions,
-  onOpenPaymentModal,
-}: CompaniesTabProps) {
+export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
+  const [selectedViewRow, setSelectedViewRow] = useState<string | null>(null);
+  const [selectedPaymentRow, setSelectedPaymentRow] = useState<string | null>(
+    null
+  );
+  // Handles payment submission
+  const handleSubmitPayment = (payment: {
+    subscriptionId: string;
+    amount: number;
+    paymentDate: string;
+    paymentMethod: string;
+    status: string;
+  }) => {
+    console.log("Enviando pago:", payment);
+    create(payment);
+    setSelectedPaymentRow(null);
+  };
+  const selectedViewSubscription =
+    subscriptions.find((s) => s.id === selectedViewRow) ?? null;
 
   const filteredSubscriptions = subscriptions.filter((subscription) => {
     const matchesSearch =
@@ -132,16 +149,16 @@ export function CompaniesTab({
 
   const getBillingCycleLabel = (billingCycle: number) => {
     switch (billingCycle) {
-      case 1:
+      case 30:
         return "Mensual";
-      case 3:
+      case 90:
         return "Trimestral";
-      case 6:
+      case 180:
         return "Semestral";
-      case 12:
+      case 365:
         return "Anual";
       default:
-        return `${billingCycle} meses`;
+        return `${billingCycle} días`;
     }
   };
 
@@ -282,23 +299,33 @@ export function CompaniesTab({
                         <p className="text-foreground">
                           {subscription.currentUsers} usuarios
                         </p>
-                        <p className="text-xs text-muted-foreground">activos</p>
+                        <p className="text-xs text-muted-foreground">maximos</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          onClick={() => setSelectedViewRow(subscription.id)}
+                          variant="outline"
+                          size="sm"
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {subscription.status.toLowerCase() === "past_due" && (
-                          <Button
-                            size="sm"
-                            onClick={() => onOpenPaymentModal(subscription)}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CreditCard className="h-4 w-4" />
-                          </Button>
-                        )}
+                        {/* Botón de pago siempre visible */}
+                        <Button
+                          size="sm"
+                          onClick={() => setSelectedPaymentRow(subscription.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                        </Button>
+                        <PaymentDialog
+                          open={selectedPaymentRow === subscription.id}
+                          onClose={() => setSelectedPaymentRow(null)}
+                          onSubmit={handleSubmitPayment}
+                          subscriptionId={subscription.id}
+                          defaultAmount={subscription.plan.price}
+                        />
                         <Button variant="outline" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -310,6 +337,11 @@ export function CompaniesTab({
             </TableBody>
           </Table>
         </div>
+        <ViewDialog
+          open={!!selectedViewRow}
+          onClose={() => setSelectedViewRow(null)}
+          subscription={selectedViewSubscription}
+        />
       </CardContent>
     </Card>
   );
