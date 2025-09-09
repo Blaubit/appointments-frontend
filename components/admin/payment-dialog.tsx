@@ -17,17 +17,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { CreditCard } from "lucide-react";
-
+import { PaymentDto } from "@/types/dto/subscription/payment.dto";
 interface PaymentDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (payment: {
-    subscriptionId: string;
-    amount: number;
-    paymentDate: string;
-    paymentMethod: string;
-    status: string;
-  }) => void;
+  onSubmit: (payment: PaymentDto) => void;
   subscriptionId: string;
   defaultAmount?: number;
 }
@@ -42,6 +36,7 @@ export function PaymentDialog({
   const [paymentDate, setPaymentDate] = useState<Date | undefined>();
   const [paymentMethod, setPaymentMethod] = useState<string>("card");
   const [amount, setAmount] = useState<number>(defaultAmount);
+  const [reference, setReference] = useState<string | undefined>();
 
   const handleSubmit = () => {
     if (!paymentDate) return;
@@ -51,11 +46,13 @@ export function PaymentDialog({
       paymentDate: format(paymentDate, "yyyy-MM-dd"),
       paymentMethod,
       status: "completed",
+      reference,
     });
     onClose();
     setPaymentDate(undefined);
     setPaymentMethod("card");
     setAmount(defaultAmount);
+    setReference(undefined);
   };
 
   return (
@@ -117,6 +114,15 @@ export function PaymentDialog({
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Referencia</label>
+            <Input
+              type="text"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="Referencia del pago"
             />
           </div>
           <div className="flex gap-2 justify-end pt-2">

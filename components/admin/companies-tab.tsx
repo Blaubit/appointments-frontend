@@ -25,6 +25,7 @@ import type { Subscription } from "@/types";
 import { PaymentDialog } from "@/components/admin/payment-dialog";
 import { ViewDialog } from "./viewSubscriptionDialog";
 import { create } from "@/actions/subscription/createPayment";
+import { PaymentDto } from "@/types/dto/subscription/payment.dto";
 interface CompaniesTabProps {
   subscriptions: Subscription[];
   onOpenPaymentModal: (subscription: Subscription) => void;
@@ -39,13 +40,7 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
     null
   );
   // Handles payment submission
-  const handleSubmitPayment = (payment: {
-    subscriptionId: string;
-    amount: number;
-    paymentDate: string;
-    paymentMethod: string;
-    status: string;
-  }) => {
+  const handleSubmitPayment = (payment: PaymentDto) => {
     console.log("Enviando pago:", payment);
     create(payment);
     setSelectedPaymentRow(null);

@@ -4,4 +4,5 @@ export interface PaymentDto {
   paymentDate: string; // ISO date string (e.g. "2023-01-01")
   paymentMethod: "card" | "cash" | "transfer" | string;
   status: "completed" | "pending" | "failed" | string;
+  reference: string | undefined;
 }

@@ -14,6 +14,7 @@ export async function create({
   paymentDate,
   paymentMethod,
   status,
+  reference,
 }: PaymentDto): Promise<SuccessReponse<Payment> | ErrorResponse> {
   const session = await getSession();
   try {
@@ -24,6 +25,7 @@ export async function create({
       paymentDate,
       paymentMethod,
       status,
+      reference,
     };
     const response = await axios.post<Payment>(url, body, {
       headers: {
