@@ -4,6 +4,7 @@ import {
   IsDateString,
   Matches,
   isArray,
+  IsUUID,
 } from "class-validator";
 
 export class appointmentDto {
@@ -35,4 +36,15 @@ export class appointmentDto {
 
   @IsString()
   notes?: string;
+}
+
+export class updateAppointmentStatusDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsUUID()
+  appointmentId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  status: string;
 }
