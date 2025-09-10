@@ -59,7 +59,7 @@ export default async function createCompany({
 
     const body = {
       companyName: name.trim(),
-      companyType: "healthcare", // vamos a dejar como healthcare pero se tiene que cambiar a companyType cuando el backend lo soporte
+      companyType: companyType,
       companyAddress: address.trim(),
       companyCity: city.trim(),
       companyState: state.trim(),
