@@ -39,13 +39,13 @@ import {
 import WhatsappIcon from "./icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 import findOne from "@/actions/appointments/findOne";
-
+import { update } from "@/actions/appointments/appointmentStatus";
+import Link from "next/link";
 interface AppointmentDetailsDialogProps {
   appointmentId: string | undefined;
   isOpen: boolean;
   onClose: () => void;
   onEdit: (appointment: Appointment) => void;
-  onConfirm: (appointment: Appointment) => void;
   onCancel: (appointment: Appointment) => void;
   onDelete: (appointment: Appointment) => void;
   onCall: (appointment: Appointment) => void;
@@ -57,8 +57,6 @@ export function AppointmentDetailsDialog({
   isOpen,
   onClose,
   onEdit,
-  onConfirm,
-  onCancel,
   onDelete,
   onCall,
   onEmail,
@@ -192,10 +190,39 @@ export function AppointmentDetailsDialog({
       </Badge>
     );
   };
-
-  const handleCancelAppointment = () => {
-    onCancel(appointment);
-  };
+  // Handlers for action buttons to change status
+  // These would typically call server actions to update the status
+  // and then refresh the appointment details
+  // For this example, we'll just log the actions
+  // and close the dialog
+  async function handleConfirmAppointment(appointment: Appointment) {
+    console.log("Confirmar cita:", appointment.id);
+    try {
+      await update({
+        appointmentId: appointment.id,
+        status: "confirmed",
+      });
+      onClose();
+      router.push(`/dashboard`);
+    } catch (err) {
+      // Aquí puedes manejar el error si lo deseas, por ejemplo mostrar un mensaje
+      console.error("Error actualizando el estado de la cita:", err);
+    }
+  }
+  async function handleCancelAppointment(appointment: Appointment) {
+    try {
+      await update({
+        appointmentId: appointment.id,
+        status: "cancelled",
+      });
+      onClose();
+      router.push(`/dashboard`);
+    } catch (err) {
+      // Aquí puedes manejar el error si lo deseas, por ejemplo mostrar un mensaje
+      console.error("Error actualizando el estado de la cita:", err);
+    }
+    //onCancel(appointment);
+  }
 
   const handleRescheduleAppointment = () => {
     // Implementar lógica de reprogramación
@@ -203,9 +230,18 @@ export function AppointmentDetailsDialog({
     console.log("Reprogramar cita:", appointment.id);
   };
 
-  const handleAttendAppointment = () => {
+  const handleAttendAppointment = async () => {
     onClose();
-    router.push(`/consultation/${appointment.id}`);
+    try {
+      await update({
+        appointmentId: appointment.id,
+        status: "in_progress",
+      });
+      router.push(`/consultation/${appointment.id}`);
+    } catch (err) {
+      // Aquí puedes manejar el error si lo deseas, por ejemplo mostrar un mensaje
+      console.error("Error actualizando el estado de la cita:", err);
+    }
   };
 
   const handleViewClientHistory = () => {
@@ -216,11 +252,11 @@ export function AppointmentDetailsDialog({
   // Suma total de precios y duración
   const totalPrice = appointment.services?.reduce(
     (acc: number, service: any) => acc + (Number(service.price) || 0),
-    0,
+    0
   );
   const totalDuration = appointment.services?.reduce(
     (acc: number, service: any) => acc + (Number(service.durationMinutes) || 0),
-    0,
+    0
   );
 
   return (
@@ -337,8 +373,8 @@ export function AppointmentDetailsDialog({
                         openWhatsApp(
                           appointment.client.phone,
                           `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                            appointment.professional.fullName,
-                          )}`,
+                            appointment.professional.fullName
+                          )}`
                         )
                       }
                       className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
@@ -389,7 +425,7 @@ export function AppointmentDetailsDialog({
                                 {formatCurrency(Number(service.price) || 0)}
                               </div>
                             </li>
-                          ),
+                          )
                         )
                       ) : (
                         <li className="text-xs text-gray-500">
@@ -409,7 +445,7 @@ export function AppointmentDetailsDialog({
                     <p className="text-xs sm:text-sm font-medium break-words">
                       {formatDateTime(
                         appointment.appointmentDate.toLocaleString(),
-                        appointment.startTime,
+                        appointment.startTime
                       )}
                     </p>
                   </div>
@@ -504,40 +540,42 @@ export function AppointmentDetailsDialog({
 
           {/* Timestamps */}
           <Card>
-            <CardHeader className="pb-3 sm:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Clock className="h-4 w-4 flex-shrink-0" />
-                Historial
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Creada
-                  </Label>
-                  <p className="text-xs sm:text-sm break-words">
-                    {new Date(appointment.createdAt).toLocaleString("es-ES")}
-                  </p>
+            <Link href={`/clients/${appointment.client.id}/history`}>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  Historial
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                  <div>
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Creada
+                    </Label>
+                    <p className="text-xs sm:text-sm break-words">
+                      {new Date(appointment.createdAt).toLocaleString("es-ES")}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Última Actualización
+                    </Label>
+                    <p className="text-xs sm:text-sm break-words">
+                      {new Date(appointment.createdAt).toLocaleString("es-ES")}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Recordatorio Enviado
+                    </Label>
+                    <p className="text-xs sm:text-sm">
+                      {appointment ? "Sí" : "No"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Última Actualización
-                  </Label>
-                  <p className="text-xs sm:text-sm break-words">
-                    {new Date(appointment.createdAt).toLocaleString("es-ES")}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Recordatorio Enviado
-                  </Label>
-                  <p className="text-xs sm:text-sm">
-                    {appointment ? "Sí" : "No"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
+              </CardContent>
+            </Link>
           </Card>
 
           {/* Action Buttons */}
@@ -578,9 +616,9 @@ export function AppointmentDetailsDialog({
               )}
 
             {/* Botón Confirmar (solo si está pendiente) */}
-            {appointment.status === "pending" && (
+            {appointment.status === "scheduled" && (
               <Button
-                onClick={() => onConfirm(appointment)}
+                onClick={() => handleConfirmAppointment(appointment)}
                 variant="outline"
                 className="w-full h-10 text-sm text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-950"
               >
@@ -593,7 +631,7 @@ export function AppointmentDetailsDialog({
             {appointment.status !== "cancelled" &&
               appointment.status !== "completed" && (
                 <Button
-                  onClick={handleCancelAppointment}
+                  onClick={() => handleCancelAppointment(appointment)}
                   variant="outline"
                   className="w-full h-10 text-sm text-orange-600 border-orange-300 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-600 dark:hover:bg-orange-950"
                 >
