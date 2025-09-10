@@ -14,6 +14,7 @@ const ROLE_RESTRICTIONS = {
   ],
   profesional: ["/bot", "/register", "/admin"],
   admin_empresa: ["/bot", "/register", "/admin"],
+
   super_admin: [],
 };
 
