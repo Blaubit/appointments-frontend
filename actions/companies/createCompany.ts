@@ -2,10 +2,10 @@
 
 import { parsedEnv } from "@/app/env";
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { Company } from "@/types";
+import { Company, CompanyRegistrationPayload } from "@/types";
+import { getSession, getUser } from "@/actions/auth";
 
 interface CreateCompanyParams {
   name: string;
@@ -16,38 +16,72 @@ interface CreateCompanyParams {
   postal_code: string;
   country: string;
   description?: string;
+  // Admin data
+  adminFullName: string;
+  adminEmail: string;
+  adminPassword: string;
+  adminBio?: string;
+  // Subscription data
+  planId: string;
+  startDate: string;
+  endDate: string;
+  createdById: string;
 }
 
 export default async function createCompany({
-  name,
+  // company data
+  companyName: name,
   companyType,
-  address,
-  city,
-  state,
-  postal_code,
-  country,
-  description,
-}: CreateCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
+  companyAddress: address,
+  companyCity: city,
+  companyState: state,
+  companyPostalCode: postal_code,
+  companyCountry: country,
+  companyDescription: description,
+  //company admin data
+  adminFullName,
+  adminEmail,
+  adminPassword,
+  adminBio,
+  // subscription data
+  planId,
+  startDate,
+  endDate,
+  createdById,
+}: CompanyRegistrationPayload): Promise<
+  SuccessReponse<Company> | ErrorResponse
+> {
+  const session = await getSession();
   try {
-    const url = `${parsedEnv.API_URL}/companies`;
-
-
+    const url = `${parsedEnv.API_URL}/registration/register`;
     // Para crear una empresa nueva, NO necesitamos session ni companyId
     // Esto debería ser un endpoint público para registro
 
     const body = {
-      name: name.trim(),
-      companyType: companyType,
-      address: address.trim(),
-      city: city.trim(),
-      state: state.trim(),
-      postalCode: postal_code.trim(), // El DTO usa postalCode, no postal_code
-      country: country.trim(),
-      description: description?.trim() || "",
+      companyName: name.trim(),
+      companyType: "healthcare", // vamos a dejar como healthcare pero se tiene que cambiar a companyType cuando el backend lo soporte
+      companyAddress: address.trim(),
+      companyCity: city.trim(),
+      companyState: state.trim(),
+      companyPostalCode: postal_code.trim(), // El DTO usa postalCode, no postal_code
+      companyCountry: country.trim(),
+      companyDescription: description?.trim() || "",
+      // Admin data
+      adminFullName: adminFullName.trim(),
+      adminEmail: adminEmail.trim(),
+      adminPassword: adminPassword,
+      adminBio: adminBio?.trim() || "",
+      // Subscription data
+      planId,
+      startDate,
+      endDate,
+      createdById: createdById,
     };
-
-    const response = await axios.post<Company>(url, body, {
+    console.log("Creating company with data:", body);
+    console.log("Using API URL:", url);
+    const response = await axios.post(url, body, {
       headers: {
+        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });

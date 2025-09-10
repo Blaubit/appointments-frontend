@@ -13,7 +13,6 @@ export default async function findOne(
   const companyId = await getCompanyId();
   const session = await getSession();
   try {
-    
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${id}`;
 
     const response = await axios.get<Appointment>(url, {

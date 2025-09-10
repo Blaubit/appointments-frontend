@@ -1,4 +1,4 @@
-import type {  User } from "@/types";
+import type { User } from "@/types";
 import PageClient from "./page.client";
 import findAll from "@/actions/appointments/findAll";
 import { getRoleName } from "@/actions/user/getRoleName";

@@ -97,7 +97,9 @@ export function AppointmentDetailsDialog({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cargando detalles...</DialogTitle>
-            <DialogDescription>Por favor espere mientras se cargan los detalles de la cita.</DialogDescription>
+            <DialogDescription>
+              Por favor espere mientras se cargan los detalles de la cita.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-6 text-center text-gray-500">Cargando...</div>
         </DialogContent>
@@ -111,7 +113,9 @@ export function AppointmentDetailsDialog({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Error</DialogTitle>
-            <DialogDescription>Ocurrió un error al cargar los detalles de la cita.</DialogDescription>
+            <DialogDescription>
+              Ocurrió un error al cargar los detalles de la cita.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-6 text-center text-red-500">
             {error || "No se pudo encontrar la cita."}

@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import type { Service as ServiceType } from "@/types";
 import deleteService from "@/actions/services/delete";
+import { useDebounceSearch } from "@/hooks/useDebounce";
 
 interface Pagination {
   currentPage: number;
@@ -83,11 +84,19 @@ export default function PageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [searchTerm, setSearchTerm] = useState(
+  const { searchTerm, setSearchTerm } = useDebounceSearch(
     initialSearchParams?.search || "",
+    {
+      delay: 500,
+      minLength: 0,
+      skipInitialSearch: true,
+      onSearch: (value) => {
+        updateFilters({ search: value });
+      },
+    }
   );
   const [statusFilter, setStatusFilter] = useState(
-    initialSearchParams?.status || "all",
+    initialSearchParams?.status || "all"
   );
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
 
@@ -95,17 +104,8 @@ export default function PageClient({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<ServiceType | null>(
-    null,
+    null
   );
-
-  // Debounce para búsqueda
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      updateFilters({ search: searchTerm });
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
 
   // Función para actualizar filtros en la URL
   const updateFilters = (newFilters: { search?: string; status?: string }) => {
@@ -144,7 +144,6 @@ export default function PageClient({
   };
 
   const handleToggleStatus = (s: ServiceType) => {
-   
     // Aquí implementarías la lógica para cambiar estado
   };
 
@@ -177,14 +176,14 @@ export default function PageClient({
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <CardTitle>Gestión de Servicios</CardTitle>
                 <CardDescription>
                   Administra todos tus servicios
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline">
                   <Download className="h-4 w-4 mr-2" /> Exportar
                 </Button>

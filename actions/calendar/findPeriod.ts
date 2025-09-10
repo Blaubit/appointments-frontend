@@ -13,7 +13,7 @@ export async function findPeriod(
 ): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse | any> {
   const companyId = await getCompanyId();
   const session = await getSession();
-  
+
   try {
     const url = `${parsedEnv.API_URL}/availabilities/professional/${userId}/schedule/${periodtype}/${date}`;
     console.log(`findPeriod: ${url}`);

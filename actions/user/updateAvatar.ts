@@ -16,7 +16,6 @@ export async function updateAvatar({
   const session = await getSession();
   const companyId = await getCompanyId();
   try {
-
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -47,8 +46,6 @@ export async function updateAvatar({
     const body = {
       avatar: avatar.trim(),
     };
-
-
 
     const response = await axios.patch<User>(url, body, {
       headers: {

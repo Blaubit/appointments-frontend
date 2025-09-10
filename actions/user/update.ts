@@ -16,7 +16,7 @@ export async function updateUser({
   avatar,
 }: UpdateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
-    const companyId = await getCompanyId();
+  const companyId = await getCompanyId();
   try {
     // Validar que tenemos companyId
     if (!companyId) {
