@@ -1,32 +1,23 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getRoleName } from "./actions/user/getRoleName";
 
 // Rutas restringidas por rol
 const ROLE_RESTRICTIONS = {
-  secretaria: ["/bot", "/consultation", "/reports", "/services", "/register"],
-  profesional: ["/bot", " /register"],
-  admin_empresa: ["/bot", " /register"],
+  secretaria: [
+    "/bot",
+    "/consultation",
+    "/reports",
+    "/services",
+    "/register",
+    "/admin",
+  ],
+  profesional: ["/bot", "/register", "/admin"],
+  admin_empresa: ["/bot", "/register", "/admin"],
   super_admin: [],
 };
 
-// Decodifica el payload del JWT
-function parseJwt(token: string): any {
-  try {
-    const base64Payload = token.split(".")[1];
-    const payload = Buffer.from(base64Payload, "base64").toString();
-    return JSON.parse(payload);
-  } catch (error) {
-    return null;
-  }
-}
-
-// Obtiene el rol desde el token JWT
-function getUserRole(sessionToken: string): string | null {
-  const payload = parseJwt(sessionToken);
-  return payload?.role || null;
-}
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const sessionToken = request.cookies.get("session")?.value;
   const pathname = request.nextUrl.pathname;
 
@@ -36,12 +27,12 @@ export function middleware(request: NextRequest) {
   }
 
   // Obtener el rol desde el token
-  const userRole = getUserRole(sessionToken);
+  const userRole = await getRoleName();
 
   // Si no se puede obtener el rol, permitir acceso
   if (!userRole) {
     console.log("No se pudo obtener el rol del usuario, permitiendo acceso");
-    return NextResponse.next();
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Verificar rutas restringidas
