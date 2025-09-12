@@ -17,6 +17,7 @@ import { findOne } from "@/actions/companies/findOne";
 import edit from "@/actions/companies/edit";
 import { Edit, X, Save, AlertCircle, Loader2 } from "lucide-react";
 import type { Company } from "@/types";
+import { logout } from "@/actions/auth/logout";
 
 interface BusinessInfoFormProps {
   company?: Company;
@@ -39,7 +40,7 @@ const businessTypes = [
 ];
 
 const getInitialFormData = (
-  company?: Company,
+  company?: Company
 ): Omit<Company, "id" | "createdAt"> => ({
   name: company?.name || "",
   companyType: company?.companyType || "",
@@ -60,10 +61,10 @@ export function BusinessInfoForm({
 }: BusinessInfoFormProps) {
   // Estados principales
   const [loadedCompany, setLoadedCompany] = useState<Company | null>(
-    company || null,
+    company || null
   );
   const [formData, setFormData] = useState<Omit<Company, "id" | "createdAt">>(
-    getInitialFormData(company),
+    getInitialFormData(company)
   );
   const [originalData, setOriginalData] = useState<
     Omit<Company, "id" | "createdAt">
@@ -126,7 +127,7 @@ export function BusinessInfoForm({
         } catch (error) {
           console.error("Error inesperado al cargar empresa:", error);
           setServerError(
-            "Error inesperado al cargar la información. Intenta recargar la página.",
+            "Error inesperado al cargar la información. Intenta recargar la página."
           );
         } finally {
           setIsLoadingFromServer(false);
@@ -242,13 +243,14 @@ export function BusinessInfoForm({
       if ("data" in result) {
         console.log(
           "Empresa actualizada exitosamente, cerrando sesión por seguridad:",
-          result.data,
+          result.data
         );
 
         // Llamar el callback onSave si existe
         await onSave(formData);
 
-        // El logout será manejado por el componente padre o la acción edit
+        // logout
+        await logout();
       } else {
         // Manejo de errores de actualización
         let errorMessage = "Error al actualizar la información de la empresa";
@@ -271,7 +273,7 @@ export function BusinessInfoForm({
     } catch (error) {
       console.error("Error inesperado al actualizar:", error);
       setServerError(
-        "Error inesperado al guardar. Verifica tu conexión e intenta nuevamente.",
+        "Error inesperado al guardar. Verifica tu conexión e intenta nuevamente."
       );
       setIsSaving(false);
     }
