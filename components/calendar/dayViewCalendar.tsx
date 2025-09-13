@@ -1,56 +1,49 @@
 import React, { useState } from "react";
-import { ScheduleResponse, OccupiedSlot } from "@/types";
+import { ScheduleResponse, OccupiedSlot, PeriodResponse } from "@/types";
 
 type SlotWithDate = OccupiedSlot & { date: string };
 
 interface DayViewCalendarProps {
-  schedule: ScheduleResponse;
+  schedule: PeriodResponse;
   date: Date;
   onHourClick?: (time: string) => void;
   onSlotClick?: (slot: SlotWithDate) => void;
 }
 
-// Genera líneas de hora para referencia visual
 function generateHourLines(start: number, end: number, stepMinutes = 30) {
   const lines = [];
   for (let h = start; h < end; h++) {
     for (let m = 0; m < 60; m += stepMinutes) {
       lines.push(
-        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`,
+        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
       );
     }
   }
-
   return lines;
 }
 
-// Función para convertir tiempo string a minutos desde medianoche
 function timeStringToMinutes(timeString: string): number {
   const [hours, minutes] = timeString.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
-// Función para convertir minutos a hora string
 function minutesToTimeString(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 }
 
-// Función para verificar si una hora está dentro del horario laboral
 function isTimeWithinWorkingHours(
   time: string,
   workingStart: string,
-  workingEnd: string,
+  workingEnd: string
 ): boolean {
   const timeMinutes = timeStringToMinutes(time + ":00");
   const startMinutes = timeStringToMinutes(workingStart);
   const endMinutes = timeStringToMinutes(workingEnd);
-
   return timeMinutes >= startMinutes && timeMinutes <= endMinutes;
 }
 
-// Calcula la posición vertical en función de la hora (para slots)
 function timeToPosition(time: string, visualStartHour: number) {
   const [h, m] = time.split(":").map(Number);
   const totalMinutes = (h - visualStartHour) * 60 + m + 15;
@@ -59,29 +52,80 @@ function timeToPosition(time: string, visualStartHour: number) {
   return totalMinutes * pixelsPerMinute;
 }
 
+function getFreeAreas(
+  slots: any[],
+  visualStartHour: number,
+  visualEndHour: number
+) {
+  if (!slots.length) {
+    const totalEnd = timeToPosition(
+      `${visualEndHour.toString().padStart(2, "0")}:00`,
+      visualStartHour
+    );
+    return [{ start: 0, end: totalEnd }];
+  }
+
+  // Ordenar slots por hora de inicio
+  const sortedSlots = slots
+    .map((slot) => ({
+      start: timeToPosition(slot.startTime.slice(0, 5), visualStartHour),
+      end: timeToPosition(slot.endTime.slice(0, 5), visualStartHour),
+    }))
+    .sort((a, b) => a.start - b.start);
+
+  const freeAreas: { start: number; end: number }[] = [];
+  let lastEnd = 0;
+
+  for (const slot of sortedSlots) {
+    // Solo agregar área libre si hay espacio significativo (más de 30px = ~23 minutos)
+    if (slot.start > lastEnd + 30) {
+      freeAreas.push({ start: lastEnd, end: slot.start });
+    }
+    lastEnd = Math.max(lastEnd, slot.end);
+  }
+
+  const totalEnd = timeToPosition(
+    `${visualEndHour.toString().padStart(2, "0")}:00`,
+    visualStartHour
+  );
+
+  // Agregar área libre al final si hay espacio significativo
+  if (lastEnd + 30 < totalEnd) {
+    freeAreas.push({ start: lastEnd, end: totalEnd });
+  }
+
+  return freeAreas;
+}
+
+function positionToTime(position: number, visualStartHour: number): string {
+  const pixelsPerMinute = 80 / 60; // 80px por hora
+  const totalMinutes = Math.round(position / pixelsPerMinute);
+  const hours = Math.floor(totalMinutes / 60) + visualStartHour;
+  const minutes = totalMinutes % 60;
+
+  // Redondear a intervalos de 15 minutos
+  const roundedMinutes = Math.round(minutes / 15) * 15;
+  const finalHours = roundedMinutes >= 60 ? hours + 1 : hours;
+  const finalMinutes = roundedMinutes >= 60 ? 0 : roundedMinutes;
+
+  return `${finalHours.toString().padStart(2, "0")}:${finalMinutes.toString().padStart(2, "0")}`;
+}
+
 export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
   schedule,
   date,
   onHourClick,
   onSlotClick,
 }) => {
-  // --- Indicador flotante de hora disponible ---
   const [hoverHour, setHoverHour] = useState<string | null>(null);
-  const [hoverY, setHoverY] = useState<number | null>(null);
-  const [isHoveringSlot, setIsHoveringSlot] = useState<boolean>(false);
-
-  // Para slot hover visual
   const [hoverSlotId, setHoverSlotId] = useState<string | null>(null);
 
-  // Obtén el día actual del schedule
   const dateStr = date.toISOString().split("T")[0];
   const daySchedule = schedule.schedule.find((d) => d.date === dateStr);
 
-  // Verificar si hay horarios de trabajo configurados
   const hasWorkingHours =
     daySchedule?.workingHours?.start && daySchedule?.workingHours?.end;
 
-  // Calcular horas visuales basadas en workingHours o usar valores por defecto
   let visualStartHour = 9;
   let visualEndHour = 18;
 
@@ -94,14 +138,12 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
     const endMinutes = timeStringToMinutes(daySchedule.workingHours.end);
     visualStartHour = Math.floor(startMinutes / 60);
     visualEndHour = Math.ceil(endMinutes / 60);
-    // Agregar un poco de padding visual (1 hora antes y después)
     visualStartHour = Math.max(0, visualStartHour);
     visualEndHour = Math.min(24, visualEndHour + 1);
   }
 
   const hourLines = generateHourLines(visualStartHour, visualEndHour, 30);
 
-  // Filtrar horas disponibles para que solo incluyan las que están dentro del horario laboral
   let filteredAvailableHours: string[] = [];
   if (
     hasWorkingHours &&
@@ -109,72 +151,102 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
     daySchedule?.workingHours?.end
   ) {
     filteredAvailableHours = (daySchedule?.availableHours || []).filter(
-      (hour) =>
+      (hour: any) =>
         isTimeWithinWorkingHours(
           hour,
           daySchedule.workingHours!.start!,
-          daySchedule.workingHours!.end!,
-        ),
+          daySchedule.workingHours!.end!
+        )
     );
   } else {
-    // Si no hay horarios laborales, usar todas las horas disponibles
     filteredAvailableHours = daySchedule?.availableHours || [];
   }
 
   const slots = daySchedule
-    ? daySchedule.occupiedSlots.map((slot) => ({
+    ? daySchedule.occupiedSlots.map((slot: any) => ({
         ...slot,
         date: daySchedule.date,
       }))
     : [];
 
-  // Handler para mouse move solo si no está sobre slot
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Si no hay horas disponibles filtradas, no mostrar hover
-    if (!filteredAvailableHours.length) {
+  const freeAreas = getFreeAreas(slots, visualStartHour, visualEndHour);
+
+  function handleMouseMoveCalendar(e: React.MouseEvent<HTMLDivElement>) {
+    // Verificar que no estamos sobre un slot ocupado
+    const target = e.target as HTMLElement;
+    const slotElement = target.closest('[data-slot="true"]');
+    if (slotElement) {
       setHoverHour(null);
-      setHoverY(null);
       return;
     }
 
-    // Verifica si el mouse está sobre un slot ocupado
-    const elements = document.elementsFromPoint(e.clientX, e.clientY);
-    const isSlot = elements.some(
-      (el) => (el as HTMLElement).dataset?.slot === "true",
+    // Obtener la posición Y relativa al contenedor del calendario
+    const calendarRect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - calendarRect.top;
+
+    // Verificar si estamos en un área libre
+    const currentArea = freeAreas.find(
+      (area) => y >= area.start && y <= area.end
     );
-    setIsHoveringSlot(isSlot);
+    if (!currentArea) {
+      setHoverHour(null);
+      return;
+    }
 
-    if (!isSlot) {
-      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-      const y = e.clientY - rect.top;
-      setHoverY(y);
+    // Convertir posición Y a hora
+    const timeAtPosition = positionToTime(y, visualStartHour);
 
-      // Encuentra la hora disponible más cercana a la posición del mouse (solo de las filtradas)
-      if (filteredAvailableHours.length > 0) {
-        let closest = filteredAvailableHours[0];
-        let minDist = Math.abs(y - timeToPosition(closest, visualStartHour));
-        for (const hour of filteredAvailableHours) {
-          const dist = Math.abs(y - timeToPosition(hour, visualStartHour));
-          if (dist < minDist) {
-            closest = hour;
-            minDist = dist;
+    // Buscar la hora disponible más cercana
+    if (filteredAvailableHours.length > 0) {
+      let closestHour = filteredAvailableHours[0];
+      let minDiff = Infinity;
+
+      for (const availableHour of filteredAvailableHours) {
+        const availablePosition = timeToPosition(
+          availableHour,
+          visualStartHour
+        );
+        // Solo considerar horas que están dentro del área libre actual
+        if (
+          availablePosition >= currentArea.start &&
+          availablePosition <= currentArea.end
+        ) {
+          const diff = Math.abs(availablePosition - y);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestHour = availableHour;
           }
         }
-        setHoverHour(closest);
+      }
+
+      // Solo mostrar hover si encontramos una hora válida en esta área (dentro de 40px)
+      if (minDiff < 40) {
+        setHoverHour(closestHour);
+      } else {
+        setHoverHour(null);
       }
     } else {
       setHoverHour(null);
-      setHoverY(null);
     }
-  };
+  }
 
-  const handleMouseLeave = () => {
+  function handleMouseLeaveCalendar() {
     setHoverHour(null);
-    setHoverY(null);
-    setIsHoveringSlot(false);
-  };
+  }
 
-  // Renderizar mensaje cuando no hay horarios de trabajo
+  function handleCalendarClick(e: React.MouseEvent<HTMLDivElement>) {
+    // Verificar que no estamos clickeando sobre un slot
+    const target = e.target as HTMLElement;
+    const slotElement = target.closest('[data-slot="true"]');
+    if (slotElement) {
+      return; // Dejar que el slot maneje su propio click
+    }
+
+    if (hoverHour && onHourClick) {
+      onHourClick(hoverHour);
+    }
+  }
+
   if (!daySchedule || !hasWorkingHours) {
     return (
       <div className="overflow-hidden">
@@ -195,10 +267,8 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
     );
   }
 
-  // Calcular altura exacta del contenedor
-  const containerHeight = Math.max((hourLines.length - 1) * 40, 600);
+  const containerHeight = Math.max(hourLines.length * 40, 600);
 
-  // Renderizar mensaje cuando no hay horas disponibles pero sí hay horarios de trabajo
   if (filteredAvailableHours.length === 0) {
     return (
       <div className="overflow-hidden">
@@ -238,11 +308,11 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
           </div>
 
           {/* Slots ocupados */}
-          <div className="relative w-full h-full z-10">
-            {slots.map((slot) => {
+          <div className="relative w-full h-full z-20">
+            {slots.map((slot: any) => {
               const top = timeToPosition(
                 slot.startTime.slice(0, 5),
-                visualStartHour,
+                visualStartHour
               );
               const end = slot.endTime
                 ? slot.endTime.slice(0, 5)
@@ -253,8 +323,6 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
                 (parseInt(slot.startTime.split(":")[0]) * 60 +
                   parseInt(slot.startTime.split(":")[1]));
               const slotHeight = Math.max((durationMinutes / 60) * 80, 40);
-
-              // Hover visual para slot
               const isHovered = hoverSlotId === slot.appointmentId;
 
               return (
@@ -267,13 +335,14 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
                     top: `${top}px`,
                     width: "calc(100% - 80px)",
                     height: `${slotHeight}px`,
-                    zIndex: 2,
+                    zIndex: 15,
                     overflow: "hidden",
                     boxShadow: isHovered
                       ? "0 4px 24px rgba(0,0,128,0.30)"
                       : "0 2px 12px rgba(0,0,0,0.15)",
                     transform: isHovered ? "scale(1.04)" : "scale(1)",
                     transition: "all 0.18s cubic-bezier(.4,2,.3,1)",
+                    pointerEvents: "auto",
                   }}
                   className={`
                     bg-blue-500 dark:bg-blue-700
@@ -310,7 +379,7 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
           </div>
 
           {/* Mensaje superpuesto cuando no hay horas disponibles */}
-          <div className="absolute inset-0 flex items-center justify-center z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
             <div className="text-center p-8">
               <div className="text-gray-400 dark:text-gray-500 text-lg mb-2">
                 ⏰
@@ -343,8 +412,11 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
   return (
     <div className="overflow-hidden">
       <div
-        className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm mx-auto"
+        className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm mx-auto cursor-pointer"
         style={{ height: `${containerHeight}px` }}
+        onMouseMove={handleMouseMoveCalendar}
+        onMouseLeave={handleMouseLeaveCalendar}
+        onClick={handleCalendarClick}
       >
         {/* Líneas de hora */}
         <div className="absolute left-0 w-full z-0 pointer-events-none">
@@ -376,12 +448,13 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
             </div>
           ))}
         </div>
+
         {/* Slots ocupados */}
-        <div className="relative w-full h-full z-10">
-          {slots.map((slot) => {
+        <div className="relative w-full h-full z-20">
+          {slots.map((slot: any) => {
             const top = timeToPosition(
               slot.startTime.slice(0, 5),
-              visualStartHour,
+              visualStartHour
             );
             const end = slot.endTime
               ? slot.endTime.slice(0, 5)
@@ -392,8 +465,6 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
               (parseInt(slot.startTime.split(":")[0]) * 60 +
                 parseInt(slot.startTime.split(":")[1]));
             const slotHeight = Math.max((durationMinutes / 60) * 80, 40);
-
-            // Hover visual para slot
             const isHovered = hoverSlotId === slot.appointmentId;
 
             return (
@@ -406,13 +477,14 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
                   top: `${top}px`,
                   width: "calc(100% - 80px)",
                   height: `${slotHeight}px`,
-                  zIndex: 2,
+                  zIndex: 25, // Mayor z-index para que esté sobre las áreas libres
                   overflow: "hidden",
                   boxShadow: isHovered
                     ? "0 4px 24px rgba(0,0,128,0.30)"
                     : "0 2px 12px rgba(0,0,0,0.15)",
                   transform: isHovered ? "scale(1.04)" : "scale(1)",
                   transition: "all 0.18s cubic-bezier(.4,2,.3,1)",
+                  pointerEvents: "auto",
                 }}
                 className={`
                   bg-blue-500 dark:bg-blue-700
@@ -425,7 +497,10 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
                   hover:bg-blue-600 dark:hover:bg-blue-800
                   text-white
                 `}
-                onClick={() => onSlotClick && onSlotClick(slot)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSlotClick && onSlotClick(slot);
+                }}
                 tabIndex={0}
                 onMouseEnter={() => setHoverSlotId(slot.appointmentId)}
                 onMouseLeave={() => setHoverSlotId(null)}
@@ -448,58 +523,37 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
           })}
         </div>
 
-        {/* Indicador flotante de hora solo si NO está sobre slot y HAY horas disponibles filtradas */}
-        {hoverHour &&
-          hoverY !== null &&
-          !isHoveringSlot &&
-          filteredAvailableHours.length > 0 && (
+        {/* Indicador flotante azul */}
+        {hoverHour && filteredAvailableHours.length > 0 && (
+          <div
+            className="absolute left-[70px] w-[calc(100%-80px)] z-30 pointer-events-none"
+            style={{
+              top: `${timeToPosition(hoverHour, visualStartHour) - 18}px`,
+              height: "36px",
+            }}
+          >
             <div
-              className="absolute left-[70px] w-[calc(100%-80px)] z-30 pointer-events-none"
+              className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded px-3 py-1 text-sm font-bold shadow-lg border border-blue-300 dark:border-blue-700"
               style={{
-                top: `${timeToPosition(hoverHour, visualStartHour) - 18}px`,
-                height: "36px",
+                position: "absolute",
+                left: 0,
+                top: 0,
+                transform: "translateY(0)",
               }}
             >
-              <div
-                className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded px-2 py-1 text-xs font-bold shadow border border-blue-300 dark:border-blue-700"
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  pointerEvents: "none",
-                  transform: "translateY(0)",
-                }}
-              >
-                {hoverHour}
-              </div>
-              <div
-                className="w-full border-t-2 border-dashed border-blue-300"
-                style={{ position: "absolute", top: "50%", left: 0 }}
-              />
+              {hoverHour}
             </div>
-          )}
-
-        {/* Área clickeable para crear cita y mostrar hora con hover */}
-        <div
-          className="absolute left-[70px] top-0 w-[calc(100%-80px)] h-full z-10"
-          onClick={(e) => {
-            if (
-              !isHoveringSlot &&
-              hoverHour &&
-              filteredAvailableHours.length > 0
-            ) {
-              if (onHourClick) onHourClick(hoverHour);
-            }
-          }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          style={{
-            cursor:
-              onHourClick && filteredAvailableHours.length > 0
-                ? "pointer"
-                : "default",
-          }}
-        />
+            <div
+              className="w-full border-t-2 border-dashed border-blue-400 dark:border-blue-500"
+              style={{
+                position: "absolute",
+                top: "18px",
+                left: 0,
+                opacity: 0.7,
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

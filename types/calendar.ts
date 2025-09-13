@@ -29,6 +29,12 @@ export interface OccupiedSlot {
   serviceName: string;
 }
 
+export type PeriodResponse = {
+  professional: User;
+  period: Period;
+  schedule: ScheduleDay[];
+};
+
 export interface ScheduleDay {
   date: string; // YYYY-MM-DD
   dayName: DayName;

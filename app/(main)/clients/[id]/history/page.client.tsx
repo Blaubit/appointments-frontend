@@ -12,36 +12,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  ArrowLeft,
   Calendar,
   Clock,
   MapPin,
   User,
   Phone,
   Mail,
-  Star,
   CheckCircle,
   XCircle,
   UserX,
   FileText,
-  MessageSquare,
   Activity,
   DollarSign,
 } from "lucide-react";
-import Link from "next/link";
 import type { Client } from "@/types/clients";
 import type {
   Appointment,
   ClientAppointmentsStats,
 } from "@/types/appointments";
 import { Header } from "@/components/header";
+import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 
 interface ClientHistoryPageClientProps {
   client: Client;
@@ -54,8 +44,9 @@ export default function ClientHistoryPageClient({
   appointments,
   stats,
 }: ClientHistoryPageClientProps) {
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | undefined
+  >(undefined);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   // Funciones de utilidad
@@ -163,7 +154,7 @@ export default function ClientHistoryPageClient({
   };
 
   const handleViewAppointment = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
+    setSelectedAppointmentId(appointment.id);
     setShowDetailsDialog(true);
   };
 
@@ -318,7 +309,7 @@ export default function ClientHistoryPageClient({
                 <div className="space-y-4 sm:space-y-6">
                   {appointments.map((appointment, index) => {
                     const { Icon, color, bg } = getTimelineIcon(
-                      appointment.status,
+                      appointment.status
                     );
 
                     return (
@@ -358,7 +349,7 @@ export default function ClientHistoryPageClient({
                                   <div className="flex-1 min-w-0">
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate">
                                       {renderServicesSummary(
-                                        appointment.services,
+                                        appointment.services
                                       )}
                                     </h3>
                                     {/* Información principal */}
@@ -367,7 +358,7 @@ export default function ClientHistoryPageClient({
                                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                                         <span className="truncate">
                                           {new Date(
-                                            appointment.appointmentDate,
+                                            appointment.appointmentDate
                                           ).toLocaleDateString("es-ES")}
                                         </span>
                                       </div>
@@ -399,7 +390,7 @@ export default function ClientHistoryPageClient({
                                   <div className="flex flex-col items-end gap-2 ml-2 sm:ml-3">
                                     <span className="text-xs text-gray-500 whitespace-nowrap">
                                       {formatDate(
-                                        appointment.appointmentDate.toLocaleString(),
+                                        appointment.appointmentDate.toLocaleString()
                                       )}
                                     </span>
                                     {getStatusBadge(appointment.status)}
@@ -425,7 +416,7 @@ export default function ClientHistoryPageClient({
                                         ? appointment.services.reduce(
                                             (sum, s) =>
                                               sum + Number(s.price || 0),
-                                            0,
+                                            0
                                           )
                                         : 0}
                                     </span>
@@ -436,7 +427,7 @@ export default function ClientHistoryPageClient({
                                             (sum, s) =>
                                               sum +
                                               Number(s.durationMinutes || 0),
-                                            0,
+                                            0
                                           )
                                         : 0}{" "}
                                       min
@@ -457,177 +448,16 @@ export default function ClientHistoryPageClient({
         </Card>
 
         {/* Modal de Detalles - Servicios[] */}
-        <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-3 sm:mx-auto">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">
-                Detalles de la Cita
-              </DialogTitle>
-              <DialogDescription className="text-sm">
-                Información completa de la cita del{" "}
-                {selectedAppointment?.appointmentDate &&
-                  new Date(
-                    selectedAppointment.appointmentDate,
-                  ).toLocaleDateString("es-ES")}{" "}
-                con {client.fullName}
-              </DialogDescription>
-            </DialogHeader>
-
-            {selectedAppointment && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {/* Información de la Cita */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
-                      Información de la Cita
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 sm:space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                      <div className="sm:col-span-2">
-                        <span className="text-gray-500">Servicios:</span>
-                        {renderServicesDetails(selectedAppointment.services)}
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Fecha:</span>
-                        <p className="font-medium">
-                          {new Date(
-                            selectedAppointment.appointmentDate,
-                          ).toLocaleDateString("es-ES")}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Hora:</span>
-                        <p className="font-medium">
-                          {selectedAppointment.startTime}
-                        </p>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <span className="text-gray-500">Profesional:</span>
-                        <p className="font-medium">
-                          {selectedAppointment.professional.fullName}
-                        </p>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <span className="text-gray-500">Ubicación:</span>
-                        <p className="font-medium">
-                          {selectedAppointment.company.address}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Estado:</span>
-                        <div className="mt-1">
-                          {getStatusBadge(selectedAppointment.status)}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Precio total:</span>
-                        <p className="font-medium">
-                          €
-                          {Array.isArray(selectedAppointment.services)
-                            ? selectedAppointment.services.reduce(
-                                (sum, s) => sum + Number(s.price || 0),
-                                0,
-                              )
-                            : 0}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Duración total:</span>
-                        <p className="font-medium">
-                          {Array.isArray(selectedAppointment.services)
-                            ? selectedAppointment.services.reduce(
-                                (sum, s) =>
-                                  sum + Number(s.durationMinutes || 0),
-                                0,
-                              )
-                            : 0}{" "}
-                          min
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Información del Cliente */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                      Cliente
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
-                        <AvatarImage
-                          src={client.avatar || "/placeholder.svg"}
-                          alt={client.fullName}
-                        />
-                        <AvatarFallback>
-                          {getInitials(client.fullName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold truncate">
-                          {client.fullName}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          {client.email}
-                        </p>
-                        <p className="text-sm text-gray-500">{client.phone}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleCallClient}
-                        className="flex-1"
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Llamar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleEmailClient}
-                        className="flex-1"
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        Email
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Notas y Feedback */}
-                {selectedAppointment.notes && (
-                  <Card className="sm:col-span-2">
-                    <CardHeader>
-                      <CardTitle className="text-base sm:text-lg">
-                        Notas y Comentarios
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <span className="text-sm text-gray-500 flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4" />
-                          Notas médicas:
-                        </span>
-                        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <p className="text-sm">{selectedAppointment.notes}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <AppointmentDetailsDialog
+          appointmentId={selectedAppointmentId}
+          isOpen={showDetailsDialog}
+          onClose={() => setShowDetailsDialog(false)}
+          onEdit={() => {}}
+          onDelete={() => {}}
+          onCall={() => {}}
+          onEmail={() => {}}
+          onCancel={() => {}}
+        />
       </div>
     </div>
   );
