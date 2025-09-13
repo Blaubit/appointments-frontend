@@ -50,7 +50,7 @@ import {
   X,
 } from "lucide-react";
 
-import { Role, User } from "@/types";
+import { Role, User, Pagination } from "@/types";
 import { UserForm } from "@/components/settings/user-form";
 
 interface UserManagementFormProps {
@@ -63,16 +63,7 @@ interface UserManagementFormProps {
   isLoading: boolean;
   currentPage?: number;
   onPageChange?: (page: number) => void;
-  meta?: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    nextPage: number | null;
-    previousPage: number | null;
-  };
+  meta?: Pagination;
   useBackendPagination?: boolean;
   canEdit?: boolean;
 }
@@ -119,7 +110,7 @@ export function UserManagementForm({
         filteredUsers = filteredUsers.filter(
           (user) =>
             user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+            user.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
@@ -152,7 +143,7 @@ export function UserManagementForm({
         filteredUsers = filteredUsers.filter(
           (user) =>
             user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+            user.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
@@ -211,8 +202,8 @@ export function UserManagementForm({
       if (editingUser) {
         setUsers((prev) =>
           prev.map((user) =>
-            user.id === editingUser.id ? { ...user, ...userData } : user,
-          ),
+            user.id === editingUser.id ? { ...user, ...userData } : user
+          )
         );
         await onSave({ type: "update", user: userData });
       } else {
@@ -220,7 +211,7 @@ export function UserManagementForm({
           ...userData,
           role:
             userData.role ||
-            roles.find((r) => r.id === userData.role.id) ||
+            roles.find((r) => r.name === userData.role.id) ||
             null,
         };
         setUsers((prev) => [...prev, enrichedUser]);
@@ -328,7 +319,7 @@ export function UserManagementForm({
       const start = (meta.currentPage - 1) * meta.itemsPerPage + 1;
       const end = Math.min(
         meta.currentPage * meta.itemsPerPage,
-        meta.totalItems,
+        meta.totalItems
       );
       return { start, end, total: meta.totalItems };
     } else {
@@ -339,7 +330,7 @@ export function UserManagementForm({
       const end = Math.min(
         filteredAndPaginatedData.currentPage *
           filteredAndPaginatedData.itemsPerPage,
-        filteredAndPaginatedData.totalItems,
+        filteredAndPaginatedData.totalItems
       );
       return { start, end, total: filteredAndPaginatedData.totalItems };
     }
@@ -588,7 +579,7 @@ export function UserManagementForm({
                       onClick={() =>
                         handlePageChange(
                           filteredAndPaginatedData.previousPage ||
-                            filteredAndPaginatedData.currentPage - 1,
+                            filteredAndPaginatedData.currentPage - 1
                         )
                       }
                       disabled={!filteredAndPaginatedData.hasPrevPage}
@@ -603,7 +594,7 @@ export function UserManagementForm({
                         {
                           length: Math.min(
                             5,
-                            filteredAndPaginatedData.totalPages,
+                            filteredAndPaginatedData.totalPages
                           ),
                         },
                         (_, i) => {
@@ -640,7 +631,7 @@ export function UserManagementForm({
                               {pageNum}
                             </Button>
                           );
-                        },
+                        }
                       )}
                     </div>
 
@@ -650,7 +641,7 @@ export function UserManagementForm({
                       onClick={() =>
                         handlePageChange(
                           filteredAndPaginatedData.nextPage ||
-                            filteredAndPaginatedData.currentPage + 1,
+                            filteredAndPaginatedData.currentPage + 1
                         )
                       }
                       disabled={!filteredAndPaginatedData.hasNextPage}

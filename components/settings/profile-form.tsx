@@ -25,6 +25,7 @@ import { AvatarSelector } from "@/components/settings/avatar-selector";
 import { updateProfile } from "@/actions/user/update";
 //import { logout } from "@/actions/auth/logout";
 import { LogoutWarningDialog } from "@/components/settings/logout-warning-dialog";
+import { logout } from "@/actions/auth/logout";
 
 interface ProfileFormProps {
   initialData?: Partial<User>;
@@ -185,7 +186,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
     setIsSaving(true);
     setShowLogoutWarning(false);
-
+    console.log("Saving profile data:", profileData);
     try {
       const result = await updateProfile({
         userId: profileData.id,
@@ -200,11 +201,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         // Éxito - pero no actualizar el estado porque vamos a cerrar sesión
         console.log(
           "Profile updated successfully, logging out for security:",
-          result.data,
+          result.data
         );
-
         // Cerrar sesión por seguridad
-        //await logout();
+        await logout();
       } else {
         // Error en la actualización
         console.error("Error updating profile:", result.message);

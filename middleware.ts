@@ -54,5 +54,5 @@ export async function middleware(request: NextRequest) {
 
 // Proteger todas las rutas excepto `/` y `/login`
 export const config = {
-  matcher: ["/((?!login|$|favicon.ico|_next).*)"],
+  matcher: ["/((?!login|$|favicon.ico|favicon.png|_next).*)"],
 };

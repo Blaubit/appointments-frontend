@@ -38,25 +38,12 @@ import { UserManagementForm } from "@/components/settings/user-management-form";
 import { ScheduleForm } from "@/components/settings/schedule-form";
 import { SecurityForm } from "@/components/settings/security-form";
 import { AppearenceForm } from "@/components/settings/appearence-form";
-import { Role, User, Company } from "@/types";
+import { Role, User, Company, Pagination, ScheduleSettings } from "@/types";
+import { findAll as findAllUsers } from "@/actions/user/findAll";
 
 interface SettingsPageClientProps {
   profileData: User;
-  scheduleSettings: {
-    timezone: string;
-    workingDays: {
-      monday: { enabled: boolean; start: string; end: string };
-      tuesday: { enabled: boolean; start: string; end: string };
-      wednesday: { enabled: boolean; start: string; end: string };
-      thursday: { enabled: boolean; start: string; end: string };
-      friday: { enabled: boolean; start: string; end: string };
-      saturday: { enabled: boolean; start: string; end: string };
-      sunday: { enabled: boolean; start: string; end: string };
-    };
-    appointmentDuration: number;
-    bufferTime: number;
-    maxAdvanceBooking: number;
-  };
+  scheduleSettings: ScheduleSettings;
   securityData: {
     currentPassword: string;
     newPassword: string;
@@ -75,19 +62,9 @@ interface SettingsPageClientProps {
   doctors: User[];
   users: User[];
   roles: Role[];
-  usersMeta?: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    nextPage: number | null;
-    previousPage: number | null;
-  };
+  usersMeta?: Pagination;
 }
 
-// Configuración de permisos por tab
 const TAB_PERMISSIONS = {
   profile: ["admin_empresa", "profesional", "secretaria", "super_admin"],
   business: ["admin_empresa", "profesional", "secretaria", "super_admin"],
@@ -97,7 +74,6 @@ const TAB_PERMISSIONS = {
   appearance: ["admin_empresa", "profesional", "secretaria", "super_admin"],
 } as const;
 
-// Definición de tabs con sus configuraciones
 const TAB_CONFIG = [
   {
     id: "profile",
@@ -145,7 +121,7 @@ export function SettingsPageClient({
   doctors,
   users: initialUsers,
   roles,
-  usersMeta,
+  usersMeta: initialUsersMeta,
 }: SettingsPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -153,47 +129,46 @@ export function SettingsPageClient({
 
   const tabFromUrl = searchParams.get("tab");
   const pageFromUrl = parseInt(searchParams.get("page") || "1");
+  const qValue = searchParams.get("q") || "";
+  const roleValue = searchParams.get("role") || "";
 
   const [isLoading, setIsLoading] = useState(false);
 
   // State management para datos que pueden cambiar en el cliente
   const [profileData, setProfileData] = useState(initialProfileData);
   const [scheduleSettings, setScheduleSettings] = useState(
-    initialScheduleSettings,
+    initialScheduleSettings
   );
   const [securityData, setSecurityData] = useState(initialSecurityData);
   const [appearanceSettings, setAppearanceSettings] = useState(
-    initialAppearanceSettings,
+    initialAppearanceSettings
   );
+
+  // Para paginación de usuarios
   const [users, setUsers] = useState(initialUsers);
+  const [usersMeta, setUsersMeta] = useState(initialUsersMeta);
 
   // Obtener el rol del usuario actual
   const currentUserRole = initialProfileData?.role?.name || "";
 
-  // Función para verificar si el usuario tiene permiso para ver un tab
   const hasPermissionForTab = (tabId: string): boolean => {
     const tabConfig = TAB_CONFIG.find((tab) => tab.id === tabId);
     if (!tabConfig) return false;
-
     return tabConfig.permissions.includes(currentUserRole as any);
   };
 
-  // Función para verificar si el usuario puede editar
   const canEdit = (): boolean => {
     return ["admin_empresa", "super_admin"].includes(currentUserRole);
   };
 
-  // Filtrar tabs según permisos del usuario
   const allowedTabs = useMemo(() => {
     return TAB_CONFIG.filter((tab) => hasPermissionForTab(tab.id));
   }, [currentUserRole]);
 
-  // Determinar el primer tab permitido como default
   const defaultTab = useMemo(() => {
     return allowedTabs.length > 0 ? allowedTabs[0].id : "profile";
   }, [allowedTabs]);
 
-  // Estado del tab activo con validación de permisos
   const [activeTab, setActiveTab] = useState(() => {
     if (tabFromUrl && hasPermissionForTab(tabFromUrl)) {
       return tabFromUrl;
@@ -201,32 +176,51 @@ export function SettingsPageClient({
     return defaultTab;
   });
 
-  // Update tab when URL changes
   useEffect(() => {
     if (tabFromUrl && hasPermissionForTab(tabFromUrl)) {
       setActiveTab(tabFromUrl);
     } else if (tabFromUrl && !hasPermissionForTab(tabFromUrl)) {
       // Si el usuario intenta acceder a un tab no permitido, redirigir al default
       console.warn(
-        `Usuario sin permisos para el tab: ${tabFromUrl}. Redirigiendo a: ${defaultTab}`,
+        `Usuario sin permisos para el tab: ${tabFromUrl}. Redirigiendo a: ${defaultTab}`
       );
       updateUrlParams({ tab: defaultTab });
     }
   }, [tabFromUrl, defaultTab]);
 
-  // Función para actualizar URL con parámetros
   const updateUrlParams = (params: Record<string, string | number>) => {
-    const current = new URLSearchParams();
+    const current = new URLSearchParams(searchParams.toString());
 
     const tab = params.tab?.toString() || activeTab;
     current.set("tab", tab);
 
+    // Solo mantener page si está en users
     if (tab === "users" && params.page && Number(params.page) > 1) {
       current.set("page", params.page.toString());
+    } else {
+      current.delete("page");
+    }
+
+    // Mantener q y role si existen
+    if (tab === "users") {
+      if (params.q !== undefined) {
+        if (params.q) current.set("q", params.q.toString());
+        else current.delete("q");
+      }
+      if (params.role !== undefined) {
+        if (params.role) current.set("role", params.role.toString());
+        else current.delete("role");
+      }
     }
 
     Object.entries(params).forEach(([key, value]) => {
-      if (key !== "tab" && key !== "page" && value) {
+      if (
+        key !== "tab" &&
+        key !== "page" &&
+        key !== "q" &&
+        key !== "role" &&
+        value
+      ) {
         current.set(key, value.toString());
       }
     });
@@ -237,12 +231,17 @@ export function SettingsPageClient({
     router.push(`${pathname}${query}`);
   };
 
-  // Función para cambiar página
+  // Cambia la página y mantiene los filtros
   const handlePageChange = (newPage: number) => {
-    updateUrlParams({ tab: activeTab, page: newPage });
+    updateUrlParams({
+      tab: activeTab,
+      page: newPage,
+      q: qValue,
+      role: roleValue,
+    });
   };
 
-  // Función para cambiar tab con validación de permisos
+  // Cambia el tab y reinicia los filtros de users
   const handleTabChange = (newTab: string) => {
     if (!hasPermissionForTab(newTab)) {
       console.warn(`Usuario sin permisos para acceder al tab: ${newTab}`);
@@ -250,13 +249,41 @@ export function SettingsPageClient({
     }
     setActiveTab(newTab);
     if (newTab === "users") {
-      updateUrlParams({ tab: newTab, page: 1 });
+      updateUrlParams({ tab: newTab, page: 1, q: "", role: "" });
     } else {
       updateUrlParams({ tab: newTab });
     }
   };
 
-  // Handler functions
+  // Actualiza usuarios desde el backend cuando cambia page, q, role o tab
+  useEffect(() => {
+    async function fetchUsers(page: number, q: string, role: string) {
+      setIsLoading(true);
+      try {
+        // El backend debe aceptar q y role como parámetros
+        const result = await findAllUsers({
+          page,
+          limit: usersMeta?.itemsPerPage || 10,
+          q,
+          role,
+        });
+        if (result && result.data) {
+          setUsers(result.data);
+          setUsersMeta(result.meta);
+        }
+      } catch (error) {
+        console.error("Error cargando usuarios:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (activeTab === "users") {
+      fetchUsers(pageFromUrl, qValue, roleValue);
+    }
+  }, [pageFromUrl, qValue, roleValue, activeTab]);
+
+  // Handler functions para guardar cambios
   const handleSaveProfile = async () => {
     setIsLoading(true);
     try {
@@ -270,20 +297,18 @@ export function SettingsPageClient({
   };
 
   const handleSaveBusiness = async (
-    companyData: Omit<Company, "id" | "createdAt">,
+    companyData: Omit<Company, "id" | "createdAt">
   ) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Saving business info:", companyData);
 
-      // Actualizar el estado con los datos de la empresa
-      // Como company es requerido en User, sabemos que profileData.company existe
       setProfileData((prev) => ({
         ...prev,
         company: {
-          ...prev.company, // Esto preserva id y createdAt
-          ...companyData, // Esto actualiza el resto de campos
+          ...prev.company,
+          ...companyData,
         },
       }));
     } catch (error) {
@@ -436,7 +461,7 @@ export function SettingsPageClient({
                 onDeleteUser={handleDeleteUser}
                 isLoading={isLoading}
                 roles={roles}
-                currentPage={usersMeta?.currentPage || 1}
+                currentPage={usersMeta?.currentPage || pageFromUrl || 1}
                 onPageChange={handlePageChange}
                 meta={usersMeta}
                 useBackendPagination={true}

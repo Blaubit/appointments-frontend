@@ -8,15 +8,17 @@ import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { User } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+
 type Props = {
   searchParams?: URLSearchParams;
   page?: number;
   limit?: number;
-  search?: string;
+  q?: string; // <-- El parámetro de búsqueda es "q"
+  role?: string; // <-- El parámetro de filtro es "role"
 };
 
 export async function findAll(
-  props: Props = {},
+  props: Props = {}
 ): Promise<SuccessReponse<User[]> | ErrorResponse | any> {
   const session = await getSession();
   const companyId = await getCompanyId();
@@ -27,15 +29,20 @@ export async function findAll(
     // Obtener parámetros finales, priorizando props directos sobre searchParams
     const page = props.page || parsedParams.page || 1;
     const limit = props.limit || parsedParams.limit || 5;
-
+    const q = props.q || parsedParams.q || ""; // <-- Búsqueda por "q"
+    const role = props.role || ""; // <-- Filtro por "role"
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users`;
 
-    const finalParams = {
+    const finalParams: any = {
       page,
       limit,
-      // Aquí puedes agregar otros parámetros que necesites para el backend
-      // pero por ahora solo enviamos page y limit ya que search y filtros serán en frontend
     };
+    if (q) {
+      finalParams.q = q; // <-- Agrega "q" si existe
+    }
+    if (role) {
+      finalParams.role = role; // <-- Agrega "role" si existe
+    }
 
     const response = await axios.get(url, {
       headers: {

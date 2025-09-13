@@ -128,7 +128,7 @@ export async function updateProfile({
         status: 401,
       };
     }
-
+    console.log("Updating profile for userId:", userId);
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users/${userId}`;
 
     if (!session) {
@@ -176,13 +176,14 @@ export async function updateProfile({
         status: 400,
       };
     }
+
     const response = await axios.patch<User>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
-
+    console.log("Update profile response:", response.data);
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/profile");
 
@@ -221,7 +222,7 @@ export async function updateProfile({
 // Función helper para actualizar solo el avatar
 export async function updateAvatar(
   userId: string,
-  avatar: string,
+  avatar: string
 ): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, avatar });
 }
@@ -229,7 +230,7 @@ export async function updateAvatar(
 // Función helper para actualizar solo el email
 export async function updateEmail(
   userId: string,
-  email: string,
+  email: string
 ): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, email });
 }
@@ -237,7 +238,7 @@ export async function updateEmail(
 // Función helper para actualizar solo el nombre completo
 export async function updateFullName(
   userId: string,
-  fullName: string,
+  fullName: string
 ): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, fullName });
 }
@@ -245,7 +246,7 @@ export async function updateFullName(
 // Función helper para actualizar solo la biografía
 export async function updateBio(
   userId: string,
-  bio: string,
+  bio: string
 ): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, bio });
 }
@@ -253,7 +254,7 @@ export async function updateBio(
 // Función helper para actualizar solo el rol
 export async function updateRole(
   userId: string,
-  roleId: string,
+  roleId: string
 ): Promise<SuccessReponse<User> | ErrorResponse> {
   return updateProfile({ userId, roleId });
 }
