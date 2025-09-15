@@ -598,29 +598,14 @@ export default function RegisterClient({
       const response = await onRegisterCompanyComplete(payload);
       console.log("Respuesta del servidor:", response);
 
-      // 2. PASO 1: Crear la empresa primero usando la función del servidor
-      console.log("Creando empresa...");
-      const companyPayload = {
-        name: formData.company.name.trim(),
-        companyType: formData.company.companyType,
-        address: formData.company.address.trim(),
-        city: formData.company.city.trim(),
-        state: formData.company.state.trim(),
-        postal_code: formData.company.postal_code.trim() || "00000",
-        country: formData.company.country.trim(),
-        description: formData.company.description?.trim() || "",
-      };
-
-      const companyResponse = await onCreateCompany(companyPayload);
-
-      if (companyResponse.status !== 200 && companyResponse.status !== 201) {
-        console.error("Error creando empresa:", companyResponse);
-        setErrors({
-          submit:
-            companyResponse.message ||
-            "Error al crear la empresa. Inténtalo de nuevo.",
-        });
-
+      // ✅ Verificar si es una ErrorResponse
+      if (
+        response &&
+        "message" in response &&
+        ("code" in response || "status" in response)
+      ) {
+        console.error("Error Response recibido:", response);
+        handleRegistrationError(response);
         return;
       }
 
@@ -631,7 +616,6 @@ export default function RegisterClient({
         setCurrentStep(5);
         return;
       }
-
       // ✅ Si no coincide con ninguna estructura esperada
       console.error("Respuesta inesperada del servidor:", response);
       handleRegistrationError({

@@ -54,12 +54,13 @@ export default async function createCompany({
   const session = await getSession();
   try {
     const url = `${parsedEnv.API_URL}/registration/register`;
+
     // Para crear una empresa nueva, NO necesitamos session ni companyId
     // Esto debería ser un endpoint público para registro
 
     const body = {
       companyName: name.trim(),
-      companyType: "healthcare", // vamos a dejar como healthcare pero se tiene que cambiar a companyType cuando el backend lo soporte
+      companyType: companyType,
       companyAddress: address.trim(),
       companyCity: city.trim(),
       companyState: state.trim(),

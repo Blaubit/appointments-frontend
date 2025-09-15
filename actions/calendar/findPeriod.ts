@@ -9,20 +9,18 @@ import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function findPeriod(
   userId: string,
   date: string,
-  periodtype: "day" | "week" | "month" = "month",
+  periodtype: "day" | "week" | "month" = "month"
 ): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse | any> {
   const companyId = await getCompanyId();
   const session = await getSession();
 
   try {
     const url = `${parsedEnv.API_URL}/availabilities/professional/${userId}/schedule/${periodtype}/${date}`;
-    console.log(`findPeriod: ${url}`);
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
-
     return {
       data: response.data,
       status: 200,

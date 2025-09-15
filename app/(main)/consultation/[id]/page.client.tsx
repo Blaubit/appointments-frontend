@@ -15,39 +15,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  ArrowLeft,
   Clock,
   User,
-  Phone,
-  Mail,
   MapPin,
   Calendar,
   FileText,
   History,
-  AlertTriangle,
   Heart,
-  Pill,
   Activity,
   Save,
   CheckCircle,
   Timer,
   Stethoscope,
-  ClipboardList,
   UserCheck,
-  Star,
-  DollarSign,
-  Package,
-  Info,
   Target,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
 import type { Appointment } from "@/types";
 import { Header } from "@/components/header";
-import { number } from "zod";
-
+import { update } from "@/actions/appointments/appointmentStatus";
+import { useRouter } from "next/navigation";
 interface ConsultationPageClientProps {
   appointment: Appointment;
   recentHistory: Appointment[];
@@ -57,6 +46,7 @@ export default function ConsultationPageClient({
   appointment,
   recentHistory,
 }: ConsultationPageClientProps) {
+  const router = useRouter();
   const [consultationNotes, setConsultationNotes] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
   const [treatment, setTreatment] = useState("");
@@ -106,14 +96,22 @@ export default function ConsultationPageClient({
   const getElapsedTime = () => {
     const now = new Date();
     const elapsed = Math.floor(
-      (now.getTime() - startTime.getTime()) / 1000 / 60,
+      (now.getTime() - startTime.getTime()) / 1000 / 60
     );
     return elapsed;
   };
 
   const handleCompleteConsultation = async () => {
     setIsCompleting(true);
-
+    try {
+      await update({
+        appointmentId: appointment.id,
+        status: "completed",
+      });
+    } catch (err) {
+      // Aquí puedes manejar el error si lo deseas, por ejemplo mostrar un mensaje
+      console.error("Error actualizando el estado de la cita:", err);
+    }
     // Simular guardado
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -129,6 +127,8 @@ export default function ConsultationPageClient({
     });
 
     setIsCompleting(false);
+    // redirigir a dashboard
+    router.push(`/dashboard`);
     // Aquí se redirigiría a la página de citas o dashboard
   };
 
@@ -292,7 +292,7 @@ export default function ConsultationPageClient({
                     <p className="font-medium text-green-900 dark:text-green-100">
                       {services.reduce(
                         (sum, s) => sum + (s.durationMinutes || 0),
-                        0,
+                        0
                       )}{" "}
                       min
                     </p>
@@ -398,7 +398,7 @@ export default function ConsultationPageClient({
                       <p className="font-medium">
                         {services.reduce(
                           (sum, s) => sum + (s.durationMinutes || 0),
-                          0,
+                          0
                         )}{" "}
                         minutos
                       </p>
@@ -411,7 +411,7 @@ export default function ConsultationPageClient({
                         €
                         {services.reduce(
                           (sum, s) => sum + (Number(s.price) || 0),
-                          0,
+                          0
                         )}
                       </p>
                     </div>

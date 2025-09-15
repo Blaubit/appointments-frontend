@@ -460,7 +460,7 @@ export default function DashboardClient({
                                           ? ` (${service.durationMinutes} min)`
                                           : ""}
                                       </li>
-                                    ),
+                                    )
                                   )
                                 ) : (
                                   <li>No hay servicios</li>
@@ -475,7 +475,7 @@ export default function DashboardClient({
                                   <Calendar className="h-3 w-3 mr-1" />
                                   {formatDate(
                                     appointment?.appointmentDate?.toLocaleString?.() ||
-                                      "",
+                                      ""
                                   )}
                                 </span>
                               </div>
@@ -503,7 +503,7 @@ export default function DashboardClient({
                                 e.stopPropagation();
                                 if (appointment?.client?.phone) {
                                   window.open(
-                                    `tel:${appointment.client.phone}`,
+                                    `tel:${appointment.client.phone}`
                                   );
                                 }
                               }}
@@ -524,8 +524,8 @@ export default function DashboardClient({
                                   openWhatsApp(
                                     appointment.client.phone,
                                     `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                                      appointment.professional.fullName,
-                                    )}`,
+                                      appointment.professional.fullName
+                                    )}`
                                   );
                                 }
                               }}
@@ -654,7 +654,6 @@ export default function DashboardClient({
         isOpen={selectedAppointment !== null}
         onClose={handleCloseDialog}
         onEdit={handleEditAppointment}
-        onConfirm={handleConfirmAppointment}
         onCancel={handleCancelAppointment}
         onDelete={handleDeleteAppointment}
         onCall={handleCallClient}

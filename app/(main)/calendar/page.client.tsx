@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MonthViewCalendar } from "@/components/calendar/monthViewCalendar";
 import { WeekViewCalendar } from "@/components/calendar/weekViewCalendar";
 import { DayViewCalendar } from "@/components/calendar/dayViewCalendar";
-import { ScheduleResponse, OccupiedSlot, Service, User } from "@/types";
+import { OccupiedSlot, Service, User, PeriodResponse } from "@/types";
 import { findPeriod } from "@/actions/calendar/findPeriod";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 import ProfessionalSelectorCard from "@/components/professional-selector";
@@ -39,7 +39,7 @@ export default function CalendarPageClient({
 }: CalendarPageClientProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
-  const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
+  const [schedule, setSchedule] = useState<PeriodResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | undefined
@@ -48,7 +48,7 @@ export default function CalendarPageClient({
   // Estado para el profesional seleccionado
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
     // Encontrar el profesional por defecto basado en userId
-    professionals.find((p) => p.id === userId) || null,
+    professionals.find((p) => p.id === userId) || null
   );
 
   // ID del profesional actual para usar en las consultas
@@ -105,7 +105,7 @@ export default function CalendarPageClient({
   };
   const handleHourClickDay = (time: string) => {
     redirect(
-      `appointments/new?fechaHora=${currentDate.toISOString().split("T")[0]}T${time}&professionalId=${currentProfessionalId}`,
+      `appointments/new?fechaHora=${currentDate.toISOString().split("T")[0]}T${time}&professionalId=${currentProfessionalId}`
     );
   };
   const handleSlotClick = (slot: OccupiedSlot & { date: string }) => {
@@ -276,7 +276,6 @@ export default function CalendarPageClient({
         isOpen={!!selectedAppointmentId}
         onClose={() => setSelectedAppointmentId(undefined)}
         onEdit={() => {}}
-        onConfirm={() => {}}
         onCancel={() => {}}
         onDelete={() => {}}
         onCall={() => {}}

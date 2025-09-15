@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { ScheduleResponse, OccupiedSlot } from "@/types";
+import { OccupiedSlot, PeriodResponse } from "@/types";
 import { CircleAlert } from "lucide-react";
 
 type SlotWithDate = OccupiedSlot & { date: string };
 
 interface WeekViewCalendarProps {
-  schedule: ScheduleResponse;
+  schedule: PeriodResponse;
   weekDate: Date;
   onHourClick?: (date: Date) => void;
   onSlotClick?: (slot: SlotWithDate) => void;
@@ -35,7 +35,7 @@ function generateHourLines(start: number, end: number, stepMinutes = 30) {
   for (let h = start; h < end; h++) {
     for (let m = 0; m < 60; m += stepMinutes) {
       lines.push(
-        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`,
+        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
       );
     }
   }
@@ -116,7 +116,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
       if (daySchedule?.workingHours?.start && daySchedule?.workingHours?.end) {
         hasAnyWorkingHours = true;
         const startMinutes = timeStringToMinutes(
-          daySchedule.workingHours.start,
+          daySchedule.workingHours.start
         );
         const endMinutes = timeStringToMinutes(daySchedule.workingHours.end);
 
@@ -298,7 +298,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                   slots.map((slot) => {
                     const top = timeToPosition(
                       slot.startTime.slice(0, 5),
-                      visualStartHour,
+                      visualStartHour
                     );
                     const end = slot.endTime
                       ? slot.endTime.slice(0, 5)
@@ -310,7 +310,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                         parseInt(slot.startTime.split(":")[1]));
                     const slotHeight = Math.max(
                       (durationMinutes / 60) * 64,
-                      40,
+                      40
                     );
 
                     const colIdx = slotColumns[slot.appointmentId];

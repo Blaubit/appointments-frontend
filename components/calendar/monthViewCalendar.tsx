@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { CircleAlert } from "lucide-react";
-import { ScheduleResponse, OccupiedSlot } from "@/types";
+import { OccupiedSlot, PeriodResponse } from "@/types";
 
 type SlotWithDate = OccupiedSlot & { date: string };
 
 interface MonthViewCalendarProps {
-  schedule: ScheduleResponse;
+  schedule: PeriodResponse;
   currentDate: Date;
   onDayClick?: (date: Date) => void;
   onSlotClick?: (slot: SlotWithDate) => void;
