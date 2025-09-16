@@ -25,7 +25,7 @@ export const getStatusColor = (status: string) => {
     case "rescheduled":
       return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
     case "confirmed":
-      return "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300";
+      return "bg-teal-400 text-teal-100 dark:bg-teal-600 dark:text-white px-2 py-1 rounded-lg";
     case "cancelled":
       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
     case "waitlist":

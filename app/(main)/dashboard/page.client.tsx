@@ -632,13 +632,23 @@ export default function DashboardClient({
                       </p>
                     </div>
                   </div>
-                  {/* Ciudad y Código postal */}
+                  {/* pais y ciudad */}
                   <div className="flex items-start space-x-3">
                     <Globe className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium">Telefono</p>
+                      <p className="text-sm font-medium">Ubicación</p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo?.postal_code || ""}
+                        {clinicInfo?.country || ""}{" "}
+                        {clinicInfo?.city ? `, ${clinicInfo.city}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  {/* descripcion */}
+                  <div className="flex items-start space-x-3">
+                    <Building2 className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">
+                        {clinicInfo?.description || "N/A"}
                       </p>
                     </div>
                   </div>
