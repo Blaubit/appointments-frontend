@@ -195,10 +195,10 @@ export default function ConsultationPageClient({
         backButtonHref="/clients"
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-3 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contenido Principal - Consulta Activa */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-10">
             {/* Información de los Servicios y Cita Actual */}
             <Card className="border-l-4 border-l-blue-500">
               <CardHeader>
@@ -345,7 +345,7 @@ export default function ConsultationPageClient({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1  gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="diagnosis">Diagnóstico</Label>
                     <Input
@@ -364,18 +364,6 @@ export default function ConsultationPageClient({
                       onChange={(e) => setTreatment(e.target.value)}
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="next-appointment">
-                    Próxima Cita (Opcional)
-                  </Label>
-                  <Input
-                    id="next-appointment"
-                    type="datetime-local"
-                    value={nextAppointment}
-                    onChange={(e) => setNextAppointment(e.target.value)}
-                  />
                 </div>
 
                 {/* Resumen de los Servicios */}
@@ -510,7 +498,7 @@ export default function ConsultationPageClient({
               </CardContent>
             </Card>
 
-            {/* Información Médica Importante */}
+            {/* Información Médica Importante 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -534,7 +522,7 @@ export default function ConsultationPageClient({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {recentHistory.slice(0, 3).map((pastAppointment) => (
+                {recentHistory.map((pastAppointment) => (
                   <div
                     key={pastAppointment.id}
                     className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
@@ -579,7 +567,7 @@ export default function ConsultationPageClient({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {client.totalAppointments || 0}

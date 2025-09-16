@@ -59,6 +59,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       const companyResponse = await findOne(user.company?.id);
       if (companyResponse?.status === 200 && "data" in companyResponse) {
         companyInfo = companyResponse.data;
+        console.log("Información de la empresa obtenida:", companyInfo);
       }
     } catch (err) {
       // Si falla, se mantiene el valor por defecto
