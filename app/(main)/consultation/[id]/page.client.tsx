@@ -37,6 +37,7 @@ import { AttendAppointment } from "@/actions/clients/attend";
 import { useRouter } from "next/navigation";
 import { PrintPrescription } from "@/components/PrintPrescription";
 import { getInitials } from "@/utils/functions/getInitials";
+import { update } from "@/actions/appointments/appointmentStatus";
 interface ConsultationPageClientProps {
   appointment: Appointment;
   recentHistory: Appointment[];
@@ -83,6 +84,10 @@ export default function ConsultationPageClient({
         observations: consultationNotes,
         treatment,
         diagnosis,
+      });
+      await update({
+        appointmentId: appointment.id,
+        status: "completed",
       });
     } catch (err) {
       console.error("Error actualizando el estado de la cita:", err);
