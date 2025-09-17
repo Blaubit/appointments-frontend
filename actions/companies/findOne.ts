@@ -2,13 +2,12 @@
 
 import axios, { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { Company } from "@/types";
 import { getSession } from "@/actions/auth";
 
 export async function findOne(
-  id: string, // Cambiado a string para ser consistente con los IDs
+  id: string // Cambiado a string para ser consistente con los IDs
 ): Promise<SuccessReponse<Company> | ErrorResponse> {
   const session = await getSession();
   try {
@@ -25,7 +24,7 @@ export async function findOne(
         Authorization: `Bearer ${session}`,
       },
     });
-
+    console.log("Company fetch response:", response.data);
     return {
       data: response.data,
       status: 200,
