@@ -75,7 +75,7 @@ interface ClientsPageClientProps {
 const defaultStats: ClientStats = {
   totalClients: 0,
   activeClients: 0,
-  newThisMonth: 0,
+  newClientsLastDays: 0,
   averageRating: 0,
 };
 
@@ -485,7 +485,7 @@ export default function ClientsPageClient({
               {stats.totalClients}
             </div>
             <p className="text-xs text-muted-foreground">
-              +{stats.newThisMonth} este mes
+              +{stats.newClientsLastDays} en los últimos días
             </p>
           </CardContent>
         </Card>
@@ -519,9 +519,11 @@ export default function ClientsPageClient({
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {stats.newThisMonth}
+              {stats.newClientsLastDays}
             </div>
-            <p className="text-xs text-muted-foreground">Crecimiento mensual</p>
+            <p className="text-xs text-muted-foreground">
+              Crecimiento en los últimos días
+            </p>
           </CardContent>
         </Card>
 

@@ -17,7 +17,7 @@ export interface Client {
 export interface ClientStats {
   totalClients: number;
   activeClients: number;
-  newThisMonth: number;
+  newClientsLastDays: number;
   averageRating: number;
 }
 
