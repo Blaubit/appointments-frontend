@@ -9,6 +9,12 @@ type Company = {
   country: string;
   description: string;
   createdAt: string;
+  phones?: phone[];
+};
+
+type phone = {
+  id: string;
+  phone: string;
 };
 interface CompanyRegistrationPayload {
   // Company data

@@ -56,6 +56,12 @@ export interface ClientEditFormData {
   email: string;
   phone: string;
 }
+export interface AttendAppointmentData {
+  id: string;
+  observations?: string;
+  treatment: string;
+  diagnosis?: string;
+}
 
 export interface ClientSummary {
   client: Client;

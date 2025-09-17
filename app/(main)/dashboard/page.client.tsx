@@ -648,7 +648,7 @@ export default function DashboardClient({
                     <Building2 className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium">
-                        {clinicInfo?.description || "N/A"}
+                        {clinicInfo?.phones?.[0].phone || "N/A"}
                       </p>
                     </div>
                   </div>
