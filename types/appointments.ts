@@ -15,6 +15,7 @@ export interface Appointment {
   client: Client; // Client is defined in ./clients
   professional: User; // User is defined in ./user
   services: Service[]; // Service is defined in ./services
+  paymentStatus: "paid" | "unpaid" | "partial";
 }
 
 export interface AppointmentStats {

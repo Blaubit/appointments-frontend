@@ -9,29 +9,25 @@ import { Appointment } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function findHistory(
-  id: string,
+  id: string
 ): Promise<SuccessReponse<Appointment[]> | ErrorResponse | any> {
   const companyId = await getCompanyId();
   const session = await getSession();
   try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/client/${id}/with-stats`;
 
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
+    console.log("Response data:", response.data.stats);
     return {
       data: response.data.data,
       status: 200,
       statusText: response.statusText,
       meta: response.data.meta,
-      stats: {
-        total: response.data.meta.totalItems,
-        confirmed: 10,
-        pending: 5,
-        cancelled: 2,
-      },
+      stats: response.data.stats,
     };
   } catch (error) {
     console.log(error);
