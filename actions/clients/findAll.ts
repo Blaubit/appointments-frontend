@@ -13,13 +13,13 @@ type Props = {
 };
 
 export async function findAll(
-  props: Props = {},
+  props: Props = {}
 ): Promise<SuccessReponse<Client[]> | ErrorResponse | any> {
   const session = await getSession();
   const companyId = await getCompanyId();
 
   try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/`;
 
     const parsedParams = parsePaginationParams(props.searchParams);
 
@@ -35,12 +35,19 @@ export async function findAll(
       },
       params,
     });
-
+    const statsUrl = `${parsedEnv.API_URL}/companies/${companyId}/clients/statistics`;
+    const statsResponse = await axios.get(statsUrl, {
+      headers: {
+        Authorization: `Bearer ${session}`,
+      },
+    });
+    console.log("Stats response:", statsResponse.data);
     // La respuesta ya viene en el formato correcto
     return {
       data: response.data.data,
       meta: response.data.meta,
       searchInfo: response.data.searchInfo,
+      stats: statsResponse.data,
       status: 200,
       statusText: response.statusText,
     };

@@ -19,7 +19,7 @@ export default async function Page({ searchParams }: Props) {
   const limit =
     typeof resolvedSearchParams.limit === "string"
       ? parseInt(resolvedSearchParams.limit)
-      : 10;
+      : 9;
   const search =
     typeof resolvedSearchParams.search === "string"
       ? resolvedSearchParams.search

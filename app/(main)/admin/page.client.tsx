@@ -28,7 +28,7 @@ import { PaymentsTab } from "@/components/admin/payments-tab";
 // Actions existentes
 import { findAll as findAllSubscriptions } from "@/actions/subscription/findAll";
 import { findAllPayments } from "@/actions/payments/findAllPayments";
-
+import formatCurrency from "@/utils/functions/formatCurrency";
 // Interface para los datos del modal de pago
 interface CreatePaymentData {
   subscriptionId: string;
@@ -63,14 +63,6 @@ export default function AdminPageClient({
     transactionId: "",
     notes: "",
   });
-
-  // Funciones de utilidad
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
 
   // Función para refrescar datos usando las actions existentes
   const refreshData = async () => {

@@ -13,12 +13,13 @@ export async function Login({
 }: LoginDto): Promise<SuccessReponse<string> | ErrorResponse> {
   try {
     const url = parsedEnv.API_URL + "/auth/login";
+    console.log("body", { email, password });
     const response = await axios.post<LoginResponse>(url, {
       email,
       password,
     });
-
-    const token = response.data.data.token;
+    console.log("response", response.data);
+    const token = response.data.token;
     const cookieStore = await cookies();
 
     // Cookie de sesión segura

@@ -28,7 +28,7 @@ export async function findAll(
 
     // Obtener parámetros finales, priorizando props directos sobre searchParams
     const page = props.page || parsedParams.page || 1;
-    const limit = props.limit || parsedParams.limit || 5;
+    const limit = 5;
     const q = props.q || parsedParams.q || ""; // <-- Búsqueda por "q"
     const role = props.role || ""; // <-- Filtro por "role"
     const url = `${parsedEnv.API_URL}/companies/${companyId}/users`;

@@ -17,7 +17,7 @@ export interface Client {
 export interface ClientStats {
   totalClients: number;
   activeClients: number;
-  newThisMonth: number;
+  newClientsLastDays: number;
   averageRating: number;
 }
 
@@ -55,6 +55,12 @@ export interface ClientEditFormData {
   fullName: string;
   email: string;
   phone: string;
+}
+export interface AttendAppointmentData {
+  id: string;
+  observations?: string;
+  treatment: string;
+  diagnosis?: string;
 }
 
 export interface ClientSummary {

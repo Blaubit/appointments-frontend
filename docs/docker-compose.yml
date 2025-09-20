@@ -1,0 +1,131 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: appointments-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-appointments_db}
+      POSTGRES_USER: ${DB_USER:-alex}
+      POSTGRES_PASSWORD: ${DB_PASS:-admin}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d # For init scripts
+    networks:
+      - appointments-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-alex} -d ${DB_NAME:-appointments_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Service
+  backend:
+    build:
+      context: ./appointments-backend
+      dockerfile: Dockerfile
+      target: ${NODE_ENV:-development} # Use 'production' for production
+    container_name: appointments-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-appointments_db}
+      DB_USER: ${DB_USER:-alex}
+      DB_PASS: ${DB_PASS:-admin}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001}
+      CORS_METHODS: ${CORS_METHODS:-GET,POST,PUT,PATCH,DELETE}
+      CORS_ALLOWED_HEADERS: ${CORS_ALLOWED_HEADERS:-Content-Type,Authorization}
+      CORS_CREDENTIALS: ${CORS_CREDENTIALS:-true}
+      DEFAULT_AVATAR: ${DEFAULT_AVATAR:-Avatar.png}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    volumes:
+      # For development - mount source code
+      - ./appointments-backend:/app:${VOLUME_MODE:-rw}
+      - /app/node_modules # Prevent overwriting node_modules
+      - backend_logs:/app/logs
+    networks:
+      - appointments-network
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./appointments-frontend
+      dockerfile: Dockerfile
+      target: dev # Use 'production' for production build
+    container_name: appointments-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_URL: ${API_URL:-http://backend:3000/api}
+      NEXT_TELEMETRY_DISABLED: 1
+    ports:
+      - "${FRONTEND_PORT:-3001}:3001"
+    volumes:
+      # For development - mount source code
+      - ./appointments-frontend:/app:${VOLUME_MODE:-rw}
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - appointments-network
+    depends_on:
+      - backend # Remove health check dependency
+    # Remove frontend health check for now
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:3001 || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+
+  # Nginx Reverse Proxy (Production)
+  nginx:
+    image: nginx:alpine
+    container_name: appointments-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro # For SSL certificates
+    networks:
+      - appointments-network
+    depends_on:
+      - backend
+      - frontend
+    profiles:
+      - production # Only run in production
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_logs:
+    driver: local
+
+networks:
+  appointments-network:
+    driver: bridge

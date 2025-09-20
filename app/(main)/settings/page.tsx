@@ -4,8 +4,6 @@ import { get } from "http";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import { findAll } from "@/actions/user/findAll";
 import { findAll as findAllRoles } from "@/actions/user/role/findAll";
-import { findOne as findCompany } from "@/actions/companies/findOne";
-import { User } from "@/types";
 
 async function getScheduleSettings() {
   // Simular fetch de datos del servidor

@@ -31,7 +31,7 @@ export async function findAllPayments(
     // Construir parámetros para la API
     const params: Record<string, any> = {
       page: searchParamsObject.page || "1",
-      limit: searchParamsObject.limit || "10",
+      limit: "7",
     };
 
     // Agregar filtros opcionales

@@ -29,7 +29,7 @@ export default async function Page({ params }: Props) {
     try {
       const findHistoryResponse = await findHistory(appointment.client.id);
       if (findHistoryResponse.status === 200 && "data" in findHistoryResponse) {
-        recentHistory = findHistoryResponse.data.slice(0, 3);
+        recentHistory = findHistoryResponse.data.slice(0, 4);
       }
     } catch (error) {
       console.warn("Failed to fetch client history:", error);

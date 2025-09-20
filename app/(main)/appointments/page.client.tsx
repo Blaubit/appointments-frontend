@@ -51,6 +51,7 @@ import {
   Grid3X3,
   List,
   User as UserIcon,
+  CreditCard,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import type { Appointment, AppointmentStats, Pagination, User } from "@/types";
@@ -61,7 +62,11 @@ import {
   getStatusText,
 } from "@/utils/functions/appointmentStatus";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+import { AppointmentPaymentDialog } from "@/components/appointments/appointment-payment-dialog";
+import { RateClientDialog } from "@/components/client/RateClientDialog"; // ⭐ Agregar import
 import { useDebounceSearch } from "@/hooks/useDebounce";
+import { getInitials } from "@/utils/functions/getInitials";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 type Props = {
   appointments: Appointment[];
@@ -82,18 +87,15 @@ export default function PageClient({
   const searchParams = useSearchParams();
 
   const qValue = searchParams.get("q") || "";
-  const { searchTerm, setSearchTerm, handleSearch } = useDebounceSearch(
-    qValue,
-    {
-      delay: 500,
-      minLength: 2,
-      resetPage: true,
-    }
-  );
+  const { searchTerm, setSearchTerm } = useDebounceSearch(qValue, {
+    delay: 500,
+    minLength: 2,
+    resetPage: true,
+  });
 
   useEffect(() => {
     setSearchTerm(qValue);
-  }, [qValue]);
+  }, [qValue, setSearchTerm]);
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
@@ -101,6 +103,61 @@ export default function PageClient({
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState("all");
+
+  // Payment dialog handlers
+  const [isPaymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [appointmentToPay, setAppointmentToPay] = useState<Appointment | null>(
+    null
+  );
+
+  // ⭐ Agregar estado para el diálogo de calificación
+  const [isRateDialogOpen, setRateDialogOpen] = useState(false);
+  const [appointmentToRate, setAppointmentToRate] =
+    useState<Appointment | null>(null);
+
+  const handleOpenPaymentDialog = (appointment: Appointment) => {
+    setAppointmentToPay(appointment);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleClosePaymentDialog = () => {
+    setAppointmentToPay(null);
+    setPaymentDialogOpen(false);
+  };
+
+  // ⭐ Modificar handlePayAppointment para abrir el diálogo de calificación después del pago
+  const handlePayAppointment = (
+    appointment: Appointment,
+    paymentData: { amount: number; method: string }
+  ) => {
+    console.log("Payment completed, opening rate dialog"); // Debug log
+    // Aquí conecta tu lógica de pago (API, actualización de estado, etc)
+    console.log("Pagando cita:", appointment, paymentData);
+
+    // Cerrar el diálogo de pago
+    setPaymentDialogOpen(false);
+    setAppointmentToPay(null);
+
+    // Usar setTimeout para asegurar que el estado se actualice correctamente
+    setTimeout(() => {
+      setAppointmentToRate(appointment);
+      setRateDialogOpen(true);
+    }, 100);
+  };
+
+  // ⭐ Agregar handler para la calificación del cliente
+  const handleRateClient = (clientId: string, rating: number) => {
+    console.log("Rating saved:", { clientId, rating }); // Debug log
+    // Aquí va tu lógica de rating (API call, actualización de estado, etc.)
+    setRateDialogOpen(false);
+    setAppointmentToRate(null);
+  };
+
+  // ⭐ Agregar handler para cerrar el diálogo de calificación
+  const handleCloseRateDialog = () => {
+    setRateDialogOpen(false);
+    setAppointmentToRate(null);
+  };
 
   const isProfessional = currentUser?.role?.name === "profesional";
 
@@ -178,20 +235,6 @@ export default function PageClient({
       </div>
     </Badge>
   );
-  const getInitials = (name: string) => {
-    if (!name) return "";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "GTQ",
-    }).format(amount);
   const getTotalDuration = (services: any[]) =>
     services?.reduce(
       (acc: number, service: any) =>
@@ -238,6 +281,14 @@ export default function PageClient({
     params.set("page", String(pagination.currentPage + 1));
     router.push(`${url.pathname}?${params.toString()}`);
   };
+
+  // Prevent opening details dialog when clicking a DropdownMenuItem
+  const menuActionHandler =
+    (action: (appointment: Appointment) => void) =>
+    (e: React.MouseEvent, appointment: Appointment) => {
+      e.stopPropagation();
+      action(appointment);
+    };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -477,33 +528,61 @@ export default function PageClient({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => handleViewAppointment(appointment)}
+                          onClick={(e) =>
+                            menuActionHandler(handleViewAppointment)(
+                              e,
+                              appointment
+                            )
+                          }
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           Ver Detalles
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleCallClient(appointment)}
+                          onClick={(e) =>
+                            menuActionHandler(handleCallClient)(e, appointment)
+                          }
                         >
                           <Phone className="h-4 w-4 mr-2" />
                           Llamar
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleEmailClient(appointment)}
+                          onClick={(e) =>
+                            menuActionHandler(handleEmailClient)(e, appointment)
+                          }
                         >
                           <Mail className="h-4 w-4 mr-2" />
                           Email
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleEditAppointment(appointment)}
+                          onClick={(e) =>
+                            menuActionHandler(handleEditAppointment)(
+                              e,
+                              appointment
+                            )
+                          }
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Editar Cita
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) =>
+                            menuActionHandler(handleOpenPaymentDialog)(
+                              e,
+                              appointment
+                            )
+                          }
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Pagar
+                        </DropdownMenuItem>
                         {appointment.status === "pending" && (
                           <DropdownMenuItem
-                            onClick={() =>
-                              handleConfirmAppointment(appointment)
+                            onClick={(e) =>
+                              menuActionHandler(handleConfirmAppointment)(
+                                e,
+                                appointment
+                              )
                             }
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
@@ -512,14 +591,24 @@ export default function PageClient({
                         )}
                         {appointment.status !== "cancelled" && (
                           <DropdownMenuItem
-                            onClick={() => handleCancelAppointment(appointment)}
+                            onClick={(e) =>
+                              menuActionHandler(handleCancelAppointment)(
+                                e,
+                                appointment
+                              )
+                            }
                           >
                             <XCircle className="h-4 w-4 mr-2" />
                             Cancelar
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
-                          onClick={() => handleDeleteAppointment(appointment)}
+                          onClick={(e) =>
+                            menuActionHandler(handleDeleteAppointment)(
+                              e,
+                              appointment
+                            )
+                          }
                           className="text-red-600"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -664,37 +753,67 @@ export default function PageClient({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() =>
-                                  handleViewAppointment(appointment)
+                                onClick={(e) =>
+                                  menuActionHandler(handleViewAppointment)(
+                                    e,
+                                    appointment
+                                  )
                                 }
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 Ver Detalles
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleCallClient(appointment)}
+                                onClick={(e) =>
+                                  menuActionHandler(handleCallClient)(
+                                    e,
+                                    appointment
+                                  )
+                                }
                               >
                                 <Phone className="h-4 w-4 mr-2" />
                                 Llamar
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleEmailClient(appointment)}
+                                onClick={(e) =>
+                                  menuActionHandler(handleEmailClient)(
+                                    e,
+                                    appointment
+                                  )
+                                }
                               >
                                 <Mail className="h-4 w-4 mr-2" />
                                 Email
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() =>
-                                  handleEditAppointment(appointment)
+                                onClick={(e) =>
+                                  menuActionHandler(handleEditAppointment)(
+                                    e,
+                                    appointment
+                                  )
                                 }
                               >
                                 <Edit className="h-4 w-4 mr-2" />
                                 Editar Cita
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) =>
+                                  menuActionHandler(handleOpenPaymentDialog)(
+                                    e,
+                                    appointment
+                                  )
+                                }
+                              >
+                                <CreditCard className="h-4 w-4 mr-2" />
+                                Pagar
+                              </DropdownMenuItem>
                               {appointment.status === "pending" && (
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    handleConfirmAppointment(appointment)
+                                  onClick={(e) =>
+                                    menuActionHandler(handleConfirmAppointment)(
+                                      e,
+                                      appointment
+                                    )
                                   }
                                 >
                                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -703,8 +822,11 @@ export default function PageClient({
                               )}
                               {appointment.status !== "cancelled" && (
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    handleCancelAppointment(appointment)
+                                  onClick={(e) =>
+                                    menuActionHandler(handleCancelAppointment)(
+                                      e,
+                                      appointment
+                                    )
                                   }
                                 >
                                   <XCircle className="h-4 w-4 mr-2" />
@@ -712,8 +834,11 @@ export default function PageClient({
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem
-                                onClick={() =>
-                                  handleDeleteAppointment(appointment)
+                                onClick={(e) =>
+                                  menuActionHandler(handleDeleteAppointment)(
+                                    e,
+                                    appointment
+                                  )
                                 }
                                 className="text-red-600"
                               >
@@ -767,6 +892,23 @@ export default function PageClient({
         onCall={handleCallClient}
         onEmail={handleEmailClient}
       />
+
+      <AppointmentPaymentDialog
+        appointment={appointmentToPay}
+        isOpen={isPaymentDialogOpen}
+        onClose={handleClosePaymentDialog}
+        onPay={handlePayAppointment}
+      />
+
+      {/* ⭐ Agregar el RateClientDialog */}
+      {appointmentToRate && (
+        <RateClientDialog
+          client={appointmentToRate.client}
+          onRate={handleRateClient}
+          open={isRateDialogOpen}
+          onOpenChange={setRateDialogOpen}
+        />
+      )}
     </div>
   );
 }

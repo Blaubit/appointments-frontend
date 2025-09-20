@@ -8,7 +8,7 @@ import { Client } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 export async function findOne(
-  id: string,
+  id: string
 ): Promise<SuccessReponse<Client> | ErrorResponse | any> {
   const companyId = await getCompanyId();
   const session = await getSession();
