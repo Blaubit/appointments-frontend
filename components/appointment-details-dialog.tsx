@@ -204,7 +204,6 @@ export function AppointmentDetailsDialog({
         status: "confirmed",
       });
       onClose();
-      router.push(`/dashboard`);
     } catch (err) {
       console.error("Error actualizando el estado de la cita:", err);
     }
@@ -217,7 +216,6 @@ export function AppointmentDetailsDialog({
         status: "cancelled",
       });
       onClose();
-      router.push(`/dashboard`);
     } catch (err) {
       console.error("Error actualizando el estado de la cita:", err);
     }

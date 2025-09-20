@@ -38,6 +38,8 @@ import { useRouter } from "next/navigation";
 import { PrintPrescription } from "@/components/PrintPrescription";
 import { getInitials } from "@/utils/functions/getInitials";
 import { update } from "@/actions/appointments/appointmentStatus";
+import { RateClientDialog } from "@/components/client/RateClientDialog";
+
 interface ConsultationPageClientProps {
   appointment: Appointment;
   recentHistory: Appointment[];
@@ -54,6 +56,7 @@ export default function ConsultationPageClient({
   const [isCompleting, setIsCompleting] = useState(false);
   const [startTime] = useState(new Date());
   const [showPrescription, setShowPrescription] = useState(false);
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
 
   const client = appointment.client;
   const services = appointment.services || [];
@@ -89,11 +92,27 @@ export default function ConsultationPageClient({
         appointmentId: appointment.id,
         status: "completed",
       });
+
+      // Mostrar el diálogo de calificación después de completar la consulta
+      setIsCompleting(false);
+      setShowRatingDialog(true);
     } catch (err) {
       console.error("Error actualizando el estado de la cita:", err);
+      setIsCompleting(false);
     }
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsCompleting(false);
+  };
+
+  const handleRatingComplete = () => {
+    // Después de calificar, cerrar el diálogo y redirigir
+    setShowRatingDialog(false);
+    setTimeout(() => {
+      router.push(`/dashboard`);
+    }, 500);
+  };
+
+  const handleSkipRating = () => {
+    // Si decide no calificar, simplemente redirigir
+    setShowRatingDialog(false);
     router.push(`/dashboard`);
   };
 
@@ -555,6 +574,44 @@ export default function ConsultationPageClient({
               </div>
             </div>
           </div>
+
+          {/* Diálogo de Calificación */}
+          <RateClientDialog
+            client={client}
+            open={showRatingDialog}
+            onOpenChange={setShowRatingDialog}
+            onRate={handleRatingComplete}
+          />
+
+          {/* Overlay cuando se muestra el diálogo de calificación */}
+          {showRatingDialog && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+                <h3 className="text-lg font-semibold mb-4">
+                  ¡Consulta Completada!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  La consulta ha sido registrada exitosamente. ¿Te gustaría
+                  calificar al cliente {client.fullName}?
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSkipRating}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Omitir
+                  </Button>
+                  <Button
+                    onClick={() => setShowRatingDialog(false)}
+                    className="flex-1"
+                  >
+                    Calificar Cliente
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
 import { Client } from "@/types";
+import rateClient from "@/actions/clients/rateClient";
+import { toast } from "sonner"; // Asumiendo que usas sonner para toasts
 
 interface RateClientDialogProps {
   client: Client;
-  onRate: (clientId: string, rating: number) => void;
-  trigger?: React.ReactNode; // Optional custom trigger (button, icon, etc.)
-  open?: boolean; // Add this prop to control dialog state externally
-  onOpenChange?: (open: boolean) => void; // Add this prop to handle state changes
+  onRate?: (clientId: string, rating: number) => void; // Ahora es opcional
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const RateClientDialog: React.FC<RateClientDialogProps> = ({
@@ -28,7 +30,8 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
   onOpenChange,
 }) => {
   const [internalOpen, setInternalOpen] = React.useState(false);
-  const [rating, setRating] = React.useState(Number(client.rating) || 0);
+  const [rating, setRating] = React.useState(0); // Inicializar con 0
+  const [isLoading, setIsLoading] = React.useState(false);
 
   // Use external open state if provided, otherwise use internal state
   const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -48,8 +51,11 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
           key={star}
           type="button"
           onClick={() => setRating(star)}
-          className={star <= rating ? "text-yellow-400" : "text-gray-300"}
+          className={`transition-colors ${
+            star <= rating ? "text-yellow-400" : "text-gray-300"
+          } hover:text-yellow-300 disabled:cursor-not-allowed`}
           aria-label={`Calificar con ${star} estrellas`}
+          disabled={isLoading}
         >
           <Star size={32} fill={star <= rating ? "#facc15" : "none"} />
         </button>
@@ -57,8 +63,41 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
     </div>
   );
 
-  const handleSave = () => {
-    onRate(client.id, rating);
+  const handleSave = async () => {
+    if (rating === 0) return;
+
+    setIsLoading(true);
+
+    try {
+      const result = await rateClient({
+        id: client.id,
+        rating: rating,
+      });
+
+      if ("data" in result) {
+        // Éxito
+        toast.success("Cliente calificado exitosamente");
+
+        // Llamar el callback opcional si existe
+        if (onRate) {
+          onRate(client.id, rating);
+        }
+
+        setOpen(false);
+      } else {
+        // Error
+        toast.error(result.message || "Error al calificar el cliente");
+      }
+    } catch (error) {
+      console.error("Error rating client:", error);
+      toast.error("Error inesperado al calificar el cliente");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setRating(0); // Resetear a la calificación original
     setOpen(false);
   };
 
@@ -85,13 +124,22 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
               Selecciona la calificación:
             </span>
             {renderStars()}
+            {client.rating && (
+              <p className="text-sm text-gray-500 mt-2">
+                Calificación actual: {client.rating} estrellas
+              </p>
+            )}
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="secondary" onClick={() => setOpen(false)}>
+            <Button
+              variant="secondary"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={rating === 0}>
-              Guardar
+            <Button onClick={handleSave} disabled={rating === 0 || isLoading}>
+              {isLoading ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -123,13 +171,22 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
             Selecciona la calificación:
           </span>
           {renderStars()}
+          {client.rating && (
+            <p className="text-sm text-gray-500 mt-2">
+              Calificación actual: {client.rating} estrellas
+            </p>
+          )}
         </div>
         <DialogFooter className="mt-4">
-          <Button variant="secondary" onClick={() => setOpen(false)}>
+          <Button
+            variant="secondary"
+            onClick={handleCancel}
+            disabled={isLoading}
+          >
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={rating === 0}>
-            Guardar
+          <Button onClick={handleSave} disabled={rating === 0 || isLoading}>
+            {isLoading ? "Guardando..." : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>
