@@ -36,6 +36,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/use-toast";
+import {
   Calendar,
   Search,
   Plus,
@@ -52,6 +64,9 @@ import {
   List,
   User as UserIcon,
   CreditCard,
+  Loader2,
+  FileText,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import type { Appointment, AppointmentStats, Pagination, User } from "@/types";
@@ -63,10 +78,11 @@ import {
 } from "@/utils/functions/appointmentStatus";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 import { AppointmentPaymentDialog } from "@/components/appointments/appointment-payment-dialog";
-import { RateClientDialog } from "@/components/client/RateClientDialog"; // ⭐ Agregar import
+import { RateClientDialog } from "@/components/client/RateClientDialog";
 import { useDebounceSearch } from "@/hooks/useDebounce";
 import { getInitials } from "@/utils/functions/getInitials";
 import formatCurrency from "@/utils/functions/formatCurrency";
+import { exportAppointments } from "@/actions/appointments/export";
 
 type Props = {
   appointments: Appointment[];
@@ -74,6 +90,17 @@ type Props = {
   pagination: Pagination;
   professionals?: User[];
   currentUser?: User;
+};
+
+type ExportOptions = {
+  format: "pdf" | "excel";
+  includeStatistics: boolean;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  professionalId?: string;
+  includePaymentInfo: boolean;
+  includeServices: boolean;
 };
 
 export default function PageClient({
@@ -110,10 +137,24 @@ export default function PageClient({
     null
   );
 
-  // ⭐ Agregar estado para el diálogo de calificación
+  // Rating dialog handlers
   const [isRateDialogOpen, setRateDialogOpen] = useState(false);
   const [appointmentToRate, setAppointmentToRate] =
     useState<Appointment | null>(null);
+
+  // Export dialog handlers
+  const [isExportDialogOpen, setExportDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportOptions, setExportOptions] = useState<ExportOptions>({
+    format: "excel",
+    includeStatistics: false,
+    startDate: "",
+    endDate: "",
+    status: "all",
+    professionalId: "all",
+    includePaymentInfo: false,
+    includeServices: true,
+  });
 
   const handleOpenPaymentDialog = (appointment: Appointment) => {
     setAppointmentToPay(appointment);
@@ -125,38 +166,117 @@ export default function PageClient({
     setPaymentDialogOpen(false);
   };
 
-  // ⭐ Modificar handlePayAppointment para abrir el diálogo de calificación después del pago
   const handlePayAppointment = (
     appointment: Appointment,
     paymentData: { amount: number; method: string }
   ) => {
-    console.log("Payment completed, opening rate dialog"); // Debug log
-    // Aquí conecta tu lógica de pago (API, actualización de estado, etc)
+    console.log("Payment completed, opening rate dialog");
     console.log("Pagando cita:", appointment, paymentData);
 
-    // Cerrar el diálogo de pago
     setPaymentDialogOpen(false);
     setAppointmentToPay(null);
 
-    // Usar setTimeout para asegurar que el estado se actualice correctamente
     setTimeout(() => {
       setAppointmentToRate(appointment);
       setRateDialogOpen(true);
     }, 100);
   };
 
-  // ⭐ Agregar handler para la calificación del cliente
   const handleRateClient = (clientId: string, rating: number) => {
-    console.log("Rating saved:", { clientId, rating }); // Debug log
-    // Aquí va tu lógica de rating (API call, actualización de estado, etc.)
+    console.log("Rating saved:", { clientId, rating });
     setRateDialogOpen(false);
     setAppointmentToRate(null);
   };
 
-  // ⭐ Agregar handler para cerrar el diálogo de calificación
   const handleCloseRateDialog = () => {
     setRateDialogOpen(false);
     setAppointmentToRate(null);
+  };
+
+  // Export functionality
+  const handleOpenExportDialog = () => {
+    // Set default values based on current filters
+    setExportOptions({
+      ...exportOptions,
+      status: statusFilter === "all" ? "" : statusFilter,
+      professionalId:
+        selectedProfessionalId === "all" ? "" : selectedProfessionalId,
+    });
+    setExportDialogOpen(true);
+  };
+
+  const handleExportAppointments = async () => {
+    setIsExporting(true);
+
+    try {
+      const options = {
+        format: exportOptions.format,
+        includeStatistics: exportOptions.includeStatistics,
+        startDate: exportOptions.startDate || undefined,
+        endDate: exportOptions.endDate || undefined,
+        status:
+          exportOptions.status === "all" ? undefined : exportOptions.status,
+        professionalId:
+          exportOptions.professionalId === "all"
+            ? undefined
+            : exportOptions.professionalId,
+        includePaymentInfo: exportOptions.includePaymentInfo,
+        includeServices: exportOptions.includeServices,
+      };
+
+      const result = await exportAppointments(options);
+
+      if ("data" in result && result.data.success) {
+        // Create blob and download file
+        const byteCharacters = atob(result.data.fileData!);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: result.data.mimeType });
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download =
+          result.data.filename ||
+          `citas-export-${new Date().toISOString().split("T")[0]}.${exportOptions.format === "pdf" ? "pdf" : "xlsx"}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast({
+          title: "Exportación exitosa",
+          description: "El archivo se ha descargado correctamente.",
+        });
+
+        setExportDialogOpen(false);
+      } else {
+        throw new Error("Error al exportar");
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Error al exportar",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const updateExportOption = <K extends keyof ExportOptions>(
+    key: K,
+    value: ExportOptions[K]
+  ) => {
+    setExportOptions((prev) => ({ ...prev, [key]: value }));
   };
 
   const isProfessional = currentUser?.role?.name === "profesional";
@@ -189,7 +309,6 @@ export default function PageClient({
     }
   };
 
-  // FILTROS LOCALES (estado, fecha, profesional) sobre appointments que ya viene filtrado por texto y paginación
   const clientFilteredAppointments = appointments.filter((appointment) => {
     const matchesStatus =
       statusFilter === "all" || appointment.status === statusFilter;
@@ -225,7 +344,6 @@ export default function PageClient({
     setSelectedAppointment(appointment);
   const handleCreateAppointment = () => redirect("/appointments/new");
   const handleCloseDialog = () => setSelectedAppointment(null);
-  const handleExportAppointments = () => console.log("Export appointments");
 
   const getStatusBadge = (status: string) => (
     <Badge className={getStatusColor(status)}>
@@ -235,17 +353,20 @@ export default function PageClient({
       </div>
     </Badge>
   );
+
   const getTotalDuration = (services: any[]) =>
     services?.reduce(
       (acc: number, service: any) =>
         acc + (Number(service.durationMinutes) || 0),
       0
     ) || 0;
+
   const getTotalPrice = (services: any[]) =>
     services?.reduce(
       (acc: number, service: any) => acc + (Number(service.price) || 0),
       0
     ) || 0;
+
   const formatTime = (timeString: string) => {
     if (!timeString) return "00:00";
     const timeParts = timeString.split(":");
@@ -274,6 +395,7 @@ export default function PageClient({
     params.set("page", String(pagination.currentPage - 1));
     router.push(`${url.pathname}?${params.toString()}`);
   };
+
   const handleNextPage = () => {
     if (!pagination.hasNextPage) return;
     const url = new URL(window.location.href);
@@ -282,13 +404,15 @@ export default function PageClient({
     router.push(`${url.pathname}?${params.toString()}`);
   };
 
-  // Prevent opening details dialog when clicking a DropdownMenuItem
   const menuActionHandler =
     (action: (appointment: Appointment) => void) =>
     (e: React.MouseEvent, appointment: Appointment) => {
       e.stopPropagation();
       action(appointment);
     };
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -331,10 +455,283 @@ export default function PageClient({
                 </CardDescription>
               </div>
               <div className="flex space-x-2">
-                <Button variant="outline" onClick={handleExportAppointments}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
+                <Dialog
+                  open={isExportDialogOpen}
+                  onOpenChange={setExportDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="outline" onClick={handleOpenExportDialog}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Exportar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Exportar Citas</DialogTitle>
+                      <DialogDescription>
+                        Configura las opciones de exportación para generar tu
+                        reporte de citas.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      {/* Format Selection */}
+                      <div className="space-y-2">
+                        <Label>Formato de exportación</Label>
+                        <Select
+                          value={exportOptions.format}
+                          onValueChange={(value: "pdf" | "excel") =>
+                            updateExportOption("format", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="excel">
+                              <div className="flex items-center gap-2">
+                                <FileSpreadsheet className="h-4 w-4" />
+                                Excel (.xlsx)
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="pdf">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                PDF (.pdf)
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Separator />
+
+                      {/* Date Range */}
+                      <div className="space-y-3">
+                        <Label>Rango de fechas (opcional)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label
+                              htmlFor="startDate"
+                              className="text-xs text-muted-foreground"
+                            >
+                              Fecha inicio
+                            </Label>
+                            <Input
+                              id="startDate"
+                              type="date"
+                              value={exportOptions.startDate}
+                              onChange={(e) =>
+                                updateExportOption("startDate", e.target.value)
+                              }
+                              max={today}
+                            />
+                          </div>
+                          <div>
+                            <Label
+                              htmlFor="endDate"
+                              className="text-xs text-muted-foreground"
+                            >
+                              Fecha fin
+                            </Label>
+                            <Input
+                              id="endDate"
+                              type="date"
+                              value={exportOptions.endDate}
+                              onChange={(e) =>
+                                updateExportOption("endDate", e.target.value)
+                              }
+                              min={exportOptions.startDate || undefined}
+                              max={today}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Filters */}
+                      <div className="space-y-3">
+                        <Label>Filtros</Label>
+
+                        {/* Status Filter */}
+                        <div>
+                          <Label
+                            htmlFor="statusFilter"
+                            className="text-xs text-muted-foreground"
+                          >
+                            Estado de las citas
+                          </Label>
+                          <Select
+                            value={exportOptions.status}
+                            onValueChange={(value) =>
+                              updateExportOption("status", value)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Todos los estados" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">
+                                Todos los estados
+                              </SelectItem>
+                              <SelectItem value="confirmed">
+                                Confirmada
+                              </SelectItem>
+                              <SelectItem value="scheduled">
+                                Agendada
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                Completada
+                              </SelectItem>
+                              <SelectItem value="in_progress">
+                                En progreso
+                              </SelectItem>
+                              <SelectItem value="cancelled">
+                                Cancelada
+                              </SelectItem>
+                              <SelectItem value="no_show">
+                                No asistió
+                              </SelectItem>
+                              <SelectItem value="expired">Expirada</SelectItem>
+                              <SelectItem value="rescheduled">
+                                Reagendada
+                              </SelectItem>
+                              <SelectItem value="waitlist">
+                                Lista de espera
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Professional Filter */}
+                        {!isProfessional && professionals && (
+                          <div>
+                            <Label
+                              htmlFor="professionalFilter"
+                              className="text-xs text-muted-foreground"
+                            >
+                              Profesional
+                            </Label>
+                            <Select
+                              value={exportOptions.professionalId}
+                              onValueChange={(value) =>
+                                updateExportOption("professionalId", value)
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Todos los profesionales" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">
+                                  Todos los profesionales
+                                </SelectItem>
+                                {professionals.map((professional) => (
+                                  <SelectItem
+                                    key={professional.id}
+                                    value={professional.id}
+                                  >
+                                    {professional.fullName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      {/* Include Options */}
+                      <div className="space-y-3">
+                        <Label>Incluir en la exportación</Label>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="includeServices"
+                              checked={exportOptions.includeServices}
+                              onCheckedChange={(checked) =>
+                                updateExportOption(
+                                  "includeServices",
+                                  checked as boolean
+                                )
+                              }
+                            />
+                            <Label
+                              htmlFor="includeServices"
+                              className="text-sm"
+                            >
+                              Detalles de servicios
+                            </Label>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="includePaymentInfo"
+                              checked={exportOptions.includePaymentInfo}
+                              onCheckedChange={(checked) =>
+                                updateExportOption(
+                                  "includePaymentInfo",
+                                  checked as boolean
+                                )
+                              }
+                            />
+                            <Label
+                              htmlFor="includePaymentInfo"
+                              className="text-sm"
+                            >
+                              Información de pagos
+                            </Label>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="includeStatistics"
+                              checked={exportOptions.includeStatistics}
+                              onCheckedChange={(checked) =>
+                                updateExportOption(
+                                  "includeStatistics",
+                                  checked as boolean
+                                )
+                              }
+                            />
+                            <Label
+                              htmlFor="includeStatistics"
+                              className="text-sm"
+                            >
+                              Estadísticas resumidas
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setExportDialogOpen(false)}
+                        disabled={isExporting}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleExportAppointments}
+                        disabled={isExporting}
+                        className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                      >
+                        {isExporting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Exportando...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            Exportar
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <Button
                   className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
                   onClick={handleCreateAppointment}
@@ -900,7 +1297,6 @@ export default function PageClient({
         onPay={handlePayAppointment}
       />
 
-      {/* ⭐ Agregar el RateClientDialog */}
       {appointmentToRate && (
         <RateClientDialog
           client={appointmentToRate.client}
