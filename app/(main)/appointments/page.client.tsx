@@ -541,7 +541,6 @@ export default function PageClient({
                                 updateExportOption("endDate", e.target.value)
                               }
                               min={exportOptions.startDate || undefined}
-                              max={today}
                             />
                           </div>
                         </div>
