@@ -32,6 +32,7 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { create } from "@/actions/clients/create";
 import deleteClient from "@/actions/clients/delete";
 import edit from "@/actions/clients/edit";
+import { exportClients } from "@/actions/clients/export";
 import {
   Users,
   UserCheck,
@@ -49,6 +50,10 @@ import {
   Grid3X3,
   List,
   History,
+  FileText,
+  FileSpreadsheet,
+  Download,
+  Loader2,
 } from "lucide-react";
 import type {
   Client,
@@ -60,6 +65,64 @@ import type {
 import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 import { useDebounceSearch } from "@/hooks/useDebounce";
+
+// Tipos para export
+type ExportErrorResponse = {
+  message: string;
+  code?: string;
+  status: number;
+};
+
+type ExportSuccessResponse = {
+  data: {
+    success: boolean;
+    message?: string;
+    timestamp?: string;
+    totalFiles?: number;
+    files?: {
+      pdf?: {
+        filename: string;
+        data: string;
+        mimeType: string;
+      };
+      excel?: {
+        filename: string;
+        data: string;
+        mimeType: string;
+      };
+    };
+  };
+  status: number;
+};
+
+// Función helper para descargar archivos base64
+function downloadBase64File(
+  base64Data: string,
+  filename: string,
+  mimeType: string
+) {
+  try {
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error("Error downloading file:", error);
+    throw new Error("Error al descargar el archivo");
+  }
+}
 
 interface ClientsPageClientProps {
   clients?: Client[];
@@ -89,6 +152,7 @@ export default function ClientsPageClient({
   const searchParams = useSearchParams();
 
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
+  const [exportLoading, setExportLoading] = useState<string | null>(null);
 
   const { searchTerm, setSearchTerm } = useDebounceSearch(
     initialSearchParams?.search || "",
@@ -97,11 +161,11 @@ export default function ClientsPageClient({
       minLength: 2,
       skipInitialSearch: true,
       onSearch: (value) => {
-        // Only call updateFilters when user actually searches
         updateFilters({ search: value, page: 1 });
       },
     }
   );
+
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -127,12 +191,139 @@ export default function ClientsPageClient({
   const currentPage = initialSearchParams?.page || 1;
   const itemsPerPage = initialSearchParams?.limit || 10;
 
-  // Auto-cerrar diálogo de éxito después de 1000ms
+  // FUNCIONES DE EXPORT
+  const handleExportPDF = async () => {
+    setExportLoading("pdf");
+    try {
+      const result = await exportClients({
+        format: "pdf",
+        includeStatistics: true,
+      });
+
+      // Verificar si es una respuesta exitosa
+      if ("data" in result && result.status === 200) {
+        const pdfFile = result.data.files?.pdf;
+        if (pdfFile) {
+          downloadBase64File(pdfFile.data, pdfFile.filename, pdfFile.mimeType);
+          showSuccessDialog(
+            "¡PDF generado exitosamente!",
+            `El archivo ${pdfFile.filename} ha sido descargado.`
+          );
+        } else {
+          throw new Error("No se pudo generar el archivo PDF");
+        }
+      } else {
+        // Es una respuesta de error
+        const errorResult = result as ExportErrorResponse;
+        throw new Error(errorResult.message || "Error al generar PDF");
+      }
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      showSuccessDialog(
+        "Error al exportar",
+        `Hubo un problema al generar el archivo PDF: ${error instanceof Error ? error.message : "Error desconocido"}`
+      );
+    } finally {
+      setExportLoading(null);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExportLoading("excel");
+    try {
+      const result = await exportClients({
+        format: "excel",
+        includeStatistics: true,
+      });
+
+      // Verificar si es una respuesta exitosa
+      if ("data" in result && result.status === 200) {
+        const excelFile = result.data.files?.excel;
+        if (excelFile) {
+          downloadBase64File(
+            excelFile.data,
+            excelFile.filename,
+            excelFile.mimeType
+          );
+          showSuccessDialog(
+            "¡Excel generado exitosamente!",
+            `El archivo ${excelFile.filename} ha sido descargado.`
+          );
+        } else {
+          throw new Error("No se pudo generar el archivo Excel");
+        }
+      } else {
+        // Es una respuesta de error
+        const errorResult = result as ExportErrorResponse;
+        throw new Error(errorResult.message || "Error al generar Excel");
+      }
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      showSuccessDialog(
+        "Error al exportar",
+        `Hubo un problema al generar el archivo Excel: ${error instanceof Error ? error.message : "Error desconocido"}`
+      );
+    } finally {
+      setExportLoading(null);
+    }
+  };
+
+  const handleExportBoth = async () => {
+    setExportLoading("both");
+    try {
+      const result = await exportClients({
+        format: "both",
+        includeStatistics: true,
+      });
+
+      // Verificar si es una respuesta exitosa
+      if ("data" in result && result.status === 200) {
+        const files = result.data.files;
+        if (files?.pdf && files?.excel) {
+          // Descargar PDF
+          downloadBase64File(
+            files.pdf.data,
+            files.pdf.filename,
+            files.pdf.mimeType
+          );
+          // Descargar Excel con delay
+          setTimeout(() => {
+            downloadBase64File(
+              files.excel!.data,
+              files.excel!.filename,
+              files.excel!.mimeType
+            );
+          }, 500);
+
+          showSuccessDialog(
+            "¡Archivos generados exitosamente!",
+            "Se han descargado los archivos PDF y Excel."
+          );
+        } else {
+          throw new Error("No se pudieron generar los archivos");
+        }
+      } else {
+        // Es una respuesta de error
+        const errorResult = result as ExportErrorResponse;
+        throw new Error(errorResult.message || "Error al generar archivos");
+      }
+    } catch (error) {
+      console.error("Error exporting both:", error);
+      showSuccessDialog(
+        "Error al exportar",
+        `Hubo un problema al generar los archivos: ${error instanceof Error ? error.message : "Error desconocido"}`
+      );
+    } finally {
+      setExportLoading(null);
+    }
+  };
+
+  // Auto-cerrar diálogo de éxito después de 3000ms
   useEffect(() => {
     if (confirmationDialogs.success.open) {
       const timer = setTimeout(() => {
         closeDialog("success");
-      }, 1000);
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
@@ -310,12 +501,6 @@ export default function ClientsPageClient({
       />
     ));
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
-
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("es-ES", {
       year: "numeric",
@@ -425,7 +610,7 @@ export default function ClientsPageClient({
         {/* Dialog de notificación de éxito (auto-cierre) */}
         <ConfirmationDialog
           open={confirmationDialogs.success.open}
-          onOpenChange={() => {}} // No permitir cierre manual
+          onOpenChange={() => {}}
           variant="success"
           type="notification"
           title={confirmationDialogs.success.title}
@@ -543,12 +728,62 @@ export default function ClientsPageClient({
         </Card>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros y Export */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Filtro</CardTitle>
+          <CardTitle className="text-base">Filtros y Exportación</CardTitle>
         </CardHeader>
+
         <CardContent>
+          {/* Botones de Export */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button
+              onClick={handleExportPDF}
+              disabled={exportLoading !== null}
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              {exportLoading === "pdf" ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4 mr-2" />
+              )}
+              {exportLoading === "pdf" ? "Generando PDF..." : "Exportar PDF"}
+            </Button>
+
+            <Button
+              onClick={handleExportExcel}
+              disabled={exportLoading !== null}
+              variant="outline"
+              className="text-green-600 border-green-200 hover:bg-green-50"
+            >
+              {exportLoading === "excel" ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+              )}
+              {exportLoading === "excel"
+                ? "Generando Excel..."
+                : "Exportar Excel"}
+            </Button>
+
+            <Button
+              onClick={handleExportBoth}
+              disabled={exportLoading !== null}
+              className="btn-gradient-primary text-white"
+            >
+              {exportLoading === "both" ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {exportLoading === "both"
+                ? "Generando ambos..."
+                : "Exportar Ambos"}
+            </Button>
+          </div>
+
+          {/* Campo de búsqueda */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -946,10 +1181,10 @@ export default function ClientsPageClient({
         onConfirm={confirmDeleteClient}
       />
 
-      {/* Dialog de notificación de éxito (auto-cierre en 1000ms) */}
+      {/* Dialog de notificación de éxito (auto-cierre en 3000ms) */}
       <ConfirmationDialog
         open={confirmationDialogs.success.open}
-        onOpenChange={() => {}} // No permitir cierre manual
+        onOpenChange={() => {}}
         variant="success"
         type="notification"
         title={confirmationDialogs.success.title}
