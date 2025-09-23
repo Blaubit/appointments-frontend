@@ -9,15 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Calendar,
   Clock,
   MapPin,
   User,
-  Phone,
-  Mail,
   CheckCircle,
   XCircle,
   UserX,
@@ -214,7 +210,7 @@ export default function ClientHistoryPageClient({
                     Total Citas
                   </p>
                   <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.total}
+                    {stats.totalCount}
                   </p>
                 </div>
                 <div className="h-8 w-8 sm:h-12 sm:w-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -250,7 +246,7 @@ export default function ClientHistoryPageClient({
                     Total Gastado
                   </p>
                   <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    €{stats.resecheduled}
+                    Q{stats.totalAmountSpent}
                   </p>
                 </div>
                 <div className="h-8 w-8 sm:h-12 sm:w-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">

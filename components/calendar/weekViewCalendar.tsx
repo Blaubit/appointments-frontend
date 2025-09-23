@@ -9,7 +9,7 @@ interface WeekViewCalendarProps {
   weekDate: Date;
   onHourClick?: (date: Date) => void;
   onSlotClick?: (slot: SlotWithDate) => void;
-  onDayColumnClick?: (date: Date) => void; // Callback para cambio de vista
+  onDayColumnClick?: (date: Date) => void;
 }
 
 const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -104,9 +104,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
   // Calcular el rango de horas dinámicamente basado en los horarios de trabajo de la semana
   function getWeekHourRange() {
-    let earliestStart = 24; // Empezar con el valor máximo
-    let latestEnd = 0; // Empezar con el valor mínimo
-
+    let earliestStart = 24;
+    let latestEnd = 0;
     let hasAnyWorkingHours = false;
 
     days.forEach((date) => {
@@ -128,7 +127,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
       }
     });
 
-    // Si no hay horarios de trabajo, usar valores por defecto
     if (!hasAnyWorkingHours) {
       earliestStart = 8;
       latestEnd = 19;
@@ -139,8 +137,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
   const { start: visualStartHour, end: visualEndHour } = getWeekHourRange();
   const hourLines = generateHourLines(visualStartHour, visualEndHour, 30);
-
-  // Calcular altura exacta del contenedor
   const containerHeight = Math.max((hourLines.length - 1) * 40, 600);
 
   function getSlotsForDate(date: Date): SlotWithDate[] {
@@ -166,13 +162,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
   }
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-hidden -mx-4 sm:mx-0">
       {/* Header con días de la semana */}
-      <div className="flex mb-4">
-        {/* Espacio para las horas */}
-        <div style={{ width: 56 }} className="py-2"></div>
+      <div className="flex mb-4 px-4 sm:px-0">
+        {/* Espacio para las horas - Reducido en móvil */}
+        <div className="w-10 sm:w-14 py-2"></div>
         {/* Días de la semana */}
-        <div className="flex-1 grid grid-cols-7 gap-2">
+        <div className="flex-1 grid grid-cols-7 gap-0.5 sm:gap-2">
           {days.map((date, index) => {
             const isToday = date.toDateString() === new Date().toDateString();
             const isWorking = isWorkingDay(date);
@@ -187,12 +183,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                       : "text-gray-400 dark:text-gray-500"
                 }`}
               >
-                <div className="text-base font-semibold">
+                <div className="text-xs sm:text-base font-semibold">
                   {dayNames[date.getDay()]}
                 </div>
-                <div className="text-xl">{date.getDate()}</div>
+                <div className="text-sm sm:text-xl">{date.getDate()}</div>
+                {/* Solo mostrar "Cerrado" en desktop */}
                 {!isWorking && (
-                  <div className="text-xs text-red-500 dark:text-red-400 mt-1">
+                  <div className="text-xs text-red-500 dark:text-red-400 mt-1 hidden sm:block">
                     Cerrado
                   </div>
                 )}
@@ -203,7 +200,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
       </div>
 
       <div
-        className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm flex"
+        className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm flex mx-4 sm:mx-0"
         style={{ height: `${containerHeight}px` }}
       >
         {/* Líneas de hora */}
@@ -221,25 +218,22 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                 alignItems: "center",
               }}
             >
-              <span
-                className="pl-2 pr-2 text-base text-gray-400 dark:text-gray-500"
-                style={{ width: 56 }}
-              >
+              <span className="pl-1 sm:pl-2 pr-1 sm:pr-2 text-xs sm:text-base text-gray-400 dark:text-gray-500 w-10 sm:w-14">
                 {hour}
               </span>
               <div
                 className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700"
-                style={{ marginLeft: 4 }}
+                style={{ marginLeft: 2 }}
               />
             </div>
           ))}
         </div>
 
         {/* Columna de horas (fija) */}
-        <div style={{ width: 56 }} className="flex-shrink-0"></div>
+        <div className="w-10 sm:w-14 flex-shrink-0"></div>
 
         {/* Contenedor de días */}
-        <div className="flex-1 grid grid-cols-7 gap-2 relative z-10">
+        <div className="flex-1 grid grid-cols-7 gap-0.5 sm:gap-2 relative z-10">
           {days.map((date, dayIdx) => {
             const isWorking = isWorkingDay(date);
             const slots = getSlotsForDate(date);
@@ -263,29 +257,31 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                   }
                 }}
               >
-                {/* Overlay para días no laborables - bloquea interacciones */}
+                {/* Overlay para días no laborables */}
                 {!isWorking && (
                   <div className="absolute inset-0 bg-gray-100/80 dark:bg-gray-800/80 flex items-center justify-center z-50">
-                    <div className="text-center p-4">
+                    <div className="text-center p-2 sm:p-4">
                       <div className="flex justify-center">
-                        <CircleAlert className="bg-red-500 text-white rounded-full p-1 my-5" />
+                        <CircleAlert className="bg-red-500 text-white rounded-full p-1 my-2 sm:my-5 w-6 h-6 sm:w-8 sm:h-8" />
                       </div>
-
-                      <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Día no laboral
-                      </div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        Clínica cerrada
+                      {/* Solo mostrar texto en desktop */}
+                      <div className="hidden sm:block">
+                        <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Día no laboral
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          Clínica cerrada
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Horarios de trabajo para días laborables */}
+                {/* Horarios de trabajo - Solo en desktop */}
                 {isWorking &&
                   daySchedule?.workingHours?.start &&
                   daySchedule?.workingHours?.end && (
-                    <div className="absolute top-2 left-1 right-1 z-20 pointer-events-none">
+                    <div className="absolute top-2 left-0.5 right-0.5 sm:left-1 sm:right-1 z-20 pointer-events-none hidden sm:block">
                       <div className="text-xs text-center bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 shadow-sm">
                         {daySchedule.workingHours.start.slice(0, 5)} -{" "}
                         {daySchedule.workingHours.end.slice(0, 5)}
@@ -293,7 +289,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                     </div>
                   )}
 
-                {/* Slots ocupados solo para días laborables */}
+                {/* Slots ocupados */}
                 {isWorking &&
                   slots.map((slot) => {
                     const top = timeToPosition(
@@ -321,13 +317,14 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                         key={slot.appointmentId}
                         style={{
                           position: "absolute",
-                          left: `calc(${colIdx * colWidth}% + 4px)`,
-                          top: `${top + 30}px`, // Offset para el horario laboral
-                          width: `calc(${colWidth}% - 8px)`,
+                          left: `calc(${colIdx * colWidth}% + 2px)`,
+                          top: `${top + (window.innerWidth >= 640 ? 30 : 10)}px`,
+                          width: `calc(${colWidth}% - 4px)`,
                           height: `${slotHeight}px`,
                           zIndex: 30,
                           overflow: "visible",
-                          fontSize: "1.1rem",
+                          fontSize:
+                            window.innerWidth >= 640 ? "1.1rem" : "0.75rem",
                         }}
                         className={`
                         shadow-lg
@@ -335,7 +332,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                         bg-blue-600 dark:bg-blue-700
                         border-l-4 border-blue-500 dark:border-blue-400
                         rounded-xl
-                        px-2 py-2
+                        px-1 sm:px-2 py-1 sm:py-2
                         mb-1
                         cursor-pointer
                         flex flex-col justify-center items-center
@@ -349,36 +346,46 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                         }
                         onMouseLeave={() => setHoveredSlotId(null)}
                         onClick={(e) => {
-                          e.stopPropagation(); // Evita que el click en el slot cambie de vista
+                          e.stopPropagation();
                           if (onSlotClick) onSlotClick(slot);
                         }}
                         tabIndex={0}
                       >
-                        <div className="font-bold text-lg truncate text-center w-full">
-                          {slot.clientName}
+                        {/* En móvil solo mostrar hora, en desktop mostrar nombre completo */}
+                        <div className="font-bold text-xs sm:text-lg truncate text-center w-full">
+                          <span className="sm:hidden">
+                            {slot.startTime.slice(0, 5)}
+                          </span>
+                          <span className="hidden sm:inline">
+                            {slot.clientName}
+                          </span>
                         </div>
-                        {hoveredSlotId === slot.appointmentId && (
-                          <div
-                            className="
+
+                        {/* Tooltip solo en desktop */}
+                        {hoveredSlotId === slot.appointmentId &&
+                          window.innerWidth >= 640 && (
+                            <div
+                              className="
                             absolute left-1/2 bottom-full z-[100] w-[240px] -translate-x-1/2 mb-3 px-4 py-3 rounded-lg shadow-xl
                             bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200
                             border border-gray-700 dark:border-gray-600 text-base
                             pointer-events-none
                             animate-fadeIn
+                            hidden sm:block
                           "
-                          >
-                            <div className="mb-1">
-                              <b>Paciente:</b> {slot.clientName}
+                            >
+                              <div className="mb-1">
+                                <b>Paciente:</b> {slot.clientName}
+                              </div>
+                              <div className="mb-1">
+                                <b>Servicio:</b> {slot.serviceName}
+                              </div>
+                              <div className="mb-1">
+                                <b>Horario:</b> {slot.startTime.slice(0, 5)} -{" "}
+                                {slot.endTime.slice(0, 5)}
+                              </div>
                             </div>
-                            <div className="mb-1">
-                              <b>Servicio:</b> {slot.serviceName}
-                            </div>
-                            <div className="mb-1">
-                              <b>Horario:</b> {slot.startTime.slice(0, 5)} -{" "}
-                              {slot.endTime.slice(0, 5)}
-                            </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     );
                   })}

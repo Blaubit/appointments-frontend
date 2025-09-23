@@ -55,7 +55,7 @@ export default function PageClient({
   });
 
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
-    null,
+    null
   );
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -69,7 +69,7 @@ export default function PageClient({
   const [initialTimeFromUrl, setInitialTimeFromUrl] = useState(horaFromUrl);
   // Servicios del profesional
   const [professionalServices, setProfessionalServices] = useState<Service[]>(
-    [],
+    []
   );
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
@@ -89,59 +89,73 @@ export default function PageClient({
     status: "pending" as const,
   });
 
-  // Obtener servicios del profesional
-  const fetchProfessionalServices = async (professionalId: string) => {
-    if (!professionalId) {
-      setProfessionalServices([]);
-      return;
-    }
-    setIsLoadingServices(true);
-    setServicesError(null);
-    try {
-      const result = await findProfessionalServices(professionalId);
-      if (
-        "data" in result &&
-        result.data &&
-        Array.isArray(result.data.services)
-      ) {
-        setProfessionalServices(result.data.services);
-      } else {
+  // Obtener servicios del profesional - Mejorada con mejor manejo de errores
+  const fetchProfessionalServices = useCallback(
+    async (professionalId: string) => {
+      if (!professionalId) {
+        setProfessionalServices([]);
+        return;
+      }
+
+      setIsLoadingServices(true);
+      setServicesError(null);
+
+      try {
+        const result = await findProfessionalServices(professionalId);
+        if (
+          result &&
+          "data" in result &&
+          result.data &&
+          Array.isArray(result.data.services)
+        ) {
+          setProfessionalServices(result.data.services);
+        } else {
+          console.error("Invalid services data structure:", result);
+          setProfessionalServices([]);
+          setServicesError(
+            "No se pudieron cargar los servicios del profesional"
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching professional services:", error);
         setProfessionalServices([]);
         setServicesError("Error al cargar los servicios del profesional");
+      } finally {
+        setIsLoadingServices(false);
       }
-    } catch (error) {
-      setProfessionalServices([]);
-      setServicesError("Error al cargar los servicios del profesional");
-    } finally {
-      setIsLoadingServices(false);
-    }
-  };
+    },
+    []
+  );
 
   // Procesamiento de parámetros de URL y auto-selección profesional y fecha/hora
   useEffect(() => {
     if (!professionals || urlParamsProcessed) return;
+
     let professionalToSelect: User | null = null;
+
     if (professionalIdFromUrl) {
       professionalToSelect =
         professionals.find(
           (p) =>
             p.id === professionalIdFromUrl ||
-            p.id.toString() === professionalIdFromUrl,
+            p.id.toString() === professionalIdFromUrl
         ) || null;
     } else if (userSession && userSession.role?.name === "profesional") {
       professionalToSelect =
         professionals.find(
           (p) =>
             p.id === userSession.id ||
-            p.id.toString() === userSession.id.toString(),
+            p.id.toString() === userSession.id.toString()
         ) || userSession;
     }
+
     if (professionalToSelect) {
       setSelectedProfessional(professionalToSelect);
       setFormData((prev) => ({
         ...prev,
         professionalId: professionalToSelect!.id.toString(),
       }));
+
       if (fechaHoraFromUrl) {
         const [fecha, hora] = fechaHoraFromUrl.split("T");
         if (fecha) {
@@ -169,21 +183,29 @@ export default function PageClient({
     urlParamsProcessed,
   ]);
 
-  // Cargar servicios cuando cambia el profesional
+  // Cargar servicios cuando cambia el profesional - Corregido para usar Promise correctamente
   useEffect(() => {
     if (selectedProfessional) {
-      fetchProfessionalServices(selectedProfessional.id.toString());
+      console.log(
+        "Professional selected, fetching services for:",
+        selectedProfessional.id
+      );
+      fetchProfessionalServices(selectedProfessional.id.toString()).catch(
+        (error) => {
+          console.error("Failed to fetch professional services:", error);
+          setServicesError("Error al cargar los servicios del profesional");
+        }
+      );
       setSelectedServices([]);
     } else {
       setProfessionalServices([]);
       setSelectedServices([]);
     }
-  }, [selectedProfessional]);
+  }, [selectedProfessional, fetchProfessionalServices]);
 
   // Para mostrar nombres de los servicios seleccionados
   const selectedServicesData = selectedServices.map(
-    (id) =>
-      professionalServices.find((s) => s.id.toString() === id)?.name || "",
+    (id) => professionalServices.find((s) => s.id.toString() === id)?.name || ""
   );
 
   // Para mostrar totales
@@ -213,7 +235,7 @@ export default function PageClient({
     professionals?.filter((professional) =>
       professional.fullName
         .toLowerCase()
-        .includes(professionalSearch.toLowerCase()),
+        .includes(professionalSearch.toLowerCase())
     ) || [];
 
   useEffect(() => {
@@ -254,7 +276,7 @@ export default function PageClient({
     setSelectedServices((prev) =>
       prev.includes(serviceId)
         ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId],
+        : [...prev, serviceId]
     );
   };
 
@@ -324,6 +346,7 @@ export default function PageClient({
         startTime: selectedTime,
         status: "confirmed",
         notes: formData.notes || " ",
+        amount: totalPrice,
       };
 
       const result = await create(appointmentData);

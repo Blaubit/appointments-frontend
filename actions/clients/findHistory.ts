@@ -21,13 +21,12 @@ export async function findHistory(
         Authorization: `Bearer ${session}`,
       },
     });
-    console.log("Response data:", response.data.stats);
     return {
       data: response.data.data,
       status: 200,
       statusText: response.statusText,
       meta: response.data.meta,
-      stats: response.data.stats,
+      stats: response.data.stats.client,
     };
   } catch (error) {
     console.log(error);
