@@ -77,6 +77,7 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
     const dateStr = dateToStr(date);
     return schedule.schedule.find((d) => d.date === dateStr);
   }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -84,17 +85,17 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h2>
       </div>
-      <div className="grid grid-cols-7 gap-2 mb-4">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
         {dayNames.map((day) => (
           <div
             key={day}
-            className="text-center text-sm font-medium text-gray-500 py-2"
+            className="text-center text-xs sm:text-sm font-medium text-gray-500 py-2"
           >
             {day}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {days.map((date, index) => {
           const isCurrentMonth = date.getMonth() === currentDate.getMonth();
           const isToday = date.toDateString() === new Date().toDateString();
@@ -105,7 +106,7 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
           return (
             <div
               key={index}
-              className={`min-h-[120px] p-2 border rounded-lg transition-colors relative ${
+              className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border rounded-lg transition-colors relative ${
                 isCurrentMonth
                   ? isWorking
                     ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
@@ -134,7 +135,7 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
 
               <div className="relative z-10">
                 <div
-                  className={`text-sm font-medium mb-2 flex items-center justify-between ${
+                  className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 flex items-center justify-between ${
                     isToday
                       ? "text-blue-600"
                       : !isWorking && isCurrentMonth
@@ -144,14 +145,14 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
                 >
                   <span>{date.getDate()}</span>
                   {isCurrentMonth && !isWorking && (
-                    <CircleAlert className="w-4 h-4 text-red-500 dark:text-red-400" />
+                    <CircleAlert className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 dark:text-red-400" />
                   )}
                 </div>
 
                 {/* Mostrar contenido según el tipo de día */}
                 {isCurrentMonth && !isWorking ? (
-                  // Día no laboral
-                  <div className="space-y-1">
+                  // Día no laboral - Solo mostrar en desktop
+                  <div className="space-y-1 hidden sm:block">
                     <div className="text-xs text-red-600 dark:text-red-400 font-medium text-center">
                       Cerrado
                     </div>
@@ -162,33 +163,41 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
                 ) : (
                   // Día laboral o fuera del mes actual
                   <div className="space-y-1">
-                    {/* Horarios de trabajo para días laborables del mes actual */}
+                    {/* Horarios de trabajo - Solo mostrar en desktop */}
                     {isCurrentMonth &&
                       isWorking &&
                       daySchedule?.workingHours?.start &&
                       daySchedule?.workingHours?.end && (
-                        <div className="text-xs text-gray-600 dark:text-white font-medium mb-1">
+                        <div className="text-xs text-gray-600 dark:text-white font-medium mb-1 hidden sm:block">
                           {formatTime(daySchedule.workingHours.start)} -{" "}
                           {formatTime(daySchedule.workingHours.end)}
                         </div>
                       )}
 
-                    {/* Citas programadas */}
-                    {slots.slice(0, 3).map((slot) => (
-                      <div
-                        key={slot.appointmentId}
-                        className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 bg-blue-100 text-blue-800 border-l-2 border-blue-500 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-400"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSlotClick && onSlotClick(slot);
-                        }}
-                      >
-                        {formatTime(slot.startTime)} - {slot.clientName}
-                      </div>
-                    ))}
-                    {slots.length > 3 && (
+                    {/* Citas programadas - Optimizado para móvil */}
+                    {slots
+                      .slice(0, window.innerWidth < 640 ? 2 : 3)
+                      .map((slot) => (
+                        <div
+                          key={slot.appointmentId}
+                          className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 bg-blue-100 text-blue-800 border-l-2 border-blue-500 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-400"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSlotClick && onSlotClick(slot);
+                          }}
+                        >
+                          {/* En móvil solo mostrar hora, en desktop mostrar hora y cliente */}
+                          <span className="sm:hidden">
+                            {formatTime(slot.startTime)}
+                          </span>
+                          <span className="hidden sm:inline">
+                            {formatTime(slot.startTime)} - {slot.clientName}
+                          </span>
+                        </div>
+                      ))}
+                    {slots.length > (window.innerWidth < 640 ? 2 : 3) && (
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        +{slots.length - 3} más
+                        +{slots.length - (window.innerWidth < 640 ? 2 : 3)} más
                       </div>
                     )}
                   </div>

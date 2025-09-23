@@ -1,7 +1,6 @@
 "use server";
 import { Header } from "@/components/header";
 import ClientsPageClient from "./page.client";
-import type { Client, ClientStats, Pagination } from "@/types";
 import { findAll } from "@/actions/clients/findAll";
 
 export default async function ClientsPage({

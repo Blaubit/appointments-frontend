@@ -9,7 +9,7 @@ type Company = {
   country: string;
   description: string;
   createdAt: string;
-  phones?: phone[];
+  phones?: string[];
 };
 
 type phone = {

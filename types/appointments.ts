@@ -39,8 +39,9 @@ export interface Pagination {
   hasPrev: boolean;
 }
 export interface ClientAppointmentsStats {
-  total: number;
+  totalCount: number;
   completed: number;
+  totalAmountSpent: number;
   resecheduled: number;
   cancelled: number;
 }

@@ -19,6 +19,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   // Obtener citas próximas y estadísticas
   try {
     const response = await upcomingAppointments();
+
     if ("message" in response) {
       errorMessage = response.message || "Error al cargar citas próximas.";
     } else {

@@ -3,8 +3,9 @@ import {
   IsNotEmpty,
   IsDateString,
   Matches,
-  isArray,
   IsUUID,
+  IsNumber,
+  IsPositive,
 } from "class-validator";
 
 export class appointmentDto {
@@ -36,6 +37,12 @@ export class appointmentDto {
 
   @IsString()
   notes?: string;
+
+  // costo de la cita
+  @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  amount: number;
 }
 
 export class updateAppointmentStatusDto {

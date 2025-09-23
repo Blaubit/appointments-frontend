@@ -18,7 +18,7 @@ type UpcomingAppointmentsResponse = SuccessReponse<Appointment[]> & {
 };
 
 export async function upcomingAppointments(
-  props: Props = {},
+  props: Props = {}
 ): Promise<UpcomingAppointmentsResponse | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();
@@ -32,7 +32,6 @@ export async function upcomingAppointments(
 
     const parsedParams = parsePaginationParams(props.searchParams);
     const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/upcoming-with-stats`;
-
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
@@ -40,12 +39,11 @@ export async function upcomingAppointments(
       params: {
         ...parsedParams,
         query: undefined,
-        q: parsedParams.query,
+        q: parsedParams.q,
       },
     });
-
     return {
-      data: response.data.upcomingAppointments,
+      data: response.data.data,
       status: response.status,
       statusText: response.statusText,
       meta: response.data.meta,

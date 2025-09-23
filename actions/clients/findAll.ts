@@ -41,7 +41,6 @@ export async function findAll(
         Authorization: `Bearer ${session}`,
       },
     });
-    console.log("Stats response:", statsResponse.data);
     // La respuesta ya viene en el formato correcto
     return {
       data: response.data.data,
