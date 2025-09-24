@@ -17,6 +17,7 @@ export default async function create({
   startTime,
   status,
   notes = "",
+  amount,
 }: appointmentDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
@@ -30,6 +31,7 @@ export default async function create({
       startTime,
       status,
       notes,
+      amount,
     };
     const response = await axios.post<Appointment>(url, body, {
       headers: {

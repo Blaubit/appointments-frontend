@@ -65,65 +65,13 @@ import type {
 import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 import { useDebounceSearch } from "@/hooks/useDebounce";
-
+import { downloadBase64File } from "@/utils/functions/downloadUtils";
 // Tipos para export
 type ExportErrorResponse = {
   message: string;
   code?: string;
   status: number;
 };
-
-type ExportSuccessResponse = {
-  data: {
-    success: boolean;
-    message?: string;
-    timestamp?: string;
-    totalFiles?: number;
-    files?: {
-      pdf?: {
-        filename: string;
-        data: string;
-        mimeType: string;
-      };
-      excel?: {
-        filename: string;
-        data: string;
-        mimeType: string;
-      };
-    };
-  };
-  status: number;
-};
-
-// Función helper para descargar archivos base64
-function downloadBase64File(
-  base64Data: string,
-  filename: string,
-  mimeType: string
-) {
-  try {
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: mimeType });
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  } catch (error) {
-    console.error("Error downloading file:", error);
-    throw new Error("Error al descargar el archivo");
-  }
-}
-
 interface ClientsPageClientProps {
   clients?: Client[];
   stats?: ClientStats;

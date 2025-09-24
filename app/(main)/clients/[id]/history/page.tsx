@@ -22,8 +22,9 @@ export default async function ClientHistoryPage({
 
     const client: Client = clientResponse.data;
     let recentHistory: Appointment[] = [];
+    let findHistoryResponse = [];
     try {
-      const findHistoryResponse = await findHistory(paramsdone.id);
+      findHistoryResponse = await findHistory(paramsdone.id);
 
       if (findHistoryResponse.status === 200) {
         recentHistory = findHistoryResponse.data;
@@ -32,20 +33,12 @@ export default async function ClientHistoryPage({
       console.warn("Failed to fetch client history:", error);
       // Continue without history data
     }
-    const stats: ClientAppointmentsStats = {
-      total: recentHistory.length,
-      completed: recentHistory.filter((app) => app.status === "completed")
-        .length,
-      resecheduled: recentHistory.filter((app) => app.status === "rescheduled")
-        .length,
-      cancelled: recentHistory.filter((app) => app.status === "cancelled")
-        .length,
-    };
+
     return (
       <ClientHistoryPageClient
         client={client}
         appointments={recentHistory}
-        stats={stats}
+        stats={findHistoryResponse.stats}
       />
     );
   } catch (error) {

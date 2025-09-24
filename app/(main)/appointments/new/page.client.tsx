@@ -101,10 +101,7 @@ export default function PageClient({
       setServicesError(null);
 
       try {
-        console.log("Fetching services for professional:", professionalId);
         const result = await findProfessionalServices(professionalId);
-        console.log("Services result:", result);
-
         if (
           result &&
           "data" in result &&
@@ -112,7 +109,6 @@ export default function PageClient({
           Array.isArray(result.data.services)
         ) {
           setProfessionalServices(result.data.services);
-          console.log("Services loaded successfully:", result.data.services);
         } else {
           console.error("Invalid services data structure:", result);
           setProfessionalServices([]);
@@ -350,6 +346,7 @@ export default function PageClient({
         startTime: selectedTime,
         status: "confirmed",
         notes: formData.notes || " ",
+        amount: totalPrice,
       };
 
       const result = await create(appointmentData);

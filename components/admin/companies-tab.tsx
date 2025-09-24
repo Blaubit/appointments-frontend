@@ -242,7 +242,7 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
                             {subscription.company.name}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            contactEmail
+                            {subscription.company.phones?.[0] || "N/A"}
                           </p>
                         </div>
                       </div>

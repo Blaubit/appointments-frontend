@@ -3,6 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { MonthViewCalendar } from "@/components/calendar/monthViewCalendar";
 import { WeekViewCalendar } from "@/components/calendar/weekViewCalendar";
 import { DayViewCalendar } from "@/components/calendar/dayViewCalendar";
@@ -16,7 +26,7 @@ interface CalendarPageClientProps {
   userId: string;
   services: Service[];
   professionals: User[];
-  userSession?: User; // Nueva prop para la sesión del usuario
+  userSession?: User;
 }
 
 type ViewMode = "month" | "week" | "day";
@@ -24,10 +34,8 @@ type ViewMode = "month" | "week" | "day";
 // Helpers para formato de fecha
 const formatDateForPeriod = (date: Date, mode: ViewMode): string => {
   if (mode === "month") {
-    // yyyy-mm
     return date.toISOString().slice(0, 7);
   }
-  // yyyy-mm-dd
   return date.toISOString().slice(0, 10);
 };
 
@@ -35,7 +43,7 @@ export default function CalendarPageClient({
   userId,
   services = [],
   professionals = [],
-  userSession, // Nueva prop
+  userSession,
 }: CalendarPageClientProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -44,10 +52,10 @@ export default function CalendarPageClient({
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | undefined
   >(undefined);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
 
   // Estado para el profesional seleccionado
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
-    // Encontrar el profesional por defecto basado en userId
     professionals.find((p) => p.id === userId) || null
   );
 
@@ -58,6 +66,7 @@ export default function CalendarPageClient({
   const isProfessionalLocked =
     selectedProfessional?.role?.name === "profesional" &&
     selectedProfessional.id === userId;
+
   // Fetch schedule cada vez que cambian fecha/mode/profesional
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -93,6 +102,14 @@ export default function CalendarPageClient({
     setCurrentDate(newDate);
   };
   const goToToday = () => setCurrentDate(new Date());
+
+  // Handler para el selector de fecha
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      setCurrentDate(selectedDate);
+      setIsDatePickerOpen(false);
+    }
+  };
 
   // Callbacks for calendar components
   const handleDayClick = (date: Date) => {
@@ -139,7 +156,7 @@ export default function CalendarPageClient({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Professional Selector - Modificado para agregar isLocked */}
+      {/* Professional Selector */}
       {professionals.length > 1 && (
         <ProfessionalSelectorCard
           professionals={professionals}
@@ -155,9 +172,11 @@ export default function CalendarPageClient({
       {/* Calendar Controls */}
       <Card className="mb-8">
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+          <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+            {/* Controls Section - Responsive */}
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Navigation Controls */}
+              <div className="flex items-center space-x-2 justify-center sm:justify-start">
                 <Button
                   variant="outline"
                   size="sm"
@@ -183,9 +202,51 @@ export default function CalendarPageClient({
                 <Button variant="outline" size="sm" onClick={goToToday}>
                   Hoy
                 </Button>
+
+                {/* Date Picker - Solo visible en vista de día */}
+                {viewMode === "day" && (
+                  <Popover
+                    open={isDatePickerOpen}
+                    onOpenChange={setIsDatePickerOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-left font-normal",
+                          !currentDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <span className="hidden sm:inline">
+                          {currentDate
+                            ? format(currentDate, "dd/MM/yyyy", { locale: es })
+                            : "Seleccionar fecha"}
+                        </span>
+                        <span className="sm:hidden">
+                          {currentDate
+                            ? format(currentDate, "dd/MM", { locale: es })
+                            : "Fecha"}
+                        </span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={currentDate}
+                        onSelect={handleDateSelect}
+                        locale={es}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+
+              {/* Date Display - Responsive */}
+              <div className="text-center sm:text-left">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">
                   {viewMode === "month" &&
                     `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
                   {viewMode === "week" &&
@@ -195,13 +256,15 @@ export default function CalendarPageClient({
                 </h2>
                 {/* Mostrar nombre del profesional actual */}
                 {selectedProfessional && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
                     Calendario de {selectedProfessional.fullName}
                   </p>
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+
+            {/* View Mode Buttons */}
+            <div className="flex items-center space-x-2 justify-center lg:justify-end">
               <Button
                 variant={viewMode === "month" ? "default" : "outline"}
                 size="sm"

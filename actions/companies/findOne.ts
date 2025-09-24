@@ -24,7 +24,6 @@ export async function findOne(
         Authorization: `Bearer ${session}`,
       },
     });
-    console.log("Company fetch response:", response.data);
     return {
       data: response.data,
       status: 200,

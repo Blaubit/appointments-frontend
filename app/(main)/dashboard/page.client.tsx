@@ -645,10 +645,11 @@ export default function DashboardClient({
                   </div>
                   {/* descripcion */}
                   <div className="flex items-start space-x-3">
-                    <Building2 className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium">
-                        {clinicInfo?.phones?.[0].phone || "N/A"}
+                      <p className="text-sm font-medium"> Teléfono </p>
+                      <p className="text-xs text-gray-500 break-words">
+                        {clinicInfo?.phones?.[0] || "N/A"}
                       </p>
                     </div>
                   </div>
