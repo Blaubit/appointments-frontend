@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Appointment } from "@/types";
 import { AppointmentActions } from "./appointment-actions";
+import { useState } from "react";
+import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 
 interface AppointmentsTableProps {
   appointments: Appointment[];
@@ -88,6 +90,11 @@ export function AppointmentsTable({
   onCall,
   onEmail,
 }: AppointmentsTableProps) {
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | undefined
+  >();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const formatDate = (date: Date) => {
     try {
       return format(date, "dd/MM/yyyy", { locale: es });
@@ -105,113 +112,149 @@ export function AppointmentsTable({
       .slice(0, 2);
   };
 
+  const handleRowClick = (
+    appointment: Appointment,
+    event: React.MouseEvent
+  ) => {
+    // Evitar abrir el dialog si se hace clic en los botones de acciones
+    if ((event.target as HTMLElement).closest("[data-actions]")) {
+      return;
+    }
+
+    setSelectedAppointmentId(appointment.id);
+    setIsDialogOpen(true);
+  };
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Cliente</TableHead>
-          <TableHead>Profesional</TableHead>
-          <TableHead>Fecha y Hora</TableHead>
-          <TableHead>Servicios</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead>Pago</TableHead>
-          <TableHead className="text-right">Monto</TableHead>
-          <TableHead className="text-right">Acciones</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {appointments.length === 0 ? (
+    <>
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={8} className="text-center py-6">
-              No hay citas programadas
-            </TableCell>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Profesional</TableHead>
+            <TableHead>Fecha y Hora</TableHead>
+            <TableHead>Servicios</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Pago</TableHead>
+            <TableHead className="text-right">Monto</TableHead>
+            <TableHead className="text-center">Acciones</TableHead>
           </TableRow>
-        ) : (
-          appointments.map((appointment) => (
-            <TableRow key={appointment.id}>
-              <TableCell>
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={appointment.client.avatar} />
-                    <AvatarFallback>
-                      {getClientInitials(appointment.client.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">
-                      {appointment.client.fullName}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {appointment.client.phone}
-                    </div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={appointment.professional.avatar} />
-                    <AvatarFallback>
-                      {getClientInitials(appointment.professional.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="font-medium">
-                    {appointment.professional.fullName}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div>
-                  <div className="font-medium">
-                    {String(formatDate(appointment.appointmentDate))}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {appointment.startTime} - {appointment.endTime}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {appointment.services.map((service) => (
-                    <div key={service.id} className="text-sm">
-                      <div className="font-medium">{service.name}</div>
-                      <div className="text-muted-foreground">
-                        {service.durationMinutes} min - €{service.price}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant={getStatusVariant(appointment.status)}>
-                  {getStatusText(appointment.status)}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant={getPaymentStatusVariant(appointment.payment.status)}
-                >
-                  {getPaymentStatusText(appointment.payment.status)}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right font-medium">
-                €{appointment.payment.amount}
-              </TableCell>
-              <TableCell className="text-right">
-                <AppointmentActions
-                  appointment={appointment}
-                  variant="dropdown"
-                  onEdit={onEdit}
-                  onCancel={onCancel}
-                  onDelete={onDelete}
-                  onCall={onCall}
-                  onEmail={onEmail}
-                />
+        </TableHeader>
+        <TableBody>
+          {appointments.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-6">
+                No hay citas programadas
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ) : (
+            appointments.map((appointment) => (
+              <TableRow
+                key={appointment.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={(event) => handleRowClick(appointment, event)}
+              >
+                <TableCell>
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={appointment.client.avatar} />
+                      <AvatarFallback>
+                        {getClientInitials(appointment.client.fullName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">
+                        {appointment.client.fullName}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {appointment.client.phone}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={appointment.professional.avatar} />
+                      <AvatarFallback>
+                        {getClientInitials(appointment.professional.fullName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="font-medium">
+                      {appointment.professional.fullName}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">
+                      {String(formatDate(appointment.appointmentDate))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {appointment.startTime} - {appointment.endTime}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    {appointment.services.map((service) => (
+                      <div key={service.id} className="text-sm">
+                        <div className="font-medium">{service.name}</div>
+                        <div className="text-muted-foreground">
+                          {service.durationMinutes} min - €{service.price}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={getStatusVariant(appointment.status)}>
+                    {getStatusText(appointment.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={getPaymentStatusVariant(
+                      appointment.payment.status
+                    )}
+                  >
+                    {getPaymentStatusText(appointment.payment.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  Q{appointment.payment.amount}
+                </TableCell>
+                <TableCell className="text-center" data-actions>
+                  <AppointmentActions
+                    appointment={appointment}
+                    onEdit={onEdit}
+                    onCancel={onCancel}
+                    onDelete={onDelete}
+                    onCall={onCall}
+                    onEmail={onEmail}
+                    variant="dropdown"
+                    size="sm"
+                  />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      <AppointmentDetailsDialog
+        appointmentId={selectedAppointmentId}
+        isOpen={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedAppointmentId(undefined);
+        }}
+        onEdit={onEdit || (() => {})}
+        onCancel={onCancel || (() => {})}
+        onDelete={onDelete || (() => {})}
+        onCall={onCall || (() => {})}
+        onEmail={onEmail || (() => {})}
+      />
+    </>
   );
 }
