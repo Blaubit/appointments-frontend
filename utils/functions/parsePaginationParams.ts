@@ -1,18 +1,40 @@
 import { z } from "zod";
 
-const schema = z.object({
+// Esquema genérico de paginación (sin status)
+const paginationSchema = z.object({
   limit: z.coerce.number().default(12),
   page: z.coerce.number().default(1),
   q: z.string().optional(),
 });
 
-export type PaginationParams = z.infer<typeof schema>;
+export type PaginationParams = z.infer<typeof paginationSchema>;
 
-const parsePaginationParams = (searchParams: URLSearchParams | undefined) => {
+// Esquema para citas (hereda de paginationSchema y añade status)
+const appointmentPaginationSchema = paginationSchema.extend({
+  status: z.string().optional(),
+  appointmentDate: z.string().optional(),
+  professionalId: z.string().optional(),
+});
+
+export type AppointmentPaginationParams = z.infer<
+  typeof appointmentPaginationSchema
+>;
+
+// Parser para PaginationParams
+const parsePaginationParams = (
+  searchParams: URLSearchParams | undefined
+): PaginationParams => {
   const searchParamsObject = Object.fromEntries(searchParams ?? []);
-  const parsedParams = schema.parse(searchParamsObject);
+  return paginationSchema.parse(searchParamsObject);
+};
 
-  return parsedParams;
+// Parser para AppointmentPaginationParams
+const parseAppointmentPaginationParams = (
+  searchParams: URLSearchParams | undefined
+): AppointmentPaginationParams => {
+  const searchParamsObject = Object.fromEntries(searchParams ?? []);
+  return appointmentPaginationSchema.parse(searchParamsObject);
 };
 
 export default parsePaginationParams;
+export { parseAppointmentPaginationParams };

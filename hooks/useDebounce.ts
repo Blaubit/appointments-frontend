@@ -74,10 +74,8 @@ export function useDebounceSearch(
 
     if (value.trim() && value.length >= minLength) {
       params.set("q", value);
-      params.set("search", value);
     } else {
       params.delete("q");
-      params.delete("search");
     }
 
     if (resetPage) {
