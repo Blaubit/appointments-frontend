@@ -3,6 +3,18 @@ import { Company } from "./company";
 import { User } from "./user"; // Assuming User is defined in ./user
 import { Service } from "./services";
 
+interface Payment {
+  id: string;
+  appointmentId: string;
+  amount: string;
+  status: string;
+  paymentMethod: string;
+  paymentDate: string;
+  reference: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
 export interface Appointment {
   id: string;
   appointmentDate: Date;
@@ -15,7 +27,7 @@ export interface Appointment {
   client: Client; // Client is defined in ./clients
   professional: User; // User is defined in ./user
   services: Service[]; // Service is defined in ./services
-  paymentStatus: "paid" | "unpaid" | "partial";
+  payment: Payment; // Payment details
 }
 
 export interface AppointmentStats {

@@ -1,48 +1,54 @@
-import type { User } from "@/types";
-import PageClient from "./page.client";
+import { PageClient } from "./page.client";
 import findAll from "@/actions/appointments/findAll";
-import { getRoleName } from "@/actions/user/getRoleName";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
+interface AppointmentsPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
 
-type Props = {
-  searchParams: { [key: string]: string | string[] | undefined };
-};
+export default async function AppointmentsPage({
+  searchParams,
+}: AppointmentsPageProps) {
+  // Await searchParams before using it
+  const resolvedSearchParams = await searchParams;
 
-export default async function Page({ searchParams }: Props) {
-  const params = await new URLSearchParams();
-  Object.entries(await searchParams).forEach(([key, value]) => {
-    if (value !== undefined) {
+  // Convert searchParams to URLSearchParams
+  const urlSearchParams = new URLSearchParams();
+
+  Object.entries(resolvedSearchParams).forEach(([key, value]) => {
+    if (value) {
       if (Array.isArray(value)) {
-        value.forEach((v) => params.append(key, v));
+        value.forEach((v) => urlSearchParams.append(key, v));
       } else {
-        params.set(key, value);
+        urlSearchParams.set(key, value);
       }
     }
   });
 
-  const response = await findAll({ searchParams: params });
+  const appointmentsResponse = await findAll({ searchParams: urlSearchParams });
   const professionalsResponse = await findAllProfessionals();
-  const roleName = await getRoleName();
-  if (response.status !== 200 || !("data" in response)) {
-    throw new Error("Failed to fetch appointments data");
+
+  if ("error" in professionalsResponse) {
+    return (
+      <div>
+        Error loading professionals: {professionalsResponse.error.message}
+      </div>
+    );
   }
 
-  if (
-    typeof professionalsResponse !== "object" ||
-    !("data" in professionalsResponse)
-  ) {
-    throw new Error("Failed to fetch professionals data");
+  if ("error" in appointmentsResponse) {
+    return (
+      <div>
+        Error loading appointments: {appointmentsResponse.error.message}
+      </div>
+    );
   }
-  // Si el usuario no es profesional, se envían los profesionales al cliente
-  const professionals: User[] =
-    roleName !== "profesional" ? professionalsResponse.data : [];
 
   return (
     <PageClient
-      appointments={response.data}
-      stats={response.stats}
-      pagination={response.meta}
-      professionals={professionals}
+      appointments={appointmentsResponse.data}
+      meta={appointmentsResponse.meta}
+      professionals={professionalsResponse.data}
+      stats={appointmentsResponse.stats}
     />
   );
 }
