@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Grid, Plus, Table, Calendar, Filter } from "lucide-react";
+import { Grid, Plus, Table, Calendar } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
