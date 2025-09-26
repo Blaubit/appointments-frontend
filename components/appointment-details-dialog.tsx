@@ -76,7 +76,9 @@ export function AppointmentDetailsDialog({
 
   useEffect(() => {
     async function fetchAppointment() {
-      if (!appointmentId) return;
+      // Solo ejecutar si el modal está abierto y hay un appointmentId
+      if (!appointmentId || !isOpen) return;
+
       setLoading(true);
       setError(null);
       try {
@@ -93,7 +95,16 @@ export function AppointmentDetailsDialog({
       }
     }
     fetchAppointment();
-  }, [appointmentId]);
+  }, [appointmentId, isOpen]); // Agregar isOpen como dependencia
+
+  // Limpiar el estado cuando se cierre el modal
+  useEffect(() => {
+    if (!isOpen) {
+      setAppointment(null);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   if (!appointmentId || !isOpen) return null;
 
@@ -131,6 +142,7 @@ export function AppointmentDetailsDialog({
     );
   }
 
+  // ... resto del código igual ...
   const getInitials = (name: string) => {
     if (!name) return "";
     return name
@@ -519,7 +531,7 @@ export function AppointmentDetailsDialog({
                       </Label>
                       <div className="mt-1">
                         {getPaymentStatusBadge(
-                          appointment.paymentStatus || "pending"
+                          appointment.payment.status || "pending"
                         )}
                       </div>
                     </div>
