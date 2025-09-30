@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "next dev -p 3001 -H 0.0.0.0",
     "build": "next build",
-    "start": "next start -H 0.0.0.0 -p 3001",
+    "start": "next start",
+    "prod" : "NODE_ENV=production next start",
     "lint": "next lint",
     "format": "prettier --write .",
     "docker:build": "docker build -t appointments-frontend .",
     "docker:dev": "docker-compose up --build",
-    "docker:prod": "docker-compose -f docker-compose.yml --profile production up -d --build"
+    "docker:prod": "docker-compose -f docker-compose.yml --profile production up -d --build",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
