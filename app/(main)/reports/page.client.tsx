@@ -9,20 +9,14 @@ import { TopServicesList } from "@/components/reports/TopServicesList";
 import { TopClientsList } from "@/components/reports/TopClientsList";
 import { PerformanceMetricsGrid } from "@/components/reports/PerformanceMetricsGrid";
 import { SummaryTable } from "@/components/reports/SummaryTable";
-
+import type { ReportsPageClientProps } from "@/types/reports";
 export default function ReportsPageClient({
   overviewStats,
   monthlyData,
   topServices,
   topClients,
   appointmentsByHour,
-}: {
-  overviewStats: any[];
-  monthlyData: any[];
-  topServices: any[];
-  topClients: any[];
-  appointmentsByHour: any[];
-}) {
+}: ReportsPageClientProps) {
   const [dateRange, setDateRange] = useState("30days");
   const [reportType, setReportType] = useState("overview");
 

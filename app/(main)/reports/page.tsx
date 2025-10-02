@@ -1,128 +1,110 @@
-// Archivo: page.tsx (Server Component)
+// Archivo: page.tsx (Server Component adaptado a datos backend)
 
 import ReportsPageClient from "./page.client";
+import { findAll } from "@/actions/reports/findReportsDashboard";
 
-const overviewStats = [
-  {
-    title: "Ingresos Totales",
-    count: "$24,580",
-    variant: "total",
-    icon: "DollarSign",
-    trend: "up",
-    change: "+12.5%",
-  },
-  {
-    title: "Total Citas",
-    count: 342,
-    variant: "confirmed",
-    icon: "Calendar",
-    trend: "up",
-    change: "+8.2%",
-  },
-  {
-    title: "Nuevos Clientes",
-    count: 28,
-    variant: "today",
-    icon: "Users",
-    trend: "up",
-    change: "+15.3%",
-  },
-  {
-    title: "Tasa de Cancelación",
-    count: "5.2%",
-    variant: "cancelled",
-    icon: "AlertTriangle",
-    trend: "down",
-    change: "-2.1%",
-  },
-];
+export default async function ReportsPage() {
+  // Llamada a tu backend (puedes ajustar si necesitas params)
+  const response = await findAll();
+  // Si la API retorna un objeto con data, úsalo, si no, usa el propio objeto
+  const report = response.data || response;
 
-const monthlyData = [
-  { month: "Ene", appointments: 85, revenue: 4250, clients: 12 },
-  { month: "Feb", appointments: 92, revenue: 4600, clients: 15 },
-  { month: "Mar", appointments: 78, revenue: 3900, clients: 8 },
-  { month: "Apr", appointments: 105, revenue: 5250, clients: 18 },
-  { month: "May", appointments: 118, revenue: 5900, clients: 22 },
-  { month: "Jun", appointments: 134, revenue: 6700, clients: 25 },
-];
+  // Adaptar datos del backend al formato esperado por ReportsPageClient
+  // Overview Stats
+  const overviewStats = [
+    {
+      title: "Ingresos Totales",
+      count: report.income?.currentMonth?.total
+        ? `${report.income.currentMonth.currency === "GTQ" ? "Q" : "$"}${report.income.currentMonth.total.toLocaleString()}`
+        : "-",
+      variant: "total",
+      icon: "DollarSign",
+      trend: report.income?.comparison?.isPositive ? "up" : "down",
+      change:
+        report.income?.comparison?.percentageChange !== undefined
+          ? (report.income.comparison.isPositive ? "+" : "-") +
+            Math.abs(report.income.comparison.percentageChange) +
+            "%"
+          : "-",
+    },
+    {
+      title: "Total Citas",
+      count: report.appointments?.currentMonth?.total ?? "-",
+      variant: "confirmed",
+      icon: "Calendar",
+      trend: report.appointments?.comparison?.isPositive ? "up" : "down",
+      change:
+        report.appointments?.comparison?.percentageChange !== undefined
+          ? (report.appointments.comparison.isPositive ? "+" : "-") +
+            Math.abs(report.appointments.comparison.percentageChange) +
+            "%"
+          : "-",
+    },
+    {
+      title: "Nuevos Clientes",
+      count: report.clients?.newClients ?? "-",
+      variant: "today",
+      icon: "Users",
+      trend: report.clients?.isPositive ? "up" : "down",
+      change:
+        report.clients?.percentageChange !== undefined
+          ? (report.clients.isPositive ? "+" : "-") +
+            Math.abs(report.clients.percentageChange) +
+            "%"
+          : "-",
+    },
+    {
+      title: "Tasa de Cancelación",
+      count:
+        report.cancellationRate?.cancellationRate !== undefined
+          ? report.cancellationRate.cancellationRate.toFixed(1) + "%"
+          : "-",
+      variant: "cancelled",
+      icon: "AlertTriangle",
+      trend: report.cancellationRate?.isPositive ? "up" : "down",
+      change:
+        report.cancellationRate?.percentageChange !== undefined
+          ? (report.cancellationRate.isPositive ? "+" : "-") +
+            Math.abs(report.cancellationRate.percentageChange) +
+            "%"
+          : "-",
+    },
+  ];
 
-const topServices = [
-  {
-    name: "Consulta General",
-    appointments: 89,
-    revenue: 4450,
-    percentage: 26,
-  },
-  {
-    name: "Limpieza Dental",
-    appointments: 67,
-    revenue: 3350,
-    percentage: 20,
-  },
-  {
-    name: "Corte y Peinado",
-    appointments: 54,
-    revenue: 2700,
-    percentage: 16,
-  },
-  { name: "Terapia Física", appointments: 43, revenue: 4300, percentage: 13 },
-  {
-    name: "Consulta Especializada",
-    appointments: 38,
-    revenue: 3800,
-    percentage: 11,
-  },
-  { name: "Otros", appointments: 51, revenue: 2550, percentage: 14 },
-];
+  // Monthly Data (para el gráfico de ingresos mensuales)
+  const monthlyData =
+    report.monthlyIncome?.monthlyData?.map((data: any) => ({
+      month: data.month.substring(0, 3), // "Ene", "Feb", etc.
+      appointments: data.appointments,
+      revenue: data.income,
+      clients: undefined, // Si tienes campo para clientes aquí ponlo, si no déjalo undefined
+    })) ?? [];
 
-const topClients = [
-  {
-    name: "María González",
-    appointments: 12,
-    revenue: 1200,
-    lastVisit: "2024-01-15",
-  },
-  {
-    name: "Carlos Rodríguez",
-    appointments: 8,
-    revenue: 800,
-    lastVisit: "2024-01-14",
-  },
-  {
-    name: "Ana Martínez",
-    appointments: 7,
-    revenue: 875,
-    lastVisit: "2024-01-13",
-  },
-  {
-    name: "Luis Fernández",
-    appointments: 6,
-    revenue: 750,
-    lastVisit: "2024-01-12",
-  },
-  {
-    name: "Carmen López",
-    appointments: 5,
-    revenue: 625,
-    lastVisit: "2024-01-11",
-  },
-];
+  // Top Services
+  const topServices =
+    report.topServices?.topServices?.map((service: any) => ({
+      name: service.serviceName,
+      appointments: service.appointmentCount,
+      revenue: undefined, // Si tienes revenue por servicio, agrégalo aquí
+      percentage: service.percentage,
+    })) ?? [];
 
-const appointmentsByHour = [
-  { hour: "08:00", count: 15 },
-  { hour: "09:00", count: 28 },
-  { hour: "10:00", count: 35 },
-  { hour: "11:00", count: 42 },
-  { hour: "12:00", count: 25 },
-  { hour: "13:00", count: 18 },
-  { hour: "14:00", count: 38 },
-  { hour: "15:00", count: 45 },
-  { hour: "16:00", count: 32 },
-  { hour: "17:00", count: 22 },
-  { hour: "18:00", count: 12 },
-];
+  // Top Clients
+  const topClients =
+    report.topClients?.topClients?.map((client: any) => ({
+      name: client.clientName,
+      appointments: client.appointmentCount,
+      revenue: undefined, // Si tienes revenue por cliente, agrégalo aquí
+      lastVisit: client.lastAppointmentDate,
+    })) ?? [];
 
-export default function ReportsPage() {
+  // Appointments by Hour
+  const appointmentsByHour =
+    report.hourlyAppointments?.hourlyData?.map((item: any) => ({
+      hour: item.hourDisplay,
+      count: item.appointments,
+    })) ?? [];
+
   return (
     <ReportsPageClient
       overviewStats={overviewStats}

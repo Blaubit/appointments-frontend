@@ -36,7 +36,7 @@ export function TopClientsList({ topClients }: { topClients: any[] }) {
                     {client.name}
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    ${client.revenue.toLocaleString()}
+                    ${client.revenue}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

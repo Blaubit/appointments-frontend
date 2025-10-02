@@ -29,7 +29,7 @@ export function TopServicesList({ topServices }: { topServices: any[] }) {
                     {service.name}
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    ${service.revenue.toLocaleString()}
+                    ${service.revenue}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
