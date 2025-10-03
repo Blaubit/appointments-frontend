@@ -36,7 +36,7 @@ import {
 import { Role, User } from "@/types";
 import { create as createUser } from "@/actions/user/create";
 import { updateProfile as updateUser } from "@/actions/user/update";
-import { create as createSecretaryProfessional } from "@/actions/user/secretary-professional/create";
+import { create as createSecretaryProfessionalAssignments } from "@/actions/user/secretary-professional/create";
 
 // Esquemas de validación con Zod
 const createUserSchema = z
@@ -48,16 +48,14 @@ const createUserSchema = z
       .max(100, "El nombre no puede exceder 100 caracteres")
       .regex(
         /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
-        "El nombre solo puede contener letras y espacios",
+        "El nombre solo puede contener letras y espacios"
       ),
-
     email: z
       .string()
       .min(1, "El correo electrónico es requerido")
       .email("El formato del correo electrónico no es válido")
       .max(255, "El correo no puede exceder 255 caracteres")
       .toLowerCase(),
-
     phone: z
       .string()
       .optional()
@@ -66,13 +64,10 @@ const createUserSchema = z
         const phoneRegex = /^(\+502\s?)?[2-9]\d{3}-?\d{4}$/;
         return phoneRegex.test(value);
       }, "El formato del teléfono no es válido (ej: +502 1234-5678 o 1234-5678)"),
-
     role: z.string().min(1, "El rol es requerido"),
-
     assignedDoctors: z
       .array(z.string().uuid("ID de doctor inválido"))
       .default([]),
-
     password: z
       .string()
       .min(1, "La contraseña es requerida")
@@ -80,9 +75,8 @@ const createUserSchema = z
       .max(128, "La contraseña no puede exceder 128 caracteres")
       .regex(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "La contraseña debe contener al menos una mayúscula, una minúscula y un número",
+        "La contraseña debe contener al menos una mayúscula, una minúscula y un número"
       ),
-
     confirmPassword: z.string().min(1, "Confirme su contraseña"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -99,16 +93,14 @@ const updateUserSchema = z
       .max(100, "El nombre no puede exceder 100 caracteres")
       .regex(
         /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
-        "El nombre solo puede contener letras y espacios",
+        "El nombre solo puede contener letras y espacios"
       ),
-
     email: z
       .string()
       .min(1, "El correo electrónico es requerido")
       .email("El formato del correo electrónico no es válido")
       .max(255, "El correo no puede exceder 255 caracteres")
       .toLowerCase(),
-
     phone: z
       .string()
       .optional()
@@ -117,11 +109,8 @@ const updateUserSchema = z
         const phoneRegex = /^(\+502\s?)?[2-9]\d{3}-?\d{4}$/;
         return phoneRegex.test(value);
       }, "El formato del teléfono no es válido"),
-
     role: z.string().min(1, "El rol es requerido"),
-
     assignedDoctors: z.array(z.string().uuid()).default([]),
-
     password: z
       .string()
       .optional()
@@ -133,7 +122,6 @@ const updateUserSchema = z
         if (!value || value.trim() === "") return true;
         return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value);
       }, "La contraseña debe contener al menos una mayúscula, una minúscula y un número"),
-
     confirmPassword: z.string().optional(),
   })
   .refine(
@@ -144,11 +132,8 @@ const updateUserSchema = z
     {
       message: "Las contraseñas no coinciden",
       path: ["confirmPassword"],
-    },
+    }
   );
-
-type CreateUserFormData = z.infer<typeof createUserSchema>;
-type UpdateUserFormData = z.infer<typeof updateUserSchema>;
 
 // Tipos para errores del servidor
 interface ServerError {
@@ -320,26 +305,21 @@ export function UserForm({
   const handleServerError = (error: any) => {
     console.error("Server error:", error);
 
-    // Determinar el tipo de error basado en el código de estado o estructura
     let serverError: ServerError = {
       statusCode: 500,
       message: "Error interno del servidor",
     };
 
     if (error && typeof error === "object") {
-      // Si el error tiene una estructura específica del backend
       if (error.statusCode || error.status) {
         serverError.statusCode = error.statusCode || error.status;
       }
-
       if (error.message) {
         serverError.message = error.message;
       }
-
       if (error.field) {
         serverError.field = error.field;
       }
-
       if (error.details) {
         serverError.details = error.details;
       }
@@ -347,7 +327,6 @@ export function UserForm({
       serverError.message = error;
     }
 
-    // Personalizar mensajes según el código de estado
     const errorMessages: Record<
       number,
       { title: string; description: string; icon?: any }
@@ -418,7 +397,6 @@ export function UserForm({
   };
 
   const handleSubmit = async () => {
-    // Limpiar errores previos
     setServerError(null);
 
     const validation = validateForm();
@@ -429,13 +407,11 @@ export function UserForm({
       let result;
 
       if (isEditMode && editingUser) {
-        // Actualizar usuario existente
         const updateData: any = {
           userId: editingUser.id,
           email: formData.email.trim().toLowerCase(),
         };
 
-        // Solo incluir contraseña si se proporcionó una nueva
         if (formData.password && formData.password.trim() !== "") {
           updateData.password = formData.password;
         }
@@ -447,21 +423,7 @@ export function UserForm({
           return;
         }
 
-        // Manejar asignaciones de doctores para secretarias
-        if (
-          formData.role === "secretaria" &&
-          formData.assignedDoctors.length > 0
-        ) {
-          const assignmentPromises = formData.assignedDoctors.map((doctorId) =>
-            createSecretaryProfessional({
-              secretaryId: editingUser.id,
-              professionalId: doctorId,
-              isActive: true,
-            }),
-          );
-
-          await Promise.allSettled(assignmentPromises);
-        }
+        // (Opcional: aquí podrías adaptar la edición de asignaciones si tu backend lo permite)
 
         toast({
           title: "Usuario actualizado exitosamente",
@@ -484,30 +446,26 @@ export function UserForm({
 
         const newUser = result.data;
 
-        // Manejar asignaciones de doctores para secretarias
+        // Asignar doctores si es secretaria (solo una llamada)
+        const secretaryRole = roles.find((role) =>
+          role.name.toLowerCase().includes("secretaria")
+        );
+
         if (
-          formData.role === "secretaria" &&
+          formData.role === secretaryRole?.id &&
           formData.assignedDoctors.length > 0
         ) {
-          const assignmentPromises = formData.assignedDoctors.map((doctorId) =>
-            createSecretaryProfessional({
+          const assignmentResult = await createSecretaryProfessionalAssignments(
+            {
               secretaryId: newUser.id,
-              professionalId: doctorId,
+              professionals: formData.assignedDoctors,
               isActive: true,
-            }),
+            }
           );
-
-          const assignmentResults =
-            await Promise.allSettled(assignmentPromises);
-
-          const failedAssignments = assignmentResults.filter(
-            (result) => result.status === "rejected",
-          ).length;
-
-          if (failedAssignments > 0) {
+          if ("message" in assignmentResult) {
             toast({
               title: "Usuario creado con advertencias",
-              description: `${failedAssignments} asignaciones de doctores fallaron`,
+              description: "No se pudieron asignar los doctores correctamente.",
               variant: "destructive",
             });
           }
@@ -519,13 +477,10 @@ export function UserForm({
         });
       }
 
-      // Notificar éxito al componente padre
       onSuccess(result.data);
 
-      // Mostrar mensaje de éxito
       setShowSuccessMessage(true);
 
-      // Cerrar modal después de 2 segundos
       setTimeout(() => {
         onClose();
         setShowSuccessMessage(false);
@@ -537,10 +492,8 @@ export function UserForm({
     }
   };
 
-  // Obtener el rol de secretaria para mostrar asignaciones de doctores
-  console.log("roles", roles);
   const secretaryRole = roles.find((role) =>
-    role.name.toLowerCase().includes("secretaria"),
+    role.name.toLowerCase().includes("secretaria")
   );
 
   // Componente para mostrar errores de validación

@@ -48,10 +48,12 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Eye,
 } from "lucide-react";
 
 import { Role, User, Pagination } from "@/types";
 import { UserForm } from "@/components/settings/user-form";
+import { UserAssignmentsDialog } from "@/components/settings/user-assigment-dialog";
 
 interface UserManagementFormProps {
   currentUserRole: "admin" | "profesional";
@@ -85,27 +87,28 @@ export function UserManagementForm({
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const { toast } = useToast();
-
-  // Estados para filtros (solo frontend cuando useBackendPagination es false)
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+
+  // Estados para el modal de asignaciones
+  const [showAssignmentsDialog, setShowAssignmentsDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [assignmentType, setAssignmentType] = useState<
+    "secretary" | "professional"
+  >("secretary");
+
+  const { toast } = useToast();
 
   // Actualizar usuarios cuando cambien los props
   useEffect(() => {
     setUsers(initialUsers);
   }, [initialUsers]);
 
-  // Log para debugging
-  useEffect(() => {}, [meta, initialCurrentPage, users]);
-
   // Lógica de filtrado y paginación
   const filteredAndPaginatedData = useMemo(() => {
     if (useBackendPagination && meta) {
-      // Si usamos paginación del backend, solo aplicamos filtros frontend
       let filteredUsers = users;
 
-      // Filtro por búsqueda (frontend)
       if (searchTerm) {
         filteredUsers = filteredUsers.filter(
           (user) =>
@@ -114,7 +117,6 @@ export function UserManagementForm({
         );
       }
 
-      // Filtro por rol (frontend)
       if (selectedRole && selectedRole !== "all") {
         filteredUsers = filteredUsers.filter((user) => {
           const userRole = user.role?.name || "";
@@ -134,11 +136,9 @@ export function UserManagementForm({
         previousPage: meta.previousPage,
       };
     } else {
-      // Lógica original para paginación frontend
       const ITEMS_PER_PAGE = 10;
       let filteredUsers = users;
 
-      // Filtro por búsqueda
       if (searchTerm) {
         filteredUsers = filteredUsers.filter(
           (user) =>
@@ -147,7 +147,6 @@ export function UserManagementForm({
         );
       }
 
-      // Filtro por rol
       if (selectedRole && selectedRole !== "all") {
         filteredUsers = filteredUsers.filter((user) => {
           const userRole = user.role?.name || "";
@@ -207,12 +206,22 @@ export function UserManagementForm({
         );
         await onSave({ type: "update", user: userData });
       } else {
+        let roleObj = null;
+        if (typeof userData.role === "string") {
+          roleObj =
+            roles.find((r) => r.id === userData.role.id) || roles[0] || null;
+        } else if (
+          userData.role &&
+          typeof userData.role === "object" &&
+          typeof userData.role.id === "string"
+        ) {
+          roleObj = userData.role;
+        } else {
+          roleObj = roles[0] || null;
+        }
         const enrichedUser = {
           ...userData,
-          role:
-            userData.role ||
-            roles.find((r) => r.name === userData.role.id) ||
-            null,
+          role: roleObj,
         };
         setUsers((prev) => [...prev, enrichedUser]);
         await onSave({ type: "create", user: enrichedUser });
@@ -248,6 +257,16 @@ export function UserManagementForm({
     }
   };
 
+  // Función para abrir el modal de asignaciones
+  const handleViewAssignments = (
+    user: User,
+    type: "secretary" | "professional"
+  ) => {
+    setSelectedUser(user);
+    setAssignmentType(type);
+    setShowAssignmentsDialog(true);
+  };
+
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedRole("");
@@ -257,13 +276,6 @@ export function UserManagementForm({
     if (onPageChange) {
       onPageChange(page);
     }
-  };
-
-  const getDoctorNames = (doctorIds: string[]) => {
-    return doctors
-      .filter((doctor) => doctorIds.includes(doctor.id))
-      .map((doctor) => doctor.fullName)
-      .join(", ");
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -305,7 +317,6 @@ export function UserManagementForm({
     return user.role?.name || "Sin rol";
   };
 
-  // Obtener roles únicos para el filtro
   const uniqueRoles = useMemo(() => {
     const roleNames = users
       .map((user) => getUserRoleName(user))
@@ -313,7 +324,6 @@ export function UserManagementForm({
     return [...new Set(roleNames)];
   }, [users]);
 
-  // Calcular rango de elementos mostrados
   const getDisplayRange = () => {
     if (useBackendPagination && meta) {
       const start = (meta.currentPage - 1) * meta.itemsPerPage + 1;
@@ -337,6 +347,14 @@ export function UserManagementForm({
   };
 
   const displayRange = getDisplayRange();
+
+  const isSecretary = (user: User) => {
+    return getUserRoleName(user).toLowerCase().includes("secretaria");
+  };
+
+  const isProfessional = (user: User) => {
+    return getUserRoleName(user).toLowerCase().includes("profesional");
+  };
 
   return (
     <div className="space-y-6">
@@ -374,7 +392,6 @@ export function UserManagementForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Búsqueda por nombre */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -387,7 +404,6 @@ export function UserManagementForm({
               </div>
             </div>
 
-            {/* Filtro por rol */}
             <div className="w-full sm:w-48">
               <Select
                 value={selectedRole || undefined}
@@ -407,7 +423,6 @@ export function UserManagementForm({
               </Select>
             </div>
 
-            {/* Botón limpiar filtros */}
             {(searchTerm || (selectedRole && selectedRole !== "all")) && (
               <Button variant="outline" onClick={clearFilters}>
                 <X className="h-4 w-4 mr-2" />
@@ -416,7 +431,6 @@ export function UserManagementForm({
             )}
           </div>
 
-          {/* Indicadores de filtros activos */}
           {(searchTerm || (selectedRole && selectedRole !== "all")) && (
             <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
               <span>Filtros activos:</span>
@@ -483,7 +497,7 @@ export function UserManagementForm({
                     <TableRow>
                       <TableHead>Usuario</TableHead>
                       <TableHead>Rol</TableHead>
-                      <TableHead>Doctores Asignados</TableHead>
+                      <TableHead>Asignaciones</TableHead>
                       {canEdit && <TableHead>Acciones</TableHead>}
                     </TableRow>
                   </TableHeader>
@@ -506,12 +520,28 @@ export function UserManagementForm({
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {getUserRoleName(user)
-                            .toLowerCase()
-                            .includes("secretaria") ? (
-                            <span className="text-sm text-gray-500">
-                              No asignado
-                            </span>
+                          {isSecretary(user) ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleViewAssignments(user, "secretary")
+                              }
+                            >
+                              <Eye className="h-3 w-3 mr-2" />
+                              Ver profesionales
+                            </Button>
+                          ) : isProfessional(user) ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleViewAssignments(user, "professional")
+                              }
+                            >
+                              <Eye className="h-3 w-3 mr-2" />
+                              Ver secretarias
+                            </Button>
                           ) : (
                             <span className="text-sm text-gray-400">N/A</span>
                           )}
@@ -588,7 +618,6 @@ export function UserManagementForm({
                       Anterior
                     </Button>
 
-                    {/* Números de página */}
                     <div className="flex gap-1">
                       {Array.from(
                         {
@@ -656,6 +685,14 @@ export function UserManagementForm({
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Asignaciones (componente separado) */}
+      <UserAssignmentsDialog
+        isOpen={showAssignmentsDialog}
+        onClose={() => setShowAssignmentsDialog(false)}
+        user={selectedUser}
+        type={assignmentType}
+      />
 
       {/* Formulario de Usuario (Modal) */}
       {canEdit && (

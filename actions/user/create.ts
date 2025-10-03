@@ -52,7 +52,6 @@ export async function create({
         "Content-Type": "application/json",
       },
     });
-    console.log("Response from create User:", response.data);
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/settings?ta=users");
