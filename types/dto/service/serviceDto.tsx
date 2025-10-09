@@ -10,4 +10,6 @@ export class serviceDto {
 
   @IsNotEmpty()
   price: number; // Price in the local currency
+
+  professionalsIds?: string[]; // Optional array of professional IDs
 }

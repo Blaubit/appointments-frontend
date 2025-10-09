@@ -1,4 +1,3 @@
-import type { ReadonlyURLSearchParams } from "next/navigation";
 import PageClient from "./page.client";
 import { findAll } from "@/actions/services/findAll";
 import { Service } from "@/types";
@@ -20,10 +19,9 @@ export default async function Page({ searchParams }: Props) {
     typeof resolvedSearchParams.limit === "string"
       ? parseInt(resolvedSearchParams.limit)
       : 9;
-  const search =
-    typeof resolvedSearchParams.search === "string"
-      ? resolvedSearchParams.search
-      : "";
+  // CAMBIO: usar 'q' en vez de 'search'
+  const q =
+    typeof resolvedSearchParams.q === "string" ? resolvedSearchParams.q : "";
   const status =
     typeof resolvedSearchParams.status === "string"
       ? resolvedSearchParams.status
@@ -33,7 +31,7 @@ export default async function Page({ searchParams }: Props) {
   const params = new URLSearchParams();
   params.set("page", page.toString());
   params.set("limit", limit.toString());
-  if (search) params.set("search", search);
+  if (q) params.set("q", q);
   if (status && status !== "all") params.set("status", status);
 
   const responseServices = await findAll({ searchParams: params });
@@ -48,7 +46,7 @@ export default async function Page({ searchParams }: Props) {
       initialSearchParams={{
         page,
         limit,
-        search,
+        q,
         status,
       }}
     />

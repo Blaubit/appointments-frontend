@@ -13,7 +13,7 @@ type Props = {
 };
 
 export async function findAllProfessionals(
-  props: Props = {},
+  props: Props = {}
 ): Promise<SuccessReponse<User[]> | ErrorResponse | any> {
   const session = await getSession();
   const companyId = await getCompanyId();
@@ -27,12 +27,11 @@ export async function findAllProfessionals(
       params: {
         ...parsedParams,
         query: undefined,
-        q: parsedParams.query,
       },
     });
     return {
       data: response.data.data.filter(
-        (user: User) => user.role.name === "profesional",
+        (user: User) => user.role.name === "profesional"
       ),
       status: 200,
       statusText: response.statusText,
