@@ -28,6 +28,7 @@ export interface Appointment {
   professional: User; // User is defined in ./user
   services: Service[]; // Service is defined in ./services
   payment: Payment; // Payment details
+  createdBy?: User; // User who created the appointment
 }
 
 export interface AppointmentStats {

@@ -4,9 +4,8 @@ import axios, { isAxiosError } from "axios";
 import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Service } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 
 type Props = {
@@ -14,7 +13,7 @@ type Props = {
 };
 
 export async function findAll(
-  props: Props = {},
+  props: Props = {}
 ): Promise<SuccessReponse<Service[]> | ErrorResponse | any> {
   const session = await getSession();
   const companyId = await getCompanyId();
@@ -22,7 +21,7 @@ export async function findAll(
   try {
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services`;
 
-    // Convertir URLSearchParams a objeto para parsePaginationParams
+    // Convertir URLSearchParams a objeto plano
     const searchParamsObject: Record<string, string> = {};
     if (props.searchParams) {
       props.searchParams.forEach((value, key) => {
@@ -30,19 +29,13 @@ export async function findAll(
       });
     }
 
-    // Construir parámetros para la API
+    // Solo tomar page, limit y q
     const params: Record<string, any> = {
       page: searchParamsObject.page || "1",
       limit: searchParamsObject.limit || "10",
     };
-
-    // Agregar filtros opcionales
-    if (searchParamsObject.search) {
-      params.q = searchParamsObject.search;
-    }
-
-    if (searchParamsObject.status && searchParamsObject.status !== "all") {
-      params.status = searchParamsObject.status;
+    if (searchParamsObject.q) {
+      params.q = searchParamsObject.q;
     }
 
     const response = await axios.get(url, {

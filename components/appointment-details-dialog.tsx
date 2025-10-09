@@ -96,7 +96,6 @@ export function AppointmentDetailsDialog({
     }
     fetchAppointment();
   }, [appointmentId, isOpen]); // Agregar isOpen como dependencia
-
   // Limpiar el estado cuando se cierre el modal
   useEffect(() => {
     if (!isOpen) {
@@ -425,6 +424,38 @@ export function AppointmentDetailsDialog({
                 </div>
               </CardContent>
             </Card>
+
+            {/* Created By Information */}
+            {appointment.createdBy && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <UserIcon className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Cita creada por</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-2">
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Nombre
+                      </Label>
+                      <p className="text-sm font-medium truncate">
+                        {appointment.createdBy.fullName}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Email
+                      </Label>
+                      <p className="text-xs sm:text-sm truncate">
+                        {appointment.createdBy.email}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Appointment Information */}
             <Card>

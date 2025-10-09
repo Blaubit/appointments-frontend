@@ -7,17 +7,18 @@ import { ServiceProfessional } from "@/types";
 import { getSession } from "@/actions/auth";
 
 export async function findProfessionalServices(
-  id: string,
+  id: string
 ): Promise<SuccessReponse<ServiceProfessional> | ErrorResponse> {
   const session = await getSession();
   try {
     const url = `${parsedEnv.API_URL}/professional-services/professional/${id}`;
+
     const response = await axios.get<ServiceProfessional>(url, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
-
+    console.log(response.data);
     return {
       data: response.data,
       status: 200,

@@ -12,22 +12,26 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner"; // Asumiendo que usas sonner para toasts
+import { toast } from "sonner";
 import create from "@/actions/services/create";
 import update from "@/actions/services/update";
-import type { Service as ServiceType } from "@/types";
+import type { Service as ServiceType, User } from "@/types";
+import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
+import { Checkbox } from "@/components/ui/checkbox";
+import { User as UserIcon } from "lucide-react";
 
 interface ServiceFormProps {
   isOpen: boolean;
   onClose: () => void;
-  service?: ServiceType | null; // Si es null/undefined = modo crear, si tiene valor = modo editar
-  onSuccess?: () => void; // Callback para refrescar datos
+  service?: ServiceType | null;
+  onSuccess?: () => void;
 }
 
 interface FormData {
   name: string;
   durationMinutes: string;
   price: string;
+  professionalsIds: string[];
 }
 
 export function ServiceForm({
@@ -42,20 +46,33 @@ export function ServiceForm({
     name: service?.name || "",
     durationMinutes: service?.durationMinutes?.toString() || "",
     price: service?.price?.toString() || "",
+    professionalsIds: service?.professionalsIds || [],
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [professionals, setProfessionals] = useState<User[]>([]);
+  const [loadingProfessionals, setLoadingProfessionals] = useState(true);
 
-  // Efecto para actualizar el formulario cuando cambie el servicio
   useEffect(() => {
     if (isOpen) {
       setFormData({
         name: service?.name || "",
         durationMinutes: service?.durationMinutes?.toString() || "",
         price: service?.price?.toString() || "",
+        professionalsIds: service?.professionalsIds || [],
       });
       setErrors({});
+      setLoadingProfessionals(true);
+      findAllProfessionals()
+        .then((result) => {
+          if (result?.data) {
+            setProfessionals(result.data);
+          } else {
+            setProfessionals([]);
+          }
+        })
+        .finally(() => setLoadingProfessionals(false));
     }
   }, [service, isOpen]);
 
@@ -97,42 +114,34 @@ export function ServiceForm({
     setIsLoading(true);
 
     try {
-      const serviceData = {
+      const serviceData: any = {
         name: formData.name.trim(),
         durationMinutes: parseInt(formData.durationMinutes),
-        price: parseFloat(formData.price), // Convertir a number
+        price: parseFloat(formData.price),
       };
-
-      console.log("Form data being sent:", serviceData); // Para debug
-      console.log("Is editing:", isEditing); // Para debug
-      console.log("Service ID:", service?.id); // Para debug
+      if (formData.professionalsIds.length > 0) {
+        serviceData.professionalsIds = formData.professionalsIds;
+      }
 
       let response;
-
       if (isEditing && service) {
-        // Modo editar
         response = await update({
           id: service.id,
           ...serviceData,
         });
-        console.log("Update response:", response); // Para debug
       } else {
-        // Modo crear
         response = await create(serviceData);
-        console.log("Create response:", response); // Para debug
       }
 
       if ("data" in response) {
-        // Éxito
         toast.success(
           isEditing
             ? "Servicio actualizado correctamente"
-            : "Servicio creado correctamente",
+            : "Servicio creado correctamente"
         );
         onSuccess?.();
         handleClose();
       } else {
-        // Error
         toast.error(response.message || "Ha ocurrido un error");
       }
     } catch (error) {
@@ -143,10 +152,19 @@ export function ServiceForm({
     }
   };
 
+  // Cambia el estado del checkbox de cada profesional
+  const handleProfessionalCheck = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      professionalsIds: prev.professionalsIds.includes(id)
+        ? prev.professionalsIds.filter((pid) => pid !== id)
+        : [...prev.professionalsIds, id],
+    }));
+  };
+
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -168,6 +186,7 @@ export function ServiceForm({
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            {/* Nombre */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Nombre *
@@ -186,6 +205,7 @@ export function ServiceForm({
               </div>
             </div>
 
+            {/* Duración */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="duration" className="text-right">
                 Duración *
@@ -210,6 +230,7 @@ export function ServiceForm({
               </div>
             </div>
 
+            {/* Precio */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right">
                 Precio *
@@ -228,6 +249,47 @@ export function ServiceForm({
                 {errors.price && (
                   <p className="text-red-500 text-sm mt-1">{errors.price}</p>
                 )}
+              </div>
+            </div>
+
+            {/* Selección de profesionales con checkboxes */}
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2 flex items-center gap-1">
+                <UserIcon className="w-4 h-4" />
+                Profesionales
+              </Label>
+              <div className="col-span-3">
+                <div className="grid grid-cols-1 sm:grid-cols-1 gap-2 max-h-40 overflow-y-auto border rounded-md p-2 bg-muted/40">
+                  {loadingProfessionals ? (
+                    <span className="text-sm text-muted-foreground">
+                      Cargando profesionales...
+                    </span>
+                  ) : professionals.length === 0 ? (
+                    <span className="text-sm text-muted-foreground">
+                      No hay profesionales disponibles
+                    </span>
+                  ) : (
+                    professionals.map((prof) => (
+                      <label
+                        key={prof.id}
+                        className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent transition cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={formData.professionalsIds.includes(prof.id)}
+                          onCheckedChange={() =>
+                            handleProfessionalCheck(prof.id)
+                          }
+                          id={`prof-${prof.id}`}
+                        />
+                        <UserIcon className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">{prof.fullName}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                <small className="text-gray-500">
+                  (Opcional) Selecciona uno o más profesionales
+                </small>
               </div>
             </div>
           </div>
