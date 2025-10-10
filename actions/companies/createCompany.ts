@@ -70,7 +70,7 @@ export default async function createCompany({
       // Admin data
       adminFullName: adminFullName.trim(),
       adminEmail: adminEmail.trim(),
-      adminPassword: adminPassword,
+      adminPassword: adminPassword, // se tiene que quitar esto
       adminBio: adminBio?.trim() || "",
       // Subscription data
       planId,
@@ -78,8 +78,7 @@ export default async function createCompany({
       endDate,
       createdById: createdById,
     };
-    console.log("Creating company with data:", body);
-    console.log("Using API URL:", url);
+
     const response = await axios.post(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,

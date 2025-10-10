@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getRoleName } from "./actions/user/getRoleName";
+import { logout } from "./actions/auth/logout";
 
 // Rutas restringidas por rol
 const ROLE_RESTRICTIONS = {
@@ -12,9 +13,10 @@ const ROLE_RESTRICTIONS = {
     "/register",
     "/admin",
     "/billing",
+    "/support/admin",
   ],
-  profesional: ["/bot", "/register", "/admin", "/billing"],
-  admin_empresa: ["/bot", "/register", "/admin"],
+  profesional: ["/bot", "/register", "/admin", "/billing", "/support/admin"],
+  admin_empresa: ["/bot", "/register", "/admin", "/support/admin"],
 
   super_admin: [],
 };
@@ -25,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
   // Si no hay token de sesión, redirigir a login
   if (!sessionToken) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    logout();
   }
 
   // Obtener el rol desde el token
@@ -34,7 +36,7 @@ export async function middleware(request: NextRequest) {
   // Si no se puede obtener el rol, permitir acceso
   if (!userRole) {
     console.log("No se pudo obtener el rol del usuario, permitiendo acceso");
-    return NextResponse.redirect(new URL("/login", request.url));
+    logout();
   }
 
   // Verificar rutas restringidas

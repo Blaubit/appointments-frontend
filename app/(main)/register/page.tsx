@@ -125,10 +125,6 @@ export default async function RegisterPage() {
     }
   };
 
-  console.log("Company types loaded:", companyTypes.length);
-  console.log("Roles loaded:", roles.length);
-  console.log("Plans loaded:", plans.length);
-
   return (
     <RegisterClient
       companyTypes={companyTypes}
