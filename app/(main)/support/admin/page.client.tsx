@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -32,174 +31,27 @@ import {
   ArrowUp,
   Minus,
   User,
-  Building,
   Calendar,
-  Send,
   Eye,
-  BarChart3,
-  TrendingUp,
-  Users,
-  Timer,
+  Mail,
 } from "lucide-react";
-import type {
-  Ticket,
-  TicketStatus,
-  TicketPriority,
-  TicketStats,
-} from "@/types/support";
 
-// Mock data expandido
-const mockStats: TicketStats = {
-  total: 156,
-  open: 23,
-  inProgress: 18,
-  waitingResponse: 12,
-  resolved: 89,
-  closed: 14,
-  averageResponseTime: 45,
-  averageResolutionTime: 180,
-  satisfactionScore: 4.3,
+// Tipos para la data real de incident reports
+type Ticket = {
+  id: string;
+  subject: string;
+  description: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  sourceSystem: string;
+  externalId: string;
+  status: "open" | "in_progress" | "waiting_response" | "resolved" | "closed";
+  createdAt: string;
+  updatedAt: string;
 };
-
-const mockTickets: Ticket[] = [
-  {
-    id: "TK-001",
-    title: "Error al cargar el calendario de citas",
-    description:
-      "El calendario no muestra las citas programadas para esta semana. Aparece un error 500 cuando intento acceder.",
-    status: "open",
-    priority: "high",
-    category: "technical_issue",
-    userId: "user-1",
-    userName: "Dr. María González",
-    userEmail: "maria.gonzalez@clinica.com",
-    companyId: "comp-1",
-    companyName: "Clínica San Rafael",
-    attachments: [],
-    comments: [
-      {
-        id: "comment-1",
-        ticketId: "TK-001",
-        authorId: "user-1",
-        authorName: "Dr. María González",
-        authorRole: "user",
-        content:
-          "El problema persiste desde ayer. Mis pacientes no pueden ver sus citas programadas.",
-        isInternal: false,
-        createdAt: "2024-01-15T11:30:00Z",
-        updatedAt: "2024-01-15T11:30:00Z",
-      },
-    ],
-    tags: ["calendario", "error-500", "urgente"],
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T11:30:00Z",
-    lastResponseAt: "2024-01-15T11:30:00Z",
-  },
-  {
-    id: "TK-002",
-    title: "Consulta sobre facturación mensual",
-    description:
-      "Necesito información sobre los cargos del mes pasado. No recibí la factura por email.",
-    status: "in_progress",
-    priority: "medium",
-    category: "billing",
-    userId: "user-2",
-    userName: "Dra. Ana Morales",
-    userEmail: "ana.morales@consultorio.com",
-    assignedToName: "Carlos Support",
-    companyId: "comp-2",
-    companyName: "Consultorio Morales",
-    attachments: [],
-    comments: [
-      {
-        id: "comment-2",
-        ticketId: "TK-002",
-        authorId: "support-1",
-        authorName: "Carlos Support",
-        authorRole: "support_agent",
-        content:
-          "Hola Dra. Morales, estoy revisando su facturación. Le enviaré los detalles en las próximas 2 horas.",
-        isInternal: false,
-        createdAt: "2024-01-14T14:20:00Z",
-        updatedAt: "2024-01-14T14:20:00Z",
-      },
-    ],
-    tags: ["facturación", "email"],
-    createdAt: "2024-01-14T09:15:00Z",
-    updatedAt: "2024-01-14T14:20:00Z",
-    lastResponseAt: "2024-01-14T14:20:00Z",
-  },
-  {
-    id: "TK-003",
-    title: "Solicitud: Recordatorios por WhatsApp",
-    description:
-      "Me gustaría que se agregue la función de enviar recordatorios automáticos por WhatsApp a mis pacientes.",
-    status: "waiting_response",
-    priority: "low",
-    category: "feature_request",
-    userId: "user-3",
-    userName: "Dr. Roberto Castillo",
-    userEmail: "roberto.castillo@dental.com",
-    assignedToName: "Laura Product",
-    companyId: "comp-3",
-    companyName: "Clínica Dental Castillo",
-    attachments: [],
-    comments: [
-      {
-        id: "comment-3",
-        ticketId: "TK-003",
-        authorId: "support-2",
-        authorName: "Laura Product",
-        authorRole: "support_agent",
-        content:
-          "Hola Dr. Castillo, esta función está en nuestro roadmap. ¿Podría decirnos qué tipo de recordatorios le gustaría enviar?",
-        isInternal: false,
-        createdAt: "2024-01-13T10:30:00Z",
-        updatedAt: "2024-01-13T10:30:00Z",
-      },
-    ],
-    tags: ["whatsapp", "recordatorios", "feature"],
-    createdAt: "2024-01-13T16:45:00Z",
-    updatedAt: "2024-01-14T11:30:00Z",
-    lastResponseAt: "2024-01-13T10:30:00Z",
-  },
-  {
-    id: "TK-004",
-    title: "Error 500 al generar reportes",
-    description:
-      "Cuando intento generar el reporte mensual de pacientes, aparece un error 500 en la página.",
-    status: "resolved",
-    priority: "urgent",
-    category: "bug_report",
-    userId: "user-4",
-    userName: "Dra. Patricia Herrera",
-    userEmail: "patricia.herrera@medica.com",
-    assignedToName: "Miguel Tech",
-    companyId: "comp-4",
-    companyName: "Centro Médico Herrera",
-    attachments: [],
-    comments: [
-      {
-        id: "comment-4",
-        ticketId: "TK-004",
-        authorId: "support-3",
-        authorName: "Miguel Tech",
-        authorRole: "support_agent",
-        content:
-          "Problema resuelto. Era un error en la consulta de base de datos. Ya está funcionando correctamente.",
-        isInternal: false,
-        createdAt: "2024-01-13T15:45:00Z",
-        updatedAt: "2024-01-13T15:45:00Z",
-      },
-    ],
-    tags: ["error-500", "reportes", "resuelto"],
-    createdAt: "2024-01-12T08:20:00Z",
-    updatedAt: "2024-01-13T15:45:00Z",
-    resolvedAt: "2024-01-13T15:45:00Z",
-    responseTime: 120,
-    resolutionTime: 1905,
-  },
-];
 
 const statusConfig = {
   open: {
@@ -255,24 +107,32 @@ const priorityConfig = {
   },
 };
 
-export default function AdminSupportPage() {
+interface AdminSupportPageProps {
+  tickets: Ticket[];
+  count: number;
+}
+
+export default function AdminSupportPage({
+  tickets,
+  count,
+}: AdminSupportPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<TicketPriority | "all">(
-    "all",
+  const [statusFilter, setStatusFilter] = useState<Ticket["status"] | "all">(
+    "all"
   );
+  const [priorityFilter, setPriorityFilter] = useState<
+    Ticket["priority"] | "all"
+  >("all");
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [newComment, setNewComment] = useState("");
-  const [newStatus, setNewStatus] = useState<TicketStatus>("open");
 
   const filteredTickets = useMemo(() => {
-    return mockTickets.filter((ticket) => {
+    return tickets.filter((ticket) => {
       const matchesSearch =
         searchTerm === "" ||
-        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
@@ -282,7 +142,7 @@ export default function AdminSupportPage() {
 
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [searchTerm, statusFilter, priorityFilter]);
+  }, [tickets, searchTerm, statusFilter, priorityFilter]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-GT", {
@@ -292,21 +152,6 @@ export default function AdminSupportPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const handleStatusChange = (ticketId: string, newStatus: TicketStatus) => {
-    // Aquí iría la lógica para actualizar el estado del ticket
-    console.log(`Cambiando estado del ticket ${ticketId} a ${newStatus}`);
-  };
-
-  const handleAddComment = () => {
-    if (!selectedTicket || !newComment.trim()) return;
-
-    // Aquí iría la lógica para agregar el comentario
-    console.log(
-      `Agregando comentario al ticket ${selectedTicket.id}: ${newComment}`,
-    );
-    setNewComment("");
   };
 
   return (
@@ -322,197 +167,16 @@ export default function AdminSupportPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue="tickets" className="space-y-6">
           <TabsList className="bg-muted">
-            <TabsTrigger
-              value="overview"
-              className="data-[state=active]:bg-background"
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Resumen
-            </TabsTrigger>
             <TabsTrigger
               value="tickets"
               className="data-[state=active]:bg-background"
             >
               <MessageSquare className="h-4 w-4 mr-2" />
-              Tickets
-            </TabsTrigger>
-            <TabsTrigger
-              value="analytics"
-              className="data-[state=active]:bg-background"
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Analíticas
+              Tickets ({count})
             </TabsTrigger>
           </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Tickets
-                  </CardTitle>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">
-                    {mockStats.total}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    +12% desde el mes pasado
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Pendientes
-                  </CardTitle>
-                  <AlertCircle className="h-4 w-4 text-orange-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">
-                    {mockStats.open +
-                      mockStats.inProgress +
-                      mockStats.waitingResponse}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Requieren atención
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Tiempo Respuesta
-                  </CardTitle>
-                  <Timer className="h-4 w-4 text-blue-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">
-                    {mockStats.averageResponseTime}min
-                  </div>
-                  <p className="text-xs text-muted-foreground">Promedio</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Satisfacción
-                  </CardTitle>
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">
-                    {mockStats.satisfactionScore}/5
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Puntuación promedio
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">
-                    Tickets Recientes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {mockTickets.slice(0, 5).map((ticket) => {
-                    const StatusIcon = statusConfig[ticket.status].icon;
-                    return (
-                      <div
-                        key={ticket.id}
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <StatusIcon className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium text-foreground text-sm">
-                              {ticket.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {ticket.userName}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge className={statusConfig[ticket.status].color}>
-                          {statusConfig[ticket.status].label}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">
-                    Distribución por Estado
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm text-foreground">
-                          Abiertos
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {mockStats.open}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm text-foreground">
-                          En Progreso
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {mockStats.inProgress}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                        <span className="text-sm text-foreground">
-                          Esperando
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {mockStats.waitingResponse}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-foreground">
-                          Resueltos
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {mockStats.resolved}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           {/* Tickets Tab */}
           <TabsContent value="tickets" className="space-y-6">
@@ -523,7 +187,7 @@ export default function AdminSupportPage() {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Buscar tickets, clientes, empresas..."
+                      placeholder="Buscar tickets, cliente, email..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 bg-background border-border"
@@ -533,7 +197,7 @@ export default function AdminSupportPage() {
                   <Select
                     value={statusFilter}
                     onValueChange={(value) =>
-                      setStatusFilter(value as TicketStatus | "all")
+                      setStatusFilter(value as Ticket["status"] | "all")
                     }
                   >
                     <SelectTrigger className="w-[140px] bg-background border-border">
@@ -554,7 +218,7 @@ export default function AdminSupportPage() {
                   <Select
                     value={priorityFilter}
                     onValueChange={(value) =>
-                      setPriorityFilter(value as TicketPriority | "all")
+                      setPriorityFilter(value as Ticket["priority"] | "all")
                     }
                   >
                     <SelectTrigger className="w-[140px] bg-background border-border">
@@ -603,7 +267,7 @@ export default function AdminSupportPage() {
                             <div className="flex items-start justify-between">
                               <div>
                                 <h3 className="font-semibold text-foreground text-lg">
-                                  {ticket.title}
+                                  {ticket.subject}
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
                                   #{ticket.id}
@@ -637,40 +301,14 @@ export default function AdminSupportPage() {
                                 {ticket.userName}
                               </div>
                               <div className="flex items-center gap-1">
-                                <Building className="h-4 w-4" />
-                                {ticket.companyName}
+                                <Mail className="h-4 w-4" />
+                                {ticket.userEmail}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" />
                                 {formatDate(ticket.createdAt)}
                               </div>
-                              {ticket.comments.length > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <MessageSquare className="h-4 w-4" />
-                                  {ticket.comments.length} comentarios
-                                </div>
-                              )}
-                              {ticket.assignedToName && (
-                                <div className="flex items-center gap-1">
-                                  <Users className="h-4 w-4" />
-                                  Asignado a: {ticket.assignedToName}
-                                </div>
-                              )}
                             </div>
-
-                            {ticket.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {ticket.tags.map((tag) => (
-                                  <Badge
-                                    key={tag}
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
                           </div>
 
                           <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
@@ -686,10 +324,10 @@ export default function AdminSupportPage() {
                                   Ver Detalles
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-background border-border">
+                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-background border-border">
                                 <DialogHeader>
                                   <DialogTitle className="text-foreground">
-                                    {selectedTicket?.title} - #
+                                    {selectedTicket?.subject} - #
                                     {selectedTicket?.id}
                                   </DialogTitle>
                                 </DialogHeader>
@@ -699,7 +337,7 @@ export default function AdminSupportPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                       <div>
                                         <Label className="text-foreground">
-                                          Cliente
+                                          Usuario
                                         </Label>
                                         <p className="text-muted-foreground">
                                           {selectedTicket.userName}
@@ -710,48 +348,27 @@ export default function AdminSupportPage() {
                                       </div>
                                       <div>
                                         <Label className="text-foreground">
-                                          Empresa
+                                          Sistema Origen
                                         </Label>
                                         <p className="text-muted-foreground">
-                                          {selectedTicket.companyName}
+                                          {selectedTicket.sourceSystem}
                                         </p>
                                       </div>
                                       <div>
                                         <Label className="text-foreground">
                                           Estado Actual
                                         </Label>
-                                        <div className="mt-1">
-                                          <Select
-                                            value={selectedTicket.status}
-                                            onValueChange={(value) =>
-                                              handleStatusChange(
-                                                selectedTicket.id,
-                                                value as TicketStatus,
-                                              )
-                                            }
-                                          >
-                                            <SelectTrigger className="w-full bg-background border-border">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-background border-border">
-                                              <SelectItem value="open">
-                                                Abierto
-                                              </SelectItem>
-                                              <SelectItem value="in_progress">
-                                                En Progreso
-                                              </SelectItem>
-                                              <SelectItem value="waiting_response">
-                                                Esperando Respuesta
-                                              </SelectItem>
-                                              <SelectItem value="resolved">
-                                                Resuelto
-                                              </SelectItem>
-                                              <SelectItem value="closed">
-                                                Cerrado
-                                              </SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
+                                        <Badge
+                                          className={
+                                            statusConfig[selectedTicket.status]
+                                              .color
+                                          }
+                                        >
+                                          {
+                                            statusConfig[selectedTicket.status]
+                                              .label
+                                          }
+                                        </Badge>
                                       </div>
                                       <div>
                                         <Label className="text-foreground">
@@ -784,110 +401,10 @@ export default function AdminSupportPage() {
                                         </p>
                                       </div>
                                     </div>
-
-                                    {/* Comments */}
-                                    <div>
-                                      <Label className="text-foreground">
-                                        Comentarios
-                                      </Label>
-                                      <div className="mt-2 space-y-4">
-                                        {selectedTicket.comments.map(
-                                          (comment) => (
-                                            <div
-                                              key={comment.id}
-                                              className="p-4 bg-muted rounded-lg"
-                                            >
-                                              <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                  <span className="font-medium text-foreground">
-                                                    {comment.authorName}
-                                                  </span>
-                                                  <Badge
-                                                    variant={
-                                                      comment.authorRole ===
-                                                      "user"
-                                                        ? "secondary"
-                                                        : "default"
-                                                    }
-                                                    className="text-xs"
-                                                  >
-                                                    {comment.authorRole ===
-                                                    "user"
-                                                      ? "Cliente"
-                                                      : "Soporte"}
-                                                  </Badge>
-                                                </div>
-                                                <span className="text-xs text-muted-foreground">
-                                                  {formatDate(
-                                                    comment.createdAt,
-                                                  )}
-                                                </span>
-                                              </div>
-                                              <p className="text-foreground">
-                                                {comment.content}
-                                              </p>
-                                            </div>
-                                          ),
-                                        )}
-
-                                        {/* Add Comment */}
-                                        <div className="space-y-2">
-                                          <Label
-                                            htmlFor="new-comment"
-                                            className="text-foreground"
-                                          >
-                                            Agregar Comentario
-                                          </Label>
-                                          <Textarea
-                                            id="new-comment"
-                                            value={newComment}
-                                            onChange={(e) =>
-                                              setNewComment(e.target.value)
-                                            }
-                                            placeholder="Escribe tu respuesta..."
-                                            className="bg-background border-border"
-                                          />
-                                          <Button
-                                            onClick={handleAddComment}
-                                            size="sm"
-                                          >
-                                            <Send className="h-4 w-4 mr-2" />
-                                            Enviar Respuesta
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </div>
                                   </div>
                                 )}
                               </DialogContent>
                             </Dialog>
-
-                            <Select
-                              value={ticket.status}
-                              onValueChange={(value) =>
-                                handleStatusChange(
-                                  ticket.id,
-                                  value as TicketStatus,
-                                )
-                              }
-                            >
-                              <SelectTrigger className="w-full sm:w-32 lg:w-full bg-background border-border">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-background border-border">
-                                <SelectItem value="open">Abierto</SelectItem>
-                                <SelectItem value="in_progress">
-                                  En Progreso
-                                </SelectItem>
-                                <SelectItem value="waiting_response">
-                                  Esperando
-                                </SelectItem>
-                                <SelectItem value="resolved">
-                                  Resuelto
-                                </SelectItem>
-                                <SelectItem value="closed">Cerrado</SelectItem>
-                              </SelectContent>
-                            </Select>
                           </div>
                         </div>
                       </CardContent>
@@ -895,90 +412,6 @@ export default function AdminSupportPage() {
                   );
                 })
               )}
-            </div>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">
-                    Métricas de Rendimiento
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">
-                      Tiempo promedio de respuesta
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {mockStats.averageResponseTime} min
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">
-                      Tiempo promedio de resolución
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {mockStats.averageResolutionTime} min
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">
-                      Puntuación de satisfacción
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {mockStats.satisfactionScore}/5
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">
-                      Tasa de resolución
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {Math.round((mockStats.resolved / mockStats.total) * 100)}
-                      %
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">
-                    Tickets por Categoría
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">
-                      Problemas Técnicos
-                    </span>
-                    <span className="font-bold text-foreground">45%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Facturación</span>
-                    <span className="font-bold text-foreground">25%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">
-                      Solicitudes de Función
-                    </span>
-                    <span className="font-bold text-foreground">15%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">
-                      Reportes de Error
-                    </span>
-                    <span className="font-bold text-foreground">10%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Otros</span>
-                    <span className="font-bold text-foreground">5%</span>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
         </Tabs>

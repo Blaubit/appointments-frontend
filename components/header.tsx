@@ -224,7 +224,7 @@ export function Header({
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/help" className="flex items-center">
+                  <Link href="/support" className="flex items-center">
                     <HelpCircle className="h-4 w-4 mr-2" />
                     Ayuda y Soporte
                   </Link>
