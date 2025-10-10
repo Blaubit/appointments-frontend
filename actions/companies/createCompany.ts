@@ -5,28 +5,7 @@ import axios, { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Company, CompanyRegistrationPayload } from "@/types";
-import { getSession, getUser } from "@/actions/auth";
-
-interface CreateCompanyParams {
-  name: string;
-  companyType: string;
-  address: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-  description?: string;
-  // Admin data
-  adminFullName: string;
-  adminEmail: string;
-  adminPassword: string;
-  adminBio?: string;
-  // Subscription data
-  planId: string;
-  startDate: string;
-  endDate: string;
-  createdById: string;
-}
+import { getSession } from "@/actions/auth";
 
 export default async function createCompany({
   // company data
@@ -41,7 +20,6 @@ export default async function createCompany({
   //company admin data
   adminFullName,
   adminEmail,
-  adminPassword,
   adminBio,
   // subscription data
   planId,
@@ -70,7 +48,6 @@ export default async function createCompany({
       // Admin data
       adminFullName: adminFullName.trim(),
       adminEmail: adminEmail.trim(),
-      adminPassword: adminPassword, // se tiene que quitar esto
       adminBio: adminBio?.trim() || "",
       // Subscription data
       planId,
