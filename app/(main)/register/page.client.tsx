@@ -25,7 +25,6 @@ import {
   ArrowRight,
   AlertCircle,
   RefreshCw,
-  WifiOff,
   ServerCrash,
   Lock,
   Ban,
@@ -108,14 +107,12 @@ export default function RegisterClient({
       city: "",
       state: "",
       postal_code: "",
-      country: "España",
+      country: "",
       description: "",
     },
     user: {
       email: "",
       fullName: "",
-      password: "",
-      confirmPassword: "",
       bio: "",
     },
   });
@@ -443,13 +440,7 @@ export default function RegisterClient({
       ...formData,
       user: userData,
     });
-    clearRelevantErrors([
-      "fullName",
-      "email",
-      "password",
-      "confirmPassword",
-      "bio",
-    ]);
+    clearRelevantErrors(["fullName", "email", "bio"]);
     clearRegistrationError();
   };
 
@@ -560,7 +551,6 @@ export default function RegisterClient({
       // Admin data
       adminFullName: formData.user.fullName.trim(),
       adminEmail: formData.user.email.trim(),
-      adminPassword: formData.user.password,
       adminBio:
         formData.user.bio?.trim() ||
         "Administrador de empresa médica con experiencia en gestión y atención al paciente.",

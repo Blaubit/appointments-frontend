@@ -29,7 +29,6 @@ interface CompanyRegistrationPayload {
   // Admin data
   adminFullName: string;
   adminEmail: string;
-  adminPassword: string;
   adminBio: string;
   // Subscription data
   planId: string;
