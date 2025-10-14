@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { Company, CompanyRegistrationPayload } from "@/types";
 import { getSession, getUser } from "@/actions/auth";
 
+
 export default async function createCompany({
   // company data
   companyName: name,

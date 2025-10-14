@@ -107,7 +107,7 @@ export default function RegisterClient({
       city: "",
       state: "",
       postal_code: "",
-      country: "España",
+      country: "",
       description: "",
     },
     user: {
