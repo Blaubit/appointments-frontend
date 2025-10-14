@@ -16,6 +16,7 @@ import { Appointment } from "@/types";
 import { AppointmentActions } from "./appointment-actions";
 import { useState } from "react";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 interface AppointmentsTableProps {
   appointments: Appointment[];
@@ -222,7 +223,7 @@ export function AppointmentsTable({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  Q{appointment.payment.amount}
+                  {formatCurrency(Number(appointment.payment.amount))}
                 </TableCell>
                 <TableCell className="text-center" data-actions>
                   <AppointmentActions

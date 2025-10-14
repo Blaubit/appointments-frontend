@@ -7,26 +7,6 @@ import { revalidatePath } from "next/cache";
 import { Company, CompanyRegistrationPayload } from "@/types";
 import { getSession, getUser } from "@/actions/auth";
 
-interface CreateCompanyParams {
-  name: string;
-  companyType: string;
-  address: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-  description?: string;
-  // Admin data
-  adminFullName: string;
-  adminEmail: string;
-  adminBio?: string;
-  // Subscription data
-  planId: string;
-  startDate: string;
-  endDate: string;
-  createdById: string;
-}
-
 export default async function createCompany({
   // company data
   companyName: name,

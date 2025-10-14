@@ -26,6 +26,7 @@ import { PaymentDialog } from "@/components/admin/payment-dialog";
 import { ViewDialog } from "./viewSubscriptionDialog";
 import { create } from "@/actions/subscription/createPayment";
 import { PaymentDto } from "@/types/dto/subscription/payment.dto";
+import formatCurrency from "@/utils/functions/formatCurrency";
 interface CompaniesTabProps {
   subscriptions: Subscription[];
   onOpenPaymentModal: (subscription: Subscription) => void;
@@ -117,13 +118,6 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
   };
 
   const formatDate = (dateString: string) => {

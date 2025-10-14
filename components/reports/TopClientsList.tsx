@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 export function TopClientsList({ topClients }: { topClients: any[] }) {
   return (
@@ -36,7 +37,7 @@ export function TopClientsList({ topClients }: { topClients: any[] }) {
                     {client.name}
                   </span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    ${client.revenue}
+                    Q {client.revenue}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

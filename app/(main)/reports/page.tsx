@@ -1,5 +1,6 @@
 // Archivo: page.tsx (Server Component adaptado a datos backend)
 
+import formatCurrency from "@/utils/functions/formatCurrency";
 import ReportsPageClient from "./page.client";
 import { findAll } from "@/actions/reports/findReportsDashboard";
 
@@ -15,7 +16,7 @@ export default async function ReportsPage() {
     {
       title: "Ingresos Totales",
       count: report.income?.currentMonth?.total
-        ? `${report.income.currentMonth.currency === "GTQ" ? "Q" : "$"}${report.income.currentMonth.total.toLocaleString()}`
+        ? `${formatCurrency(report.income.currentMonth.total)}`
         : "-",
       variant: "total",
       icon: "DollarSign",
