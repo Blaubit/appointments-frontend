@@ -90,7 +90,6 @@ export default async function SettingsPage({
       : findAll({ page: 1, limit: 10 }), // Cargar página 1 por defecto
     findAllRoles(),
   ]);
-
   return (
     <SettingsPageClient
       profileData={profileData}

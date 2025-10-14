@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, Clock, DollarSign } from "lucide-react";
 import type { Service as ServiceType } from "@/types";
 import { ServiceCardActions } from "./ServiceCardActions";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 export function ServicesCardsGrid({
   services,
@@ -28,7 +29,7 @@ export function ServicesCardsGrid({
                   <Clock className="h-4 w-4" /> {s.durationMinutes} minutos
                 </p>
                 <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" /> Q{s.price}
+                  {formatCurrency(Number(s.price))}
                 </p>
               </div>
               <ServiceCardActions

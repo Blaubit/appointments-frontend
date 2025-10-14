@@ -581,13 +581,8 @@ export default function RegisterClient({
     clearRegistrationError();
 
     try {
-      console.log("Iniciando registro completo de empresa...");
       const payload = buildRegistrationPayload();
-      console.log("Payload a enviar:", payload);
-
       const response = await onRegisterCompanyComplete(payload);
-      console.log("Respuesta del servidor:", response);
-
       // ✅ Verificar si es una ErrorResponse
       if (
         response &&
@@ -601,7 +596,6 @@ export default function RegisterClient({
 
       // ✅ Verificar si es una SuccessResponse<Company>
       if (response && "data" in response && response.data) {
-        console.log("Success Response recibido:", response);
         setRegistrationResult(response);
         setCurrentStep(5);
         return;

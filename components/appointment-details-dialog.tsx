@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import formatCurrency from "@/utils/functions/formatCurrency";
 import {
   Calendar,
   Phone,
@@ -150,13 +151,6 @@ export function AppointmentDetailsDialog({
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "GTQ",
-    }).format(amount);
   };
 
   const formatDateTime = (date: string, time: string) => {

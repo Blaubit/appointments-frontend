@@ -139,7 +139,7 @@ export function SettingsPageClient({
   const [scheduleSettings, setScheduleSettings] = useState(
     initialScheduleSettings
   );
-  const [securityData, setSecurityData] = useState(initialSecurityData);
+  const [securityData] = useState(initialSecurityData);
   const [appearanceSettings, setAppearanceSettings] = useState(
     initialAppearanceSettings
   );
@@ -288,7 +288,6 @@ export function SettingsPageClient({
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Saving profile:", profileData);
     } catch (error) {
       console.error("Error saving profile:", error);
     } finally {
@@ -302,7 +301,6 @@ export function SettingsPageClient({
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Saving business info:", companyData);
 
       setProfileData((prev) => ({
         ...prev,
@@ -322,7 +320,6 @@ export function SettingsPageClient({
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Saving user data:", userData);
     } catch (error) {
       console.error("Error saving user data:", error);
     } finally {
@@ -333,7 +330,6 @@ export function SettingsPageClient({
   const handleDeleteUser = async (userId: string) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("Deleting user:", userId);
     } catch (error) {
       console.error("Error deleting user:", error);
     }
@@ -343,7 +339,6 @@ export function SettingsPageClient({
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Saving schedule:", scheduleSettings);
     } catch (error) {
       console.error("Error saving schedule:", error);
     } finally {

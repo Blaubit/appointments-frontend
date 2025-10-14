@@ -5,7 +5,8 @@ import axios, { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Company, CompanyRegistrationPayload } from "@/types";
-import { getSession } from "@/actions/auth";
+import { getSession, getUser } from "@/actions/auth";
+
 
 export default async function createCompany({
   // company data
