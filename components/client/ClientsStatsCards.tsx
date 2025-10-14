@@ -73,7 +73,7 @@ export function ClientsStatsCards({ stats }: ClientsStatsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-xl sm:text-2xl font-bold">
-            {stats.averageRating.toFixed(1)}
+            {stats.averageRating}
           </div>
           <p className="text-xs text-muted-foreground">
             {stats.totalClients > 0 ? "De 5.0 estrellas" : "Sin valoraciones"}

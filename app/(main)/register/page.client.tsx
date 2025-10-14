@@ -25,7 +25,6 @@ import {
   ArrowRight,
   AlertCircle,
   RefreshCw,
-  WifiOff,
   ServerCrash,
   Lock,
   Ban,
@@ -114,8 +113,6 @@ export default function RegisterClient({
     user: {
       email: "",
       fullName: "",
-      password: "",
-      confirmPassword: "",
       bio: "",
     },
   });
@@ -443,13 +440,7 @@ export default function RegisterClient({
       ...formData,
       user: userData,
     });
-    clearRelevantErrors([
-      "fullName",
-      "email",
-      "password",
-      "confirmPassword",
-      "bio",
-    ]);
+    clearRelevantErrors(["fullName", "email", "bio"]);
     clearRegistrationError();
   };
 
@@ -560,7 +551,6 @@ export default function RegisterClient({
       // Admin data
       adminFullName: formData.user.fullName.trim(),
       adminEmail: formData.user.email.trim(),
-      adminPassword: formData.user.password,
       adminBio:
         formData.user.bio?.trim() ||
         "Administrador de empresa médica con experiencia en gestión y atención al paciente.",
@@ -591,13 +581,8 @@ export default function RegisterClient({
     clearRegistrationError();
 
     try {
-      console.log("Iniciando registro completo de empresa...");
       const payload = buildRegistrationPayload();
-      console.log("Payload a enviar:", payload);
-
       const response = await onRegisterCompanyComplete(payload);
-      console.log("Respuesta del servidor:", response);
-
       // ✅ Verificar si es una ErrorResponse
       if (
         response &&
@@ -611,7 +596,6 @@ export default function RegisterClient({
 
       // ✅ Verificar si es una SuccessResponse<Company>
       if (response && "data" in response && response.data) {
-        console.log("Success Response recibido:", response);
         setRegistrationResult(response);
         setCurrentStep(5);
         return;
