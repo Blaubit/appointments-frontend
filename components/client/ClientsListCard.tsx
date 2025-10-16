@@ -83,6 +83,7 @@ export function ClientsListCard({
             getInitials={getInitials}
             renderStars={renderStars}
             formatDate={formatDate}
+            onWhatsApp={onWhatsApp}
           />
         )}
       </CardContent>
