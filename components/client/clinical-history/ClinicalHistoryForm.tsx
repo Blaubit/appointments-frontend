@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Accordion } from "@/components/ui/accordion";
 import { Save, Loader2 } from "lucide-react";
 import { savePatientRecord } from "@/actions/clients/create-history";
+import { updatePatientRecord } from "@/actions/clients/update-history"; // NUEVA IMPORTACIÓN
 import { PatientRecord } from "@/types";
 import { PersonalInfoSection } from "@/components/client/clinical-history/PersonalInfoSelection";
 import { ChronicDiseasesSection } from "@/components/client/clinical-history/ChronicDiseasesSection";
@@ -95,13 +96,17 @@ export function ClinicalHistoryForm({
     }));
   };
 
-  // Manejador de envío
+  // Manejador de envío - MODIFICADO PARA USAR LA ACTION CORRECTA
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const result = await savePatientRecord(clientId, formData);
+      // Usar la action correcta según el modo
+      const result =
+        mode === "create"
+          ? await savePatientRecord(clientId, formData)
+          : await updatePatientRecord(clientId, formData);
 
       if (result.success) {
         toast({
@@ -285,7 +290,7 @@ export function ClinicalHistoryForm({
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Guardando...
+                    {mode === "create" ? "Guardando..." : "Actualizando..."}
                   </>
                 ) : (
                   <>

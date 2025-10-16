@@ -203,3 +203,83 @@ export interface ClinicalHistoryResponse {
     clinicalHistory: ClinicalHistoryData;
   };
 }
+// ========== FUNCIÓN HELPER PARA TRANSFORMAR DATOS ==========
+
+/**
+ * Transforma la respuesta del API (ClinicalHistoryResponse)
+ * al formato que usa el formulario (PatientRecord)
+ */
+export function transformClinicalHistoryToPatientRecord(
+  response: ClinicalHistoryResponse["data"]
+): PatientRecord {
+  return {
+    // Información personal
+    gender: response.personalInfo?.gender || "",
+    nationalId: response.personalInfo?.nationalId || "",
+    birthDate: response.personalInfo?.birthDate || "",
+    birthPlace: response.personalInfo?.birthPlace || "",
+    address: response.personalInfo?.address || "",
+    occupation: response.personalInfo?.occupation || "",
+    maritalStatus: response.personalInfo?.maritalStatus || "",
+
+    // Historial clínico
+    chronicDiseases: response.clinicalHistory?.chronicDiseases || [],
+    allergies: response.clinicalHistory?.allergies || [],
+    hospitalizations: response.clinicalHistory?.hospitalizations || [],
+    currentMedications: response.clinicalHistory?.currentMedications || [],
+    familyHistory: response.clinicalHistory?.familyHistory || [],
+    habits: response.clinicalHistory?.habits || [],
+  };
+}
+
+/**
+ * Limpia los campos 'id' de los arrays antes de enviar al API
+ * El API no acepta IDs en POST/PATCH, solo los devuelve en GET
+ */
+export function cleanPatientRecordForSubmit(
+  data: PatientRecord
+): PatientRecord {
+  return {
+    gender: data.gender,
+    nationalId: data.nationalId,
+    birthDate: data.birthDate,
+    birthPlace: data.birthPlace,
+    address: data.address,
+    occupation: data.occupation,
+    maritalStatus: data.maritalStatus,
+
+    // Limpiar IDs de todos los arrays
+    chronicDiseases: data.chronicDiseases.map(({ id, ...rest }) => rest),
+    allergies: data.allergies.map(({ id, ...rest }) => rest),
+    hospitalizations: data.hospitalizations.map(({ id, ...rest }) => rest),
+    currentMedications: data.currentMedications.map(({ id, ...rest }) => rest),
+    familyHistory: data.familyHistory.map(({ id, ...rest }) => rest),
+    habits: data.habits.map(({ id, ...rest }) => rest),
+  };
+}
+
+/**
+ * Transforma el formato del formulario (PatientRecord)
+ * al formato que espera el API para crear/actualizar
+ */
+export function transformPatientRecordToApiPayload(data: PatientRecord) {
+  return {
+    personalInfo: {
+      gender: data.gender,
+      nationalId: data.nationalId,
+      birthDate: data.birthDate,
+      birthPlace: data.birthPlace,
+      address: data.address,
+      occupation: data.occupation,
+      maritalStatus: data.maritalStatus,
+    },
+    clinicalHistory: {
+      chronicDiseases: data.chronicDiseases,
+      allergies: data.allergies,
+      hospitalizations: data.hospitalizations,
+      currentMedications: data.currentMedications,
+      familyHistory: data.familyHistory,
+      habits: data.habits,
+    },
+  };
+}
