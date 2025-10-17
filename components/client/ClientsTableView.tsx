@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -21,11 +22,14 @@ import {
   Trash2,
   Eye,
   Phone,
-  Mail,
   Calendar,
   MoreHorizontal,
+  FileText,
+  History,
 } from "lucide-react";
+import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { ClientPagination } from "@/components/ui/client-pagination";
+import { ClinicalHistoryDialog } from "@/components/client/clinical-history/ClinicalHistoryDialog";
 import type { Client, Pagination } from "@/types";
 import { JSX } from "react";
 
@@ -37,6 +41,7 @@ interface ClientsTableViewProps {
   onDelete: (client: Client) => void;
   onCall: (client: Client) => void;
   onEmail: (client: Client) => void;
+  onWhatsApp: (phone: string, message: string) => void;
   onSchedule: (client: Client) => void;
   getInitials: (name: string) => string;
   renderStars: (rating: number) => JSX.Element[];
@@ -51,11 +56,20 @@ export function ClientsTableView({
   onDelete,
   onCall,
   onEmail,
+  onWhatsApp,
   onSchedule,
   getInitials,
   renderStars,
   formatDate,
 }: ClientsTableViewProps) {
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isClinicalHistoryOpen, setIsClinicalHistoryOpen] = useState(false);
+
+  const handleOpenClinicalHistory = (client: Client) => {
+    setSelectedClient(client);
+    setIsClinicalHistoryOpen(true);
+  };
+
   return (
     <>
       <div className="overflow-x-auto">
@@ -128,8 +142,24 @@ export function ClientsTableView({
                         Llamar
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEmail(client)}>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Enviar Email
+                        <History className="h-4 w-4 mr-2" />
+                        Ver historial
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleOpenClinicalHistory(client)}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Historial Clínico
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onWhatsApp(client.phone, "Buen dia")}
+                      >
+                        <WhatsappIcon
+                          className="text-green-500 dark:bg-gray-900"
+                          width={16}
+                          height={16}
+                        />
+                        WhatsApp
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onSchedule(client)}>
                         <Calendar className="h-4 w-4 mr-2" />
@@ -159,6 +189,15 @@ export function ClientsTableView({
           hasPreviousPage={pagination.hasPreviousPage}
           totalItems={pagination.totalItems}
           itemsPerPage={pagination.itemsPerPage}
+        />
+      )}
+
+      {/* Dialog de Historial Clínico */}
+      {selectedClient && (
+        <ClinicalHistoryDialog
+          open={isClinicalHistoryOpen}
+          onOpenChange={setIsClinicalHistoryOpen}
+          client={selectedClient}
         />
       )}
     </>
