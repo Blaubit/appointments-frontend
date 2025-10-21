@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
-
+import formatCurrency from "@/utils/functions/formatCurrency";
 interface BillingClientProps {
   currentSubscription: Subscription;
   availablePlans: Plan[];
@@ -90,13 +90,6 @@ export default function BillingClient({
     setShowConfirmModal(true);
   };
 
-  const formatPrice = (price: string) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(parseFloat(price));
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
       year: "numeric",
@@ -133,7 +126,7 @@ export default function BillingClient({
                 <div className="mt-4 space-y-2">
                   <p className="text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">Precio:</span>{" "}
-                    {formatPrice(String(currentPlan.price))}
+                    {formatCurrency(currentPlan.price)}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">
@@ -233,7 +226,7 @@ export default function BillingClient({
                   </p>
                   <div className="space-y-1">
                     <p className="text-2xl font-bold text-foreground">
-                      {formatPrice(String(plan.price))}
+                      {formatCurrency(plan.price)}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       por {plan.billingCycle} días
@@ -262,9 +255,7 @@ export default function BillingClient({
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       Nuevo precio:{" "}
-                      {selectedPlan
-                        ? formatPrice(String(selectedPlan.price))
-                        : ""}{" "}
+                      {selectedPlan ? formatCurrency(selectedPlan.price) : ""}{" "}
                       por {selectedPlan?.billingCycle} días
                     </p>
                   </div>

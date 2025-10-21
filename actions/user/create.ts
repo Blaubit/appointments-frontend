@@ -13,13 +13,11 @@ export async function create({
   roleId,
   fullName,
   email,
-  password,
   bio,
 }: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();
   try {
-    const companyId = await getCompanyId();
     // Validar que tenemos companyId
     if (!companyId) {
       return {
@@ -42,7 +40,6 @@ export async function create({
       roleId,
       fullName,
       email,
-      password,
       bio,
     };
 

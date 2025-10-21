@@ -145,13 +145,13 @@ export default function CalendarPageClient({
     "Diciembre",
   ];
   const dayNamesLong = [
-    "Domingo",
     "Lunes",
     "Martes",
     "Miércoles",
     "Jueves",
     "Viernes",
     "Sábado",
+    "Domingo",
   ];
 
   return (
@@ -168,7 +168,6 @@ export default function CalendarPageClient({
           isLocked={isProfessionalLocked}
         />
       )}
-
       {/* Calendar Controls */}
       <Card className="mb-8">
         <CardHeader>
@@ -290,7 +289,7 @@ export default function CalendarPageClient({
           </div>
         </CardHeader>
       </Card>
-
+      schedule
       {/* Calendar Views */}
       <Card>
         <CardContent className="p-6">
@@ -332,7 +331,6 @@ export default function CalendarPageClient({
           )}
         </CardContent>
       </Card>
-
       {/* Appointment Details Dialog */}
       <AppointmentDetailsDialog
         appointmentId={selectedAppointmentId}

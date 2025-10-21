@@ -23,11 +23,6 @@ export class CreateUserDto {
   @IsEmail({}, { message: "El correo electrónico no es válido" })
   email!: string;
 
-  @IsString({ message: "La contraseña debe ser un texto" })
-  @MinLength(8, { message: "La contraseña debe tener al menos 8 caracteres" })
-  @MaxLength(50, { message: "La contraseña no debe superar los 50 caracteres" })
-  password!: string;
-
   @IsString({ message: "La biografía debe ser un texto" })
   @MinLength(10, { message: "La biografía debe tener al menos 10 caracteres" })
   @MaxLength(500, {
