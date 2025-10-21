@@ -96,7 +96,7 @@ export default function ClientSupportForm({
     const payload = {
       subject: form.subject,
       description: form.description,
-      priority: form.priority,
+      priority: "medium", // sended medium always as default
       userId: form.userId,
       userName: form.userName,
       userEmail: form.userEmail,
@@ -131,14 +131,7 @@ export default function ClientSupportForm({
               <p className="text-muted-foreground mb-4">
                 Hemos recibido tu solicitud. Te contactaremos pronto por email.
               </p>
-              <div className="bg-muted rounded-lg p-4 mb-6">
-                <p className="text-sm text-muted-foreground mb-1">
-                  ID externo de usuario:
-                </p>
-                <p className="font-mono font-bold text-foreground">
-                  {form.externalId}
-                </p>
-              </div>
+
               <Button
                 onClick={() => {
                   setSubmitted(false);
@@ -225,31 +218,6 @@ export default function ClientSupportForm({
                     className="bg-background border-border"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="priority" className="text-foreground">
-                    Prioridad *
-                  </Label>
-                  <Select value={form.priority} onValueChange={handlePriority}>
-                    <SelectTrigger className="bg-background border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border-border">
-                      {Object.entries(priorityInfo).map(([key, info]) => (
-                        <SelectItem key={key} value={key}>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`h-3 w-3 rounded-full ${info.color} inline-block`}
-                            />
-                            <span>{info.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground">
-                    {priorityInfo[form.priority].desc}
-                  </p>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="userName" className="text-foreground">
@@ -276,44 +244,7 @@ export default function ClientSupportForm({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="userRole" className="text-foreground">
-                      Rol
-                    </Label>
-                    <Input
-                      id="userRole"
-                      name="userRole"
-                      value={form.userRole}
-                      readOnly
-                      className="bg-muted border-border"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sourceSystem" className="text-foreground">
-                      Sistema Origen
-                    </Label>
-                    <Input
-                      id="sourceSystem"
-                      name="sourceSystem"
-                      value={form.sourceSystem}
-                      readOnly
-                      className="bg-muted border-border"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="externalId" className="text-foreground">
-                      ID Externo (ID de usuario)
-                    </Label>
-                    <Input
-                      id="externalId"
-                      name="externalId"
-                      value={form.externalId}
-                      readOnly
-                      className="bg-muted border-border"
-                    />
-                  </div>
-                </div>
+
                 {error && <div className="text-red-600 text-sm">{error}</div>}
                 <Button
                   type="submit"
@@ -348,9 +279,7 @@ export default function ClientSupportForm({
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium text-foreground">Email</p>
-                    <p className="text-sm text-muted-foreground">
-                      soporte@citasfacil.com
-                    </p>
+                    <p className="text-sm text-muted-foreground"></p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -360,7 +289,7 @@ export default function ClientSupportForm({
                       WhatsApp
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      +502 1234-5678
+                      +502 5926-9084
                     </p>
                   </div>
                 </div>

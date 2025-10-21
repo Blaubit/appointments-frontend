@@ -104,6 +104,38 @@ export function UserManagementForm({
     setUsers(initialUsers);
   }, [initialUsers]);
 
+  // Helper para normalizar/Resolver role (evita copiar roles por fallback)
+  const resolveRole = (roleInput: any): Role | null => {
+    if (!roleInput) return null;
+
+    // Si viene un ID o un string, buscar por id o por name
+    if (typeof roleInput === "string") {
+      const byId = roles.find((r) => r.id === roleInput);
+      if (byId) return byId;
+      const byName = roles.find((r) => r.name === roleInput);
+      if (byName) return byName;
+      return null;
+    }
+
+    // Si viene un objeto, preferimos mapear contra la lista de roles para obtener la forma completa
+    if (typeof roleInput === "object") {
+      if (typeof roleInput.id === "string") {
+        const byId = roles.find((r) => r.id === roleInput.id);
+        if (byId) return byId;
+        // Si no existe en la lista, devolver el objeto tal cual (asumiendo contiene name)
+        return roleInput;
+      }
+      if (typeof roleInput.name === "string") {
+        const byName = roles.find((r) => r.name === roleInput.name);
+        if (byName) return byName;
+        return roleInput;
+      }
+      return null;
+    }
+
+    return null;
+  };
+
   // Lógica de filtrado y paginación
   const filteredAndPaginatedData = useMemo(() => {
     if (useBackendPagination && meta) {
@@ -198,34 +230,28 @@ export function UserManagementForm({
     if (!canEdit) return;
 
     try {
+      const resolvedRole = resolveRole(userData.role);
+
       if (editingUser) {
-        setUsers((prev) =>
-          prev.map((user) =>
-            user.id === editingUser.id ? { ...user, ...userData } : user
-          )
-        );
-        await onSave({ type: "update", user: userData });
-      } else {
-        let roleObj = null;
-        if (typeof userData.role === "string") {
-          roleObj =
-            roles.find((r) => r.id === userData.role.id) || roles[0] || null;
-        } else if (
-          userData.role &&
-          typeof userData.role === "object" &&
-          typeof userData.role.id === "string"
-        ) {
-          roleObj = userData.role;
-        } else {
-          roleObj = roles[0] || null;
-        }
-        const enrichedUser = {
+        const updatedUser: User = {
+          ...editingUser,
           ...userData,
-          role: roleObj,
-        };
+          role: resolvedRole,
+        } as User;
+        // <-- devuelve un array: prev.map(...)
+        setUsers((prev) =>
+          prev.map((u) => (u.id === editingUser.id ? updatedUser : u))
+        );
+        await onSave({ type: "update", user: updatedUser });
+      } else {
+        const enrichedUser: User = { ...userData, role: resolvedRole } as User;
+        // <-- añade al array
         setUsers((prev) => [...prev, enrichedUser]);
         await onSave({ type: "create", user: enrichedUser });
       }
+
+      setIsUserFormOpen(false);
+      setEditingUser(null);
     } catch (error) {
       console.error("Error in handleUserFormSuccess:", error);
       toast({
@@ -314,7 +340,7 @@ export function UserManagementForm({
   };
 
   const getUserRoleName = (user: User): string => {
-    return user.role?.name || "Sin rol";
+    return user.role?.name || "";
   };
 
   const uniqueRoles = useMemo(() => {

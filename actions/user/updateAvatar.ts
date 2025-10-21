@@ -56,7 +56,6 @@ export async function updateAvatar({
 
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
-      revalidatePath("/profile");
       revalidatePath("/users");
 
       return {
