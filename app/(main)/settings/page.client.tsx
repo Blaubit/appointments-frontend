@@ -2,28 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { BusinessInfoForm } from "@/components/settings/bussines-form";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
 import {
   User as UserIcon,
   Building2,
@@ -31,15 +13,24 @@ import {
   Clock,
   Shield,
   Palette,
-  Trash2,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import { UserManagementForm } from "@/components/settings/user-management-form";
 import { ScheduleForm } from "@/components/settings/schedule-form";
 import { SecurityForm } from "@/components/settings/security-form";
 import { AppearenceForm } from "@/components/settings/appearence-form";
-import { Role, User, Company, Pagination, ScheduleSettings } from "@/types";
+import {
+  Role,
+  User,
+  Company,
+  Pagination,
+  ScheduleSettings,
+  SecurityData,
+} from "@/types";
 import { findAll as findAllUsers } from "@/actions/user/findAll";
+import { changePassword } from "@/actions/auth/change-password";
+import { useToast } from "@/hooks/use-toast";
+import { logout } from "@/actions/auth/logout";
 
 interface SettingsPageClientProps {
   profileData: User;
@@ -126,6 +117,7 @@ export function SettingsPageClient({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
 
   const tabFromUrl = searchParams.get("tab");
   const pageFromUrl = parseInt(searchParams.get("page") || "1");
@@ -139,7 +131,7 @@ export function SettingsPageClient({
   const [scheduleSettings, setScheduleSettings] = useState(
     initialScheduleSettings
   );
-  const [securityData] = useState(initialSecurityData);
+  const [securityData, setSecurityData] = useState(initialSecurityData);
   const [appearanceSettings, setAppearanceSettings] = useState(
     initialAppearanceSettings
   );
@@ -346,14 +338,71 @@ export function SettingsPageClient({
     }
   };
 
-  const handleSaveSecurity = async () => {
+  const handleSaveSecurity = async (securityFormData: SecurityData) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Saving security:", securityData);
+      // Validar que las contraseñas coincidan
+      if (securityFormData.newPassword !== securityFormData.confirmPassword) {
+        toast({
+          title: "Error de validación",
+          description: "Las contraseñas nuevas no coinciden",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Llamar a la action changePassword
+      const response = await changePassword({
+        currentPassword: securityFormData.currentPassword,
+        newPassword: securityFormData.newPassword,
+      });
+
+      // Validar que la respuesta sea exitosa (status entre 200-299)
+      if (response.status >= 200 && response.status < 300) {
+        toast({
+          title: "Éxito",
+          description:
+            "Contraseña cambiada correctamente. Se cerrará tu sesión por seguridad.",
+          variant: "default",
+        });
+
+        // Limpiar el formulario antes de cerrar sesión
+        setSecurityData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+          twoFactorEnabled: false,
+          loginAlerts: true,
+          sessionTimeout: 30,
+        });
+
+        // Esperar un poco antes de cerrar sesión para que el usuario vea el mensaje
+        setTimeout(async () => {
+          await logout();
+        }, 2000);
+      } else {
+        // Error en la respuesta
+        toast({
+          title: "Error",
+          description: response.message || "Error al cambiar la contraseña",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
     } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error al cambiar la contraseña";
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+
       console.error("Error saving security:", error);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -484,56 +533,6 @@ export function SettingsPageClient({
                 onSave={handleSaveSecurity}
                 isLoading={isLoading}
               />
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-red-600">
-                    Zona de Peligro
-                  </CardTitle>
-                  <CardDescription>
-                    Acciones irreversibles para tu cuenta
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
-                    <div>
-                      <h4 className="font-medium text-red-600">
-                        Eliminar Cuenta
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        Esta acción no se puede deshacer
-                      </p>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar Cuenta
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción eliminará permanentemente tu cuenta y
-                            todos los datos asociados. Esta acción no se puede
-                            deshacer.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleDeleteAccount}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Eliminar Cuenta
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
           )}
 

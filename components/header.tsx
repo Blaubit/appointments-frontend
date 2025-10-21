@@ -303,7 +303,10 @@ export function Header({
 
                 {/* Navigation Items */}
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center">
+                  <Link
+                    href="/settings?tab=profile"
+                    className="flex items-center"
+                  >
                     <UserIcon className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </Link>
