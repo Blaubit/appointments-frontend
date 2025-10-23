@@ -106,9 +106,9 @@ export default function PageClient({
           result &&
           "data" in result &&
           result.data &&
-          Array.isArray(result.data.services)
+          Array.isArray(result.data)
         ) {
-          setProfessionalServices(result.data.services);
+          setProfessionalServices(result.data);
         } else {
           console.error("Invalid services data structure:", result);
           setProfessionalServices([]);
@@ -186,10 +186,6 @@ export default function PageClient({
   // Cargar servicios cuando cambia el profesional - Corregido para usar Promise correctamente
   useEffect(() => {
     if (selectedProfessional) {
-      console.log(
-        "Professional selected, fetching services for:",
-        selectedProfessional.id
-      );
       fetchProfessionalServices(selectedProfessional.id.toString()).catch(
         (error) => {
           console.error("Failed to fetch professional services:", error);
@@ -441,6 +437,8 @@ export default function PageClient({
             selectedDate={selectedDate}
             initialTime={initialTimeFromUrl}
             onChange={handleDateTimeChange}
+            selectedServices={selectedServices}
+            professionalServices={professionalServices}
           />
 
           <Card>

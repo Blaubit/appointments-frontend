@@ -43,7 +43,7 @@ export function ClientSelectorCard({
   }, []);
 
   const filteredClients = clients.filter((client) =>
-    client.fullName.toLowerCase().includes(search.toLowerCase()),
+    client.fullName.toLowerCase().includes(search.toLowerCase())
   );
 
   // Crear cliente y seleccionarlo automáticamente
@@ -203,7 +203,7 @@ export function ClientSelectorCard({
                   id="clientPhone"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="+502 12344567"
                   required
                 />
               </div>

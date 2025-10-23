@@ -16,6 +16,7 @@ export interface Service {
   price: string;
   createdAt: string;
   company: Company;
+  professionalsIds?: string[];
 }
 
 export interface ServiceCategoryConfig {

@@ -10,6 +10,7 @@ import { Appointment } from "@/types";
 import { AppointmentActions } from "./appointment-actions";
 import { useState } from "react";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -131,7 +132,7 @@ export function AppointmentCard({
               {getStatusText(appointment.status)}
             </Badge>
             <span className="font-semibold text-lg">
-              Q{appointment.payment.amount}
+              {formatCurrency(Number(appointment.payment.amount))}
             </span>
           </div>
 

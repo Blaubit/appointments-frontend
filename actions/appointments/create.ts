@@ -38,7 +38,6 @@ export default async function create({
         Authorization: `Bearer ${session}`,
       },
     });
-
     revalidatePath("/appointments");
 
     return {

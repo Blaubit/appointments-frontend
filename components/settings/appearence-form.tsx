@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Sun, Moon, Monitor, Download } from "lucide-react";
+import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -67,13 +66,10 @@ const currencies: Currency[] = [
 
 // Main component
 export const AppearenceForm: React.FC<AppearanceSettingsProps> = ({
-  onSave,
-  onExport,
   initialSettings = {},
 }) => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Default settings
   const defaultSettings: AppearanceSettings = {
@@ -208,7 +204,7 @@ export const AppearenceForm: React.FC<AppearanceSettingsProps> = ({
         theme: newTheme,
       }));
     },
-    [setTheme],
+    [setTheme]
   );
 
   const handleSettingChange = useCallback(
@@ -218,7 +214,7 @@ export const AppearenceForm: React.FC<AppearanceSettingsProps> = ({
         [key]: value,
       }));
     },
-    [],
+    []
   );
 
   const themeOptions = [
@@ -278,7 +274,7 @@ export const AppearenceForm: React.FC<AppearanceSettingsProps> = ({
                   }`}
                   onClick={() =>
                     handleThemeChange(
-                      option.value as "light" | "dark" | "system",
+                      option.value as "light" | "dark" | "system"
                     )
                   }
                 >
@@ -293,84 +289,6 @@ export const AppearenceForm: React.FC<AppearanceSettingsProps> = ({
             })}
           </div>
         </div>
-
-        <Separator />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="language">Idioma</Label>
-            <Select
-              value={appearanceSettings.language}
-              onValueChange={(value) => handleSettingChange("language", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map((lang) => (
-                  <SelectItem key={lang.value} value={lang.value}>
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="currency">Moneda</Label>
-            <Select
-              value={appearanceSettings.currency}
-              onValueChange={(value) => handleSettingChange("currency", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currencies.map((currency) => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dateFormat">Formato de Fecha</Label>
-            <Select
-              value={appearanceSettings.dateFormat}
-              onValueChange={(value) =>
-                handleSettingChange("dateFormat", value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="timeFormat">Formato de Hora</Label>
-            <Select
-              value={appearanceSettings.timeFormat}
-              onValueChange={(value) =>
-                handleSettingChange("timeFormat", value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="12h">12 horas (AM/PM)</SelectItem>
-                <SelectItem value="24h">24 horas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <Separator />
       </CardContent>
     </Card>
   );

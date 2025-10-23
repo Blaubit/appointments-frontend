@@ -1,24 +1,24 @@
 "use server";
 
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { User } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+
 type Props = {
   searchParams?: URLSearchParams;
 };
 
 export async function findAllProfessionals(
-  props: Props = {},
+  props: Props = {}
 ): Promise<SuccessReponse<User[]> | ErrorResponse | any> {
   const session = await getSession();
   const companyId = await getCompanyId();
   try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/users`;
+    const url = `${parsedEnv.API_URL}/companies/${companyId}/users/professionals`;
     const parsedParams = parsePaginationParams(props.searchParams);
     const response = await axios.get(url, {
       headers: {
@@ -27,22 +27,13 @@ export async function findAllProfessionals(
       params: {
         ...parsedParams,
         query: undefined,
-        q: parsedParams.query,
       },
     });
     return {
-      data: response.data.data.filter(
-        (user: User) => user.role.name === "profesional",
-      ),
+      data: response.data,
       status: 200,
       statusText: response.statusText,
       meta: response.data.meta,
-      stats: {
-        total: response.data.meta.totalItems,
-        active: 10,
-        total_income: 5,
-        total_Users: 2,
-      },
     };
   } catch (error) {
     console.log(error);

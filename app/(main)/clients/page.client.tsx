@@ -2,59 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ClientForm } from "@/components/client-form";
-import { ClientPagination } from "@/components/ui/client-pagination";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { create } from "@/actions/clients/create";
 import deleteClient from "@/actions/clients/delete";
 import edit from "@/actions/clients/edit";
 import { exportClients } from "@/actions/clients/export";
-import {
-  Users,
-  UserCheck,
-  UserPlus,
-  Star,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  Phone,
-  Mail,
-  Calendar,
-  Plus,
-  MoreHorizontal,
-  Grid3X3,
-  List,
-  History,
-  FileText,
-  FileSpreadsheet,
-  Download,
-  Loader2,
-} from "lucide-react";
+import { Star } from "lucide-react";
 import type {
   Client,
   ClientStats,
@@ -62,16 +16,23 @@ import type {
   ClientFormData,
   ClientEditFormData,
 } from "@/types";
-import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 import { useDebounceSearch } from "@/hooks/useDebounce";
 import { downloadBase64File } from "@/utils/functions/downloadUtils";
+import { ClientsHeader } from "@/components/client/ClientsHeader";
+import { ClientsStatsCards } from "@/components/client/ClientsStatsCards";
+import { ClientsFiltersCard } from "@/components/client/ClientsFiltersCard";
+import { ClientsListCard } from "@/components/client/ClientsListCard";
+import { ClientDetailsDialog } from "@/components/client/ClientsDetailsDialog";
+import { EmptyClientsState } from "@/components/client/EmptyClientsState";
+
 // Tipos para export
 type ExportErrorResponse = {
   message: string;
   code?: string;
   status: number;
 };
+
 interface ClientsPageClientProps {
   clients?: Client[];
   stats?: ClientStats;
@@ -135,10 +96,6 @@ export default function ClientsPageClient({
     },
   });
 
-  // Pagination states
-  const currentPage = initialSearchParams?.page || 1;
-  const itemsPerPage = initialSearchParams?.limit || 10;
-
   // FUNCIONES DE EXPORT
   const handleExportPDF = async () => {
     setExportLoading("pdf");
@@ -148,7 +105,6 @@ export default function ClientsPageClient({
         includeStatistics: true,
       });
 
-      // Verificar si es una respuesta exitosa
       if ("data" in result && result.status === 200) {
         const pdfFile = result.data.files?.pdf;
         if (pdfFile) {
@@ -161,7 +117,6 @@ export default function ClientsPageClient({
           throw new Error("No se pudo generar el archivo PDF");
         }
       } else {
-        // Es una respuesta de error
         const errorResult = result as ExportErrorResponse;
         throw new Error(errorResult.message || "Error al generar PDF");
       }
@@ -184,7 +139,6 @@ export default function ClientsPageClient({
         includeStatistics: true,
       });
 
-      // Verificar si es una respuesta exitosa
       if ("data" in result && result.status === 200) {
         const excelFile = result.data.files?.excel;
         if (excelFile) {
@@ -201,7 +155,6 @@ export default function ClientsPageClient({
           throw new Error("No se pudo generar el archivo Excel");
         }
       } else {
-        // Es una respuesta de error
         const errorResult = result as ExportErrorResponse;
         throw new Error(errorResult.message || "Error al generar Excel");
       }
@@ -224,17 +177,14 @@ export default function ClientsPageClient({
         includeStatistics: true,
       });
 
-      // Verificar si es una respuesta exitosa
       if ("data" in result && result.status === 200) {
         const files = result.data.files;
         if (files?.pdf && files?.excel) {
-          // Descargar PDF
           downloadBase64File(
             files.pdf.data,
             files.pdf.filename,
             files.pdf.mimeType
           );
-          // Descargar Excel con delay
           setTimeout(() => {
             downloadBase64File(
               files.excel!.data,
@@ -251,7 +201,6 @@ export default function ClientsPageClient({
           throw new Error("No se pudieron generar los archivos");
         }
       } else {
-        // Es una respuesta de error
         const errorResult = result as ExportErrorResponse;
         throw new Error(errorResult.message || "Error al generar archivos");
       }
@@ -281,28 +230,20 @@ export default function ClientsPageClient({
   const updateFilters = (newFilters: { search?: string; page?: number }) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Search filter
     if (newFilters.search !== undefined) {
       if (newFilters.search.trim() && newFilters.search.length >= 2) {
         params.set("search", newFilters.search);
       } else {
         params.delete("search");
       }
-      // When changing search, reset page to 1
       params.set("page", "1");
     }
 
-    // Pagination filter
     if (newFilters.page !== undefined) {
       params.set("page", String(newFilters.page));
     }
 
     router.push(`?${params.toString()}`);
-  };
-
-  // Handler for changing the page
-  const handlePageChange = (newPage: number) => {
-    updateFilters({ page: newPage });
   };
 
   const hasClients = clients && clients.length > 0;
@@ -459,571 +400,51 @@ export default function ClientsPageClient({
   // Estado vacío cuando no hay clientes del servidor
   if (!hasClients) {
     return (
-      <div className="space-y-6">
-        {/* Header con botón para crear cliente */}
-        <div className="flex flex-wrap sm:flex-row justify-between items-start sm:items-center gap-4">
-          <ClientForm
-            trigger={
-              <Button className="btn-gradient-primary text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Cliente
-              </Button>
-            }
-            onSubmit={handleCreateClient}
-          />
-        </div>
-
-        {/* Stats Cards - Todos en 0 */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Clientes
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                Comienza agregando clientes
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Clientes Activos
-              </CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">0% del total</p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Nuevos este Mes
-              </CardTitle>
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Sin registros</p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Valoración Promedio
-              </CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">0.0</div>
-              <p className="text-xs text-muted-foreground">Sin valoraciones</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Estado vacío principal */}
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="rounded-full bg-muted p-4 mb-6">
-              <Users className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h2 className="text-2xl font-semibold mb-2">
-              ¡Bienvenido a tu lista de clientes!
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-md">
-              Aún no tienes clientes registrados. Comienza agregando tu primer
-              cliente para gestionar tus citas y relaciones comerciales.
-            </p>
-            <ClientForm
-              trigger={
-                <Button size="lg" className="btn-gradient-primary text-white">
-                  <UserPlus className="h-5 w-5 mr-2" />
-                  Agregar Primer Cliente
-                </Button>
-              }
-              onSubmit={handleCreateClient}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Dialog de notificación de éxito (auto-cierre) */}
-        <ConfirmationDialog
-          open={confirmationDialogs.success.open}
-          onOpenChange={() => {}}
-          variant="success"
-          type="notification"
-          title={confirmationDialogs.success.title}
-          description={confirmationDialogs.success.message}
-          showCancel={false}
-        />
-      </div>
+      <EmptyClientsState
+        onCreateClient={handleCreateClient}
+        confirmationDialogs={confirmationDialogs}
+      />
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex flex-wrap sm:flex-row justify-between items-start sm:items-center gap-4">
-        <ClientForm
-          trigger={
-            <Button className="btn-gradient-primary text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Cliente
-            </Button>
-          }
-          onSubmit={handleCreateClient}
-        />
-
-        {/* View Toggle */}
-        <div className="flex border rounded-lg">
-          <Button
-            variant={viewMode === "cards" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("cards")}
-            className="rounded-r-none"
-          >
-            <Grid3X3 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "table" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("table")}
-            className="rounded-l-none"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <ClientsHeader
+        onCreateClient={handleCreateClient}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Clientes
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.totalClients}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              +{stats.newClientsLastDays} en los últimos días
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Clientes Activos
-            </CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.activeClients}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalClients > 0
-                ? Math.round((stats.activeClients / stats.totalClients) * 100)
-                : 0}
-              % del total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Nuevos este Mes
-            </CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.newClientsLastDays}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Crecimiento en los últimos días
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-hover">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Valoración Promedio
-            </CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.averageRating.toFixed(1)}
-            </div>
-            <p className="text-xs text-muted-foreground">De 5.0 estrellas</p>
-          </CardContent>
-        </Card>
-      </div>
+      <ClientsStatsCards stats={stats} />
 
       {/* Filtros y Export */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filtros y Exportación</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          {/* Botones de Export */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button
-              onClick={handleExportPDF}
-              disabled={exportLoading !== null}
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              {exportLoading === "pdf" ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <FileText className="h-4 w-4 mr-2" />
-              )}
-              {exportLoading === "pdf" ? "Generando PDF..." : "Exportar PDF"}
-            </Button>
-
-            <Button
-              onClick={handleExportExcel}
-              disabled={exportLoading !== null}
-              variant="outline"
-              className="text-green-600 border-green-200 hover:bg-green-50"
-            >
-              {exportLoading === "excel" ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
-              )}
-              {exportLoading === "excel"
-                ? "Generando Excel..."
-                : "Exportar Excel"}
-            </Button>
-
-            <Button
-              onClick={handleExportBoth}
-              disabled={exportLoading !== null}
-              className="btn-gradient-primary text-white"
-            >
-              {exportLoading === "both" ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
-              )}
-              {exportLoading === "both"
-                ? "Generando ambos..."
-                : "Exportar Ambos"}
-            </Button>
-          </div>
-
-          {/* Campo de búsqueda */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar por nombre, email o teléfono..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ClientsFiltersCard
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        exportLoading={exportLoading}
+        onExportPDF={handleExportPDF}
+        onExportExcel={handleExportExcel}
+        onExportBoth={handleExportBoth}
+      />
 
       {/* Lista de Clientes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Lista de Clientes ({pagination?.totalItems || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {clients.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No hay clientes</h3>
-              <p className="text-muted-foreground mb-4">
-                No se encontraron clientes que coincidan con la búsqueda.
-              </p>
-            </div>
-          ) : viewMode === "cards" ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {clients.map((client) => (
-                  <Card
-                    key={client.id}
-                    className="hover:shadow-lg transition-shadow"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage
-                              src={client.avatar}
-                              alt={client.fullName}
-                            />
-                            <AvatarFallback>
-                              {getInitials(client.fullName)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold">{client.fullName}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {client.email}
-                            </p>
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleViewClient(client)}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Ver Detalles
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setEditingClient(client)}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleCallClient(client)}
-                            >
-                              <Phone className="h-4 w-4 mr-2" />
-                              Llamar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleEmailClient(client)}
-                            >
-                              <History className="h-4 w-4 mr-2" />
-                              Ver historial
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                openWhatsApp(client.phone, "Buen dia")
-                              }
-                            >
-                              <WhatsappIcon
-                                className="text-green-500 dark:bg-gray-900"
-                                width={16}
-                                height={16}
-                              />
-                              WhatsApp
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleScheduleAppointment(client)}
-                            >
-                              <Calendar className="h-4 w-4 mr-2" />
-                              Programar Cita
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteClient(client)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Teléfono:
-                          </span>
-                          <span className="text-sm font-medium">
-                            {client.phone}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Valoración:
-                          </span>
-                          <div className="flex items-center space-x-1">
-                            {renderStars(parseFloat(client.rating) || 0)}
-                            <span className="text-sm ml-1">
-                              ({client.rating || "0"})
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Registro:
-                          </span>
-                          <span className="text-sm font-medium">
-                            {formatDate(client.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Paginación para cards */}
-              {pagination && (
-                <ClientPagination
-                  currentPage={pagination.currentPage}
-                  totalPages={pagination.totalPages}
-                  hasNextPage={pagination.hasNextPage}
-                  hasPreviousPage={pagination.hasPreviousPage}
-                  totalItems={pagination.totalItems}
-                  itemsPerPage={pagination.itemsPerPage}
-                />
-              )}
-            </>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Contacto</TableHead>
-                      <TableHead>Valoración</TableHead>
-                      <TableHead>Fecha Registro</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {clients.map((client) => (
-                      <TableRow key={client.id} className="hover:bg-muted/50">
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage
-                                src={client.avatar || "/placeholder.svg"}
-                                alt={client.fullName}
-                              />
-                              <AvatarFallback className="text-xs">
-                                {getInitials(client.fullName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">
-                                {client.fullName}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">{client.email}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {client.phone}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
-                            {renderStars(parseFloat(client.rating) || 0)}
-                            <span className="text-sm ml-1">
-                              ({client.rating || "0"})
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {formatDate(client.createdAt)}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => handleViewClient(client)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver Detalles
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => setEditingClient(client)}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleCallClient(client)}
-                              >
-                                <Phone className="h-4 w-4 mr-2" />
-                                Llamar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleEmailClient(client)}
-                              >
-                                <Mail className="h-4 w-4 mr-2" />
-                                Enviar Email
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleScheduleAppointment(client)
-                                }
-                              >
-                                <Calendar className="h-4 w-4 mr-2" />
-                                Programar Cita
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteClient(client)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Eliminar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Paginación para tabla */}
-              {pagination && (
-                <ClientPagination
-                  currentPage={pagination.currentPage}
-                  totalPages={pagination.totalPages}
-                  hasNextPage={pagination.hasNextPage}
-                  hasPreviousPage={pagination.hasPreviousPage}
-                  totalItems={pagination.totalItems}
-                  itemsPerPage={pagination.itemsPerPage}
-                />
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <ClientsListCard
+        clients={clients}
+        pagination={pagination}
+        viewMode={viewMode}
+        onView={handleViewClient}
+        onEdit={setEditingClient}
+        onDelete={handleDeleteClient}
+        onCall={handleCallClient}
+        onEmail={handleEmailClient}
+        onWhatsApp={openWhatsApp}
+        onSchedule={handleScheduleAppointment}
+        getInitials={getInitials}
+        renderStars={renderStars}
+        formatDate={formatDate}
+      />
 
       {/* Dialogs */}
       {editingClient && (
@@ -1034,77 +455,16 @@ export default function ClientsPageClient({
         />
       )}
 
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detalles del Cliente</DialogTitle>
-          </DialogHeader>
-          {selectedClient && (
-            <div className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage
-                    src={selectedClient.avatar}
-                    alt={selectedClient.fullName}
-                  />
-                  <AvatarFallback>
-                    {getInitials(selectedClient.fullName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="text-2xl font-bold">
-                    {selectedClient.fullName}
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {selectedClient.email}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Teléfono</label>
-                    <p className="mt-1">{selectedClient.phone}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Email</label>
-                    <p className="mt-1">{selectedClient.email}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Valoración</label>
-                    <div className="flex items-center space-x-1 mt-1">
-                      {renderStars(parseFloat(selectedClient.rating) || 0)}
-                      <span className="text-sm ml-1">
-                        ({selectedClient.rating || "0"})
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">
-                      Fecha de Registro
-                    </label>
-                    <p className="mt-1">
-                      {formatDate(selectedClient.createdAt)}
-                    </p>
-                    <div>
-                      <label className="text-sm font-medium">Compañía</label>
-                      <p className="mt-1">{selectedClient.company?.name}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ClientDetailsDialog
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+        client={selectedClient}
+        getInitials={getInitials}
+        renderStars={renderStars}
+        formatDate={formatDate}
+      />
 
       {/* Diálogos de Confirmación */}
-
-      {/* Dialog de confirmación para editar cliente */}
       <ConfirmationDialog
         open={confirmationDialogs.editClient.open}
         onOpenChange={(open) => !open && closeDialog("editClient")}
@@ -1116,7 +476,6 @@ export default function ClientsPageClient({
         onConfirm={confirmEditClient}
       />
 
-      {/* Dialog de confirmación para eliminar cliente */}
       <ConfirmationDialog
         open={confirmationDialogs.deleteClient.open}
         onOpenChange={(open) => !open && closeDialog("deleteClient")}
@@ -1129,7 +488,6 @@ export default function ClientsPageClient({
         onConfirm={confirmDeleteClient}
       />
 
-      {/* Dialog de notificación de éxito (auto-cierre en 3000ms) */}
       <ConfirmationDialog
         open={confirmationDialogs.success.open}
         onOpenChange={() => {}}

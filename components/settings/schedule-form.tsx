@@ -62,7 +62,7 @@ function mapAvailabilitiesToScheduleSettings(avail: any): ScheduleSettings {
   const getDaySettings = (
     day: string,
     defaultStart: string,
-    defaultEnd: string,
+    defaultEnd: string
   ): WorkingDaySettings => {
     const start = avail[`${day}Start`];
     const end = avail[`${day}End`];
@@ -100,7 +100,7 @@ export function ScheduleForm({
   const [scheduleSettings, setScheduleSettings] =
     useState<ScheduleSettings>(initialSettings);
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
-    null,
+    null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -126,7 +126,7 @@ export function ScheduleForm({
       const professional = professionals.find(
         (p) =>
           p.id === userSession.id ||
-          p.id.toString() === userSession.id.toString(),
+          p.id.toString() === userSession.id.toString()
       );
       if (professional) setSelectedProfessional(professional);
     }
@@ -155,7 +155,7 @@ export function ScheduleForm({
 
   const updateWorkingDay = (
     day: keyof ScheduleSettings["workingDays"],
-    updates: Partial<WorkingDaySettings>,
+    updates: Partial<WorkingDaySettings>
   ) => {
     setScheduleSettings((prev) => ({
       ...prev,
@@ -232,7 +232,6 @@ export function ScheduleForm({
       setDialogOpen(true); // Muestra el dialog de éxito
     }
   };
-
   return (
     <Card className="w-full max-w-none">
       <CardHeader className="pb-4">
@@ -284,7 +283,7 @@ export function ScheduleForm({
                               isEditing &&
                               updateWorkingDay(
                                 day as keyof ScheduleSettings["workingDays"],
-                                { enabled: checked },
+                                { enabled: checked }
                               )
                             }
                             disabled={!isEditing}
@@ -304,7 +303,7 @@ export function ScheduleForm({
                               isEditing &&
                               updateWorkingDay(
                                 day as keyof ScheduleSettings["workingDays"],
-                                { start: e.target.value },
+                                { start: e.target.value }
                               )
                             }
                             className="flex-1"
@@ -318,7 +317,7 @@ export function ScheduleForm({
                               isEditing &&
                               updateWorkingDay(
                                 day as keyof ScheduleSettings["workingDays"],
-                                { end: e.target.value },
+                                { end: e.target.value }
                               )
                             }
                             className="flex-1"
@@ -337,7 +336,7 @@ export function ScheduleForm({
                             isEditing &&
                             updateWorkingDay(
                               day as keyof ScheduleSettings["workingDays"],
-                              { enabled: checked },
+                              { enabled: checked }
                             )
                           }
                           disabled={!isEditing}
@@ -354,7 +353,7 @@ export function ScheduleForm({
                             isEditing &&
                             updateWorkingDay(
                               day as keyof ScheduleSettings["workingDays"],
-                              { start: e.target.value },
+                              { start: e.target.value }
                             )
                           }
                           disabled={!isEditing || !settings.enabled}
@@ -368,7 +367,7 @@ export function ScheduleForm({
                             isEditing &&
                             updateWorkingDay(
                               day as keyof ScheduleSettings["workingDays"],
-                              { end: e.target.value },
+                              { end: e.target.value }
                             )
                           }
                           disabled={!isEditing || !settings.enabled}
@@ -377,7 +376,7 @@ export function ScheduleForm({
                       </div>
                     </div>
                   </div>
-                ),
+                )
               )}
             </div>
           </div>

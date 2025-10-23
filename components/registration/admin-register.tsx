@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,9 +23,6 @@ import {
 import {
   User,
   Mail,
-  Lock,
-  Eye,
-  EyeOff,
   ArrowRight,
   ArrowLeft,
   UserCheck,
@@ -37,54 +33,33 @@ import { Role } from "@/types";
 interface UserData {
   fullName: string;
   email: string;
-  password: string;
-  confirmPassword: string;
   bio: string;
   roleId?: string;
 }
 
 interface UserRegistrationCardProps {
-  /** Datos del usuario */
   userData: UserData;
-  /** Función para actualizar los datos del usuario */
   onUserDataChange: (data: UserData) => void;
-  /** Lista de roles disponibles */
   roles?: Role[];
-  /** Errores de validación */
   errors?: Record<string, string>;
-  /** Función llamada al avanzar al siguiente paso */
   onNext?: () => void;
-  /** Función llamada al retroceder al paso anterior */
   onPrevious?: () => void;
-  /** Si mostrar el botón de anterior */
   showPreviousButton?: boolean;
-  /** Si mostrar el botón de siguiente */
   showNextButton?: boolean;
-  /** Si mostrar el selector de rol */
   showRoleSelector?: boolean;
-  /** Rol por defecto (si no se muestra selector) */
   defaultRole?: Role;
-  /** Texto del botón siguiente */
   nextButtonText?: string;
-  /** Texto del botón anterior */
   previousButtonText?: string;
-  /** Si el botón siguiente está deshabilitado */
   nextButtonDisabled?: boolean;
-  /** Clase CSS adicional para el card */
   className?: string;
-  /** Título personalizado */
   title?: string;
-  /** Descripción personalizada */
   description?: string;
-  /** Si mostrar información del rol */
   showRoleInfo?: boolean;
 }
 
 const defaultUserData: UserData = {
   fullName: "",
   email: "",
-  password: "",
-  confirmPassword: "",
   bio: "",
   roleId: "",
 };
@@ -108,9 +83,6 @@ export default function UserRegistrationCard({
   description = "Crea tu cuenta para gestionar la plataforma",
   showRoleInfo = true,
 }: UserRegistrationCardProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const updateField = (field: keyof UserData, value: string) => {
     onUserDataChange({
       ...userData,
@@ -143,7 +115,6 @@ export default function UserRegistrationCard({
 
   const getRoleDescription = (roleName?: string) => {
     if (!roleName) return "Usuario estándar de la plataforma";
-
     switch (roleName.toLowerCase()) {
       case "admin_empresa":
       case "administrador":
@@ -265,93 +236,23 @@ export default function UserRegistrationCard({
           )}
         </div>
 
-        {/* Contraseñas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña *</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={userData.password}
-                onChange={(e) => updateField("password", e.target.value)}
-                placeholder="Mínimo 8 caracteres"
-                className={`pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-red-600">{errors.password}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar Contraseña *</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={userData.confirmPassword}
-                onChange={(e) => updateField("confirmPassword", e.target.value)}
-                placeholder="Repite tu contraseña"
-                className={`pl-10 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-600">{errors.confirmPassword}</p>
-            )}
-          </div>
-        </div>
-
         <Separator />
 
         {/* Biografía */}
         <div className="space-y-2">
-          <Label htmlFor="bio">
-            Biografía Profesional{" "}
-            {currentRole?.name === "admin_empresa" ? "" : "*"}
-          </Label>
+          <Label htmlFor="bio">Biografía Profesional</Label>
           <Textarea
             id="bio"
             value={userData.bio}
             onChange={(e) => updateField("bio", e.target.value)}
-            placeholder="Describe tu experiencia profesional, especialidades, etc... (mínimo 10 caracteres)"
+            placeholder="Describe tu experiencia profesional, especialidades, etc..."
             rows={3}
             className={errors.bio ? "border-red-500" : ""}
           />
           <div className="flex justify-between items-center">
             <p className="text-xs text-gray-500">
               {userData.bio.trim().length === 0
-                ? currentRole?.name === "admin_empresa"
-                  ? "Campo opcional, pero si lo completas debe tener al menos 10 caracteres"
-                  : "Campo requerido, mínimo 10 caracteres"
+                ? "Campo opcional, pero si lo completas debe tener al menos 10 caracteres"
                 : `${userData.bio.trim().length} caracteres`}
             </p>
             {userData.bio.trim().length >= 10 && (
@@ -360,73 +261,6 @@ export default function UserRegistrationCard({
           </div>
           {errors.bio && <p className="text-sm text-red-600">{errors.bio}</p>}
         </div>
-
-        {/* Indicadores de fortaleza de contraseña */}
-        {userData.password && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              Fortaleza de la contraseña
-            </Label>
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2 text-xs">
-                <div
-                  className={`w-2 h-2 rounded-full ${userData.password.length >= 8 ? "bg-green-500" : "bg-gray-300"}`}
-                />
-                <span
-                  className={
-                    userData.password.length >= 8
-                      ? "text-green-600"
-                      : "text-gray-500"
-                  }
-                >
-                  Al menos 8 caracteres
-                </span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs">
-                <div
-                  className={`w-2 h-2 rounded-full ${/[A-Z]/.test(userData.password) ? "bg-green-500" : "bg-gray-300"}`}
-                />
-                <span
-                  className={
-                    /[A-Z]/.test(userData.password)
-                      ? "text-green-600"
-                      : "text-gray-500"
-                  }
-                >
-                  Una letra mayúscula
-                </span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs">
-                <div
-                  className={`w-2 h-2 rounded-full ${/[0-9]/.test(userData.password) ? "bg-green-500" : "bg-gray-300"}`}
-                />
-                <span
-                  className={
-                    /[0-9]/.test(userData.password)
-                      ? "text-green-600"
-                      : "text-gray-500"
-                  }
-                >
-                  Un número
-                </span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs">
-                <div
-                  className={`w-2 h-2 rounded-full ${/[!@#$%^&*(),.?":{}|<>]/.test(userData.password) ? "bg-green-500" : "bg-gray-300"}`}
-                />
-                <span
-                  className={
-                    /[!@#$%^&*(),.?":{}|<>]/.test(userData.password)
-                      ? "text-green-600"
-                      : "text-gray-500"
-                  }
-                >
-                  Un carácter especial
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Botones de navegación */}
         {(showPreviousButton || showNextButton) && (
@@ -463,11 +297,11 @@ export default function UserRegistrationCard({
   );
 }
 
-// Hook personalizado para manejar la validación del usuario
+// Hook personalizado para manejar la validación del usuario (sin validación de contraseña)
 export function useUserValidation() {
   const validateUser = (
     userData: UserData,
-    isAdminRole: boolean = false
+    _isAdminRole: boolean = false
   ): Record<string, string> => {
     const errors: Record<string, string> = {};
 
@@ -485,54 +319,19 @@ export function useUserValidation() {
       errors.email = "Email inválido";
     }
 
-    // Validar contraseña
-    if (!userData.password) {
-      errors.password = "La contraseña es requerida";
-    } else if (userData.password.length < 8) {
-      errors.password = "La contraseña debe tener al menos 8 caracteres";
-    }
-
-    // Validar confirmación de contraseña
-    if (userData.password !== userData.confirmPassword) {
-      errors.confirmPassword = "Las contraseñas no coinciden";
-    }
-
-    // Validar biografía
+    // Validar biografía (opcional, pero si se completa debe tener al menos 10 caracteres)
     const bioTrimmed = userData.bio.trim();
-    if (isAdminRole) {
-      // Para admin es opcional, pero si se completa debe tener al menos 10 caracteres
-      if (bioTrimmed.length > 0 && bioTrimmed.length < 10) {
-        errors.bio = "La biografía debe tener al menos 10 caracteres";
-      }
-    } else {
-      // Para otros roles es requerida
-      if (bioTrimmed.length === 0) {
-        errors.bio = "La biografía es requerida";
-      } else if (bioTrimmed.length < 10) {
-        errors.bio = "La biografía debe tener al menos 10 caracteres";
-      }
+    if (bioTrimmed.length > 0 && bioTrimmed.length < 10) {
+      errors.bio = "La biografía debe tener al menos 10 caracteres";
     }
 
     return errors;
   };
 
-  const isValidUser = (
-    userData: UserData,
-    isAdminRole: boolean = false
-  ): boolean => {
-    const errors = validateUser(userData, isAdminRole);
+  const isValidUser = (userData: UserData): boolean => {
+    const errors = validateUser(userData);
     return Object.keys(errors).length === 0;
   };
 
-  const getPasswordStrength = (password: string): number => {
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
-    return strength;
-  };
-
-  return { validateUser, isValidUser, getPasswordStrength };
+  return { validateUser, isValidUser };
 }

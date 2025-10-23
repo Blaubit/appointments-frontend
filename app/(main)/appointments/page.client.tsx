@@ -156,7 +156,7 @@ export function PageClient({
 
   return (
     <div>
-      <Header title="Appointments" backButtonHref="/dashboard" />
+      <Header title="Appointments" showBackButton backButtonHref="/dashboard" />
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-8 pb-2">

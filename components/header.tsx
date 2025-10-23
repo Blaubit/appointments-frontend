@@ -88,6 +88,12 @@ export function Header({
   };
 
   const currentUser = user || defaultUser;
+
+  // Nueva lógica para permisos de facturación y seguridad
+  const canSeeBillingAndSecurity =
+    currentUser.role.name === "admin_empresa" ||
+    currentUser.role.name === "super_admin";
+
   return (
     <header
       className={`bg-white dark:bg-gray-800 shadow-sm border-b ${className}`}
@@ -196,24 +202,29 @@ export function Header({
                     Configuración
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/billing" className="flex items-center">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Facturación
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/settings?tab=security"
-                    className="flex items-center"
-                  >
-                    <Shield className="h-4 w-4 mr-2" />
-                    Seguridad
-                  </Link>
-                </DropdownMenuItem>
+                {/* Facturación y Seguridad solo si tiene el permiso */}
+                {canSeeBillingAndSecurity && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/billing" className="flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Facturación
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/settings?tab=security"
+                        className="flex items-center"
+                      >
+                        <Shield className="h-4 w-4 mr-2" />
+                        Seguridad
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/help" className="flex items-center">
+                  <Link href="/support" className="flex items-center">
                     <HelpCircle className="h-4 w-4 mr-2" />
                     Ayuda y Soporte
                   </Link>
@@ -292,7 +303,10 @@ export function Header({
 
                 {/* Navigation Items */}
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center">
+                  <Link
+                    href="/settings?tab=profile"
+                    className="flex items-center"
+                  >
                     <UserIcon className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </Link>
@@ -303,18 +317,23 @@ export function Header({
                     Configuración
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/billing" className="flex items-center">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Facturación
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/security" className="flex items-center">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Seguridad
-                  </Link>
-                </DropdownMenuItem>
+                {/* Facturación y Seguridad solo si tiene el permiso */}
+                {canSeeBillingAndSecurity && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/billing" className="flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Facturación
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/security" className="flex items-center">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Seguridad
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/help" className="flex items-center">

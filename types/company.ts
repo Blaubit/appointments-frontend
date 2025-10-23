@@ -29,7 +29,6 @@ interface CompanyRegistrationPayload {
   // Admin data
   adminFullName: string;
   adminEmail: string;
-  adminPassword: string;
   adminBio: string;
   // Subscription data
   planId: string;
@@ -37,5 +36,28 @@ interface CompanyRegistrationPayload {
   endDate: string;
   createdById: string;
 }
+export type CompanySettings = {
+  id: string;
+  companyId: string;
+  dateFormat: string;
+  hourFormat: string;
+  timezone: string;
+  emailNotificationsEnabled: boolean;
+  whatsappNotificationsEnabled: boolean;
+  systemNotificationsEnabled: boolean;
+  reminderHoursBefore: number;
+  defaultAppointmentDuration: number;
+  allowOnlineBooking: boolean;
+  requireConfirmation: boolean;
+  minHoursBeforeBooking: number;
+  maxHoursAdvanceBooking: number;
+  primaryColor: string;
+  secondaryColor: string;
+  defaultLanguage: string;
+  currency: string;
+  createdAt: string; // ISO Date
+  updatedAt: string; // ISO Date
+  company: Company;
+};
 
 export type { Company, CompanyRegistrationPayload };
