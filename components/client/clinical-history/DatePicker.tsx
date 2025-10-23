@@ -1,18 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-
-import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -20,8 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-interface DatePickerProps {
+interface DatePickerNewProps {
   date?: Date;
   onDateChange: (date: Date | undefined) => void;
   disabled?: boolean;
@@ -29,61 +25,103 @@ interface DatePickerProps {
   yearRange?: { start: number; end: number };
 }
 
+const MONTHS_ES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+const DAYS_IN_MONTH = (year: number, month: number) => {
+  return new Date(year, month + 1, 0).getDate();
+};
+
+const formatDateDisplay = (date: Date): string => {
+  const day = date.getDate();
+  const month = MONTHS_ES[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} de ${month} de ${year}`;
+};
+
 export function DatePicker({
   date,
   onDateChange,
   disabled = false,
   placeholder = "Seleccione una fecha",
   yearRange = { start: 1900, end: 2100 },
-}: DatePickerProps) {
-  const [month, setMonth] = React.useState<Date>(date || new Date());
+}: DatePickerNewProps) {
+  // Estado local para el mes/año visible en el calendario
+  const [displayMonth, setDisplayMonth] = React.useState<number>(
+    date?.getMonth() ?? new Date().getMonth()
+  );
+  const [displayYear, setDisplayYear] = React.useState<number>(
+    date?.getFullYear() ?? new Date().getFullYear()
+  );
+  const [open, setOpen] = React.useState(false);
 
   const years = Array.from(
     { length: yearRange.end - yearRange.start + 1 },
     (_, i) => yearRange.start + i
   );
 
-  const months = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
+  const daysInCurrentMonth = DAYS_IN_MONTH(displayYear, displayMonth);
+  const firstDayOfMonth = new Date(displayYear, displayMonth, 1).getDay();
+  const days = Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1);
+  const emptyDays = Array.from({ length: firstDayOfMonth }, (_, i) => i);
 
-  const handleYearChange = (year: string) => {
-    const newDate = new Date(month);
-    newDate.setFullYear(parseInt(year));
-    setMonth(newDate);
+  const handleSelectYear = (year: string) => {
+    setDisplayYear(parseInt(year));
   };
 
-  const handleMonthChange = (monthIndex: string) => {
-    const newDate = new Date(month);
-    newDate.setMonth(parseInt(monthIndex));
-    setMonth(newDate);
+  const handleSelectMonth = (month: string) => {
+    setDisplayMonth(parseInt(month));
   };
 
-  const handlePreviousYear = () => {
-    const newDate = new Date(month);
-    newDate.setFullYear(newDate.getFullYear() - 1);
-    setMonth(newDate);
+  const handleSelectDay = (day: number) => {
+    // Crear fecha en zona horaria local (sin UTC) y agregar 1 día
+    const selectedDate = new Date(displayYear, displayMonth, day);
+    selectedDate.setDate(selectedDate.getDate() + 1);
+    onDateChange(selectedDate);
+    setOpen(false);
   };
 
-  const handleNextYear = () => {
-    const newDate = new Date(month);
-    newDate.setFullYear(newDate.getFullYear() + 1);
-    setMonth(newDate);
+  const handlePreviousMonth = () => {
+    if (displayMonth === 0) {
+      setDisplayMonth(11);
+      setDisplayYear(displayYear - 1);
+    } else {
+      setDisplayMonth(displayMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (displayMonth === 11) {
+      setDisplayMonth(0);
+      setDisplayYear(displayYear + 1);
+    } else {
+      setDisplayMonth(displayMonth + 1);
+    }
+  };
+
+  const isDateSelected = (day: number) => {
+    if (!date) return false;
+    return (
+      date.getDate() === day &&
+      date.getMonth() === displayMonth &&
+      date.getFullYear() === displayYear
+    );
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -93,32 +131,19 @@ export function DatePicker({
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? (
-            format(date, "PPP", { locale: es })
-          ) : (
-            <span>{placeholder}</span>
-          )}
+          {date ? formatDateDisplay(date) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <div className="p-3 border-b">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handlePreviousYear}
-              disabled={disabled}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
+      <PopoverContent className="w-auto p-4" align="start">
+        <div className="space-y-4">
+          {/* Selectores de Año y Mes */}
+          <div className="flex gap-2">
             <Select
-              value={month.getFullYear().toString()}
-              onValueChange={handleYearChange}
+              value={displayYear.toString()}
+              onValueChange={handleSelectYear}
               disabled={disabled}
             >
-              <SelectTrigger className="w-[110px] h-8">
+              <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-[200px]">
@@ -129,43 +154,107 @@ export function DatePicker({
                 ))}
               </SelectContent>
             </Select>
+
+            <Select
+              value={displayMonth.toString()}
+              onValueChange={handleSelectMonth}
+              disabled={disabled}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS_ES.map((month, index) => (
+                  <SelectItem key={index} value={index.toString()}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Navegación de Mes */}
+          <div className="flex items-center justify-between">
             <Button
               variant="outline"
               size="icon"
               className="h-7 w-7"
-              onClick={handleNextYear}
+              onClick={handlePreviousMonth}
+              disabled={disabled}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium">
+              {MONTHS_ES[displayMonth]} {displayYear}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleNextMonth}
               disabled={disabled}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Select
-            value={month.getMonth().toString()}
-            onValueChange={handleMonthChange}
-            disabled={disabled}
-          >
-            <SelectTrigger className="w-full h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((monthName, index) => (
-                <SelectItem key={index} value={index.toString()}>
-                  {monthName}
-                </SelectItem>
+
+          {/* Calendario */}
+          <div className="space-y-2">
+            {/* Encabezado de días de la semana */}
+            <div className="grid grid-cols-7 gap-2 mb-2">
+              {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day) => (
+                <div
+                  key={day}
+                  className="text-center text-xs font-semibold text-gray-500 h-8 flex items-center justify-center"
+                >
+                  {day}
+                </div>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+
+            {/* Días del mes */}
+            <div className="grid grid-cols-7 gap-2">
+              {/* Espacios vacíos al inicio del mes */}
+              {emptyDays.map((_, index) => (
+                <div key={`empty-${index}`} className="h-8" />
+              ))}
+
+              {/* Días del mes */}
+              {days.map((day) => (
+                <button
+                  key={day}
+                  onClick={() => handleSelectDay(day)}
+                  disabled={disabled}
+                  className={cn(
+                    "h-8 w-8 rounded text-sm font-medium transition-colors",
+                    isDateSelected(day)
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-800",
+                    disabled && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Botón para limpiar */}
+          {date && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                onDateChange(undefined);
+                setOpen(false);
+              }}
+              disabled={disabled}
+            >
+              Limpiar fecha
+            </Button>
+          )}
         </div>
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={onDateChange}
-          month={month}
-          onMonthChange={setMonth}
-          disabled={disabled}
-          initialFocus
-          locale={es}
-        />
       </PopoverContent>
     </Popover>
   );

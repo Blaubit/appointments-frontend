@@ -437,6 +437,8 @@ export default function PageClient({
             selectedDate={selectedDate}
             initialTime={initialTimeFromUrl}
             onChange={handleDateTimeChange}
+            selectedServices={selectedServices}
+            professionalServices={professionalServices}
           />
 
           <Card>

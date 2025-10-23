@@ -69,10 +69,12 @@ export default function CalendarPageClient({
 
   // Fetch schedule cada vez que cambian fecha/mode/profesional
   useEffect(() => {
+    if (!selectedProfessional) return;
     const fetchSchedule = async () => {
       setLoading(true);
       const dateStr = formatDateForPeriod(currentDate, viewMode);
       const result = await findPeriod(currentProfessionalId, dateStr, viewMode);
+      console.log("Fetched schedule:", result.data);
       setSchedule(result?.data || null);
       setLoading(false);
     };
@@ -251,7 +253,7 @@ export default function CalendarPageClient({
                   {viewMode === "week" &&
                     `Semana del ${currentDate.getDate()} de ${monthNames[currentDate.getMonth()]}`}
                   {viewMode === "day" &&
-                    `${dayNamesLong[currentDate.getDay()]}, ${currentDate.getDate()} de ${monthNames[currentDate.getMonth()]}`}
+                    `${dayNamesLong[(currentDate.getDay() + 6) % 7]}, ${currentDate.getDate()} de ${monthNames[currentDate.getMonth()]}`}
                 </h2>
                 {/* Mostrar nombre del profesional actual */}
                 {selectedProfessional && (
@@ -289,7 +291,7 @@ export default function CalendarPageClient({
           </div>
         </CardHeader>
       </Card>
-      schedule
+
       {/* Calendar Views */}
       <Card>
         <CardContent className="p-6">

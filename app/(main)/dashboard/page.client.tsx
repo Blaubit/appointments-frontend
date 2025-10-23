@@ -192,7 +192,7 @@ export default function DashboardClient({
           <Link href="/clients">
             <Button variant="outline" size="sm">
               <Users className="h-4 w-4 mr-2" />
-              Gestionar Clientes
+              Gestionar Pacientes
             </Button>
           </Link>
         </div>
@@ -578,7 +578,7 @@ export default function DashboardClient({
                     variant="outline"
                   >
                     <Users className="h-4 w-4 mr-2" />
-                    Gestionar Clientes
+                    Gestionar Pacientes
                   </Button>
                 </Link>
                 <Link href="/services">
