@@ -18,7 +18,6 @@ export async function findProfessionalServices(
         Authorization: `Bearer ${session}`,
       },
     });
-    console.log(response.data);
     return {
       data: response.data,
       status: 200,
