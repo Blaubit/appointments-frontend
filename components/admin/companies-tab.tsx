@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,139 +28,124 @@ import { ViewDialog } from "./viewSubscriptionDialog";
 import { create } from "@/actions/subscription/createPayment";
 import { PaymentDto } from "@/types/dto/subscription/payment.dto";
 import formatCurrency from "@/utils/functions/formatCurrency";
+
 interface CompaniesTabProps {
   subscriptions: Subscription[];
-  onOpenPaymentModal: (subscription: Subscription) => void;
+  onOpenPaymentModal?: (subscription: Subscription) => void;
+  pagination?: any;
+  onPageChange?: (page: number, filters?: any) => void;
+  isLoading?: boolean;
 }
 
-export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+export function CompaniesTab({
+  subscriptions,
+  onOpenPaymentModal,
+  pagination,
+  onPageChange,
+  isLoading = false,
+}: CompaniesTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [searchTerm, setSearchTerm] = useState(
+    () => searchParams.get("q") ?? ""
+  );
+  const [statusFilter, setStatusFilter] = useState<string>(
+    () => searchParams.get("status") ?? "all"
+  );
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [selectedViewRow, setSelectedViewRow] = useState<string | null>(null);
   const [selectedPaymentRow, setSelectedPaymentRow] = useState<string | null>(
     null
   );
-  // Handles payment submission
+
+  // sincronizar inputs cuando cambia la URL (p.ej. navegacion o back/forward)
+  useEffect(() => {
+    setSearchTerm(searchParams.get("q") ?? "");
+    setStatusFilter(searchParams.get("status") ?? "all");
+    // planFilter could be synced too if you use it in the URL
+  }, [searchParams?.toString()]);
+
+  // Debounce: al cambiar filtros, actualizamos la URL después de 500ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchTerm && searchTerm.trim().length > 0)
+        params.set("q", searchTerm.trim());
+      else params.delete("q");
+      if (statusFilter && statusFilter !== "all")
+        params.set("status", statusFilter);
+      else params.delete("status");
+      if (planFilter && planFilter !== "all") params.set("plan", planFilter);
+      else params.delete("plan");
+
+      // reset page a 1 cuando cambian filtros
+      params.set("page", "1");
+      params.set("limit", String(pagination?.itemsPerPage ?? 10));
+
+      router.push(`${pathname}?${params.toString()}`);
+    }, 500);
+
+    return () => clearTimeout(handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, planFilter]);
+
+  // Handlers prev/next que actualizan la URL (adminPage escucha la URL y hace fetch)
+  const handlePrev = () => {
+    if (!pagination) return;
+    const prev =
+      pagination.previousPage ??
+      (pagination.currentPage > 1 ? pagination.currentPage - 1 : null);
+    if (!prev) return;
+
+    // If parent provided onPageChange, prefer that (parent will update URL)
+    if (onPageChange) {
+      onPageChange(prev, {
+        q: searchParams.get("q") ?? undefined,
+        status: searchParams.get("status") ?? undefined,
+        limit: pagination.itemsPerPage,
+      });
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(prev));
+    params.set("limit", String(pagination?.itemsPerPage ?? 10));
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleNext = () => {
+    if (!pagination) return;
+    const next =
+      pagination.nextPage ??
+      (pagination.currentPage < pagination.totalPages
+        ? pagination.currentPage + 1
+        : null);
+    if (!next) return;
+
+    if (onPageChange) {
+      onPageChange(next, {
+        q: searchParams.get("q") ?? undefined,
+        status: searchParams.get("status") ?? undefined,
+        limit: pagination.itemsPerPage,
+      });
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(next));
+    params.set("limit", String(pagination?.itemsPerPage ?? 10));
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const handleSubmitPayment = (payment: PaymentDto) => {
-    console.log("Enviando pago:", payment);
     create(payment);
     setSelectedPaymentRow(null);
   };
+
   const selectedViewSubscription =
     subscriptions.find((s) => s.id === selectedViewRow) ?? null;
-
-  const filteredSubscriptions = subscriptions.filter((subscription) => {
-    const matchesSearch =
-      subscription.company.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      subscription.company.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || subscription.status === statusFilter;
-    const matchesPlan =
-      planFilter === "all" || subscription.plan.id === planFilter;
-
-    return matchesSearch && matchesStatus && matchesPlan;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-      case "activo":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "past_due":
-      case "vencido":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      case "canceled":
-      case "cancelado":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-      case "unpaid":
-      case "sin_pagar":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
-      case "trialing":
-      case "prueba":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return "Activo";
-      case "past_due":
-        return "Vencido";
-      case "canceled":
-        return "Cancelado";
-      case "unpaid":
-        return "Sin Pagar";
-      case "trialing":
-        return "Prueba";
-      default:
-        return status;
-    }
-  };
-
-  const getPlanColor = (planName: string) => {
-    switch (planName.toLowerCase()) {
-      case "basic":
-      case "básico":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      case "professional":
-      case "profesional":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-      case "enterprise":
-      case "empresarial":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-GT", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const getDaysUntilDue = (endDate: string) => {
-    const today = new Date();
-    const due = new Date(endDate);
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  const getBillingCycleLabel = (billingCycle: number) => {
-    switch (billingCycle) {
-      case 30:
-        return "Mensual";
-      case 90:
-        return "Trimestral";
-      case 180:
-        return "Semestral";
-      case 365:
-        return "Anual";
-      default:
-        return `${billingCycle} días`;
-    }
-  };
-
-  // Obtener lista única de planes para el filtro
-  const uniquePlans = Array.from(
-    new Set(subscriptions.map((sub) => sub.plan.id))
-  )
-    .map((planId) => {
-      const plan = subscriptions.find((sub) => sub.plan.id === planId)?.plan;
-      return plan;
-    })
-    .filter(Boolean);
 
   return (
     <Card>
@@ -197,16 +183,23 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los planes</SelectItem>
-                {uniquePlans.map((plan) => (
-                  <SelectItem key={plan?.id} value={plan?.id || ""}>
-                    {plan?.name}
-                  </SelectItem>
-                ))}
+                {Array.from(new Set(subscriptions.map((s) => s.plan.id)))
+                  .map(
+                    (planId) =>
+                      subscriptions.find((s) => s.plan.id === planId)?.plan
+                  )
+                  .filter(Boolean)
+                  .map((plan) => (
+                    <SelectItem key={plan!.id} value={plan!.id}>
+                      {plan!.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
         </div>
       </CardHeader>
+
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
@@ -222,8 +215,11 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSubscriptions.map((subscription) => {
-                const daysUntilDue = getDaysUntilDue(subscription.endDate);
+              {subscriptions.map((subscription) => {
+                const daysUntilDue = Math.ceil(
+                  (new Date(subscription.endDate).getTime() - Date.now()) /
+                    (1000 * 60 * 60 * 24)
+                );
                 return (
                   <TableRow key={subscription.id}>
                     <TableCell>
@@ -243,32 +239,24 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <Badge className={getPlanColor(subscription.plan.name)}>
-                          {subscription.plan.name}
-                        </Badge>
+                        <Badge>{subscription.plan.name}</Badge>
                         <p className="text-xs text-muted-foreground">
-                          {getBillingCycleLabel(subscription.plan.billingCycle)}
+                          {subscription.plan.billingCycle} días
                         </p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(subscription.status)}>
-                        {getStatusLabel(subscription.status)}
-                      </Badge>
+                      <Badge>{subscription.status}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         <p className="text-foreground">
-                          {formatDate(subscription.endDate)}
+                          {new Date(subscription.endDate).toLocaleDateString(
+                            "es-GT"
+                          )}
                         </p>
                         <p
-                          className={`text-xs ${
-                            daysUntilDue < 0
-                              ? "text-red-600"
-                              : daysUntilDue <= 7
-                                ? "text-yellow-600"
-                                : "text-muted-foreground"
-                          }`}
+                          className={`text-xs ${daysUntilDue < 0 ? "text-red-600" : daysUntilDue <= 7 ? "text-yellow-600" : "text-muted-foreground"}`}
                         >
                           {daysUntilDue < 0
                             ? `${Math.abs(daysUntilDue)} días vencido`
@@ -288,7 +276,7 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
                         <p className="text-foreground">
                           {subscription.currentUsers} usuarios
                         </p>
-                        <p className="text-xs text-muted-foreground">maximos</p>
+                        <p className="text-xs text-muted-foreground">máximos</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -300,10 +288,13 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {/* Botón de pago siempre visible */}
                         <Button
                           size="sm"
-                          onClick={() => setSelectedPaymentRow(subscription.id)}
+                          onClick={() => {
+                            if (onOpenPaymentModal)
+                              onOpenPaymentModal(subscription);
+                            setSelectedPaymentRow(subscription.id);
+                          }}
                           className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <CreditCard className="h-4 w-4" />
@@ -326,6 +317,44 @@ export function CompaniesTab({ subscriptions }: CompaniesTabProps) {
             </TableBody>
           </Table>
         </div>
+
+        {pagination && (
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Página {pagination.currentPage} de {pagination.totalPages} —{" "}
+              {pagination.totalItems} resultados
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrev}
+                disabled={
+                  isLoading ||
+                  (!pagination.hasPreviousPage &&
+                    !pagination.previousPage &&
+                    pagination.currentPage <= 1)
+                }
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNext}
+                disabled={
+                  isLoading ||
+                  (!pagination.hasNextPage &&
+                    !pagination.nextPage &&
+                    pagination.currentPage >= pagination.totalPages)
+                }
+              >
+                Siguiente
+              </Button>
+            </div>
+          </div>
+        )}
+
         <ViewDialog
           open={!!selectedViewRow}
           onClose={() => setSelectedViewRow(null)}
