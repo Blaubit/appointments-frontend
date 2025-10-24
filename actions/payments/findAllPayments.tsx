@@ -8,41 +8,56 @@ import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 
 type Props = {
-  searchParams?: URLSearchParams;
+  // aceptar string | URLSearchParams | objeto plano para robustez al llamar desde cliente
+  searchParams?: URLSearchParams | string | Record<string, any>;
 };
 
 export async function findAllPayments(
   props: Props = {}
 ): Promise<SuccessReponse<Service[]> | ErrorResponse | any> {
   const session = await getSession();
+  // companyId no usado en payments endpoint actual, pero lo mantenemos por consistencia
   const companyId = await getCompanyId();
 
   try {
     const url = `${parsedEnv.API_URL}/payments`;
 
-    // Convertir URLSearchParams a objeto para parsePaginationParams
-    const searchParamsObject: Record<string, string> = {};
+    // Normalize incoming searchParams into a URLSearchParams instance
+    let localUrlSearchParams = new URLSearchParams();
     if (props.searchParams) {
-      props.searchParams.forEach((value, key) => {
-        searchParamsObject[key] = value;
-      });
+      if (typeof props.searchParams === "string") {
+        localUrlSearchParams = new URLSearchParams(props.searchParams);
+      } else if (props.searchParams instanceof URLSearchParams) {
+        localUrlSearchParams = props.searchParams;
+      } else if (typeof props.searchParams === "object") {
+        Object.entries(props.searchParams).forEach(([k, v]) => {
+          if (v === undefined || v === null) return;
+          localUrlSearchParams.set(k, String(v));
+        });
+      }
     }
+
+    // Convertir a objeto para facilidad de uso
+    const searchParamsObject: Record<string, string> = {};
+    localUrlSearchParams.forEach((value, key) => {
+      searchParamsObject[key] = value;
+    });
 
     // Construir parámetros para la API
     const params: Record<string, any> = {
-      page: searchParamsObject.page || "1",
-      limit: "7",
+      page: searchParamsObject.page ? Number(searchParamsObject.page) : 1,
+      limit: searchParamsObject.limit ? Number(searchParamsObject.limit) : 7,
     };
 
-    // Agregar filtros opcionales
-    if (searchParamsObject.search) {
+    if (searchParamsObject.q) {
+      params.q = searchParamsObject.q;
+    } else if (searchParamsObject.search) {
       params.q = searchParamsObject.search;
     }
 
     if (searchParamsObject.status && searchParamsObject.status !== "all") {
       params.status = searchParamsObject.status;
     }
-
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${session}`,
@@ -56,14 +71,15 @@ export async function findAllPayments(
       statusText: response.statusText,
       meta: response.data.meta,
       stats: {
-        total: response.data.meta.totalItems,
-        active: 10,
-        total_income: 5,
-        total_appointments: 2,
+        total: response.data.meta?.totalItems ?? 0,
+        // valores fallback si backend no devuelve stats concretas
+        active: response.data.stats?.active ?? 0,
+        total_income: response.data.stats?.total_income ?? 0,
+        total_appointments: response.data.stats?.total_appointments ?? 0,
       },
     };
   } catch (error) {
-    console.log("Error in findAll services:", error);
+    console.error("[findAllPayments] error ->", error);
     if (isAxiosError(error)) {
       return {
         message: error.message,

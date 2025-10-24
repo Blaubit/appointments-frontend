@@ -70,7 +70,7 @@ interface PlanFeature {
 export default function PlanSelectionCard({
   plans: initialPlans = [],
   onFetchPlans,
-  selectedPlanId,
+  selectedPlanId: externalSelectedPlanId,
   onPlanSelect,
   onConfirm,
   loading = false,
@@ -87,6 +87,18 @@ export default function PlanSelectionCard({
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
+
+  // ✅ CAMBIO 1: Estado interno sincronizado con la prop externa
+  const [internalSelectedPlanId, setInternalSelectedPlanId] = useState<
+    string | undefined
+  >(externalSelectedPlanId);
+
+  // ✅ CAMBIO 2: Sincronizar el selectedPlanId externo con el estado interno
+  useEffect(() => {
+    if (externalSelectedPlanId) {
+      setInternalSelectedPlanId(externalSelectedPlanId);
+    }
+  }, [externalSelectedPlanId]);
 
   // Cargar planes al montar el componente
   useEffect(() => {
@@ -122,6 +134,21 @@ export default function PlanSelectionCard({
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ✅ CAMBIO 3: Handler mejorado para selección de plan
+  const handlePlanSelection = (plan: Plan) => {
+    console.log("✅ Plan seleccionado:", plan.id, plan.name);
+    setInternalSelectedPlanId(plan.id);
+    onPlanSelect?.(plan);
+  };
+
+  // ✅ CAMBIO 4: Handler mejorado para confirmación
+  const handleConfirmSelection = () => {
+    console.log("✅ Confirmando plan:", internalSelectedPlanId);
+    if (internalSelectedPlanId) {
+      onConfirm?.(internalSelectedPlanId);
     }
   };
 
@@ -326,8 +353,9 @@ export default function PlanSelectionCard({
           }}
         >
           <CarouselContent>
-            {activePlans.map((plan, index) => {
-              const isSelected = selectedPlanId === plan.id;
+            {activePlans.map((plan) => {
+              // ✅ CAMBIO 5: Usar internalSelectedPlanId para comparación
+              const isSelected = internalSelectedPlanId === plan.id;
               const isRecommended = recommendedPlanId === plan.id;
               const pricing = formatPrice(plan.price, plan.billingCycle);
               const features = getPlanFeatures(plan.name);
@@ -367,7 +395,7 @@ export default function PlanSelectionCard({
                             ? "border-2 border-yellow-300 shadow-yellow-100 dark:border-yellow-600"
                             : "border border-gray-200 dark:border-gray-700"
                         }`}
-                        onClick={() => onPlanSelect?.(plan)}
+                        onClick={() => handlePlanSelection(plan)}
                       >
                         {/* Layout horizontal para hacer más ancho y menos alto */}
                         <div className="flex flex-col lg:flex-row lg:items-center p-6">
@@ -468,7 +496,7 @@ export default function PlanSelectionCard({
                                   }`}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onPlanSelect?.(plan);
+                                    handlePlanSelection(plan);
                                   }}
                                 >
                                   {isSelected ? (
@@ -537,11 +565,11 @@ export default function PlanSelectionCard({
         </div>
 
         {/* Botón de confirmación */}
-        {showConfirmButton && selectedPlanId && (
+        {showConfirmButton && internalSelectedPlanId && (
           <div className="flex justify-center pt-4">
             <Button
               size="lg"
-              onClick={() => onConfirm?.(selectedPlanId)}
+              onClick={handleConfirmSelection}
               className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 px-12 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {confirmButtonText}

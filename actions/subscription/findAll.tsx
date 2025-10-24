@@ -8,7 +8,8 @@ import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 
 type Props = {
-  searchParams?: URLSearchParams;
+  // Accept multiple shapes to be resilient when called from client: string | URLSearchParams | Record
+  searchParams?: URLSearchParams | string | Record<string, any>;
 };
 
 export async function findAll(
@@ -20,22 +21,37 @@ export async function findAll(
   try {
     const url = `${parsedEnv.API_URL}/companies/${companyId}/subscriptions`;
 
-    // Convertir URLSearchParams a objeto para parsePaginationParams
-    const searchParamsObject: Record<string, string> = {};
+    // Normalize incoming searchParams into a URLSearchParams instance
+    let localUrlSearchParams = new URLSearchParams();
     if (props.searchParams) {
-      props.searchParams.forEach((value, key) => {
-        searchParamsObject[key] = value;
-      });
+      if (typeof props.searchParams === "string") {
+        localUrlSearchParams = new URLSearchParams(props.searchParams);
+      } else if (props.searchParams instanceof URLSearchParams) {
+        localUrlSearchParams = props.searchParams;
+      } else if (typeof props.searchParams === "object") {
+        // plain object (e.g., serialised from client)
+        Object.entries(props.searchParams).forEach(([k, v]) => {
+          if (v === undefined || v === null) return;
+          localUrlSearchParams.set(k, String(v));
+        });
+      }
     }
+    // Convertir URLSearchParams a objeto
+    const searchParamsObject: Record<string, string> = {};
+    localUrlSearchParams.forEach((value, key) => {
+      searchParamsObject[key] = value;
+    });
 
-    // Construir parámetros para la API
+    // Construir params que enviaremos al backend respetando page/limit/q/status
     const params: Record<string, any> = {
-      page: searchParamsObject.page || "1",
-      limit: "9",
+      page: searchParamsObject.page ? Number(searchParamsObject.page) : 1,
+      limit: searchParamsObject.limit ? Number(searchParamsObject.limit) : 10,
     };
 
-    // Agregar filtros opcionales
-    if (searchParamsObject.search) {
+    // Soportar 'q' o 'search'
+    if (searchParamsObject.q) {
+      params.q = searchParamsObject.q;
+    } else if (searchParamsObject.search) {
       params.q = searchParamsObject.search;
     }
 
@@ -50,20 +66,21 @@ export async function findAll(
       params,
     });
 
+    // Respuesta del backend (esperamos data + meta)
     return {
       data: response.data.data,
       status: 200,
       statusText: response.statusText,
       meta: response.data.meta,
       stats: {
-        total: response.data.meta.totalItems,
-        active: 10,
-        total_income: 5,
-        total_appointments: 2,
+        total: response.data.meta?.totalItems ?? 0,
+        active: response.data.stats?.active ?? 0,
+        total_income: response.data.stats?.total_income ?? 0,
+        total_appointments: response.data.stats?.total_appointments ?? 0,
       },
     };
   } catch (error) {
-    console.log("Error in findAll services:", error);
+    console.error("[findAllSubscriptions] error ->", error);
     if (isAxiosError(error)) {
       return {
         message: error.message,

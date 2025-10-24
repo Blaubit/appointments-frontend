@@ -8,6 +8,7 @@ type Company = {
   postal_code: string;
   country: string;
   description: string;
+  phone?: string;
   createdAt: string;
   phones?: string[];
 };
@@ -16,6 +17,7 @@ type phone = {
   id: string;
   phone: string;
 };
+
 interface CompanyRegistrationPayload {
   // Company data
   companyName: string;
@@ -26,6 +28,7 @@ interface CompanyRegistrationPayload {
   companyPostalCode: string;
   companyCountry: string;
   companyDescription: string;
+  companyPhone: string;
   // Admin data
   adminFullName: string;
   adminEmail: string;
@@ -36,6 +39,7 @@ interface CompanyRegistrationPayload {
   endDate: string;
   createdById: string;
 }
+
 export type CompanySettings = {
   id: string;
   companyId: string;

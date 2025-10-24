@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, MapPin, ArrowRight, ArrowLeft } from "lucide-react";
+import { Building2, MapPin, ArrowRight, ArrowLeft, Phone } from "lucide-react";
 import { CompanyTypes } from "@/types";
 
 interface CompanyData {
@@ -32,6 +32,7 @@ interface CompanyData {
   state: string;
   postal_code: string;
   country: string;
+  phone: string;
   description: string;
 }
 
@@ -70,6 +71,7 @@ const defaultCompanyData: CompanyData = {
   state: "",
   postal_code: "",
   country: "Guatemala",
+  phone: "",
   description: "",
 };
 
@@ -155,6 +157,25 @@ export default function CompanyRegistrationCard({
           </Select>
           {errors.companyType && (
             <p className="text-sm text-red-600">{errors.companyType}</p>
+          )}
+        </div>
+
+        {/* Teléfono de la empresa */}
+        <div className="space-y-2">
+          <Label htmlFor="companyPhone">Teléfono de la Empresa *</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="companyPhone"
+              type="tel"
+              value={companyData.phone}
+              onChange={(e) => updateField("phone", e.target.value)}
+              placeholder="+502 2123-4567"
+              className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
+            />
+          </div>
+          {errors.phone && (
+            <p className="text-sm text-red-600">{errors.phone}</p>
           )}
         </div>
 
@@ -297,6 +318,10 @@ export function useCompanyValidation() {
 
     if (!companyData.companyType) {
       errors.companyType = "Selecciona el tipo de empresa";
+    }
+
+    if (!companyData.phone.trim()) {
+      errors.phone = "El teléfono de la empresa es requerido";
     }
 
     if (!companyData.address.trim()) {
