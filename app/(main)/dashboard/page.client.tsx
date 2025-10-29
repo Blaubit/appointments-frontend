@@ -108,6 +108,7 @@ export default function DashboardClient({
     setSelectedAppointment(null);
   };
   const handleEditAppointment = (_appointment: Appointment) => {
+    // redirigir a /appointments/:id/edit
     setSelectedAppointment(null);
   };
   const handleConfirmAppointment = (_appointment: Appointment) => {

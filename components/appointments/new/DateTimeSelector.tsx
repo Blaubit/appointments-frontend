@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -20,6 +22,7 @@ type Props = {
   onChange: (date: string, time: string) => void;
   selectedServices: string[];
   professionalServices: Service[];
+  appointmentId?: string; // opcional: id de la cita que estamos editando
 };
 
 interface TimeSlotStatus {
@@ -40,6 +43,7 @@ export function DateTimeSelectorCard({
   onChange,
   selectedServices,
   professionalServices,
+  appointmentId,
 }: Props) {
   const [timeSlots, setTimeSlots] = useState<TimeSlotStatus[]>([]);
   const [selectedTime, setSelectedTime] = useState("");
@@ -83,14 +87,7 @@ export function DateTimeSelectorCard({
     return hours * 60 + minutes;
   };
 
-  // Convertir minutos a formato HH:MM
-  const minutesToTime = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
-  };
-
-  // Verificar si un horario de inicio es válido
+  // Verificar si un horario de inicio es válido (ocupados ya deben venir filtrados si se edita)
   const isTimeSlotValid = (
     startTime: string,
     totalDuration: number,
@@ -116,11 +113,11 @@ export function DateTimeSelectorCard({
       const slotStart = timeToMinutes(slot.startTime.slice(0, 5));
       const slotEnd = timeToMinutes(slot.endTime.slice(0, 5));
 
-      // Verificar si hay solapamiento
+      // Verificar si hay solapamiento (intersección de intervalos)
       if (startMinutes < slotEnd && endMinutes > slotStart) {
         return {
           isValid: false,
-          reason: `Conflicto con cita de ${slot.clientName} (${slot.serviceName})`,
+          reason: `Conflicto con cita de ${slot.clientName || "otro cliente"} (${slot.serviceName || "servicio"})`,
         };
       }
     }
@@ -162,7 +159,7 @@ export function DateTimeSelectorCard({
       };
     }
 
-    // Usar la validación existente
+    // Usar la validación con occupiedSlots ya filtrados (scheduleData contiene la versión filtrada)
     const validation = isTimeSlotValid(
       time,
       totalDuration,
@@ -196,6 +193,47 @@ export function DateTimeSelectorCard({
     }
   };
 
+  // Utility: normalizar "HH:MM:SS" -> "HH:MM"
+  const normalizeToHHMM = (t?: string) => {
+    if (!t) return "";
+    const parts = t.split(":");
+    if (parts.length >= 2)
+      return `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}`;
+    return t;
+  };
+
+  // -----------------------
+  // Optimistic pre-render:
+  // Si tenemos initialTime + profesional + fecha, añadir inmediatamente un slot
+  // optimista para que sea renderizado antes de que termine el fetch de findPeriod.
+  // -----------------------
+  useEffect(() => {
+    if (!selectedProfessional || !selectedDate || !initialTime) return;
+
+    const normalizedInitial = normalizeToHHMM(initialTime);
+    if (!normalizedInitial) return;
+
+    // Si ya existe en timeSlots, no hacemos nada
+    setTimeSlots((prev) => {
+      if (prev.some((s) => s.time === normalizedInitial)) return prev;
+      // insertarlo al inicio (no ordenado aún); el fetch posterior reordenará
+      const optimistic: TimeSlotStatus = {
+        time: normalizedInitial,
+        isAvailable: true,
+      };
+      // Si no hay selección de hora, preseleccionamos optimísticamente
+      if (!selectedTime) {
+        setSelectedTime(normalizedInitial);
+        setCustomTime(normalizedInitial);
+        setCustomTimeValid(true);
+        setCustomTimeError(null);
+      }
+      return [optimistic, ...prev];
+    });
+    // Nota: el fetch que viene después reemplazará timeSlots con la lista definitiva.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProfessional?.id, selectedDate, initialTime]);
+
   // Cargar y filtrar horarios disponibles
   useEffect(() => {
     if (!selectedProfessional || !selectedDate) {
@@ -218,34 +256,76 @@ export function DateTimeSelectorCard({
           );
 
           if (daySchedule && daySchedule.availableHours) {
-            // Guardar datos de horario para validar tiempo personalizado
-            setScheduleData(daySchedule);
+            // FILTRAR occupiedSlots: eliminar la propia cita (si appointmentId fue pasado)
+            const rawOccupied = Array.isArray(daySchedule.occupiedSlots)
+              ? daySchedule.occupiedSlots
+              : [];
+            const filteredOccupied = appointmentId
+              ? rawOccupied.filter(
+                  (s: any) => String(s.appointmentId) !== String(appointmentId)
+                )
+              : rawOccupied.slice(); // clon
+
+            // Creamos una copia del daySchedule que usaremos para validaciones (ocupado filtrado)
+            const dayScheduleForValidation = {
+              ...daySchedule,
+              occupiedSlots: filteredOccupied,
+            };
+
+            // Normalizamos initialTime a HH:MM para posibles inserciones
+            const normalizedInitial = initialTime
+              ? normalizeToHHMM(initialTime)
+              : "";
+
+            // Construimos availableHours para render: añadimos normalizedInitial si no existe
+            const baseAvailable = Array.isArray(daySchedule.availableHours)
+              ? daySchedule.availableHours.map((h: string) =>
+                  normalizeToHHMM(h)
+                )
+              : [];
+
+            let availableHoursForRender = baseAvailable.slice();
+            if (
+              normalizedInitial &&
+              !availableHoursForRender.includes(normalizedInitial)
+            ) {
+              availableHoursForRender.push(normalizedInitial);
+            }
+
+            // Deduplicate and sort ascending
+            availableHoursForRender = Array.from(
+              new Set(availableHoursForRender)
+            ).sort((a: any, b: any) => timeToMinutes(a) - timeToMinutes(b));
+
+            // Guardar datos de horario para validar tiempo personalizado (ya filtrados)
+            setScheduleData(dayScheduleForValidation);
             // Registrar que este día es laboral (tiene horarios disponibles)
             setWorkingDays((prev) => new Set([...prev, selectedDate]));
 
             const totalDuration = getTotalDuration();
 
-            // Si no hay servicios seleccionados, mostrar todos los horarios
+            // Si no hay servicios seleccionados, mostrar todos los horarios disponibles tal cual vienen (pero usando availableHoursForRender)
             if (totalDuration === 0) {
-              const slots: TimeSlotStatus[] = daySchedule.availableHours.map(
+              const slots: TimeSlotStatus[] = availableHoursForRender.map(
                 (hour: string) => ({
                   time: hour,
                   isAvailable: true,
                 })
               );
+
               setTimeSlots(slots);
               setHoursError(null);
               return;
             }
 
-            // Filtrar horarios válidos considerando la duración total
-            const validSlots: TimeSlotStatus[] = daySchedule.availableHours.map(
+            // Filtrar horarios válidos considerando la duración total, usando occupiedSlots filtrados
+            const validSlots: TimeSlotStatus[] = availableHoursForRender.map(
               (hour: string) => {
                 const validation = isTimeSlotValid(
                   hour,
                   totalDuration,
-                  daySchedule.occupiedSlots,
-                  daySchedule.workingHours
+                  dayScheduleForValidation.occupiedSlots,
+                  dayScheduleForValidation.workingHours
                 );
 
                 return {
@@ -256,6 +336,12 @@ export function DateTimeSelectorCard({
               }
             );
 
+            // Ordenar por hora ascendente (aunque availableHoursForRender ya lo está)
+            validSlots.sort(
+              (a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)
+            );
+
+            // Reemplazamos los slots (esto sobrescribe el optimistic slot si es necesario)
             setTimeSlots(validSlots);
 
             // Verificar si hay al menos un horario válido
@@ -289,21 +375,41 @@ export function DateTimeSelectorCard({
     selectedDate,
     selectedServices,
     professionalServices,
+    appointmentId,
+    initialTime,
   ]);
 
   // Preselección automática de hora
   useEffect(() => {
+    const normalizedInitial = initialTime ? normalizeToHHMM(initialTime) : "";
     if (
-      initialTime &&
-      timeSlots.find((slot) => slot.time === initialTime && slot.isAvailable) &&
+      normalizedInitial &&
+      timeSlots.find(
+        (slot) => slot.time === normalizedInitial && slot.isAvailable
+      ) &&
       !selectedTime
     ) {
-      setSelectedTime(initialTime);
-      setCustomTime(initialTime);
+      setSelectedTime(normalizedInitial);
+      setCustomTime(normalizedInitial);
       setCustomTimeValid(true);
       setCustomTimeError(null);
+    } else if (normalizedInitial && !selectedTime && scheduleData) {
+      // En caso el slot no esté en los timeSlots, intentamos validar manualmente usando scheduleData (filtrada)
+      const totalDuration = getTotalDuration();
+      const manualValidation = isTimeSlotValid(
+        normalizedInitial,
+        totalDuration,
+        scheduleData.occupiedSlots,
+        scheduleData.workingHours
+      );
+      if (manualValidation.isValid) {
+        setSelectedTime(normalizedInitial);
+        setCustomTime(normalizedInitial);
+        setCustomTimeValid(true);
+        setCustomTimeError(null);
+      }
     }
-  }, [timeSlots, initialTime, selectedTime]);
+  }, [timeSlots, initialTime, selectedTime, scheduleData]);
 
   // Notificar cambios al padre
   useEffect(() => {

@@ -40,7 +40,7 @@ import {
 } from "@/utils/functions/appointmentStatus";
 import WhatsappIcon from "./icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
-import findOne from "@/actions/appointments/findOne";
+import { findOne } from "@/actions/appointments/findOne";
 import { update } from "@/actions/appointments/appointmentStatus";
 import Link from "next/link";
 import { AppointmentPaymentDialog } from "@/components/appointments/appointment-payment-dialog";
@@ -61,7 +61,6 @@ export function AppointmentDetailsDialog({
   appointmentId,
   isOpen,
   onClose,
-  onEdit,
   onDelete,
   onCall,
   onEmail,
@@ -229,7 +228,9 @@ export function AppointmentDetailsDialog({
   const handleRescheduleAppointment = () => {
     console.log("Reprogramar cita:", appointment?.id);
   };
-
+  const handleEditAppointment = () => {
+    router.push(`/appointments/${appointment?.id}/edit`);
+  };
   const handleAttendAppointment = async () => {
     onClose();
     try {
@@ -656,7 +657,7 @@ export function AppointmentDetailsDialog({
                 </Button>
               )}
               <Button
-                onClick={() => onEdit(appointment)}
+                onClick={() => handleEditAppointment()}
                 variant="outline"
                 className="w-full h-10 text-sm"
               >
