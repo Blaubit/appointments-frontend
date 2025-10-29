@@ -43,16 +43,16 @@ export function ClientsListCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Lista de Clientes ({pagination?.totalItems || 0})
+          Lista de pacientes ({pagination?.totalItems || 0})
         </CardTitle>
       </CardHeader>
       <CardContent>
         {clients.length === 0 ? (
           <div className="text-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hay clientes</h3>
+            <h3 className="text-lg font-semibold mb-2">No hay pacientes</h3>
             <p className="text-muted-foreground mb-4">
-              No se encontraron clientes que coincidan con la búsqueda.
+              No se encontraron pacientes que coincidan con la búsqueda.
             </p>
           </div>
         ) : viewMode === "cards" ? (

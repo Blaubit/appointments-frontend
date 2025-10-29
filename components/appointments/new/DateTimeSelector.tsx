@@ -117,7 +117,7 @@ export function DateTimeSelectorCard({
       if (startMinutes < slotEnd && endMinutes > slotStart) {
         return {
           isValid: false,
-          reason: `Conflicto con cita de ${slot.clientName || "otro cliente"} (${slot.serviceName || "servicio"})`,
+          reason: `Conflicto con cita de ${slot.clientName || "otro paciente"} (${slot.serviceName || "servicio"})`,
         };
       }
     }

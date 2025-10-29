@@ -5,7 +5,7 @@ import LoginClient from "./page.client";
 import { Login } from "@/actions/auth/login";
 import { loginSchema } from "@/lib/validations/auth";
 import { z } from "zod";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 
 // Validación con backend real usando Zod
 async function handleServerLogin(formData: FormData) {
@@ -109,7 +109,7 @@ async function checkAuth() {
   }
 }
 
-// Información adicional que puedes pasar al cliente
+// Información adicional que puedes pasar al paciente
 async function getServerMetadata() {
   return {
     timestamp: new Date().toISOString(),

@@ -78,7 +78,7 @@ export default function PageClient({
 
   const [formData, setFormData] = useState({
     clientName: "",
-    clientEmail: "",
+    pacientemail: "",
     clientPhone: "",
     professionalId: professionalIdFromUrl || "",
     duration: "",
@@ -251,7 +251,7 @@ export default function PageClient({
     setFormData({
       ...formData,
       clientName: client.fullName,
-      clientEmail: client.email,
+      pacientemail: client.email,
       clientPhone: client.phone,
     });
     setShowNewClientForm(false);
@@ -291,7 +291,7 @@ export default function PageClient({
 
     const dataToValidate = {
       clientName: formData.clientName,
-      clientEmail: formData.clientEmail,
+      pacientemail: formData.pacientemail,
       clientPhone: formData.clientPhone,
       professionalId: formData.professionalId,
       selectedServices,
@@ -307,7 +307,7 @@ export default function PageClient({
       if (!clientId || clientId === "temp") {
         const newClientData = {
           fullName: formData.clientName,
-          email: formData.clientEmail || "",
+          email: formData.pacientemail || "",
           phone: formData.clientPhone,
         };
         const clientResult = await createClient(newClientData);
@@ -318,7 +318,7 @@ export default function PageClient({
         }
       }
       if (!clientId || clientId === "temp") {
-        throw new Error("Debe seleccionar o crear un cliente");
+        throw new Error("Debe seleccionar o crear un paciente");
       }
       if (!selectedProfessional) {
         throw new Error("Debe seleccionar un profesional");

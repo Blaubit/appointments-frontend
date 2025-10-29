@@ -18,10 +18,6 @@ import { getCompanyId } from "@/actions/user/getCompanyId";
       appointment: appointmentDto & { id: string }
     ): Promise<SuccessReponse<Appointment> | ErrorResponse>
 
-  Nota:
-  - El body admite serviceId que puede ser string o string[]; si es array se envía como `serviceIds`
-    (ajusta la clave si tu backend espera otro nombre).
-  - Revalida "/appointments" y "/appointments/:id" tras una actualización exitosa.
 */
 
 export default async function update(
@@ -76,7 +72,6 @@ export default async function update(
     } else if (serviceId !== undefined) {
       body.serviceId = serviceId;
     }
-    console.log("Updating appointment with body:", body);
     const response = await axios.patch<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,

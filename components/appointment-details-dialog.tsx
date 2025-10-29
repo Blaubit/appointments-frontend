@@ -309,7 +309,7 @@ export function AppointmentDetailsDialog({
                 <CardTitle className="flex items-center justify-between text-base sm:text-lg">
                   <div className="flex items-center gap-2">
                     <UserIcon className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Información del Cliente</span>
+                    <span className="truncate">Información del paciente</span>
                   </div>
                   <Button
                     size="sm"

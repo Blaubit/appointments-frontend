@@ -13,7 +13,7 @@ export function ClientsStatsCards({ stats }: ClientsStatsCardsProps) {
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card className="card-hover">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
+          <CardTitle className="text-sm font-medium">Total pacientes</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -23,7 +23,7 @@ export function ClientsStatsCards({ stats }: ClientsStatsCardsProps) {
           <p className="text-xs text-muted-foreground">
             {stats.totalClients > 0
               ? `+${stats.newClientsLastDays} en los últimos días`
-              : "Comienza agregando clientes"}
+              : "Comienza agregando pacientes"}
           </p>
         </CardContent>
       </Card>
@@ -31,7 +31,7 @@ export function ClientsStatsCards({ stats }: ClientsStatsCardsProps) {
       <Card className="card-hover">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">
-            Clientes Activos
+            pacientes Activos
           </CardTitle>
           <UserCheck className="h-4 w-4 text-muted-foreground" />
         </CardHeader>

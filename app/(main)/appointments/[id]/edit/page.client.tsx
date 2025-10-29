@@ -37,8 +37,8 @@ import type {
   - Paso de appointment.id a DateTimeSelectorCard para que ignore la propia cita en occupiedSlots.
   - Sincronización de selectedServices con los servicios disponibles del profesional cuando se cargan.
   - Conversión de "HH:MM" -> "HH:MM:00" al enviar a la API.
-  - NOTA: Solo cambié la UI del campo "Notas" para que sea igual a la de la página de creación (usa Label + Textarea).
-    No toqué la lógica de envío de services (queda como en EditAppointmentClient2: envia un único serviceId al backend).
+  - UI del campo "Notas" igual que en la página de creación (Label + Textarea).
+  - Cambiado: ahora el payload de actualización envía los servicios como array (serviceId: string[]).
 */
 
 type Props = {
@@ -50,7 +50,7 @@ type Props = {
 
 interface LocalFormData {
   clientName: string;
-  clientEmail?: string;
+  pacientemail?: string;
   clientPhone?: string;
   professionalId: string;
   duration: string;
@@ -154,8 +154,8 @@ export default function EditAppointmentClient({
   // --- formData local (strings) ---
   const [formData, setFormData] = useState<LocalFormData>({
     clientName: selectedClient?.fullName || appointment.client.fullName || "",
-    clientEmail:
-      selectedClient?.email || (appointment as any).clientEmail || "",
+    pacientemail:
+      selectedClient?.email || (appointment as any).pacientemail || "",
     clientPhone:
       selectedClient?.phone || (appointment as any).clientPhone || "",
     professionalId:
@@ -280,7 +280,7 @@ export default function EditAppointmentClient({
     setFormData((prev) => ({
       ...prev,
       clientName: client.fullName,
-      clientEmail: client.email,
+      pacientemail: client.email,
       clientPhone: client.phone,
     }));
     setShowNewClientForm(false);
@@ -321,7 +321,7 @@ export default function EditAppointmentClient({
 
     const dataToValidate = {
       clientName: formData.clientName,
-      clientEmail: formData.clientEmail,
+      pacientemail: formData.pacientemail,
       clientPhone: formData.clientPhone,
       professionalId: formData.professionalId,
       selectedServices,
@@ -338,7 +338,7 @@ export default function EditAppointmentClient({
       if (!clientId || clientId === "temp") {
         const newClientData: ClientFormData = {
           fullName: formData.clientName,
-          email: formData.clientEmail || "",
+          email: formData.pacientemail || "",
           phone: formData.clientPhone || "",
         };
         const clientResult = await createClient(newClientData);
@@ -350,7 +350,7 @@ export default function EditAppointmentClient({
       }
 
       if (!clientId || clientId === "temp") {
-        throw new Error("Debe seleccionar o crear un cliente");
+        throw new Error("Debe seleccionar o crear un paciente");
       }
       if (!selectedProfessional) {
         throw new Error("Debe seleccionar un profesional");
@@ -365,24 +365,20 @@ export default function EditAppointmentClient({
         throw new Error("Debe seleccionar una hora");
       }
 
-      // IMPORTANT: backend does not accept serviceIds array — send single serviceId
-      let serviceIdToSend: string | undefined = undefined;
-
-      const normalizedStartTime = normalizeToHHMMSS(selectedTime); // ensure HH:MM:SS
-
+      // IMPORTANT: backend now accepts string[] for services — send array
+      const normalizedStartTime = normalizeToHHMM(selectedTime); // ensure HH:MM:SS
       const appointmentData: any = {
         id: appointment.id,
         clientId: clientId.toString(),
         professionalId: selectedProfessional.id.toString(),
-        // send single serviceId (string) to satisfy backend validation
-        serviceId: serviceIdToSend,
+        // send array of service ids
+        serviceId: selectedServices,
         appointmentDate: selectedDate,
         startTime: normalizedStartTime,
         status: formData.status || "confirmed",
         notes: formData.notes || " ",
         amount: totalPrice,
       };
-
       const result = await updateAppointment(appointmentData);
 
       if ("message" in result) {

@@ -35,7 +35,7 @@ export default function LoginClient({
   serverAction,
   serverMetadata,
 }: LoginClientProps) {
-  // Estados del cliente
+  // Estados del paciente
   const [step, setStep] = useState<"email" | "password">("email");
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",

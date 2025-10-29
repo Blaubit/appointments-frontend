@@ -22,7 +22,7 @@ export function ClientsHeader({
         trigger={
           <Button className="btn-gradient-primary text-white">
             <Plus className="h-4 w-4 mr-2" />
-            Nuevo Cliente
+            Nuevo paciente
           </Button>
         }
         onSubmit={onCreateClient}

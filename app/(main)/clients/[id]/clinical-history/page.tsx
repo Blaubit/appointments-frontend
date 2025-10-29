@@ -14,7 +14,7 @@ export default async function PatientRecordPage({ params }: PageProps) {
   const client = await findOne(clientId);
 
   if (!client || "error" in client) {
-    return <div>Cliente no encontrado</div>;
+    return <div>paciente no encontrado</div>;
   }
 
   return (

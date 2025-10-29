@@ -33,7 +33,7 @@ export function ClientDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Detalles del Cliente</DialogTitle>
+          <DialogTitle>Detalles del paciente</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
           <div className="flex items-center space-x-4">

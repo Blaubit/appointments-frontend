@@ -79,7 +79,7 @@ export default async function RegisterPage() {
       console.log("Respuesta de createCompany:", response);
 
       // ✅ El response ya viene en el formato correcto desde el backend
-      // Si es un ErrorResponse, se manejará en el cliente
+      // Si es un ErrorResponse, se manejará en el paciente
       // Si es un SuccessResponse<Company>, se procesará como éxito
       return response;
     } catch (error) {

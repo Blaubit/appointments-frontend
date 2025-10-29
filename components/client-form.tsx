@@ -116,12 +116,12 @@ export function ClientForm({
           <Plus className="h-6 w-6 text-primary" />
         </div>
         <CardTitle className="text-lg">
-          {isEditMode ? "Editar Cliente" : "Nuevo Cliente"}
+          {isEditMode ? "Editar paciente" : "Nuevo paciente"}
         </CardTitle>
         <CardDescription>
           {isEditMode
-            ? "Actualizar información del cliente"
-            : "Agregar un nuevo cliente al sistema"}
+            ? "Actualizar información del paciente"
+            : "Agregar un nuevo paciente al sistema"}
         </CardDescription>
       </CardHeader>
     </Card>
@@ -134,12 +134,12 @@ export function ClientForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            {isEditMode ? "Editar Cliente" : "Nuevo Cliente"}
+            {isEditMode ? "Editar paciente" : "Nuevo paciente"}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? "Actualiza la información del cliente"
-              : "Completa la información básica para crear un nuevo cliente"}
+              ? "Actualiza la información del paciente"
+              : "Completa la información básica para crear un nuevo paciente"}
           </DialogDescription>
         </DialogHeader>
 
@@ -194,7 +194,7 @@ export function ClientForm({
               Cancelar
             </Button>
             <Button type="submit">
-              {isEditMode ? "Actualizar Cliente" : "Crear Cliente"}
+              {isEditMode ? "Actualizar paciente" : "Crear paciente"}
             </Button>
           </div>
         </form>

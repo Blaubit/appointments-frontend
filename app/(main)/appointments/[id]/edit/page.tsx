@@ -11,7 +11,7 @@ interface Props {
 
 /*
   Página de servidor que carga los datos necesarios para editar una cita:
-   - clientes
+   - pacientes
    - profesionales
    - sesión del usuario
    - datos de la cita por id (params.id)
@@ -44,7 +44,6 @@ export default async function Page({ params }: Props) {
   }
 
   const appointment: Appointment = appointmentResult.data;
-  console.log("Editing appointment:", appointment);
   return (
     <EditAppointmentClient
       appointment={appointment}

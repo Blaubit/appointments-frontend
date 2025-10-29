@@ -76,7 +76,7 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
 
       if ("data" in result) {
         // Éxito
-        toast.success("Cliente calificado exitosamente");
+        toast.success("paciente calificado exitosamente");
 
         // Llamar el callback opcional si existe
         if (onRate) {
@@ -86,11 +86,11 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
         setOpen(false);
       } else {
         // Error
-        toast.error(result.message || "Error al calificar el cliente");
+        toast.error(result.message || "Error al calificar el paciente");
       }
     } catch (error) {
       console.error("Error rating client:", error);
-      toast.error("Error inesperado al calificar el cliente");
+      toast.error("Error inesperado al calificar el paciente");
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +107,7 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
       <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Calificar Cliente</DialogTitle>
+            <DialogTitle>Calificar paciente</DialogTitle>
           </DialogHeader>
           <div className="flex items-center gap-4">
             <Avatar>
@@ -150,11 +150,11 @@ export const RateClientDialog: React.FC<RateClientDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || <Button variant="outline">Calificar cliente</Button>}
+        {trigger || <Button variant="outline">Calificar paciente</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Calificar Cliente</DialogTitle>
+          <DialogTitle>Calificar paciente</DialogTitle>
         </DialogHeader>
         <div className="flex items-center gap-4">
           <Avatar>

@@ -1,6 +1,6 @@
 # 📅 App de Gestión de Citas
 
-Esta es una aplicación web moderna para la gestión eficiente de citas, clientes y servicios, pensada para clínicas, peluquerías, consultorios, spas y cualquier negocio que requiera una agenda organizada y digitalizada. El proyecto está construido con **Next.js** y utiliza una arquitectura modular, facilitando la escalabilidad y el mantenimiento. Incluye autenticación, panel de administración, gestión de clientes, horarios por profesional, y una interfaz intuitiva y responsiva.
+Esta es una aplicación web moderna para la gestión eficiente de citas, pacientes y servicios, pensada para clínicas, peluquerías, consultorios, spas y cualquier negocio que requiera una agenda organizada y digitalizada. El proyecto está construido con **Next.js** y utiliza una arquitectura modular, facilitando la escalabilidad y el mantenimiento. Incluye autenticación, panel de administración, gestión de pacientes, horarios por profesional, y una interfaz intuitiva y responsiva.
 
 El frontend se conecta a una API protegida mediante token, y está preparado para integrarse con sistemas de notificaciones y recordatorios. El flujo de desarrollo y despliegue está optimizado para entornos modernos y utiliza **pnpm** como gestor de paquetes para mayor rapidez y eficiencia.
 
@@ -9,8 +9,8 @@ El frontend se conecta a una API protegida mediante token, y está preparado par
 ## 🚀 Características principales
 
 - Registro y autenticación de usuarios (Auth.js / NextAuth)
-- Panel de administración para gestionar citas, clientes y servicios
-- Gestión de clientes/pacientes y profesionales
+- Panel de administración para gestionar citas, pacientes y servicios
+- Gestión de pacientes/pacientes y profesionales
 - Horarios disponibles por día y profesional
 - Integración con API protegida por token
 - Interfaz moderna, rápida y responsive (Tailwind CSS)

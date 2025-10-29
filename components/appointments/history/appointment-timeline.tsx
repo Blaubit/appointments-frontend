@@ -39,7 +39,7 @@ export function AppointmentsTimeline({
               No hay citas registradas
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-center">
-              Este cliente aún no tiene citas en el historial.
+              Este paciente aún no tiene citas en el historial.
             </p>
           </div>
         </CardContent>

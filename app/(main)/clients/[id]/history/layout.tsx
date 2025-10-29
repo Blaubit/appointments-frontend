@@ -2,8 +2,8 @@ import type React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Historial del Cliente - Sistema de Citas",
-  description: "Historial completo de citas del cliente",
+  title: "Historial del paciente - Sistema de Citas",
+  description: "Historial completo de citas del paciente",
 };
 
 export default function ClientHistoryLayout({

@@ -22,7 +22,7 @@ export interface ServiceProfessional {
 export type FormDataType = {
   professionalId: string;
   clientName: string;
-  clientEmail: string;
+  pacientemail: string;
   clientPhone: string;
   service: string;
   date: string;

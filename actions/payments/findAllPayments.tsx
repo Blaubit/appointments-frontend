@@ -8,7 +8,7 @@ import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 
 type Props = {
-  // aceptar string | URLSearchParams | objeto plano para robustez al llamar desde cliente
+  // aceptar string | URLSearchParams | objeto plano para robustez al llamar desde paciente
   searchParams?: URLSearchParams | string | Record<string, any>;
 };
 

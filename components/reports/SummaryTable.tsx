@@ -53,7 +53,7 @@ export function SummaryTable() {
               </tr>
               <tr className="border-b">
                 <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                  Nuevos Clientes
+                  Nuevos pacientes
                 </td>
                 <td className="py-3 px-4 text-right font-medium">28</td>
                 <td className="py-3 px-4 text-right text-gray-500">24</td>

@@ -126,7 +126,7 @@ export function SettingsPageClient({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // State management para datos que pueden cambiar en el cliente
+  // State management para datos que pueden cambiar en el paciente
   const [profileData, setProfileData] = useState(initialProfileData);
   const [scheduleSettings, setScheduleSettings] = useState(
     initialScheduleSettings

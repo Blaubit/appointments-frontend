@@ -131,7 +131,7 @@ export function AppointmentsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Cliente</TableHead>
+            <TableHead>paciente</TableHead>
             <TableHead>Profesional</TableHead>
             <TableHead>Fecha y Hora</TableHead>
             <TableHead>Servicios</TableHead>

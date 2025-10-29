@@ -13,9 +13,9 @@ export function TopClientsList({ topClients }: { topClients: any[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Mejores Clientes</CardTitle>
+        <CardTitle>Mejores pacientes</CardTitle>
         <CardDescription>
-          Clientes con mayor frecuencia de visitas
+          pacientes con mayor frecuencia de visitas
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -76,7 +76,7 @@ export function ClientsTableView({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cliente</TableHead>
+              <TableHead>paciente</TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead>Valoración</TableHead>
               <TableHead>Fecha Registro</TableHead>

@@ -92,7 +92,7 @@ const variantConfig = {
     colorClasses:
       "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
     buttonVariant: "default" as const,
-    defaultTitle: "Crear cliente",
+    defaultTitle: "Crear paciente",
     defaultConfirmText: "Crear",
   },
   edit: {
@@ -100,7 +100,7 @@ const variantConfig = {
     colorClasses:
       "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
     buttonVariant: "default" as const,
-    defaultTitle: "Editar cliente",
+    defaultTitle: "Editar paciente",
     defaultConfirmText: "Guardar cambios",
   },
   delete: {
@@ -108,7 +108,7 @@ const variantConfig = {
     colorClasses:
       "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400",
     buttonVariant: "destructive" as const,
-    defaultTitle: "Eliminar cliente",
+    defaultTitle: "Eliminar paciente",
     defaultConfirmText: "Eliminar",
   },
 };
