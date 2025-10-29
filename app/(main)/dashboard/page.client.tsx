@@ -76,21 +76,58 @@ export default function DashboardClient({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) {
-      return "Hoy";
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Mañana";
-    } else {
-      return date.toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+    try {
+      // Manejar diferentes formatos de fecha
+      let date: Date;
+
+      // Si es un ISO string con timezone
+      if (typeof dateString === "string" && dateString.includes("T")) {
+        // Extraer solo la parte de la fecha para evitar cambios de zona horaria
+        const datePart = dateString.split("T")[0];
+        const [year, month, day] = datePart.split("-").map(Number);
+        // Crear fecha en UTC al mediodía para evitar cambios de día
+        date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      } else if (typeof dateString === "string") {
+        // Formato YYYY-MM-DD simple
+        const [year, month, day] = dateString.split("-").map(Number);
+        date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      } else {
+        // Si es un objeto Date
+        date = new Date(dateString);
+      }
+
+      const today = new Date();
+      const todayUTC = new Date(
+        Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth(),
+          today.getUTCDate()
+        )
+      );
+
+      const tomorrow = new Date(todayUTC);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const appointmentDateUTC = new Date(
+        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+      );
+
+      if (appointmentDateUTC.getTime() === todayUTC.getTime()) {
+        return "Hoy";
+      } else if (appointmentDateUTC.getTime() === tomorrow.getTime()) {
+        return "Mañana";
+      } else {
+        // Usar formato de fecha en español
+        return new Intl.DateTimeFormat("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }).format(appointmentDateUTC);
+      }
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "";
     }
   };
 
@@ -109,9 +146,6 @@ export default function DashboardClient({
   };
   const handleEditAppointment = (_appointment: Appointment) => {
     // redirigir a /appointments/:id/edit
-    setSelectedAppointment(null);
-  };
-  const handleConfirmAppointment = (_appointment: Appointment) => {
     setSelectedAppointment(null);
   };
   const handleCancelAppointment = (_appointment: Appointment) => {
@@ -412,136 +446,134 @@ export default function DashboardClient({
                 ) : upcomingAppointments.length === 0 ? (
                   <EmptyAppointmentsState />
                 ) : (
-                  <>
-                    <div className="space-y-3 sm:space-y-4">
-                      {upcomingAppointments.map((appointment) => (
-                        <div
-                          key={appointment.id}
-                          className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-1s sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
-                          onClick={() => handleViewAppointment(appointment)}
-                        >
-                          {/* Avatar and main info */}
-                          <div className="flex items-center space-x-3 flex-1 min-w-0">
-                            <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                              <AvatarImage
-                                src={
-                                  appointment?.client?.avatar || "/Avatar1.png"
-                                }
-                                alt={appointment?.client?.fullName || ""}
-                              />
-                              <AvatarFallback className="text-xs sm:text-sm">
-                                {getInitials(appointment?.client?.fullName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-1">
-                                <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate pr-2">
-                                  {appointment?.client?.fullName || ""}
-                                </p>
-                                <Badge
-                                  className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
-                                >
-                                  <div className="flex items-center space-x-1">
-                                    {getStatusIcon(appointment.status)}
-                                    <span className="capitalize hidden sm:inline">
-                                      {getStatusText(appointment.status)}
-                                    </span>
-                                  </div>
-                                </Badge>
-                              </div>
-                              {/* Mostrar todos los servicios (services[]) */}
-                              <ul className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {Array.isArray(appointment.services) &&
-                                appointment.services.length > 0 ? (
-                                  appointment.services.map(
-                                    (service: any, idx: number) => (
-                                      <li key={service.id || idx}>
-                                        {service.name || "Servicio"}
-                                        {service.durationMinutes
-                                          ? ` (${service.durationMinutes} min)`
-                                          : ""}
-                                      </li>
-                                    )
+                  <div className="space-y-3 sm:space-y-4">
+                    {upcomingAppointments.map((appointment) => (
+                      <div
+                        key={appointment.id}
+                        className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-3 sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
+                        onClick={() => handleViewAppointment(appointment)}
+                      >
+                        {/* Avatar and main info */}
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                            <AvatarImage
+                              src={
+                                appointment?.client?.avatar || "/Avatar1.png"
+                              }
+                              alt={appointment?.client?.fullName || ""}
+                            />
+                            <AvatarFallback className="text-xs sm:text-sm">
+                              {getInitials(appointment?.client?.fullName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate pr-2">
+                                {appointment?.client?.fullName || ""}
+                              </p>
+                              <Badge
+                                className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
+                              >
+                                <div className="flex items-center space-x-1">
+                                  {getStatusIcon(appointment.status)}
+                                  <span className="capitalize hidden sm:inline">
+                                    {getStatusText(appointment.status)}
+                                  </span>
+                                </div>
+                              </Badge>
+                            </div>
+                            {/* Mostrar todos los servicios (services[]) */}
+                            <ul className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                              {Array.isArray(appointment.services) &&
+                              appointment.services.length > 0 ? (
+                                appointment.services.map(
+                                  (service: any, idx: number) => (
+                                    <li key={service.id || idx}>
+                                      {service.name || "Servicio"}
+                                      {service.durationMinutes
+                                        ? ` (${service.durationMinutes} min)`
+                                        : ""}
+                                    </li>
                                   )
-                                ) : (
-                                  <li>No hay servicios</li>
+                                )
+                              ) : (
+                                <li>No hay servicios</li>
+                              )}
+                            </ul>
+                            <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {formatTime(appointment?.startTime)}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {formatDate(
+                                  typeof appointment?.appointmentDate ===
+                                    "string"
+                                    ? appointment.appointmentDate
+                                    : appointment?.appointmentDate?.toString?.()
                                 )}
-                              </ul>
-                              <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
-                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {formatTime(appointment?.startTime)}
-                                </span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  {formatDate(
-                                    appointment?.appointmentDate?.toLocaleString?.() ||
-                                      ""
-                                  )}
-                                </span>
-                              </div>
+                              </span>
                             </div>
                           </div>
-                          {/* Action buttons */}
-                          <div className="flex space-x-2 sm:flex-shrink-0">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewAppointment(appointment);
-                              }}
-                            >
-                              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                              <span className="ml-1 sm:hidden">Ver</span>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (appointment?.client?.phone) {
-                                  window.open(
-                                    `tel:${appointment.client.phone}`
-                                  );
-                                }
-                              }}
-                            >
-                              <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                              <span className="ml-1 sm:hidden">Llamar</span>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (
-                                  appointment?.client?.phone &&
-                                  appointment?.professional?.fullName
-                                ) {
-                                  openWhatsApp(
-                                    appointment.client.phone,
-                                    `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                                      appointment.professional.fullName
-                                    )}`
-                                  );
-                                }
-                              }}
-                            >
-                              <WhatsappIcon
-                                className="text-green-500 dark:bg-gray-900"
-                                width={16}
-                                height={16}
-                              />
-                              <span className="sm:hidden">WhatsApp</span>
-                            </Button>
-                          </div>
                         </div>
-                      ))}
-                    </div>
+                        {/* Action buttons */}
+                        <div className="flex space-x-2 sm:flex-shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewAppointment(appointment);
+                            }}
+                          >
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="ml-1 sm:hidden">Ver</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (appointment?.client?.phone) {
+                                window.open(`tel:${appointment.client.phone}`);
+                              }
+                            }}
+                          >
+                            <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="ml-1 sm:hidden">Llamar</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (
+                                appointment?.client?.phone &&
+                                appointment?.professional?.fullName
+                              ) {
+                                openWhatsApp(
+                                  appointment.client.phone,
+                                  `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
+                                    appointment.professional.fullName
+                                  )}`
+                                );
+                              }
+                            }}
+                          >
+                            <WhatsappIcon
+                              className="text-green-500 dark:bg-gray-900"
+                              width={16}
+                              height={16}
+                            />
+                            <span className="sm:hidden">WhatsApp</span>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                     <div className="mt-4 sm:mt-6 text-center">
                       <Link href="/appointments">
                         <Button variant="outline" className="w-full text-sm">
@@ -549,8 +581,20 @@ export default function DashboardClient({
                         </Button>
                       </Link>
                     </div>
-                  </>
+                  </div>
                 )}
+                {/* Botón "Ver Todas las Citas" SIEMPRE VISIBLE */}
+                {upcomingAppointments &&
+                  upcomingAppointments.length === 0 &&
+                  !showAppointmentsError && (
+                    <div className="mt-6 text-center">
+                      <Link href="/appointments">
+                        <Button variant="outline" className="w-full text-sm">
+                          Ver Todas las Citas
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
               </CardContent>
             </Card>
           </div>
@@ -665,7 +709,6 @@ export default function DashboardClient({
         appointmentId={selectedAppointment?.id}
         isOpen={selectedAppointment !== null}
         onClose={handleCloseDialog}
-        onEdit={handleEditAppointment}
         onCancel={handleCancelAppointment}
         onDelete={handleDeleteAppointment}
         onCall={handleCallClient}

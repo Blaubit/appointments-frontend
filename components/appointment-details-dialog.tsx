@@ -50,7 +50,6 @@ interface AppointmentDetailsDialogProps {
   appointmentId: string | undefined;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (appointment: Appointment) => void;
   onCancel: (appointment: Appointment) => void;
   onDelete: (appointment: Appointment) => void;
   onCall: (appointment: Appointment) => void;

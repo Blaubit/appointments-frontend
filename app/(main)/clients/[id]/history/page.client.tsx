@@ -226,7 +226,6 @@ export default function ClientHistoryPageClient({
           appointmentId={selectedAppointmentId}
           isOpen={showDetailsDialog}
           onClose={() => setShowDetailsDialog(false)}
-          onEdit={() => {}}
           onDelete={() => {}}
           onCall={() => {}}
           onEmail={() => {}}

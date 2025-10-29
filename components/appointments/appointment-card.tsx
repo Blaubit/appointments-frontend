@@ -177,7 +177,6 @@ export function AppointmentCard({
         appointmentId={appointment.id}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onEdit={onEdit || (() => {})}
         onCancel={onCancel || (() => {})}
         onDelete={onDelete || (() => {})}
         onCall={onCall || (() => {})}

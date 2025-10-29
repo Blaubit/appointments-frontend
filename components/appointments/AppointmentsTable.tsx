@@ -250,7 +250,6 @@ export function AppointmentsTable({
           setIsDialogOpen(false);
           setSelectedAppointmentId(undefined);
         }}
-        onEdit={onEdit || (() => {})}
         onCancel={onCancel || (() => {})}
         onDelete={onDelete || (() => {})}
         onCall={onCall || (() => {})}
