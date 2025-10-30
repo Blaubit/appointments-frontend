@@ -598,6 +598,54 @@ export function AppointmentDetailsDialog({
               </Card>
             )}
 
+            {/* Consultation Notes (added) */}
+            {appointment.consultationNotes && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Stethoscope className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Notas de Consulta</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Observaciones
+                      </Label>
+                      <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
+                          {appointment.consultationNotes.observations || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Diagnóstico
+                      </Label>
+                      <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
+                          {appointment.consultationNotes.diagnosis || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Plan de Tratamiento
+                      </Label>
+                      <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
+                          {appointment.consultationNotes.treatmentPlan || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Timestamps */}
             <Card>
               <Link href={`/clients/${appointment.client.id}/history`}>

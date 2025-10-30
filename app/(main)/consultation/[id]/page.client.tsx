@@ -439,9 +439,6 @@ export default function ConsultationPageClient({
                       </Avatar>
                       <div>
                         <p className="font-semibold">{client.fullName}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {`0`} años
-                        </p>
                       </div>
                     </div>
                     <Separator />

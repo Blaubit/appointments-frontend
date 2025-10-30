@@ -24,8 +24,7 @@ export const PrintPrescription: React.FC<PrintPrescriptionProps> = ({
     <div className="prescription-header">
       <h1 className="clinic-name">{clinic?.name || "Clínica Médica"}</h1>
       <p className="clinic-info">
-        {clinic?.address || "Dirección"} •{" "}
-        {clinic?.phones?.[0].phone || "Teléfono"}
+        {clinic?.address || "Dirección"} • {clinic?.phones?.[0] || "Teléfono"}
       </p>
       <hr className="divider" />
     </div>
