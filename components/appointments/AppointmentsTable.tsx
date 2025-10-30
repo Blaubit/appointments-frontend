@@ -17,7 +17,11 @@ import { AppointmentActions } from "./appointment-actions";
 import { useState } from "react";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 import formatCurrency from "@/utils/functions/formatCurrency";
-
+import {
+  getStatusColor,
+  getStatusIcon,
+  getStatusText,
+} from "@/utils/functions/appointmentStatus";
 interface AppointmentsTableProps {
   appointments: Appointment[];
   onEdit?: (appointment: Appointment) => void;
@@ -26,36 +30,6 @@ interface AppointmentsTableProps {
   onCall?: (appointment: Appointment) => void;
   onEmail?: (appointment: Appointment) => void;
 }
-
-const getStatusVariant = (status: string) => {
-  switch (status) {
-    case "confirmed":
-      return "default";
-    case "pending":
-      return "secondary";
-    case "cancelled":
-      return "destructive";
-    case "completed":
-      return "outline";
-    default:
-      return "secondary";
-  }
-};
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case "confirmed":
-      return "Confirmada";
-    case "pending":
-      return "Pendiente";
-    case "cancelled":
-      return "Cancelada";
-    case "completed":
-      return "Completada";
-    default:
-      return status;
-  }
-};
 
 const getPaymentStatusVariant = (status: string) => {
   switch (status) {
@@ -209,21 +183,30 @@ export function AppointmentsTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusVariant(appointment.status)}>
-                    {getStatusText(appointment.status)}
-                  </Badge>
+                  <div className="flex items-center justify-between">
+                    <Badge
+                      className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
+                    >
+                      <div className="flex items-center space-x-1">
+                        {getStatusIcon(appointment.status)}
+                        <span className="capitalize hidden sm:inline">
+                          {getStatusText(appointment.status)}
+                        </span>
+                      </div>
+                    </Badge>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge
                     variant={getPaymentStatusVariant(
-                      appointment.payment.status
+                      appointment?.payment?.status ?? ""
                     )}
                   >
-                    {getPaymentStatusText(appointment.payment.status)}
+                    {getPaymentStatusText(appointment?.payment?.status ?? "")}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(Number(appointment.payment.amount))}
+                  {formatCurrency(Number(appointment?.payment?.amount ?? 0))}
                 </TableCell>
                 <TableCell className="text-center" data-actions>
                   <AppointmentActions

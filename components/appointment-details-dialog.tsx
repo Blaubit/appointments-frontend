@@ -267,7 +267,6 @@ export function AppointmentDetailsDialog({
     appointment: Appointment,
     paymentData: { amount: number; method: string }
   ) => {
-    console.log("Payment completed, opening rate dialog"); // Debug log
     // Aquí va tu lógica de pago
     setPaymentDialogOpen(false);
     // Usar setTimeout para asegurar que el estado se actualice correctamente
@@ -645,8 +644,10 @@ export function AppointmentDetailsDialog({
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 pt-4">
-              {(appointment.status === "confirmed" ||
-                appointment.status === "pending") && (
+              {(() => {
+                const status = String(appointment?.status ?? "").toLowerCase();
+                return status !== "cancelled" && status !== "canceled";
+              })() && (
                 <Button
                   onClick={handleAttendAppointment}
                   className="w-full h-10 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"

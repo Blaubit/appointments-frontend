@@ -1,12 +1,11 @@
 "use server";
 
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment, AppointmentStats } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 type Props = {
   searchParams?: URLSearchParams;
