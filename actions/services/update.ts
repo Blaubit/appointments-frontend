@@ -16,18 +16,21 @@ export default async function update({
   name,
   durationMinutes,
   price,
+  professionalsIds,
 }: updateServiceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
   try {
     const url = `${parsedEnv.API_URL}/companies/${companyId}/services/${id}`;
 
-    const body = {
+    const body: any = {
       name,
       durationMinutes,
       price,
     };
-
+    if (professionalsIds && professionalsIds.length > 0) {
+      body.professionalsIds = professionalsIds;
+    }
     const response = await axios.patch<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,

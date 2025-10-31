@@ -40,6 +40,7 @@ export function ServiceForm({
   service,
   onSuccess,
 }: ServiceFormProps) {
+  console.log("ServiceForm service:", service);
   const isEditing = !!service;
 
   const [formData, setFormData] = useState<FormData>({
