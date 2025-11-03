@@ -47,7 +47,7 @@ export function ServiceForm({
     name: service?.name || "",
     durationMinutes: service?.durationMinutes?.toString() || "",
     price: service?.price?.toString() || "",
-    professionalsIds: service?.professionalsIds || [],
+    professionalsIds: service?.professionals?.map((p) => p.id) || [],
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +61,7 @@ export function ServiceForm({
         name: service?.name || "",
         durationMinutes: service?.durationMinutes?.toString() || "",
         price: service?.price?.toString() || "",
-        professionalsIds: service?.professionalsIds || [],
+        professionalsIds: service?.professionals?.map((p) => p.id) || [],
       });
       setErrors({});
       setLoadingProfessionals(true);
