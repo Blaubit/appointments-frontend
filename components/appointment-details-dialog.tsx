@@ -225,7 +225,7 @@ export function AppointmentDetailsDialog({
   }
 
   const handleRescheduleAppointment = () => {
-    console.log("Reprogramar cita:", appointment?.id);
+    //console.log("Reprogramar cita:", appointment?.id);
   };
   const handleEditAppointment = () => {
     router.push(`/appointments/${appointment?.id}/edit`);
@@ -277,7 +277,7 @@ export function AppointmentDetailsDialog({
 
   // Cuando el rating se guarda, cierra el rate
   const handleRateClient = (clientId: string, rating: number) => {
-    console.log("Rating saved:", { clientId, rating }); // Debug log
+    //  console.log("Rating saved:", { clientId, rating }); // Debug log
     // Aquí va tu lógica de rating
     setRateDialogOpen(false);
   };
@@ -285,7 +285,6 @@ export function AppointmentDetailsDialog({
   const handleCloseRateDialog = () => {
     setRateDialogOpen(false);
   };
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -637,7 +636,7 @@ export function AppointmentDetailsDialog({
                       </Label>
                       <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
-                          {appointment.consultationNotes.treatmentPlan || "—"}
+                          {appointment.consultationNotes.treatment || "—"}
                         </p>
                       </div>
                     </div>

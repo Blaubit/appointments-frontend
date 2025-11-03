@@ -18,7 +18,7 @@ interface Payment {
 interface consultationNotes {
   observations: string;
   diagnosis: string;
-  treatmentPlan: string;
+  treatment: string;
 }
 export interface Appointment {
   id: string;
