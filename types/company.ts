@@ -1,3 +1,8 @@
+export type Phone = {
+  id: string;
+  phone: string;
+};
+
 type Company = {
   id: string;
   name: string;
@@ -5,17 +10,12 @@ type Company = {
   address: string;
   city: string;
   state: string;
-  postal_code: string;
+  postalCode: string;
   country: string;
   description: string;
-  phone?: string;
+  phone?: string; // legacy: primer teléfono como string
   createdAt: string;
-  phones?: string[];
-};
-
-type phone = {
-  id: string;
-  phone: string;
+  phones?: Phone[]; // array de objetos { id, phone }
 };
 
 interface CompanyRegistrationPayload {

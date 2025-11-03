@@ -15,15 +15,15 @@ import { Separator } from "@/components/ui/separator";
 import { LogoutWarningDialog } from "@/components/settings/logout-warning-dialog";
 import { findOne } from "@/actions/companies/findOne";
 import edit from "@/actions/companies/edit";
-import { Edit, X, Save, AlertCircle, Loader2 } from "lucide-react";
-import type { Company } from "@/types";
+import { Edit, X, Save, AlertCircle, Loader2, Plus, Phone } from "lucide-react";
+import type { Company, Phone as PhoneType } from "@/types";
 import { logout } from "@/actions/auth/logout";
 
 interface BusinessInfoFormProps {
   company?: Company;
-  companyId?: string; // Nuevo: para cargar desde servidor si no se pasa company
+  companyId?: string;
   onSave?: (companyData: Omit<Company, "id" | "createdAt">) => Promise<void>;
-  isLoading?: boolean; // Mantener prop original
+  isLoading?: boolean;
   canEdit?: boolean;
 }
 
@@ -47,19 +47,20 @@ const getInitialFormData = (
   address: company?.address || "",
   city: company?.city || "",
   state: company?.state || "",
-  postal_code: company?.postal_code || "",
+  postalCode: company?.postalCode || "",
   country: company?.country || "",
   description: company?.description || "",
+  phone: company?.phone || "",
+  phones: company?.phones ? company.phones.map((p) => ({ ...p })) : [],
 });
 
 export function BusinessInfoForm({
   company,
   companyId,
   onSave = async () => {},
-  isLoading = false, // Mantener prop original
+  isLoading = false,
   canEdit = true,
 }: BusinessInfoFormProps) {
-  // Estados principales
   const [loadedCompany, setLoadedCompany] = useState<Company | null>(
     company || null
   );
@@ -70,26 +71,19 @@ export function BusinessInfoForm({
     Omit<Company, "id" | "createdAt">
   >(getInitialFormData(company));
 
-  // Estados de UI
   const [isLoadingFromServer, setIsLoadingFromServer] =
     useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [showLogoutWarning, setShowLogoutWarning] = useState<boolean>(false);
 
-  // Estados de errores
   const [serverError, setServerError] = useState<string>("");
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
 
-  // Efecto para cargar datos del servidor cuando sea necesario
   useEffect(() => {
     const loadCompanyData = async () => {
-      // Solo cargar del servidor si:
-      // 1. No se pasó company como prop Y
-      // 2. Se pasó companyId Y
-      // 3. No estamos ya en estado de loading externo
       if (!company && companyId && !isLoading) {
         try {
           setIsLoadingFromServer(true);
@@ -101,12 +95,10 @@ export function BusinessInfoForm({
             const companyData = result.data;
             setLoadedCompany(companyData);
 
-            // Llenar el formulario SOLO con los datos del servidor
             const serverFormData = getInitialFormData(companyData);
             setFormData(serverFormData);
             setOriginalData(serverFormData);
           } else {
-            // Manejo de errores del servidor
             let errorMessage = "Error al cargar la información de la empresa";
 
             if (result.status === 401) {
@@ -138,14 +130,13 @@ export function BusinessInfoForm({
     loadCompanyData();
   }, [company, companyId, isLoading]);
 
-  // Efecto para actualizar el formulario cuando cambie el company prop
   useEffect(() => {
     if (company) {
       const newFormData = getInitialFormData(company);
       setFormData(newFormData);
       setOriginalData(newFormData);
       setLoadedCompany(company);
-      setServerError(""); // Limpiar errores si se pasan datos válidos
+      setServerError("");
     }
   }, [company]);
 
@@ -172,6 +163,13 @@ export function BusinessInfoForm({
       newErrors.country = "El país es requerido";
     }
 
+    // Validación simple de teléfonos: si hay entradas, ninguna phone debe estar vacía
+    const phones = formData.phones ?? [];
+    if (phones.some((p) => !p || !p.phone || p.phone.trim() === "")) {
+      newErrors.phones =
+        "Por favor completa o elimina entradas de teléfono vacías.";
+    }
+
     setValidationErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -179,14 +177,48 @@ export function BusinessInfoForm({
   const updateFormData = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Limpiar error de validación cuando el usuario empiece a escribir
-    if (validationErrors[field]) {
-      setValidationErrors((prev) => ({ ...prev, [field]: "" }));
+    if (validationErrors[field as string]) {
+      setValidationErrors((prev) => ({ ...prev, [field as string]: "" }));
     }
 
-    // Limpiar errores de servidor cuando el usuario interactúe
     if (serverError) {
       setServerError("");
+    }
+  };
+
+  // Manejo del array de teléfonos como objetos { id, phone }
+  const addPhone = () => {
+    setFormData((prev) => ({
+      ...prev,
+      phones: [...(prev.phones ?? []), { id: "", phone: "" }],
+    }));
+    setValidationErrors((prev) => ({ ...prev, phones: "" }));
+  };
+
+  const updatePhoneAtIndex = (index: number, value: string) => {
+    setFormData((prev) => {
+      const nextPhones = [...(prev.phones ?? [])];
+      const existing = nextPhones[index] ?? { id: "", phone: "" };
+      nextPhones[index] = { ...existing, phone: value };
+      return { ...prev, phones: nextPhones };
+    });
+
+    if (validationErrors["phones"]) {
+      setValidationErrors((prev) => ({ ...prev, phones: "" }));
+    }
+    if (serverError) {
+      setServerError("");
+    }
+  };
+
+  const removePhoneAtIndex = (index: number) => {
+    setFormData((prev) => {
+      const nextPhones = [...(prev.phones ?? [])];
+      nextPhones.splice(index, 1);
+      return { ...prev, phones: nextPhones };
+    });
+    if (validationErrors["phones"]) {
+      setValidationErrors((prev) => ({ ...prev, phones: "" }));
     }
   };
 
@@ -194,12 +226,10 @@ export function BusinessInfoForm({
     if (!canEdit) return;
 
     if (isEditing) {
-      // Cancelar edición - restaurar datos originales
       setFormData(originalData);
       setValidationErrors({});
       setServerError("");
     } else {
-      // Habilitar edición - guardar estado actual como respaldo
       setOriginalData(formData);
     }
     setIsEditing(!isEditing);
@@ -229,30 +259,27 @@ export function BusinessInfoForm({
     setServerError("");
 
     try {
+      // Enviamos phones como array de objetos { id?, phone } y phone legacy con primer teléfono
       const result = await edit({
         id: currentCompany.id,
         name: formData.name,
         address: formData.address,
         city: formData.city,
         state: formData.state,
-        postal_code: formData.postal_code,
+        postalCode: formData.postalCode,
         country: formData.country,
         description: formData.description,
+        phones: formData.phones,
+        phone:
+          (formData.phones && formData.phones.length > 0
+            ? formData.phones[0].phone
+            : formData.phone) || "",
       });
 
       if ("data" in result) {
-        console.log(
-          "Empresa actualizada exitosamente, cerrando sesión por seguridad:",
-          result.data
-        );
-
-        // Llamar el callback onSave si existe
         await onSave(formData);
-
-        // logout
         await logout();
       } else {
-        // Manejo de errores de actualización
         let errorMessage = "Error al actualizar la información de la empresa";
 
         if (result.status === 401) {
@@ -291,20 +318,15 @@ export function BusinessInfoForm({
   const handleRetry = () => {
     if (companyId && !company) {
       setServerError("");
-      // Forzar recarga eliminando y agregando el companyId
-      const currentId = companyId;
       setTimeout(() => {
-        // El useEffect se ejecutará nuevamente
         setIsLoadingFromServer(true);
       }, 100);
     }
   };
 
-  // Determinar el estado de loading actual
   const currentlyLoading = isLoading || isLoadingFromServer;
   const currentCompany = loadedCompany || company;
 
-  // Estado de carga inicial
   if (currentlyLoading) {
     return (
       <Card>
@@ -322,7 +344,6 @@ export function BusinessInfoForm({
     );
   }
 
-  // Estado de error de servidor (sin datos)
   if (serverError && !currentCompany) {
     return (
       <Card>
@@ -404,7 +425,6 @@ export function BusinessInfoForm({
           </div>
         </CardHeader>
         <CardContent>
-          {/* Error de servidor durante operaciones */}
           {serverError && currentCompany && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -488,12 +508,12 @@ export function BusinessInfoForm({
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="postal_code">Código Postal</Label>
+                  <Label htmlFor="postalCode ">Código Postal</Label>
                   <Input
-                    id="postal_code"
-                    value={formData.postal_code}
+                    id="postalCode "
+                    value={formData.postalCode}
                     onChange={(e) =>
-                      updateFormData("postal_code", e.target.value)
+                      updateFormData("postalCode", e.target.value)
                     }
                     disabled={!isEditing || !canEdit || isSaving}
                   />
@@ -514,6 +534,81 @@ export function BusinessInfoForm({
                   )}
                 </div>
               </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>Teléfonos</Label>
+
+              {!isEditing ? (
+                <div className="flex flex-col space-y-2">
+                  {formData.phones && formData.phones.length > 0 ? (
+                    formData.phones.map((p, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center text-sm text-muted-foreground"
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        <span>{p.phone || "-"}</span>
+                      </div>
+                    ))
+                  ) : formData.phone ? (
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Phone className="h-4 w-4 mr-2" />
+                      <span>{formData.phone}</span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      No especificado
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {(formData.phones ?? []).map((p, idx) => (
+                    <div key={idx} className="flex items-center space-x-2">
+                      <Input
+                        value={p.phone}
+                        onChange={(e) =>
+                          updatePhoneAtIndex(idx, e.target.value)
+                        }
+                        placeholder="Número telefónico"
+                        disabled={!isEditing || !canEdit || isSaving}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removePhoneAtIndex(idx)}
+                        disabled={isSaving}
+                        aria-label={`Eliminar teléfono ${idx + 1}`}
+                        className="h-10 w-10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={addPhone}
+                      disabled={isSaving}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Añadir teléfono
+                    </Button>
+                    {validationErrors.phones && (
+                      <p className="text-sm text-red-500">
+                        {validationErrors.phones}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Separator />

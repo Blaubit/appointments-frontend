@@ -418,15 +418,6 @@ export function SettingsPageClient({
       setIsLoading(false);
     }
   };
-
-  const handleDeleteAccount = async () => {
-    try {
-      console.log("Deleting account...");
-    } catch (error) {
-      console.error("Error deleting account:", error);
-    }
-  };
-
   const handleExportData = async () => {
     try {
       console.log("Exporting data...");
