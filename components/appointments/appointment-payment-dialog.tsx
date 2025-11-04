@@ -43,7 +43,7 @@ export function AppointmentPaymentDialog({
       0
     ) ?? 0;
   const [amount, setAmount] = useState(total);
-  const [method, setMethod] = useState("efectivo");
+  const [method, setMethod] = useState("cash");
 
   const handlePay = () => {
     if (appointment && onPay) {
@@ -94,15 +94,15 @@ export function AppointmentPaymentDialog({
                 <SelectValue placeholder="Selecciona método" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="efectivo">Efectivo</SelectItem>
-                <SelectItem value="tarjeta">Tarjeta</SelectItem>
-                <SelectItem value="transferencia">Transferencia</SelectItem>
+                <SelectItem value="cash">Efectivo</SelectItem>
+                <SelectItem value="card">Tarjeta</SelectItem>
+                <SelectItem value="transfer">Transferencia</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handlePay} disabled={amount <= 0 || amount > total}>
+          <Button onClick={handlePay} disabled={amount < 0 || amount > total}>
             Confirmar pago
           </Button>
           <DialogClose asChild>

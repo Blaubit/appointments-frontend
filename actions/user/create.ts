@@ -6,14 +6,33 @@ import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { CreateUserDto } from "@/types/dto/User/createUserDto";
 import { User } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+
+/**
+ * Ahora CreateUserDto puede (opcionalmente) contener:
+ * - password?: string
+ * - theme?: string
+ * - professionalIds?: string[]
+ * - secretaryIds?: string[]
+ *
+ * Esta función solo agrega esos campos al body si vienen presentes.
+ */
 export async function create({
   roleId,
   fullName,
   email,
   bio,
-}: CreateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
+  password,
+  theme,
+  professionalIds,
+  secretaryIds,
+}: CreateUserDto & {
+  password?: string;
+  theme?: string;
+  professionalIds?: string[];
+  secretaryIds?: string[];
+}): Promise<SuccessReponse<User> | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();
   try {
@@ -35,12 +54,20 @@ export async function create({
       };
     }
 
-    const body = {
+    const body: any = {
       roleId,
       fullName,
       email,
       bio,
     };
+
+    // Campos opcionales nuevos según el nuevo contrato de la API
+    if (password) body.password = password;
+    if (theme) body.theme = theme;
+    if (Array.isArray(professionalIds) && professionalIds.length > 0)
+      body.professionalIds = professionalIds;
+    if (Array.isArray(secretaryIds) && secretaryIds.length > 0)
+      body.secretaryIds = secretaryIds;
 
     const response = await axios.post<User>(url, body, {
       headers: {

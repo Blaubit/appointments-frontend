@@ -725,7 +725,7 @@ export function UserManagementForm({
           isOpen={isUserFormOpen}
           onClose={() => setIsUserFormOpen(false)}
           onSuccess={handleUserFormSuccess}
-          editingUser={editingUser}
+          editingUserId={editingUser?.id}
           doctors={doctors}
           roles={roles}
           isLoading={isLoading}

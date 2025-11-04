@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Clock, User } from "lucide-react";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { es } from "date-fns/locale";
 import { Appointment } from "@/types";
 import { AppointmentActions } from "./appointment-actions";
@@ -49,12 +49,20 @@ export function AppointmentCard({
   onEmail,
 }: AppointmentCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const formatDate = (date: Date) => {
+  const formatDate = (input: Date | string) => {
     try {
-      return format(date, "dd/MM/yyyy", { locale: es });
-    } catch {
-      return String(date);
+      let dateObj: Date;
+      if (typeof input === "string") {
+        // Trata "2025-11-17" como fecha local (no UTC)
+        dateObj = parse(input, "yyyy-MM-dd", new Date());
+      } else {
+        dateObj = input;
+      }
+      const datereturned = format(dateObj, "dd/MM/yyyy", { locale: es });
+      return <>{datereturned}</>;
+    } catch (e) {
+      console.error(e);
+      return String(input);
     }
   };
 

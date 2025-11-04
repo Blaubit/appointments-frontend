@@ -74,7 +74,6 @@ export default function CalendarPageClient({
       setLoading(true);
       const dateStr = formatDateForPeriod(currentDate, viewMode);
       const result = await findPeriod(currentProfessionalId, dateStr, viewMode);
-      console.log("Fetched schedule:", result.data);
       setSchedule(result?.data || null);
       setLoading(false);
     };

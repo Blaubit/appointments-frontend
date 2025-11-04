@@ -51,19 +51,11 @@ export default async function DashboardPage({ searchParams }: Props) {
       address: "Calle Falsa 123",
       city: "Ciudad",
       state: "Estado",
-      postal_code: "12345",
+      postalCode: "12345",
       country: "País",
       description: "Empresa de citas por defecto",
       createdAt: "2023-01-01T00:00:00Z",
     };
-    try {
-      const companyResponse = await findOne(user.company?.id);
-      if (companyResponse?.status === 200 && "data" in companyResponse) {
-        companyInfo = companyResponse.data;
-      }
-    } catch (err) {
-      // Si falla, se mantiene el valor por defecto
-    }
   }
   // Renderizar DashboardClient con props + error
   return (
@@ -71,7 +63,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       upcomingAppointments={upcomingAppointmentsData}
       appointmentStats={stats}
       user={user}
-      clinicInfo={companyInfo}
+      clinicInfo={user?.company}
       errorMessage={errorMessage}
     />
   );
