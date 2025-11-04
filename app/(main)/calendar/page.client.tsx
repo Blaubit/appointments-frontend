@@ -159,7 +159,7 @@ export default function CalendarPageClient({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Professional Selector */}
-      {professionals.length > 1 && (
+      {professionals.length >= 1 && (
         <ProfessionalSelectorCard
           professionals={professionals}
           selectedProfessional={selectedProfessional}
