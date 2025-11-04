@@ -74,7 +74,6 @@ export default function CalendarPageClient({
       setLoading(true);
       const dateStr = formatDateForPeriod(currentDate, viewMode);
       const result = await findPeriod(currentProfessionalId, dateStr, viewMode);
-      console.log("Fetched schedule:", result.data);
       setSchedule(result?.data || null);
       setLoading(false);
     };
@@ -159,7 +158,7 @@ export default function CalendarPageClient({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Professional Selector */}
-      {professionals.length > 1 && (
+      {professionals.length >= 1 && (
         <ProfessionalSelectorCard
           professionals={professionals}
           selectedProfessional={selectedProfessional}

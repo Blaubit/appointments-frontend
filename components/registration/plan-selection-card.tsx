@@ -32,32 +32,21 @@ import {
   Users,
   Shield,
 } from "lucide-react";
+import formatCurrency from "@/utils/functions/formatCurrency";
 import { Plan } from "@/types";
 
 interface PlanSelectionCardProps {
-  /** Lista de planes disponibles */
   plans?: Plan[];
-  /** Función para obtener planes del backend */
   onFetchPlans?: () => Promise<Plan[]>;
-  /** Plan seleccionado actualmente */
   selectedPlanId?: string;
-  /** Función llamada cuando se selecciona un plan */
   onPlanSelect?: (plan: Plan) => void;
-  /** Función para confirmar la selección */
   onConfirm?: (planId: string) => void;
-  /** Si está en proceso de carga */
   loading?: boolean;
-  /** Error al cargar planes */
   error?: string;
-  /** Clase CSS adicional */
   className?: string;
-  /** Mostrar precio anual además del mensual */
   showAnnualPricing?: boolean;
-  /** Plan recomendado */
   recommendedPlanId?: string;
-  /** Si mostrar botón de confirmación */
   showConfirmButton?: boolean;
-  /** Texto del botón de confirmación */
   confirmButtonText?: string;
 }
 
@@ -88,26 +77,22 @@ export default function PlanSelectionCard({
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
 
-  // ✅ CAMBIO 1: Estado interno sincronizado con la prop externa
   const [internalSelectedPlanId, setInternalSelectedPlanId] = useState<
     string | undefined
   >(externalSelectedPlanId);
 
-  // ✅ CAMBIO 2: Sincronizar el selectedPlanId externo con el estado interno
   useEffect(() => {
     if (externalSelectedPlanId) {
       setInternalSelectedPlanId(externalSelectedPlanId);
     }
   }, [externalSelectedPlanId]);
 
-  // Cargar planes al montar el componente
   useEffect(() => {
     if (onFetchPlans && plans.length === 0) {
       fetchPlans();
     }
   }, [onFetchPlans, plans.length]);
 
-  // Configurar API del carousel
   useEffect(() => {
     if (!api) return;
 
@@ -137,14 +122,12 @@ export default function PlanSelectionCard({
     }
   };
 
-  // ✅ CAMBIO 3: Handler mejorado para selección de plan
   const handlePlanSelection = (plan: Plan) => {
     console.log("✅ Plan seleccionado:", plan.id, plan.name);
     setInternalSelectedPlanId(plan.id);
     onPlanSelect?.(plan);
   };
 
-  // ✅ CAMBIO 4: Handler mejorado para confirmación
   const handleConfirmSelection = () => {
     console.log("✅ Confirmando plan:", internalSelectedPlanId);
     if (internalSelectedPlanId) {
@@ -180,11 +163,10 @@ export default function PlanSelectionCard({
     return "from-blue-500 to-indigo-500";
   };
 
-  // Función para formatear precios con billing cycle en días
   const formatPrice = (price: number, billingCycleDays: number) => {
     const dailyPrice = price / billingCycleDays;
-    const monthlyPrice = dailyPrice * 30; // Aproximadamente 30 días por mes
-    const yearlyPrice = dailyPrice * 365; // 365 días por año
+    const monthlyPrice = dailyPrice * 30;
+    const yearlyPrice = dailyPrice * 365;
 
     return {
       daily: dailyPrice,
@@ -192,12 +174,10 @@ export default function PlanSelectionCard({
       yearly: yearlyPrice,
       total: price,
       cycle: billingCycleDays,
-      // Ahorro comparando con plan mensual hipotético
       savings: billingCycleDays >= 365 ? monthlyPrice * 12 - price : 0,
     };
   };
 
-  // Función para formatear el período del billing cycle
   const formatBillingPeriod = (days: number) => {
     if (days === 1) return "día";
     if (days === 7) return "semana";
@@ -258,11 +238,12 @@ export default function PlanSelectionCard({
     return commonFeatures;
   };
 
-  const activePlans = plans.filter(
-    (plan) => plan.status === "active" || plan.status === "available"
-  );
+  // Filtrar y ordenar los planes activos de menor a mayor precio
+  const activePlans = plans
+    .filter((plan) => plan.status === "active" || plan.status === "available")
+    .slice()
+    .sort((a, b) => a.price - b.price);
 
-  // Estado de carga
   if (isLoading) {
     return (
       <div className={`w-full ${className}`}>
@@ -280,7 +261,6 @@ export default function PlanSelectionCard({
     );
   }
 
-  // Estado de error
   if (fetchError) {
     return (
       <div className={`w-full ${className}`}>
@@ -306,7 +286,6 @@ export default function PlanSelectionCard({
     );
   }
 
-  // No hay planes
   if (activePlans.length === 0) {
     return (
       <div className={`w-full ${className}`}>
@@ -324,7 +303,6 @@ export default function PlanSelectionCard({
 
   return (
     <div className={`w-full space-y-6 ${className}`}>
-      {/* Header */}
       <div className="text-center space-y-4 px-4 sm:px-8">
         <div className="flex justify-center">
           <div className="p-4 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-lg">
@@ -342,7 +320,6 @@ export default function PlanSelectionCard({
         </div>
       </div>
 
-      {/* Carousel - Una sola card por vista con espacio para badges */}
       <div className="px-4 sm:px-8 lg:px-12">
         <Carousel
           setApi={setApi}
@@ -354,7 +331,6 @@ export default function PlanSelectionCard({
         >
           <CarouselContent>
             {activePlans.map((plan) => {
-              // ✅ CAMBIO 5: Usar internalSelectedPlanId para comparación
               const isSelected = internalSelectedPlanId === plan.id;
               const isRecommended = recommendedPlanId === plan.id;
               const pricing = formatPrice(plan.price, plan.billingCycle);
@@ -363,9 +339,7 @@ export default function PlanSelectionCard({
               return (
                 <CarouselItem key={plan.id} className="basis-full">
                   <div className="p-2">
-                    {/* Contenedor con espacio superior para badges */}
                     <div className="relative pt-6">
-                      {/* Badge recomendado */}
                       {isRecommended && (
                         <div className="absolute -top-2 left-6 z-20">
                           <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-3 py-1 text-sm font-semibold shadow-lg border-0">
@@ -375,7 +349,6 @@ export default function PlanSelectionCard({
                         </div>
                       )}
 
-                      {/* Badge seleccionado */}
                       {isSelected && (
                         <div className="absolute -top-2 right-6 z-20">
                           <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-1 text-sm font-semibold shadow-lg border-0">
@@ -386,7 +359,7 @@ export default function PlanSelectionCard({
                       )}
 
                       <Card
-                        className={`relative transition-all duration-300 hover:shadow-xl cursor-pointer group h-auto ${
+                        className={`relative overflow-hidden box-border transition-all duration-300 hover:shadow-xl cursor-pointer group h-auto ${
                           isSelected
                             ? "ring-2 ring-blue-500 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950"
                             : "hover:shadow-lg"
@@ -397,13 +370,10 @@ export default function PlanSelectionCard({
                         }`}
                         onClick={() => handlePlanSelection(plan)}
                       >
-                        {/* Layout horizontal para hacer más ancho y menos alto */}
                         <div className="flex flex-col lg:flex-row lg:items-center p-6">
-                          {/* Sección izquierda - Info del plan */}
                           <div className="flex-1 lg:pr-8">
                             <CardHeader className="p-0 pb-4 lg:pb-0">
                               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                {/* Icono */}
                                 <div className="flex justify-center sm:justify-start">
                                   <div
                                     className={`p-3 bg-gradient-to-r ${getPlanColor(plan.name)} rounded-full text-white shadow-lg group-hover:scale-105 transition-transform duration-300`}
@@ -412,7 +382,6 @@ export default function PlanSelectionCard({
                                   </div>
                                 </div>
 
-                                {/* Nombre y precio */}
                                 <div className="text-center sm:text-left">
                                   <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                                     {plan.name}
@@ -420,19 +389,16 @@ export default function PlanSelectionCard({
 
                                   <div className="flex items-baseline justify-center sm:justify-start gap-2">
                                     <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                                      ${pricing.monthly.toFixed(0)}
+                                      {formatCurrency(
+                                        Number(pricing.monthly.toFixed(0))
+                                      )}
                                     </span>
                                     <span className="text-lg text-muted-foreground">
                                       /mes
                                     </span>
                                   </div>
 
-                                  {/* Información del billing cycle */}
                                   <div className="mt-1">
-                                    <p className="text-sm text-muted-foreground">
-                                      ${pricing.total} cada{" "}
-                                      {formatBillingPeriod(plan.billingCycle)}
-                                    </p>
                                     {showAnnualPricing &&
                                       pricing.savings > 0 && (
                                         <p className="text-sm font-medium text-green-600">
@@ -442,24 +408,24 @@ export default function PlanSelectionCard({
                                       )}
                                     {plan.billingCycle > 1 && (
                                       <p className="text-xs text-muted-foreground mt-1">
-                                        ${pricing.daily.toFixed(2)}/día
+                                        {formatCurrency(
+                                          Number(pricing.daily.toFixed(2))
+                                        )}
+                                        /día
                                       </p>
                                     )}
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Descripción */}
                               <CardDescription className="text-center sm:text-left text-base leading-relaxed mt-4">
                                 {plan.description}
                               </CardDescription>
                             </CardHeader>
                           </div>
 
-                          {/* Sección derecha - Features y botón */}
-                          <div className="lg:w-80 lg:flex-shrink-0">
+                          <div className="lg:w-80 lg:flex-shrink-0 w-full min-w-0">
                             <CardContent className="p-0">
-                              {/* Features */}
                               <div className="space-y-3 mb-6">
                                 <h4 className="font-semibold text-gray-900 dark:text-white text-center lg:text-left">
                                   Características incluidas:
@@ -486,13 +452,13 @@ export default function PlanSelectionCard({
                                 </div>
                               </div>
 
-                              {/* Botón */}
-                              <CardFooter className="p-0">
+                              {/* Aquí se añadió padding al footer para mantener separación interna */}
+                              <CardFooter className="px-4 pb-4 pt-0">
                                 <Button
-                                  className={`w-full py-3 text-base font-semibold transition-all duration-200 ${
+                                  className={`w-full box-border py-3 px-4 rounded-md text-base font-semibold transition-all duration-200 ${
                                     isSelected
-                                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
-                                      : "bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white border-2 hover:border-blue-300"
+                                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg border-transparent"
+                                      : "bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white border border-gray-200 hover:border-blue-300"
                                   }`}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -520,7 +486,6 @@ export default function PlanSelectionCard({
             })}
           </CarouselContent>
 
-          {/* Botones de navegación */}
           {activePlans.length > 1 && (
             <>
               <CarouselPrevious className="-left-4 lg:-left-8 h-10 w-10" />
@@ -529,7 +494,6 @@ export default function PlanSelectionCard({
           )}
         </Carousel>
 
-        {/* Indicadores de posición */}
         {activePlans.length > 1 && (
           <div className="flex justify-center space-x-2 mt-6">
             {Array.from({ length: count }).map((_, index) => (
@@ -547,7 +511,6 @@ export default function PlanSelectionCard({
         )}
       </div>
 
-      {/* Información adicional */}
       <div className="text-center space-y-6 px-4 sm:px-8">
         <div className="flex flex-wrap justify-center gap-6 sm:gap-8 text-sm text-muted-foreground">
           <div className="flex items-center space-x-2">
@@ -564,13 +527,12 @@ export default function PlanSelectionCard({
           </div>
         </div>
 
-        {/* Botón de confirmación */}
         {showConfirmButton && internalSelectedPlanId && (
           <div className="flex justify-center pt-4">
             <Button
               size="lg"
               onClick={handleConfirmSelection}
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 px-12 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {confirmButtonText}
               <Check className="h-5 w-5 ml-3" />
@@ -582,7 +544,6 @@ export default function PlanSelectionCard({
   );
 }
 
-// Hook para manejar la lógica de planes
 export function usePlanSelection() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -600,7 +561,6 @@ export function usePlanSelection() {
     setIsConfirming(true);
     try {
       const startDate = new Date().toISOString().split("T")[0];
-      // Calcular fecha de fin basada en días de billing cycle
       const endDate = new Date(
         Date.now() + selectedPlan.billingCycle * 24 * 60 * 60 * 1000
       )
