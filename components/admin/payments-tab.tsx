@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,154 +32,169 @@ import {
   DollarSign,
 } from "lucide-react";
 import type { Payment } from "@/types";
+import { findAllPayments } from "@/actions/payments/findAllPayments";
+import { Loader2 } from "lucide-react";
+import formatCurrencyUtil from "@/utils/functions/formatCurrency";
 
 interface PaymentsTabProps {
+  // initial payments passed from server render while client-side fetch runs
   payments: Payment[];
+  initialMeta?: any;
 }
 
-export function PaymentsTab({ payments }: PaymentsTabProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [methodFilter, setMethodFilter] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<string>("all");
+export function PaymentsTab({
+  payments: initialPayments,
+  initialMeta,
+}: PaymentsTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const filteredPayments = payments.filter((payment) => {
-    // Filtro por estado
-    const matchesStatus =
-      statusFilter === "all" || payment.status === statusFilter;
+  const [searchTerm, setSearchTerm] = useState(
+    () => searchParams.get("q") ?? ""
+  );
+  const [statusFilter, setStatusFilter] = useState<string>(
+    () => searchParams.get("status") ?? "all"
+  );
+  const [methodFilter, setMethodFilter] = useState<string>(
+    () => searchParams.get("method") ?? "all"
+  );
+  const [dateRange, setDateRange] = useState<string>(
+    () => searchParams.get("dateRange") ?? "all"
+  );
 
-    // Filtro por método
-    const matchesMethod =
-      methodFilter === "all" || payment.paymentMethod === methodFilter;
+  const [payments, setPayments] = useState<Payment[]>(initialPayments ?? []);
+  const [meta, setMeta] = useState<any>(
+    initialMeta ?? {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: initialPayments?.length ?? 0,
+      itemsPerPage: 7,
+      hasNextPage: false,
+      hasPreviousPage: false,
+      nextPage: null,
+      previousPage: null,
+    }
+  );
 
-    // Filtro por fecha
-    let matchesDate = true;
-    if (dateRange !== "all") {
-      const paymentDate = new Date(payment.paymentDate);
-      const now = new Date();
-      switch (dateRange) {
-        case "today":
-          matchesDate = paymentDate.toDateString() === now.toDateString();
-          break;
-        case "week":
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          matchesDate = paymentDate >= weekAgo;
-          break;
-        case "month":
-          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          matchesDate = paymentDate >= monthAgo;
-          break;
-        case "quarter":
-          const quarterAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-          matchesDate = paymentDate >= quarterAgo;
-          break;
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Control de races
+  const latestRequestId = useRef(0);
+
+  // Fetch helper: always pass params as string to server action
+  const fetchWithParams = async (params: URLSearchParams | string) => {
+    const requestId = ++latestRequestId.current;
+    const paramsString =
+      typeof params === "string" ? params : params.toString();
+
+    setIsLoading(true);
+    try {
+      const result = await findAllPayments({ searchParams: paramsString });
+      if (requestId !== latestRequestId.current) {
+        console.warn(
+          "[PaymentsTab] Ignoring stale payments response id:",
+          requestId
+        );
+        return;
       }
-    }
-
-    // Filtro por búsqueda
-    let matchesSearch = true;
-    if (searchTerm.trim() !== "") {
-      const normalizedSearch = searchTerm.trim().toLowerCase();
-      matchesSearch =
-        payment.reference?.toLowerCase().includes(normalizedSearch) ||
-        payment.subscription?.company?.name
-          ?.toLowerCase()
-          .includes(normalizedSearch) ||
-        payment.subscription?.plan?.name
-          ?.toLowerCase()
-          .includes(normalizedSearch);
-    }
-
-    return matchesStatus && matchesMethod && matchesDate && matchesSearch;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-      case "completado":
-      case "success":
-      case "exitoso":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "pending":
-      case "pendiente":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      case "failed":
-      case "fallido":
-      case "error":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      case "refunded":
-      case "reembolsado":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      if (result && result.status === 200) {
+        setPayments(result.data || []);
+        setMeta(result.meta || meta);
+      } else {
+        console.error("[PaymentsTab] error fetching payments:", result);
+        setPayments([]);
+      }
+    } catch (err) {
+      console.error("[PaymentsTab] fetch error:", err);
+      setPayments([]);
+    } finally {
+      if (requestId === latestRequestId.current) setIsLoading(false);
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-      case "success":
-        return "Completado";
-      case "pending":
-        return "Pendiente";
-      case "failed":
-      case "error":
-        return "Fallido";
-      case "refunded":
-        return "Reembolsado";
-      default:
-        return status;
-    }
+  // Debounce local filter inputs -> update URL
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchTerm && searchTerm.trim().length > 0)
+        params.set("q", searchTerm.trim());
+      else params.delete("q");
+
+      if (statusFilter && statusFilter !== "all")
+        params.set("status", statusFilter);
+      else params.delete("status");
+
+      if (methodFilter && methodFilter !== "all")
+        params.set("method", methodFilter);
+      else params.delete("method");
+
+      if (dateRange && dateRange !== "all") params.set("dateRange", dateRange);
+      else params.delete("dateRange");
+
+      // reset to first page when filters change
+      params.set("page", "1");
+      params.set("limit", String(meta?.itemsPerPage ?? 7));
+
+      router.push(`${pathname}?${params.toString()}`);
+    }, 400);
+
+    return () => clearTimeout(handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, methodFilter, dateRange]);
+
+  // When URL search params change, call server action with the same params
+  useEffect(() => {
+    const paramsString = searchParams.toString();
+    const params = new URLSearchParams(paramsString);
+
+    // ensure page/limit defaults
+    if (!params.get("page")) params.set("page", String(meta?.currentPage ?? 1));
+    if (!params.get("limit"))
+      params.set("limit", String(meta?.itemsPerPage ?? 7));
+
+    fetchWithParams(params);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams?.toString()]);
+
+  // Pagination handlers: update URL (parent/router will trigger fetch)
+  const handlePrev = () => {
+    const prev =
+      meta.previousPage ?? (meta.currentPage > 1 ? meta.currentPage - 1 : null);
+    if (!prev) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(prev));
+    params.set("limit", String(meta.itemsPerPage ?? 7));
+    router.push(`${pathname}?${params.toString()}`);
   };
 
-  const getPaymentMethodIcon = (method: string) => {
-    switch (method.toLowerCase()) {
-      case "credit_card":
-      case "tarjeta_credito":
-        return <CreditCard className="h-4 w-4" />;
-      case "bank_transfer":
-      case "transferencia":
-        return <Building2 className="h-4 w-4" />;
-      case "cash":
-      case "efectivo":
-        return <DollarSign className="h-4 w-4" />;
-      case "check":
-      case "cheque":
-        return <FileText className="h-4 w-4" />;
-      default:
-        return <CreditCard className="h-4 w-4" />;
-    }
+  const handleNext = () => {
+    const next =
+      meta.nextPage ??
+      (meta.currentPage < meta.totalPages ? meta.currentPage + 1 : null);
+    if (!next) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(next));
+    params.set("limit", String(meta.itemsPerPage ?? 7));
+    router.push(`${pathname}?${params.toString()}`);
   };
 
-  const getPaymentMethodLabel = (method: string) => {
-    switch (method.toLowerCase()) {
-      case "credit_card":
-        return "Tarjeta de Crédito";
-      case "bank_transfer":
-        return "Transferencia Bancaria";
-      case "cash":
-        return "Efectivo";
-      case "check":
-        return "Cheque";
-      case "paypal":
-        return "PayPal";
-      case "stripe":
-        return "Stripe";
-      case "debit_card":
-        return "Tarjeta de Débito";
-      default:
-        return method;
-    }
-  };
+  // derive unique methods from current payments (server returns filtered set)
+  const uniqueMethods = Array.from(
+    new Set(payments.map((p) => p.paymentMethod))
+  ).filter(Boolean);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-GT", {
-      style: "currency",
-      currency: "GTQ",
-      currencyDisplay: "symbol", // fuerza a usar "Q"
-      minimumFractionDigits: 2, // asegura 2 decimales
-      maximumFractionDigits: 2,
-    }).format(amount);
+    // Use util if available, fallback to Intl
+    try {
+      return formatCurrencyUtil(amount);
+    } catch {
+      return new Intl.NumberFormat("es-GT", {
+        style: "currency",
+        currency: "GTQ",
+        minimumFractionDigits: 2,
+      }).format(amount);
+    }
   };
 
   const formatDateShort = (dateString: string) => {
@@ -189,23 +205,18 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
     });
   };
 
-  // Calcular estadísticas
-  const totalAmount = filteredPayments.reduce(
-    (sum, payment) => sum + (Number(payment.amount) || 0),
+  // statistics
+  const totalAmount = payments.reduce(
+    (sum, p) => sum + (Number(p.amount) || 0),
     0
   );
-  const completedPayments = filteredPayments.filter(
+  const completedPayments = payments.filter(
     (p) =>
       p.status.toLowerCase() === "completed" ||
       p.status.toLowerCase() === "success"
   );
-  const pendingPayments = filteredPayments.filter(
+  const pendingPayments = payments.filter(
     (p) => p.status.toLowerCase() === "pending"
-  );
-
-  // Obtener métodos de pago únicos para el filtro
-  const uniqueMethods = Array.from(
-    new Set(payments.map((payment) => payment.paymentMethod))
   );
 
   return (
@@ -232,7 +243,9 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
               <FileText className="h-4 w-4 text-blue-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Pagos</p>
-                <p className="text-xl font-bold">{filteredPayments.length}</p>
+                <p className="text-xl font-bold">
+                  {meta?.totalItems ?? payments.length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -307,7 +320,7 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
                   <SelectItem value="all">Todos</SelectItem>
                   {uniqueMethods.map((method) => (
                     <SelectItem key={method} value={method}>
-                      {getPaymentMethodLabel(method)}
+                      {method}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -344,7 +357,16 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.length === 0 ? (
+                {isLoading && payments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Cargando pagos...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : payments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
@@ -356,7 +378,7 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPayments.map((payment) => (
+                  payments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -401,20 +423,18 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {getPaymentMethodIcon(payment.paymentMethod)}
+                          <CreditCard className="h-4 w-4" />
                           <span className="text-sm">
-                            {getPaymentMethodLabel(payment.paymentMethod)}
+                            {payment.paymentMethod}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(payment.status)}>
-                          {getStatusLabel(payment.status)}
-                        </Badge>
+                        <Badge>{payment.status}</Badge>
                       </TableCell>
                       <TableCell>
                         <span className="font-medium text-foreground">
-                          {formatCurrency(payment.amount)}
+                          {formatCurrency(Number(payment.amount) || 0)}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -433,6 +453,44 @@ export function PaymentsTab({ payments }: PaymentsTabProps) {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {meta && (
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Página {meta.currentPage} de {meta.totalPages} —{" "}
+                {meta.totalItems} resultados
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrev}
+                  disabled={
+                    isLoading ||
+                    (!meta.hasPreviousPage &&
+                      !meta.previousPage &&
+                      meta.currentPage <= 1)
+                  }
+                >
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNext}
+                  disabled={
+                    isLoading ||
+                    (!meta.hasNextPage &&
+                      !meta.nextPage &&
+                      meta.currentPage >= meta.totalPages)
+                  }
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

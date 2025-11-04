@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const appointmentSchema = z.object({
-  clientName: z.string().min(1, "El nombre del cliente es obligatorio"),
-  clientEmail: z.string().email("Correo electrónico inválido").optional(),
+  clientName: z.string().min(1, "El nombre del paciente es obligatorio"),
+  pacientemail: z.string().email("Correo electrónico inválido").optional(),
   clientPhone: z.string().min(1, "El teléfono es obligatorio"),
   professionalId: z.string().min(1, "Debe seleccionar un profesional"),
   selectedServices: z

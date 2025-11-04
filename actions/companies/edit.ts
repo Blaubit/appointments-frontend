@@ -2,23 +2,24 @@
 
 import { parsedEnv } from "@/app/env";
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Company } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
-// Interface para los parámetros de edición usando los nombres correctos del tipo Company
+
 interface EditCompanyParams {
   id: string;
   name?: string;
-  companyType?: string; // Corregido: usar companyType en lugar de companyType
+  companyType?: string;
   address?: string;
   city?: string;
   state?: string;
-  postal_code?: string; // Corregido: usar postal_code en lugar de postalCode
+  postalCode?: string;
   country?: string;
   description?: string;
+  phone?: string; // legacy
+  phones?: { id?: string; phone: string }[]; // nuevo: array de objetos
 }
 
 export default async function edit({
@@ -28,14 +29,15 @@ export default async function edit({
   address,
   city,
   state,
-  postal_code,
+  postalCode,
   country,
   description,
+  phone,
+  phones,
 }: EditCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
   try {
-    // Validar que tenemos companyId
     if (!companyId) {
       return {
         message: "Company ID not found. Please log in again.",
@@ -43,10 +45,8 @@ export default async function edit({
       };
     }
 
-    // Corregir la URL - no debería tener `:` antes del id
     const url = `${parsedEnv.API_URL}/companies/${id}`;
 
-    // Validar que tenemos session
     if (!session) {
       return {
         message: "Session not found. Please log in again.",
@@ -54,19 +54,19 @@ export default async function edit({
       };
     }
 
-    // Construir el body solo con los campos que tienen valores válidos
     const body: Partial<{
       name: string;
       companyType: string;
       address: string;
       city: string;
       state: string;
-      postal_code: string;
+      postalCode: string;
       country: string;
       description: string;
+      phone: string;
+      phones: { id?: string; phone: string }[];
     }> = {};
 
-    // Solo agregar campos que no sean undefined, null o string vacío
     if (name !== undefined && name !== null && name.trim() !== "") {
       body.name = name.trim();
     }
@@ -92,11 +92,11 @@ export default async function edit({
     }
 
     if (
-      postal_code !== undefined &&
-      postal_code !== null &&
-      postal_code.trim() !== ""
+      postalCode !== undefined &&
+      postalCode !== null &&
+      postalCode.trim() !== ""
     ) {
-      body.postal_code = postal_code.trim();
+      body.postalCode = postalCode.trim();
     }
 
     if (country !== undefined && country !== null && country.trim() !== "") {
@@ -107,7 +107,26 @@ export default async function edit({
       body.description = description.trim();
     }
 
-    // Validar que al menos un campo se está actualizando
+    // phones: acepta el array de objetos si se proporciona (incluye [] para limpiar)
+    if (phones !== undefined) {
+      if (Array.isArray(phones)) {
+        // Normalizar cada objeto: trim a phone y mantener id si existe
+        body.phones = phones.map((p) => ({
+          ...(p.id ? { id: p.id } : {}),
+          phone: p.phone ? p.phone.trim() : p.phone,
+        }));
+      } else {
+        console.warn(
+          "edit_company: 'phones' debe ser un array de objetos {id?, phone}"
+        );
+      }
+    }
+
+    // phone (legacy): incluir solo si no es string vacío
+    if (phone !== undefined && phone !== null && phone.trim() !== "") {
+      body.phone = phone.trim();
+    }
+
     if (Object.keys(body).length === 0) {
       return {
         message: "No se proporcionaron campos válidos para actualizar.",
@@ -121,7 +140,6 @@ export default async function edit({
       },
     });
 
-    // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/settings");
       revalidatePath("/dashboard");
@@ -133,7 +151,6 @@ export default async function edit({
       };
     }
 
-    // Si por alguna razón llegamos aquí con un código no exitoso
     return {
       message: `Unexpected status code: ${response.status}`,
       status: response.status,

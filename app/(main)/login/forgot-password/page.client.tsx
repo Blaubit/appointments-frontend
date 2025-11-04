@@ -46,7 +46,7 @@ export default function ForgotPasswordClient({
   serverAction,
   serverMetadata,
 }: ForgotPasswordClientProps) {
-  // Estados del cliente
+  // Estados del paciente
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"input" | "success">("input");
   const [errors, setErrors] = useState<{
@@ -95,7 +95,7 @@ export default function ForgotPasswordClient({
   const handleSubmit = async () => {
     setErrors({});
 
-    // Validación del cliente
+    // Validación del paciente
     if (!email.trim()) {
       setErrors({ email: ["El correo electrónico es requerido"] });
       return;

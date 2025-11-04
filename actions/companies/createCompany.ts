@@ -7,7 +7,6 @@ import { revalidatePath } from "next/cache";
 import { Company, CompanyRegistrationPayload } from "@/types";
 import { getSession, getUser } from "@/actions/auth";
 
-
 export default async function createCompany({
   // company data
   companyName: name,
@@ -17,6 +16,7 @@ export default async function createCompany({
   companyState: state,
   companyPostalCode: postal_code,
   companyCountry: country,
+  companyPhone: phone,
   companyDescription: description,
   //company admin data
   adminFullName,
@@ -43,8 +43,9 @@ export default async function createCompany({
       companyAddress: address.trim(),
       companyCity: city.trim(),
       companyState: state.trim(),
-      companyPostalCode: postal_code.trim(), // El DTO usa postalCode, no postal_code
+      companyPostalCode: postal_code.trim(),
       companyCountry: country.trim(),
+      companyPhone: phone.trim(),
       companyDescription: description?.trim() || "",
       // Admin data
       adminFullName: adminFullName.trim(),

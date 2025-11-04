@@ -338,7 +338,6 @@ export default function CalendarPageClient({
         appointmentId={selectedAppointmentId}
         isOpen={!!selectedAppointmentId}
         onClose={() => setSelectedAppointmentId(undefined)}
-        onEdit={() => {}}
         onCancel={() => {}}
         onDelete={() => {}}
         onCall={() => {}}

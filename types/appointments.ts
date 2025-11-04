@@ -15,6 +15,11 @@ interface Payment {
   createdAt: string;
   updatedAt: string;
 }
+interface consultationNotes {
+  observations: string;
+  diagnosis: string;
+  treatment: string;
+}
 export interface Appointment {
   id: string;
   appointmentDate: Date;
@@ -29,6 +34,7 @@ export interface Appointment {
   services: Service[]; // Service is defined in ./services
   payment: Payment; // Payment details
   createdBy?: User; // User who created the appointment
+  consultationNotes?: consultationNotes; // Notes from the consultation
 }
 
 export interface AppointmentStats {

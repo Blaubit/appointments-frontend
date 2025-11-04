@@ -42,7 +42,7 @@ export default async function ReportsPage() {
           : "-",
     },
     {
-      title: "Nuevos Clientes",
+      title: "Nuevos pacientes",
       count: report.clients?.newClients ?? "-",
       variant: "today",
       icon: "Users",
@@ -78,7 +78,7 @@ export default async function ReportsPage() {
       month: data.month.substring(0, 3), // "Ene", "Feb", etc.
       appointments: data.appointments,
       revenue: data.income,
-      clients: undefined, // Si tienes campo para clientes aquí ponlo, si no déjalo undefined
+      clients: undefined, // Si tienes campo para pacientes aquí ponlo, si no déjalo undefined
     })) ?? [];
 
   // Top Services
@@ -95,7 +95,7 @@ export default async function ReportsPage() {
     report.topClients?.topClients?.map((client: any) => ({
       name: client.clientName,
       appointments: client.appointmentCount,
-      revenue: undefined, // Si tienes revenue por cliente, agrégalo aquí
+      revenue: undefined, // Si tienes revenue por paciente, agrégalo aquí
       lastVisit: client.lastAppointmentDate,
     })) ?? [];
 

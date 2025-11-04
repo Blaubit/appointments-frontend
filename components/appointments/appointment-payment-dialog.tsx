@@ -61,7 +61,7 @@ export function AppointmentPaymentDialog({
         <div className="space-y-4">
           <div>
             <p className="text-sm text-gray-600">
-              Cliente: <strong>{appointment?.client?.fullName}</strong>
+              paciente: <strong>{appointment?.client?.fullName}</strong>
             </p>
             <div>
               <span className="text-sm text-gray-600">Servicios:</span>

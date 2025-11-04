@@ -2,7 +2,6 @@
 
 import { parsedEnv } from "@/app/env";
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { CreateUserDto } from "@/types/dto/User/createUserDto";

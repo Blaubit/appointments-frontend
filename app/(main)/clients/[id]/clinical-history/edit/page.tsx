@@ -14,7 +14,7 @@ interface PageProps {
 export default async function EditPatientRecordPage({ params }: PageProps) {
   const clientId = (await params).id;
 
-  // Obtener datos del cliente
+  // Obtener datos del paciente
   const clientResult = await findOne(clientId);
 
   if (!clientResult || "error" in clientResult) {
@@ -22,10 +22,10 @@ export default async function EditPatientRecordPage({ params }: PageProps) {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-destructive mb-2">
-            Cliente no encontrado
+            paciente no encontrado
           </h2>
           <p className="text-muted-foreground">
-            No se pudo cargar la información del cliente.
+            No se pudo cargar la información del paciente.
           </p>
         </div>
       </div>

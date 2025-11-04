@@ -73,12 +73,13 @@ export default async function RegisterPage() {
       }
 
       // ✅ Llamar al action que devuelve SuccessResponse<Company> | ErrorResponse
+      console.log("Llamando a createCompany con formData:", formData);
       const response = await createCompany(formData);
 
       console.log("Respuesta de createCompany:", response);
 
       // ✅ El response ya viene en el formato correcto desde el backend
-      // Si es un ErrorResponse, se manejará en el cliente
+      // Si es un ErrorResponse, se manejará en el paciente
       // Si es un SuccessResponse<Company>, se procesará como éxito
       return response;
     } catch (error) {

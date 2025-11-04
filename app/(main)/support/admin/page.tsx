@@ -5,7 +5,7 @@ import { getTickets } from "@/actions/tickets/get-tickets";
 export const metadata: Metadata = {
   title: "Administración de Tickets - CitasFácil",
   description:
-    "Panel de administración para gestionar tickets de soporte de clientes.",
+    "Panel de administración para gestionar tickets de soporte de pacientes.",
   keywords: ["admin", "tickets", "soporte", "gestión"],
 };
 

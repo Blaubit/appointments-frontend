@@ -186,7 +186,7 @@ export const MonthViewCalendar: React.FC<MonthViewCalendarProps> = ({
                             onSlotClick && onSlotClick(slot);
                           }}
                         >
-                          {/* En móvil solo mostrar hora, en desktop mostrar hora y cliente */}
+                          {/* En móvil solo mostrar hora, en desktop mostrar hora y paciente */}
                           <span className="sm:hidden">
                             {formatTime(slot.startTime)}
                           </span>

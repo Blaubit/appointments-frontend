@@ -46,7 +46,7 @@ export function ClientSelectorCard({
     client.fullName.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Crear cliente y seleccionarlo automáticamente
+  // Crear paciente y seleccionarlo automáticamente
   const handleCreateClient = async () => {
     if (!form.fullName.trim() || !form.phone.trim()) return;
     setIsCreating(true);
@@ -57,7 +57,7 @@ export function ClientSelectorCard({
         email: form.email,
       });
       if ("data" in result) {
-        // Selecciona el cliente recién creado
+        // Selecciona el paciente recién creado
         onSelect(result.data);
         setShowNewClientForm(false);
         setForm({ fullName: "", phone: "", email: "" });
@@ -73,10 +73,10 @@ export function ClientSelectorCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <span>Seleccionar Cliente</span>
+          <span>Seleccionar paciente</span>
         </CardTitle>
         <CardDescription>
-          Busca un cliente existente o crea uno nuevo
+          Busca un paciente existente o crea uno nuevo
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -87,7 +87,7 @@ export function ClientSelectorCard({
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar cliente por nombre..."
+                  placeholder="Buscar paciente por nombre..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
@@ -100,7 +100,7 @@ export function ClientSelectorCard({
                 className="whitespace-nowrap"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Nuevo Cliente
+                Nuevo paciente
               </Button>
             </div>
             {search && (
@@ -134,14 +134,14 @@ export function ClientSelectorCard({
                 ))}
                 {filteredClients.length === 0 && (
                   <p className="text-center text-gray-500 py-4">
-                    No se encontraron clientes
+                    No se encontraron pacientes
                   </p>
                 )}
               </div>
             )}
           </>
         )}
-        {/* Cliente seleccionado */}
+        {/* paciente seleccionado */}
         {selectedClient && (
           <div className="flex items-start sm:items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <Avatar className="flex-shrink-0">
@@ -178,11 +178,11 @@ export function ClientSelectorCard({
             </div>
           </div>
         )}
-        {/* Formulario nuevo cliente */}
+        {/* Formulario nuevo paciente */}
         {showNewClientForm && (
           <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
             <h4 className="font-medium text-gray-900 dark:text-white">
-              Nuevo Cliente
+              Nuevo paciente
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -193,7 +193,7 @@ export function ClientSelectorCard({
                   onChange={(e) =>
                     setForm({ ...form, fullName: e.target.value })
                   }
-                  placeholder="Nombre del cliente"
+                  placeholder="Nombre del paciente"
                   required
                 />
               </div>
@@ -209,13 +209,13 @@ export function ClientSelectorCard({
               </div>
             </div>
             <div>
-              <Label htmlFor="clientEmail">Email</Label>
+              <Label htmlFor="pacientemail">Email</Label>
               <Input
-                id="clientEmail"
+                id="pacientemail"
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="cliente@email.com"
+                placeholder="paciente@email.com"
               />
             </div>
             <div className="flex space-x-2">
@@ -233,7 +233,7 @@ export function ClientSelectorCard({
                   !form.fullName.trim() || !form.phone.trim() || isCreating
                 }
               >
-                {isCreating ? "Creando..." : "Seleccionar Cliente"}
+                {isCreating ? "Creando..." : "Seleccionar paciente"}
               </Button>
             </div>
           </div>

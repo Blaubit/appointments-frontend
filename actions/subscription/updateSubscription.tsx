@@ -27,14 +27,13 @@ export async function updateSubscription(
   }
 
   try {
-    const url = `${parsedEnv.API_URL}/companies/${data.companyId}/subscriptions/${data.id}`;
+    const url = `${parsedEnv.API_URL}/companies/${data.companyId}/subscriptions/request-plan-change`;
 
-    const response = await axios.patch(
+    const response = await axios.post(
       url,
       {
-        planId: data.planId,
-        endDate: data.endDate,
-        status: data.status,
+        requestedPlanId: data.planId,
+        reason: "Necesitamos mas funcionalidades",
       },
       {
         headers: {

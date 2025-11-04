@@ -1,5 +1,6 @@
 import type React from "react";
 import { Company } from "./company";
+import { User } from "./user";
 export type ServiceCategory =
   | "consultation"
   | "treatment"
@@ -16,7 +17,7 @@ export interface Service {
   price: string;
   createdAt: string;
   company: Company;
-  professionalsIds?: string[];
+  professionals?: User[];
 }
 
 export interface ServiceCategoryConfig {

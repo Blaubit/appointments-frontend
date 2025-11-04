@@ -11,7 +11,11 @@ import { AppointmentActions } from "./appointment-actions";
 import { useState } from "react";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 import formatCurrency from "@/utils/functions/formatCurrency";
-
+import {
+  getStatusColor,
+  getStatusIcon,
+  getStatusText,
+} from "@/utils/functions/appointmentStatus";
 interface AppointmentCardProps {
   appointment: Appointment;
   onEdit?: (appointment: Appointment) => void;
@@ -33,21 +37,6 @@ const getStatusVariant = (status: string) => {
       return "outline";
     default:
       return "secondary";
-  }
-};
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case "confirmed":
-      return "Confirmada";
-    case "pending":
-      return "Pendiente";
-    case "cancelled":
-      return "Cancelada";
-    case "completed":
-      return "Completada";
-    default:
-      return status;
   }
 };
 
@@ -128,11 +117,18 @@ export function AppointmentCard({
 
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <Badge variant={getStatusVariant(appointment.status)}>
-              {getStatusText(appointment.status)}
+            <Badge
+              className={`${getStatusColor(appointment.status)} flex-shrink-0 text-xs`}
+            >
+              <div className="flex items-center space-x-1">
+                {getStatusIcon(appointment.status)}
+                <span className="capitalize hidden sm:inline">
+                  {getStatusText(appointment.status)}
+                </span>
+              </div>
             </Badge>
             <span className="font-semibold text-lg">
-              {formatCurrency(Number(appointment.payment.amount))}
+              {formatCurrency(Number(appointment?.payment?.amount ?? 0))}
             </span>
           </div>
 
@@ -177,7 +173,6 @@ export function AppointmentCard({
         appointmentId={appointment.id}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onEdit={onEdit || (() => {})}
         onCancel={onCancel || (() => {})}
         onDelete={onDelete || (() => {})}
         onCall={onCall || (() => {})}
