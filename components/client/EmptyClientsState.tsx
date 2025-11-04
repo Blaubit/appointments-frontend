@@ -32,13 +32,13 @@ export function EmptyClientsState({
 }: EmptyClientsStateProps) {
   return (
     <div className="space-y-6">
-      {/* Header con botón para crear cliente */}
+      {/* Header con botón para crear paciente */}
       <div className="flex flex-wrap sm:flex-row justify-between items-start sm:items-center gap-4">
         <ClientForm
           trigger={
             <Button className="btn-gradient-primary text-white">
               <UserPlus className="h-4 w-4 mr-2" />
-              Nuevo Cliente
+              Nuevo paciente
             </Button>
           }
           onSubmit={onCreateClient}
@@ -55,17 +55,17 @@ export function EmptyClientsState({
             <Users className="h-12 w-12 text-muted-foreground" />
           </div>
           <h2 className="text-2xl font-semibold mb-2">
-            ¡Bienvenido a tu lista de clientes!
+            ¡Bienvenido a tu lista de pacientes!
           </h2>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Aún no tienes clientes registrados. Comienza agregando tu primer
-            cliente para gestionar tus citas y relaciones comerciales.
+            Aún no tienes pacientes registrados. Comienza agregando tu primer
+            paciente para gestionar tus citas y relaciones comerciales.
           </p>
           <ClientForm
             trigger={
               <Button size="lg" className="btn-gradient-primary text-white">
                 <UserPlus className="h-5 w-5 mr-2" />
-                Agregar Primer Cliente
+                Agregar Primer paciente
               </Button>
             }
             onSubmit={onCreateClient}

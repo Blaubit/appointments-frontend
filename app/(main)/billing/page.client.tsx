@@ -24,6 +24,7 @@ export default function BillingClient({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showNotifiedModal, setShowNotifiedModal] = useState(false);
   const [actionType, setActionType] = useState<"upgrade" | "cancel" | null>(
     null
   );
@@ -48,37 +49,17 @@ export default function BillingClient({
       });
 
       if (result.status === 200) {
+        // Refrescar datos y mostrar diálogo informativo de "avisado"
         router.refresh();
         setShowConfirmModal(false);
+        setShowNotifiedModal(true);
       } else {
         // Handle error
+        console.error("Error updating subscription, status:", result.status);
+        alert("Se produjo un error al solicitar el cambio de plan.");
       }
     } catch (error) {
       console.error("Error updating subscription:", error);
-      alert("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancelSubscription = async () => {
-    setIsLoading(true);
-    try {
-      const result = await updateSubscription({
-        companyId,
-        planId: currentPlan.id,
-        endDate: currentSubscription.endDate,
-        status: "cancelled",
-      });
-
-      if (result.status === 200) {
-        router.refresh();
-        setShowConfirmModal(false);
-      } else {
-        // Handle error
-      }
-    } catch (error) {
-      console.error("Error cancelling subscription:", error);
       alert("An unexpected error occurred");
     } finally {
       setIsLoading(false);
@@ -174,21 +155,6 @@ export default function BillingClient({
                     {currentSubscription.currentUsers}
                   </p>
                 </div>
-                <Button
-                  onClick={() => openConfirmModal("cancel")}
-                  variant="destructive"
-                  className="mt-4"
-                  disabled={
-                    currentSubscription.status === "cancelled" || isLoading
-                  }
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <XCircle className="h-4 w-4 mr-2" />
-                  )}
-                  Cancelar Suscripción
-                </Button>
               </div>
             </div>
           </div>
@@ -196,7 +162,7 @@ export default function BillingClient({
           {/* Available Plans */}
           <div className="bg-card rounded-lg shadow-md border p-6">
             <h2 className="text-2xl font-semibold text-foreground mb-6">
-              Cambiar Plan
+              Solicitar cambio de plan
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {availablePlans.map((plan) => (
@@ -269,7 +235,7 @@ export default function BillingClient({
                     ) : (
                       <CheckCircle className="h-4 w-4 mr-2" />
                     )}
-                    {isLoading ? "Actualizando..." : "Cambiar Plan"}
+                    {isLoading ? "Actualizando..." : "Solicitar cambio de plan"}
                   </Button>
                 </div>
               </div>
@@ -283,7 +249,7 @@ export default function BillingClient({
                 <h3 className="text-lg font-semibold text-foreground mb-4">
                   {actionType === "cancel"
                     ? "Cancelar Suscripción"
-                    : "Cambiar Plan"}
+                    : "Solicitar cambio de plan"}
                 </h3>
                 <p className="text-muted-foreground mb-6">
                   {actionType === "cancel"
@@ -299,23 +265,47 @@ export default function BillingClient({
                   >
                     Cancelar
                   </Button>
-                  <Button
-                    onClick={
-                      actionType === "cancel"
-                        ? handleCancelSubscription
-                        : handlePlanChange
-                    }
-                    variant={
-                      actionType === "cancel" ? "destructive" : "default"
-                    }
-                    disabled={isLoading}
-                    className="flex-1"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : null}
-                    {isLoading ? "Procesando..." : "Confirmar"}
-                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notified / Pending Support Modal */}
+          {showNotifiedModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4 border">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      Solicitud recibida
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      Hemos recibido tu solicitud de cambio al plan{" "}
+                      <span className="font-medium text-foreground">
+                        {selectedPlan?.name}
+                      </span>
+                      . El equipo de soporte ha sido notificado y revisará la
+                      petición. El cambio se aplicará manualmente por soporte;
+                      tu suscripción actual permanecerá activa hasta que se
+                      confirme la modificación.
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Si necesitas asistencia urgente, por favor contacta con
+                      soporte
+                    </p>
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={() => {
+                          setShowNotifiedModal(false);
+                          // opcional: navegar a otro sitio si se desea
+                        }}
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        Entendido
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

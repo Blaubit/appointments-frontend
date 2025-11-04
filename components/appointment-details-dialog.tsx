@@ -40,7 +40,7 @@ import {
 } from "@/utils/functions/appointmentStatus";
 import WhatsappIcon from "./icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
-import findOne from "@/actions/appointments/findOne";
+import { findOne } from "@/actions/appointments/findOne";
 import { update } from "@/actions/appointments/appointmentStatus";
 import Link from "next/link";
 import { AppointmentPaymentDialog } from "@/components/appointments/appointment-payment-dialog";
@@ -50,7 +50,6 @@ interface AppointmentDetailsDialogProps {
   appointmentId: string | undefined;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (appointment: Appointment) => void;
   onCancel: (appointment: Appointment) => void;
   onDelete: (appointment: Appointment) => void;
   onCall: (appointment: Appointment) => void;
@@ -61,7 +60,6 @@ export function AppointmentDetailsDialog({
   appointmentId,
   isOpen,
   onClose,
-  onEdit,
   onDelete,
   onCall,
   onEmail,
@@ -227,9 +225,11 @@ export function AppointmentDetailsDialog({
   }
 
   const handleRescheduleAppointment = () => {
-    console.log("Reprogramar cita:", appointment?.id);
+    //console.log("Reprogramar cita:", appointment?.id);
   };
-
+  const handleEditAppointment = () => {
+    router.push(`/appointments/${appointment?.id}/edit`);
+  };
   const handleAttendAppointment = async () => {
     onClose();
     try {
@@ -267,7 +267,6 @@ export function AppointmentDetailsDialog({
     appointment: Appointment,
     paymentData: { amount: number; method: string }
   ) => {
-    console.log("Payment completed, opening rate dialog"); // Debug log
     // Aquí va tu lógica de pago
     setPaymentDialogOpen(false);
     // Usar setTimeout para asegurar que el estado se actualice correctamente
@@ -278,7 +277,7 @@ export function AppointmentDetailsDialog({
 
   // Cuando el rating se guarda, cierra el rate
   const handleRateClient = (clientId: string, rating: number) => {
-    console.log("Rating saved:", { clientId, rating }); // Debug log
+    //  console.log("Rating saved:", { clientId, rating }); // Debug log
     // Aquí va tu lógica de rating
     setRateDialogOpen(false);
   };
@@ -286,7 +285,6 @@ export function AppointmentDetailsDialog({
   const handleCloseRateDialog = () => {
     setRateDialogOpen(false);
   };
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -308,7 +306,7 @@ export function AppointmentDetailsDialog({
                 <CardTitle className="flex items-center justify-between text-base sm:text-lg">
                   <div className="flex items-center gap-2">
                     <UserIcon className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Información del Cliente</span>
+                    <span className="truncate">Información del paciente</span>
                   </div>
                   <Button
                     size="sm"
@@ -599,6 +597,54 @@ export function AppointmentDetailsDialog({
               </Card>
             )}
 
+            {/* Consultation Notes (added) */}
+            {appointment.consultationNotes && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Stethoscope className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Notas de Consulta</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Observaciones
+                      </Label>
+                      <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
+                          {appointment.consultationNotes.observations || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Diagnóstico
+                      </Label>
+                      <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
+                          {appointment.consultationNotes.diagnosis || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Plan de Tratamiento
+                      </Label>
+                      <div className="mt-1 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words">
+                          {appointment.consultationNotes.treatment || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Timestamps */}
             <Card>
               <Link href={`/clients/${appointment.client.id}/history`}>
@@ -645,8 +691,10 @@ export function AppointmentDetailsDialog({
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 pt-4">
-              {(appointment.status === "confirmed" ||
-                appointment.status === "pending") && (
+              {(() => {
+                const status = String(appointment?.status ?? "").toLowerCase();
+                return status !== "cancelled" && status !== "canceled";
+              })() && (
                 <Button
                   onClick={handleAttendAppointment}
                   className="w-full h-10 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
@@ -656,7 +704,7 @@ export function AppointmentDetailsDialog({
                 </Button>
               )}
               <Button
-                onClick={() => onEdit(appointment)}
+                onClick={() => handleEditAppointment()}
                 variant="outline"
                 className="w-full h-10 text-sm"
               >

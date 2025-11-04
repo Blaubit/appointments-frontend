@@ -65,7 +65,6 @@ export default async function DashboardPage({ searchParams }: Props) {
       // Si falla, se mantiene el valor por defecto
     }
   }
-
   // Renderizar DashboardClient con props + error
   return (
     <DashboardClient

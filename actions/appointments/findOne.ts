@@ -7,8 +7,8 @@ import { parsedEnv } from "@/app/env";
 import { Appointment } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
-export default async function findOne(
-  id: string,
+export async function findOne(
+  id: string
 ): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();

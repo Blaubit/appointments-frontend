@@ -14,7 +14,7 @@ import type {
   ClientStats,
   Pagination,
   ClientFormData,
-  ClientEditFormData,
+  pacienteditFormData,
 } from "@/types";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
 import { useDebounceSearch } from "@/hooks/useDebounce";
@@ -271,15 +271,15 @@ export default function ClientsPageClient({
     }));
   };
 
-  // Handler para crear cliente (SIN CONFIRMACIÓN)
+  // Handler para crear paciente (SIN CONFIRMACIÓN)
   const handleCreateClient = async (data: ClientFormData) => {
     try {
       const response = await create(data);
       if (response.status === 201) {
         router.refresh();
         showSuccessDialog(
-          "¡Cliente creado exitosamente!",
-          `El cliente ${data.fullName} ha sido registrado correctamente en el sistema.`
+          "¡paciente creado exitosamente!",
+          `El paciente ${data.fullName} ha sido registrado correctamente en el sistema.`
         );
       }
     } catch (error) {
@@ -287,7 +287,7 @@ export default function ClientsPageClient({
     }
   };
 
-  // Handler para preparar edición de cliente
+  // Handler para preparar edición de paciente
   const handleEditClient = (data: ClientFormData) => {
     setConfirmationDialogs((prev) => ({
       ...prev,
@@ -298,12 +298,12 @@ export default function ClientsPageClient({
     }));
   };
 
-  // Handler para confirmar edición de cliente
+  // Handler para confirmar edición de paciente
   const confirmEditClient = async () => {
     const { data } = confirmationDialogs.editClient;
     if (!data || !editingClient) return;
 
-    const data2: ClientEditFormData = {
+    const data2: pacienteditFormData = {
       id: editingClient?.id,
       fullName: data.fullName,
       email: data.email,
@@ -316,7 +316,7 @@ export default function ClientsPageClient({
         router.refresh();
         setEditingClient(null);
         showSuccessDialog(
-          "¡Cliente editado exitosamente!",
+          "¡paciente editado exitosamente!",
           `Los datos de ${data.fullName} han sido actualizados correctamente.`
         );
       }
@@ -325,7 +325,7 @@ export default function ClientsPageClient({
     }
   };
 
-  // Handler para preparar eliminación de cliente
+  // Handler para preparar eliminación de paciente
   const handleDeleteClient = (client: Client) => {
     setConfirmationDialogs((prev) => ({
       ...prev,
@@ -336,7 +336,7 @@ export default function ClientsPageClient({
     }));
   };
 
-  // Handler para confirmar eliminación de cliente
+  // Handler para confirmar eliminación de paciente
   const confirmDeleteClient = async () => {
     const { client } = confirmationDialogs.deleteClient;
     if (!client) return;
@@ -346,8 +346,8 @@ export default function ClientsPageClient({
       if (response.status === 200) {
         router.refresh();
         showSuccessDialog(
-          "¡Cliente eliminado exitosamente!",
-          `El cliente ${client.fullName} ha sido eliminado del sistema.`
+          "¡paciente eliminado exitosamente!",
+          `El paciente ${client.fullName} ha sido eliminado del sistema.`
         );
       }
     } catch (error) {
@@ -397,7 +397,7 @@ export default function ClientsPageClient({
       day: "numeric",
     });
 
-  // Estado vacío cuando no hay clientes del servidor
+  // Estado vacío cuando no hay pacientes del servidor
   if (!hasClients) {
     return (
       <EmptyClientsState
@@ -429,7 +429,7 @@ export default function ClientsPageClient({
         onExportBoth={handleExportBoth}
       />
 
-      {/* Lista de Clientes */}
+      {/* Lista de pacientes */}
       <ClientsListCard
         clients={clients}
         pagination={pagination}
@@ -470,8 +470,8 @@ export default function ClientsPageClient({
         onOpenChange={(open) => !open && closeDialog("editClient")}
         variant="edit"
         type="confirmation"
-        title="Guardar cambios del cliente"
-        description="¿Deseas guardar los cambios realizados en la información del cliente?"
+        title="Guardar cambios del paciente"
+        description="¿Deseas guardar los cambios realizados en la información del paciente?"
         confirmText="Guardar cambios"
         onConfirm={confirmEditClient}
       />
@@ -481,8 +481,8 @@ export default function ClientsPageClient({
         onOpenChange={(open) => !open && closeDialog("deleteClient")}
         variant="delete"
         type="confirmation"
-        title="Eliminar cliente"
-        description={`Esta acción no se puede deshacer. El cliente ${confirmationDialogs.deleteClient.client?.fullName || ""} será eliminado permanentemente del sistema junto con todo su historial.`}
+        title="Eliminar paciente"
+        description={`Esta acción no se puede deshacer. El paciente ${confirmationDialogs.deleteClient.client?.fullName || ""} será eliminado permanentemente del sistema junto con todo su historial.`}
         confirmText="Sí, eliminar"
         cancelText="No, mantener"
         onConfirm={confirmDeleteClient}

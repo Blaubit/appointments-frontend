@@ -163,7 +163,7 @@ export default function AdminSupportPage({
             Panel de Administración - Tickets
           </h1>
           <p className="text-muted-foreground">
-            Gestiona todos los tickets de soporte de tus clientes
+            Gestiona todos los tickets de soporte de tus pacientes
           </p>
         </div>
 
@@ -187,7 +187,7 @@ export default function AdminSupportPage({
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Buscar tickets, cliente, email..."
+                      placeholder="Buscar tickets, paciente, email..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 bg-background border-border"

@@ -116,6 +116,7 @@ export function UserForm({
   roles,
   isLoading = false,
 }: UserFormProps) {
+  console.log("editingUser:", editingUser);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>

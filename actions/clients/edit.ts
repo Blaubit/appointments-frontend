@@ -2,19 +2,18 @@
 
 import { parsedEnv } from "@/app/env";
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { ClientEditFormData } from "@/types";
+import { pacienteditFormData } from "@/types";
 import { Client } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
 export default async function edit({
   id,
   fullName,
   email,
   phone,
-}: ClientEditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
+}: pacienteditFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
 

@@ -74,7 +74,7 @@ export function ReportFilterBar({
                 <SelectItem value="overview">Resumen General</SelectItem>
                 <SelectItem value="financial">Financiero</SelectItem>
                 <SelectItem value="appointments">Citas</SelectItem>
-                <SelectItem value="clients">Clientes</SelectItem>
+                <SelectItem value="clients">pacientes</SelectItem>
               </SelectContent>
             </Select>
           </div>

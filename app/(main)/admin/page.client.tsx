@@ -162,7 +162,7 @@ export default function AdminPageClient({
     <div className="min-h-screen bg-background">
       <Header
         title="Panel de Administración SaaS"
-        subtitle="Gestiona todas las empresas clientes y suscripciones"
+        subtitle="Gestiona todas las empresas pacientes y suscripciones"
         showBackButton={true}
         backButtonText="Dashboard"
         backButtonHref="/dashboard"

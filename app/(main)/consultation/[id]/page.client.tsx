@@ -439,9 +439,6 @@ export default function ConsultationPageClient({
                       </Avatar>
                       <div>
                         <p className="font-semibold">{client.fullName}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {`0`} años
-                        </p>
                       </div>
                     </div>
                     <Separator />
@@ -531,7 +528,7 @@ export default function ConsultationPageClient({
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <UserCheck className="h-5 w-5" />
-                      Resumen del Cliente
+                      Resumen del paciente
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -592,7 +589,7 @@ export default function ConsultationPageClient({
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   La consulta ha sido registrada exitosamente. ¿Te gustaría
-                  calificar al cliente {client.fullName}?
+                  calificar al paciente {client.fullName}?
                 </p>
                 <div className="flex gap-3">
                   <Button
@@ -606,7 +603,7 @@ export default function ConsultationPageClient({
                     onClick={() => setShowRatingDialog(false)}
                     className="flex-1"
                   >
-                    Calificar Cliente
+                    Calificar paciente
                   </Button>
                 </div>
               </div>

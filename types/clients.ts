@@ -53,7 +53,7 @@ export interface ClientFormData {
   phone: string;
 }
 
-export interface ClientEditFormData {
+export interface pacienteditFormData {
   id?: string;
   fullName: string;
   email: string;

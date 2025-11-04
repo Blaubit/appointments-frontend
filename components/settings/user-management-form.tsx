@@ -71,7 +71,6 @@ interface UserManagementFormProps {
 }
 
 export function UserManagementForm({
-  currentUserRole,
   doctors,
   users: initialUsers,
   onSave,

@@ -145,7 +145,7 @@ export function ClinicalHistoryDialog({
           <div className="flex flex-col items-center justify-center h-[400px] gap-4">
             <div className="text-center space-y-2">
               <p className="text-lg font-medium">
-                Este cliente no tiene historial clínico
+                Este paciente no tiene historial clínico
               </p>
               <p className="text-sm text-muted-foreground">
                 Crea un nuevo historial clínico para comenzar a registrar

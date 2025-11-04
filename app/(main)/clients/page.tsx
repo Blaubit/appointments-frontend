@@ -32,13 +32,13 @@ export default async function ClientsPage({
 
   const clients = await findAll({ searchParams: params });
 
-  // Calcular estadísticas basadas en clientes filtrados
+  // Calcular estadísticas basadas en pacientes filtrados
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header
-        title="Clientes"
-        subtitle="Gestiona la información de tus clientes"
+        title="Pacientes"
+        subtitle="Gestiona la información de tus pacientes"
         showBackButton={true}
         backButtonText="Dashboard"
         backButtonHref="/dashboard"

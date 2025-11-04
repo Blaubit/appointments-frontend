@@ -56,10 +56,12 @@ export function ClientCard({
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
+      {/* overflow-visible para permitir que el dropdown no quede recortado */}
+      <Card className="hover:shadow-lg transition-shadow overflow-visible">
         <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3">
+          {/* contenedor relativo para posicionar el botón absolute */}
+          <div className="relative mb-4">
+            <div className="flex items-center space-x-3 pr-10">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={client.avatar} alt={client.fullName} />
                 <AvatarFallback>{getInitials(client.fullName)}</AvatarFallback>
@@ -69,58 +71,69 @@ export function ClientCard({
                 <p className="text-sm text-muted-foreground">{client.email}</p>
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onView(client)}>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Ver Detalles
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(client)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onCall(client)}>
-                  <Phone className="h-4 w-4 mr-2" />
-                  Llamar
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEmail(client)}>
-                  <History className="h-4 w-4 mr-2" />
-                  Ver historial
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsClinicalHistoryOpen(true)}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Historial Clínico
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onWhatsApp(client.phone, "Buen dia")}
-                >
-                  <WhatsappIcon
-                    className="text-green-500 dark:bg-gray-900"
-                    width={16}
-                    height={16}
-                  />
-                  WhatsApp
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSchedule(client)}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Programar Cita
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onDelete(client)}
-                  className="text-red-600"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            {/* Botón de acciones posicionado absolute para no salirse en pantallas pequeñas */}
+            <div className="absolute top-2 right-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-1 flex-shrink-0"
+                    aria-label={`Acciones de ${client.fullName}`}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                {/* z-index alto y ancho controlado para mobile */}
+                <DropdownMenuContent align="end" className="z-50 w-44 sm:w-48">
+                  <DropdownMenuItem onClick={() => onView(client)}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver Detalles
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(client)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onCall(client)}>
+                    <Phone className="h-4 w-4 mr-2" />
+                    Llamar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEmail(client)}>
+                    <History className="h-4 w-4 mr-2" />
+                    Ver historial
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsClinicalHistoryOpen(true)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Historial Clínico
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onWhatsApp(client.phone, "Buen dia")}
+                  >
+                    <WhatsappIcon
+                      className="text-green-500 dark:bg-gray-900"
+                      width={16}
+                      height={16}
+                    />
+                    WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSchedule(client)}>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Programar Cita
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onDelete(client)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           <div className="space-y-3">

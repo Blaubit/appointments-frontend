@@ -74,7 +74,6 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
           monthStr,
           "month"
         );
-
         if (result && "data" in result && result.data) {
           const monthSchedule = result.data as PeriodResponse;
 
@@ -97,7 +96,11 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
 
           setNonWorkingDays(nonWorking);
           // Guardar en caché
-          setCachedMonths((prev) => new Map(prev).set(monthStr, nonWorking));
+          setCachedMonths((prev) => {
+            const next = new Map(prev);
+            next.set(monthStr, nonWorking);
+            return next;
+          });
         }
       } catch (error) {
         console.error("Error loading month data:", error);
@@ -108,28 +111,45 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
     };
 
     loadMonthData();
-  }, [selectedProfessional, currentMonth, cachedMonths]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProfessional, currentMonth]);
 
-  // Genera solo los días del mes actual
-  const getCalendarDays = (date: Date): Date[] => {
+  // Genera "slots" del mes actual (incluye celdas vacías hasta el primer día)
+  const getCalendarSlots = (date: Date): (Date | null)[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
     const totalDays = lastDayOfMonth.getDate();
-    const days: Date[] = [];
 
-    // Solo días del mes actual
-    for (let i = 1; i <= totalDays; i++) {
-      days.push(new Date(year, month, i));
+    // JS getDay(): 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    // Queremos que la semana empiece en Lunes => calcular offset:
+    const leadingBlanks = (firstDayOfMonth.getDay() + 6) % 7; // Monday -> 0, Sunday -> 6
+
+    const slots: (Date | null)[] = [];
+
+    // Agregar celdas vacías antes del 1º del mes
+    for (let i = 0; i < leadingBlanks; i++) {
+      slots.push(null);
     }
 
-    return days;
+    // Agregar los días reales
+    for (let day = 1; day <= totalDays; day++) {
+      slots.push(new Date(year, month, day));
+    }
+
+    // Completar la última semana con celdas vacías si es necesario (opcional, para cuadrícula completa)
+    while (slots.length % 7 !== 0) {
+      slots.push(null);
+    }
+
+    return slots;
   };
 
-  const calendarDays = getCalendarDays(currentMonth);
+  const calendarSlots = getCalendarSlots(currentMonth);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split("T")[0];
 
   const changeMonth = (offset: number) => {
     const newDate = new Date(currentMonth);
@@ -195,53 +215,57 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
         </div>
 
         <div className="space-y-2">
-          {Array.from({ length: Math.ceil(calendarDays.length / 7) }).map(
-            (_, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-7 gap-2">
-                {calendarDays
-                  .slice(weekIndex * 7, (weekIndex + 1) * 7)
-                  .map((date, dayIndex) => {
-                    if (isNaN(date.getTime()))
-                      return <div key={dayIndex}></div>;
+          {Array.from({
+            length: Math.ceil(calendarSlots.length / 7),
+          }).map((_, weekIndex) => (
+            <div key={weekIndex} className="grid grid-cols-7 gap-2">
+              {calendarSlots
+                .slice(weekIndex * 7, (weekIndex + 1) * 7)
+                .map((slot, slotIndex) => {
+                  if (!slot) {
+                    // Celda vacía (antes o después del mes)
+                    return <div key={slotIndex} className="p-2" />;
+                  }
 
-                    const dateStr = date.toISOString().split("T")[0];
-                    const isSelected = selectedDate === dateStr;
-                    const isToday =
-                      date.toDateString() === new Date().toDateString();
-                    const isPast = date.getTime() < today.getTime();
-                    const isNonWorking = nonWorkingDays.has(dateStr);
-                    const isDisabled = isPast || isNonWorking;
+                  const date = slot;
+                  if (isNaN(date.getTime())) return <div key={slotIndex} />;
 
-                    return (
-                      <button
-                        key={dayIndex}
-                        type="button"
-                        disabled={isDisabled}
-                        title={
-                          isPast
-                            ? "Fecha pasada"
-                            : isNonWorking
-                              ? "Día no laboral"
-                              : undefined
-                        }
-                        className={`p-2 text-sm rounded-lg transition-colors ${
-                          isDisabled
-                            ? "text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800"
-                            : isSelected
-                              ? "bg-blue-500 text-white"
-                              : isToday
-                                ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
-                                : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => handleDateSelect(date)}
-                      >
-                        {date.getDate()}
-                      </button>
-                    );
-                  })}
-              </div>
-            )
-          )}
+                  const dateStr = date.toISOString().split("T")[0];
+                  const isSelected = selectedDate === dateStr;
+                  const isToday = dateStr === todayStr;
+                  const isPast = date.getTime() < today.getTime();
+                  const isNonWorking = nonWorkingDays.has(dateStr);
+                  const isDisabled = isPast || isNonWorking;
+
+                  return (
+                    <button
+                      key={slotIndex}
+                      type="button"
+                      disabled={isDisabled}
+                      title={
+                        isPast
+                          ? "Fecha pasada"
+                          : isNonWorking
+                            ? "Día no laboral"
+                            : undefined
+                      }
+                      className={`p-2 text-sm rounded-lg transition-colors ${
+                        isDisabled
+                          ? "text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800"
+                          : isSelected
+                            ? "bg-blue-500 text-white"
+                            : isToday
+                              ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                      onClick={() => handleDateSelect(date)}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+            </div>
+          ))}
         </div>
 
         {isLoadingMonth && (
