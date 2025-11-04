@@ -45,6 +45,7 @@ import { update } from "@/actions/appointments/appointmentStatus";
 import Link from "next/link";
 import { AppointmentPaymentDialog } from "@/components/appointments/appointment-payment-dialog";
 import { RateClientDialog } from "@/components/client/RateClientDialog";
+import updateAppointmentPayment from "@/actions/appointments/appointmentPayment";
 
 interface AppointmentDetailsDialogProps {
   appointmentId: string | undefined;
@@ -82,6 +83,7 @@ export function AppointmentDetailsDialog({
       setError(null);
       try {
         const result = await findOne(appointmentId);
+        console.log("Fetch appointment result:", result); // Debug log
         if ("data" in result) {
           setAppointment(result.data);
         } else {
@@ -179,7 +181,7 @@ export function AppointmentDetailsDialog({
           "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
         label: "Pendiente",
       },
-      paid: {
+      completed: {
         color:
           "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
         label: "Pagado",
@@ -263,11 +265,16 @@ export function AppointmentDetailsDialog({
   const handleClosePaymentDialog = () => setPaymentDialogOpen(false);
 
   // Cuando el pago se realiza, cierra el payment y abre el rate
-  const handlePayAppointment = (
+  const handlePayAppointment = async (
     appointment: Appointment,
     paymentData: { amount: number; method: string }
   ) => {
-    // Aquí va tu lógica de pago
+    const paymentresponse = await updateAppointmentPayment({
+      id: appointment.id,
+      paymentStatus: "completed",
+      paymentMethod: paymentData.method,
+      paymentDate: new Date().toISOString(),
+    });
     setPaymentDialogOpen(false);
     // Usar setTimeout para asegurar que el estado se actualice correctamente
     setTimeout(() => {
@@ -277,14 +284,13 @@ export function AppointmentDetailsDialog({
 
   // Cuando el rating se guarda, cierra el rate
   const handleRateClient = (clientId: string, rating: number) => {
-    //  console.log("Rating saved:", { clientId, rating }); // Debug log
-    // Aquí va tu lógica de rating
     setRateDialogOpen(false);
   };
 
   const handleCloseRateDialog = () => {
     setRateDialogOpen(false);
   };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -324,7 +330,7 @@ export function AppointmentDetailsDialog({
                   <div className="flex items-center sm:flex-col sm:items-center gap-3 sm:gap-2">
                     <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
                       <AvatarImage
-                        src={appointment.client.avatar || "/Avatar1.png"}
+                        src={appointment.client.avatar || "/avatars/1.svg"}
                         alt={appointment.client.fullName}
                       />
                       <AvatarFallback className="text-sm sm:text-lg">

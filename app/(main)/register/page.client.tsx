@@ -179,7 +179,7 @@ export default function RegisterClient({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-4xl">
         {/* Botón de regreso y tema */}
         <div className="flex justify-between items-center mb-6">
           <Link href="/">
@@ -245,17 +245,20 @@ export default function RegisterClient({
         {/* Step 3: Plan Selection */}
         {form.currentStep === 3 && (
           <Card className="shadow-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-            <PlanSelectionCard
-              plans={plans}
-              onFetchPlans={onFetchPlans}
-              selectedPlanId={form.selectedPlanId}
-              onPlanSelect={form.handlePlanSelectionChange}
-              recommendedPlanId={
-                plans.find((p) => p.name.toLowerCase().includes("pro"))?.id
-              }
-              showConfirmButton={false}
-              className="border-0 shadow-none bg-transparent"
-            />
+            {/* Envolver en CardContent para asegurar padding consistente */}
+            <CardContent className="px-4 sm:px-6">
+              <PlanSelectionCard
+                plans={plans}
+                onFetchPlans={onFetchPlans}
+                selectedPlanId={form.selectedPlanId}
+                onPlanSelect={form.handlePlanSelectionChange}
+                recommendedPlanId={
+                  plans.find((p) => p.name.toLowerCase().includes("pro"))?.id
+                }
+                showConfirmButton={false}
+                className="" /* quitar bg-transparent/padding conflictivo */
+              />
+            </CardContent>
 
             {form.errors.plan && (
               <CardContent className="px-4 sm:px-6 pt-0">

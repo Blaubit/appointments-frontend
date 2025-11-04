@@ -121,89 +121,146 @@ export default function TermsAndConditionsCard({
       title: "Términos de Servicio para Empresas Médicas",
       sections: [
         {
-          title: "1. Aceptación de Términos",
-          content: `Al registrar ${companyName} en CitasFácil, aceptas cumplir con estos términos de servicio y todas las políticas aplicables.`,
+          title: "1. Aceptación de los Términos",
+          content: `Al registrar una empresa médica, clínica o centro de salud (en adelante, “la Empresa”) en la plataforma planitgt, aceptas expresamente cumplir con los presentes Términos de Servicio, así como con nuestras Políticas de Privacidad, Políticas de Facturación y cualquier otro lineamiento o normativa complementaria que se publique dentro del sitio o aplicación.
+
+El uso continuado del servicio constituye tu aceptación de los términos, condiciones y modificaciones que puedan realizarse de forma periódica. Si no estás de acuerdo con alguna parte de estos términos, deberás abstenerte de utilizar la plataforma.`,
         },
         {
           title: "2. Uso del Servicio",
-          content: `El servicio está diseñado para ${companyType}s y centros médicos. Te comprometes a:
-          • Proporcionar información veraz sobre tu empresa
-          • Cumplir con las regulaciones locales de salud
-          • Gestionar responsablemente las citas de tus pacientes
-          • Mantener la confidencialidad de los datos médicos
-          • Usar la plataforma de manera ética y profesional`,
+          content: `planitgt es una plataforma tecnológica creada para la gestión de citas médicas y administración operativa de clínicas. El servicio está destinado exclusivamente a centros médicos, consultorios, clínicas, hospitales, laboratorios o profesionales de la salud autorizados.
+
+Al utilizar la plataforma, te comprometes a:
+
+• Proporcionar información veraz, actualizada y comprobable sobre tu empresa.
+• Cumplir con las regulaciones locales y nacionales en materia de salud, protección de datos y ejercicio profesional.
+• Gestionar las citas de pacientes de forma responsable, transparente y eficiente.
+• Mantener la confidencialidad y seguridad de toda la información médica y personal a la que tengas acceso.
+• Utilizar la plataforma de forma ética, profesional y dentro de los fines previstos por planitgt.
+
+Cualquier uso indebido del sistema —como la manipulación de datos, suplantación de identidad o divulgación no autorizada de información— podrá derivar en la suspensión o cancelación inmediata de la cuenta.`,
         },
         {
           title: "3. Responsabilidades de la Empresa",
-          content: `Como empresa médica registrada, eres responsable de:
-          • Verificar la identidad de los pacientes
-          • Mantener registros médicos precisos
-          • Cumplir con HIPAA y regulaciones locales
-          • Proporcionar atención médica de calidad
-          • Gestionar adecuadamente los datos de pacientes`,
+          content: `Como empresa médica registrada, reconoces y aceptas que eres únicamente responsable de la información, los datos y las acciones realizadas dentro de tu cuenta. En particular, te comprometes a:
+
+• Verificar la identidad de los pacientes antes de generar, modificar o cancelar citas.
+• Mantener registros médicos precisos y actualizados, cuando aplique.
+• Cumplir con las leyes locales de confidencialidad de datos personales y médicos, incluyendo aquellas relacionadas con la protección de la privacidad.
+• Brindar atención médica de calidad, conforme a los estándares éticos y profesionales aplicables.
+• Resguardar de forma segura los datos de los pacientes, adoptando las medidas necesarias para prevenir accesos no autorizados, pérdidas o alteraciones.
+• Capacitar a su personal sobre el uso adecuado de la plataforma y la correcta manipulación de la información.
+
+planitgt no asume responsabilidad alguna por el incumplimiento de estas obligaciones por parte de la Empresa o de sus representantes.`,
         },
         {
           title: "4. Limitaciones del Servicio",
-          content: `CitasFácil es una herramienta de gestión y no:
-          • Proporciona consejos médicos
-          • Se responsabiliza por decisiones clínicas
-          • Garantiza resultados de tratamiento
-          • Almacena información médica sensible sin cifrado`,
+          content: `planitgt actúa exclusivamente como una herramienta tecnológica de apoyo para la gestión de citas, pacientes y procesos administrativos. La plataforma no sustituye ni reemplaza el criterio profesional médico ni constituye un servicio de salud.
+
+En consecuencia, planitgt no:
+
+• Proporciona diagnósticos, tratamientos ni consejos médicos.
+• Se responsabiliza por las decisiones clínicas o administrativas tomadas por las empresas usuarias.
+• Garantiza los resultados de tratamientos médicos o la satisfacción de los pacientes.
+• Almacena ni procesa información médica sensible sin cifrado o medidas de seguridad adecuadas.
+
+planitgt asume responsabilidad limitada por interrupciones temporales del servicio causadas por mantenimiento, actualizaciones, fallos técnicos o causas de fuerza mayor.`,
         },
         {
           title: "5. Facturación y Pagos",
-          content: `Los términos de facturación incluyen:
-          • Pagos mensuales o según el plan seleccionado
-          • Cancelación con 30 días de anticipación
-          • Reembolsos según política específica
-          • Suspensión por falta de pago`,
+          content: `El acceso a los servicios de planitgt puede estar sujeto a planes de suscripción o pagos periódicos, según las características elegidas al momento del registro.
+
+Las condiciones de facturación incluyen:
+
+• Pagos mensuales, anuales o según el plan contratado, realizados mediante los métodos de pago disponibles.
+• La Empresa podrá cancelar su suscripción con un aviso previo de 30 días, mediante los canales habilitados.
+• Los reembolsos estarán sujetos a las políticas específicas vigentes en la fecha de solicitud.
+
+planitgt se reserva el derecho de suspender temporal o definitivamente el acceso a la cuenta en caso de falta de pago, incumplimiento de los términos o uso indebido del servicio.
+
+Las tarifas y condiciones pueden ser modificadas con previo aviso, y la continuidad en el uso del servicio implicará la aceptación de los nuevos términos.`,
         },
       ],
     },
+    // Aquí reemplazamos la política de privacidad resumida por la política completa que nos enviaste
     privacy: {
       title: "Política de Privacidad y Protección de Datos",
       sections: [
         {
+          title: "Información general",
+          content: `La presente Política de Privacidad y Protección de Datos tiene como finalidad informar a los usuarios, pacientes y personal médico sobre el tratamiento, manejo y resguardo de los datos personales y médicos recolectados por la plataforma planitgt (en adelante, “la Plataforma”).
+El tratamiento de la información se realiza conforme a principios de confidencialidad, seguridad, responsabilidad y transparencia, garantizando la protección de los datos personales y médicos de todos los usuarios.`,
+        },
+        {
           title: "1. Recopilación de Datos",
-          content: `Recopilamos información necesaria para:
-          • Funcionamiento del servicio de citas
-          • Comunicación con pacientes y personal
-          • Cumplimiento de regulaciones médicas
-          • Mejora continua del servicio`,
+          content: `La Plataforma recopila únicamente la información necesaria para la correcta prestación de los servicios y el cumplimiento de obligaciones administrativas y operativas.
+Entre los tipos de datos recolectados se incluyen, según corresponda:
+
+• Datos de identificación personal (nombre, DPI, número de teléfono, correo electrónico).
+• Datos médicos y clínicos relacionados con la atención, diagnóstico y tratamiento.
+• Información administrativa para la gestión de citas y expedientes.
+• Registros de comunicación y uso de la Plataforma.
+
+La recopilación se realiza mediante formularios digitales, interacciones directas con el usuario o sistemas de gestión médica integrados, garantizando siempre el consentimiento informado del titular de los datos.`,
         },
         {
           title: "2. Protección de Datos Médicos",
-          content: `Implementamos medidas de seguridad estrictas:
-          • Encriptación de datos médicos sensibles
-          • Acceso controlado por roles y permisos
-          • Auditoría de accesos y cambios
-          • Backups seguros y recuperación de datos
-          • Cumplimiento con normativas de privacidad`,
+          content: `planitgt implementa medidas técnicas, administrativas y organizativas de seguridad para garantizar la confidencialidad, integridad y disponibilidad de la información.
+Entre dichas medidas se incluyen:
+
+• Encriptación de datos sensibles durante el almacenamiento y la transmisión.
+• Acceso restringido mediante roles y permisos diferenciados.
+• Auditorías periódicas de accesos y modificaciones.
+• Copias de seguridad cifradas y mecanismos de recuperación ante desastres.
+• Políticas internas de confidencialidad firmadas por el personal autorizado.
+• Procedimientos de revisión y actualización continua en materia de seguridad de la información.`,
         },
         {
           title: "3. Uso de la Información",
-          content: `Los datos se utilizan únicamente para:
-          • Gestión de citas y pacientes
-          • Comunicación autorizada
-          • Reportes y análisis (datos anonimizados)
-          • Cumplimiento legal y regulatorio`,
+          content: `Los datos personales y médicos se utilizan exclusivamente para fines legítimos relacionados con la prestación de servicios, tales como:
+
+• Gestión, programación y seguimiento de citas médicas.
+• Comunicación autorizada entre pacientes, personal médico y administrativo.
+• Elaboración de reportes estadísticos y análisis internos (utilizando datos anonimizados).
+• Cumplimiento de responsabilidades administrativas y operativas.
+• Evaluación de calidad y mejora de procesos asistenciales.
+
+Bajo ninguna circunstancia la información será utilizada para fines comerciales o publicitarios sin el consentimiento explícito del titular.`,
         },
         {
-          title: "4. Compartir Información",
-          content: `No compartimos datos personales excepto:
-          • Con autorización explícita del paciente
-          • Cuando la ley lo requiera
-          • Con proveedores de servicios bajo acuerdos estrictos
-          • En emergencias médicas según protocolos`,
+          title: "4. Compartición y Transferencia de Información",
+          content: `planitgt no comparte, vende ni transfiere datos personales a terceros, salvo en los siguientes casos:
+
+• Con autorización expresa del paciente o usuario.
+• Por requerimiento de una autoridad competente.
+• Con proveedores de servicios tecnológicos o médicos que colaboren en la operación de la Plataforma, bajo acuerdos que garanticen la confidencialidad y seguridad de la información.
+• En casos de emergencia médica, cuando sea necesario salvaguardar la vida o integridad del paciente conforme a los protocolos establecidos.
+
+En todo caso, se asegurará que los terceros receptores de los datos cumplan con las mismas obligaciones de confidencialidad y protección de la información.`,
         },
         {
-          title: "5. Derechos del Usuario",
-          content: `Los pacientes tienen derecho a:
-          • Acceder a sus datos personales
-          • Solicitar correcciones
-          • Eliminar información (con limitaciones legales)
-          • Portar datos a otros sistemas
-          • Presentar quejas ante autoridades`,
+          title: "5. Derechos del Titular de los Datos",
+          content: `Los pacientes y usuarios tienen derecho a:
+
+• Acceder a los datos personales que la Plataforma conserva sobre ellos.
+• Rectificar la información que sea inexacta o desactualizada.
+• Solicitar la eliminación de sus datos personales cuando ya no sean necesarios, salvo por motivos administrativos o médicos que requieran su conservación.
+• Oponerse al tratamiento de sus datos por motivos legítimos.
+• Solicitar la portabilidad de sus datos a otros sistemas o servicios.
+
+Las solicitudes pueden realizarse a través de los canales oficiales de contacto indicados por la Plataforma, y serán atendidas con la debida diligencia y confidencialidad.`,
+        },
+        {
+          title: "6. Conservación de los Datos",
+          content: `Los datos personales serán conservados únicamente durante el tiempo necesario para cumplir con los fines descritos en esta Política o mientras exista una relación activa entre el paciente y la Plataforma. Posteriormente, serán eliminados o anonimizados de forma segura.`,
+        },
+        {
+          title: "7. Modificaciones de la Política",
+          content: `planitgt se reserva el derecho de modificar esta Política de Privacidad en cualquier momento, con el fin de adaptarla a mejoras tecnológicas, cambios operativos o nuevos requerimientos del servicio. Cualquier modificación será publicada y notificada a los usuarios a través de los canales oficiales.`,
+        },
+        {
+          title: "8. Contacto y Consultas",
+          content: `Para consultas, solicitudes o ejercicio de derechos relacionados con la protección de datos, puede comunicarse con nuestro Responsable de Privacidad a través del correo electrónico: privacidad@planitgt.com.gt`,
         },
       ],
     },
@@ -213,18 +270,18 @@ export default function TermsAndConditionsCard({
         {
           title: "Cookies Esenciales",
           content: `Necesarias para el funcionamiento básico:
-          • Autenticación de sesión
-          • Seguridad de formularios
-          • Configuraciones de usuario
-          • Funcionalidad de citas`,
+• Autenticación de sesión
+• Seguridad de formularios
+• Configuraciones de usuario
+• Funcionalidad de citas`,
         },
         {
           title: "Cookies de Análisis",
           content: `Para mejorar nuestro servicio:
-          • Estadísticas de uso
-          • Rendimiento del sistema
-          • Errores y problemas técnicos
-          • Datos anonimizados únicamente`,
+• Estadísticas de uso
+• Rendimiento del sistema
+• Errores y problemas técnicos
+• Datos anonimizados únicamente`,
         },
       ],
     },
@@ -307,7 +364,7 @@ export default function TermsAndConditionsCard({
                   Términos de Servicio para Empresas Médicas
                 </h4>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                  <p>Al registrar tu empresa en CitasFácil, aceptas:</p>
+                  <p>Al registrar tu empresa en planitgt, aceptas:</p>
                   <ul className="list-disc list-inside space-y-1 ml-4">
                     <li>Proporcionar información veraz sobre tu empresa</li>
                     <li>Cumplir con las regulaciones locales de salud</li>
@@ -427,29 +484,6 @@ export default function TermsAndConditionsCard({
           </h4>
 
           {/* Marketing */}
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="acceptMarketing"
-              checked={termsData.acceptMarketing}
-              onCheckedChange={(checked) =>
-                updateField("acceptMarketing", checked as boolean)
-              }
-            />
-            <div className="space-y-1 flex-1">
-              <Label
-                htmlFor="acceptMarketing"
-                className="text-xs sm:text-sm font-medium cursor-pointer flex items-center"
-              >
-                <Bell className="h-3 w-3 mr-2 text-blue-500" />
-                Recibir actualizaciones y ofertas especiales
-              </Label>
-              <p className="text-xs text-gray-500">
-                Mantente informado sobre nuevas funcionalidades, promociones y
-                contenido educativo
-              </p>
-            </div>
-          </div>
-
           {/* Cookies */}
           <div className="space-y-3">
             <div className="flex items-start space-x-3">

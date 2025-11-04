@@ -26,11 +26,11 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, CheckCircle2, XCircle, Shield, Ban } from "lucide-react";
 
 import { Role, User } from "@/types";
+// Acciones para crear y actualizar usuarios
 import { create as createUser } from "@/actions/user/create";
 import { updateProfile as updateUser } from "@/actions/user/update";
-import { create as createSecretaryProfessionalAssignments } from "@/actions/user/secretary-professional/create";
+import findOne from "@/actions/user/findOne";
 
-// Esquemas de validación con Zod (sin contraseñas)
 const createUserSchema = z.object({
   fullName: z
     .string()
@@ -101,7 +101,8 @@ interface UserFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: User) => void;
-  editingUser?: User | null;
+  // Cambiado: en vez de recibir todo el objeto `editingUser`, ahora recibimos solo su id
+  editingUserId?: string | null;
   doctors: User[];
   roles: Role[];
   isLoading?: boolean;
@@ -111,21 +112,22 @@ export function UserForm({
   isOpen,
   onClose,
   onSuccess,
-  editingUser = null,
+  editingUserId = null,
   doctors,
   roles,
   isLoading = false,
 }: UserFormProps) {
-  console.log("editingUser:", editingUser);
+  // ahora inspeccionamos el id en vez del objeto completo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
   const [serverError, setServerError] = useState<ServerError | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [isFetchingUser, setIsFetchingUser] = useState(false);
   const { toast } = useToast();
 
-  const isEditMode = !!editingUser;
+  const isEditMode = !!editingUserId;
 
   // Estado del formulario (sin contraseñas)
   const [formData, setFormData] = useState({
@@ -136,25 +138,104 @@ export function UserForm({
     assignedDoctors: [] as string[],
   });
 
-  // Resetear formulario cuando se abre/cierra o cambia el usuario a editar
+  // Helpers: extraer IDs de doctores asignados desde la respuesta del findOne
+  const extractAssignedDoctorIds = (data: any): string[] => {
+    if (!data) return [];
+    // Intentamos distintas claves que la API podría devolver
+    const candidates = [
+      data.professionals,
+      data.professionalsAssigned,
+      data.assignedProfessionals,
+      data.secretaryProfessionals,
+      data.professionalAssignments,
+      data.professionalIds,
+      data.assignedDoctorIds,
+      data.doctors,
+    ];
+
+    for (const c of candidates) {
+      if (!c) continue;
+      // Si es array de objetos
+      if (Array.isArray(c)) {
+        // Si los elementos son strings uuid
+        if (c.length > 0 && typeof c[0] === "string") {
+          return c;
+        }
+        // Si los elementos son objetos con id
+        if (c.length > 0 && typeof c[0] === "object" && c[0].id) {
+          return c.map((item: any) => String(item.id));
+        }
+      }
+    }
+
+    // Fallback: revisar si data tiene una propiedad 'assigned' con ids
+    if (
+      Array.isArray(data.assigned) &&
+      data.assigned.every((x: any) => typeof x === "string")
+    ) {
+      return data.assigned;
+    }
+
+    return [];
+  };
+
+  // Resetear formulario cuando se abre/cierra o cambia el usuario a editar (ahora por id)
   useEffect(() => {
+    let mounted = true;
+
+    const loadUserById = async (id: string) => {
+      setIsFetchingUser(true);
+      try {
+        // Intentamos llamar findOne con el id. Dependiendo de la implementación
+        // de tu acción `findOne`, puede aceptar (id) o ({ userId: id }).
+        // Probamos primero con un objeto y si falla intentamos con id plano.
+        let result: any;
+        result = await findOne(id);
+        if (!mounted) return;
+
+        if (!result) {
+          throw new Error("No se obtuvo respuesta al buscar el usuario");
+        }
+
+        // Si la acción devuelve un objeto con `message` -> error
+        if ("message" in result) {
+          handleServerError(result);
+          return;
+        }
+
+        // Normalmente la respuesta tiene `.data` pero si no, asumimos que result es el propio usuario
+        const data = result.data ?? result;
+
+        setFormData({
+          fullName: data.fullName || "",
+          email: data.email || "",
+          phone: data.bio ?? data.phone ?? "",
+          role: data.role?.id ?? data.role ?? "",
+          assignedDoctors: extractAssignedDoctorIds(data),
+        });
+      } catch (error) {
+        handleServerError(error);
+      } finally {
+        if (mounted) setIsFetchingUser(false);
+      }
+    };
+
     if (isOpen) {
       setShowSuccessMessage(false);
       setServerError(null);
-      if (editingUser) {
-        setFormData({
-          fullName: editingUser.fullName,
-          email: editingUser.email,
-          phone: editingUser.bio || "",
-          role: editingUser.role?.id || "",
-          assignedDoctors: [], // TODO: Obtener asignaciones actuales de la API si aplica
-        });
+      if (editingUserId) {
+        loadUserById(editingUserId);
       } else {
         resetForm();
       }
       setValidationErrors({});
     }
-  }, [isOpen, editingUser]);
+
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, editingUserId]);
 
   const resetForm = () => {
     setFormData({
@@ -332,14 +413,25 @@ export function UserForm({
     try {
       let result;
 
-      if (isEditMode && editingUser) {
+      if (isEditMode && editingUserId) {
         const updateData: any = {
-          userId: editingUser.id,
+          userId: editingUserId,
           email: formData.email.trim().toLowerCase(),
           fullName: formData.fullName.trim(),
           bio: formData.phone?.trim(),
           roleId: formData.role,
         };
+
+        // Incluir professionalIds cuando el rol es secretaria.
+        // Enviamos el arreglo (incluso si está vacío) para que la API pueda limpiar asignaciones.
+        const secretaryRole = roles.find((role) =>
+          role.name.toLowerCase().includes("secretaria")
+        );
+        if (formData.role === secretaryRole?.id) {
+          updateData.professionalIds = Array.isArray(formData.assignedDoctors)
+            ? formData.assignedDoctors
+            : [];
+        }
 
         result = await updateUser(updateData);
 
@@ -352,14 +444,40 @@ export function UserForm({
           title: "Usuario actualizado exitosamente",
           description: `Los datos de ${result.data.fullName} han sido actualizados`,
         });
+
+        // Si en la edición cambias a workflow donde profesionales puedan recibir secretaryIds,
+        // añade aquí updateData.secretaryIds y la UI para asignarlas.
       } else {
         // Crear nuevo usuario (sin contraseña en el formulario)
-        result = await createUser({
+        // Ahora incluimos professionalIds si estamos creando una secretaria.
+        const createPayload: any = {
           roleId: formData.role,
           fullName: formData.fullName.trim(),
           email: formData.email.trim().toLowerCase(),
           bio: formData.phone?.trim(),
-        });
+        };
+
+        // Si el rol seleccionado es secretaria, pasamos professionalIds en el body
+        const secretaryRole = roles.find((role) =>
+          role.name.toLowerCase().includes("secretaria")
+        );
+        if (formData.role === secretaryRole?.id) {
+          // assignedDoctors en el form representan professionalIds para la secretaria
+          if (
+            Array.isArray(formData.assignedDoctors) &&
+            formData.assignedDoctors.length > 0
+          ) {
+            createPayload.professionalIds = formData.assignedDoctors;
+          } else {
+            // Si quieres que crear con asignaciones vacías también haga algo,
+            // puedes enviar professionalIds: [] aquí.
+          }
+        }
+
+        // Si más adelante ya tienes UI para asignar secretarias a profesionales,
+        // podrías pasar createPayload.secretaryIds = formData.assignedSecretaries;
+
+        result = await createUser(createPayload);
 
         if ("message" in result) {
           handleServerError(result);
@@ -367,31 +485,6 @@ export function UserForm({
         }
 
         const newUser = result.data;
-
-        // Asignar doctores si es secretaria (solo una llamada)
-        const secretaryRole = roles.find((role) =>
-          role.name.toLowerCase().includes("secretaria")
-        );
-
-        if (
-          formData.role === secretaryRole?.id &&
-          formData.assignedDoctors.length > 0
-        ) {
-          const assignmentResult = await createSecretaryProfessionalAssignments(
-            {
-              secretaryId: newUser.id,
-              professionals: formData.assignedDoctors,
-              isActive: true,
-            }
-          );
-          if ("message" in assignmentResult) {
-            toast({
-              title: "Usuario creado con advertencias",
-              description: "No se pudieron asignar los doctores correctamente.",
-              variant: "destructive",
-            });
-          }
-        }
 
         toast({
           title: "Usuario creado exitosamente",
@@ -512,6 +605,12 @@ export function UserForm({
           {/* Mostrar errores del servidor */}
           <ServerErrorDisplay />
 
+          {isFetchingUser && (
+            <div className="text-sm text-gray-500">
+              Cargando datos del usuario...
+            </div>
+          )}
+
           {/* Información Personal */}
           <div className="space-y-2">
             <Label htmlFor="fullName">Nombre Completo *</Label>
@@ -616,7 +715,10 @@ export function UserForm({
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting || isLoading}>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || isLoading || isFetchingUser}
+          >
             {isSubmitting
               ? isEditMode
                 ? "Actualizando..."

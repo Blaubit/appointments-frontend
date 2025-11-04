@@ -172,7 +172,6 @@ export default function DashboardClient({
       appointmentStats.pendingCount === 0
     );
   };
-
   // Componente para estado vacío de citas
   const EmptyAppointmentsState = () => (
     <div className="text-center py-12">
@@ -458,7 +457,7 @@ export default function DashboardClient({
                           <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                             <AvatarImage
                               src={
-                                appointment?.client?.avatar || "/Avatar1.png"
+                                appointment?.client?.avatar || "/avatars/1.svg"
                               }
                               alt={appointment?.client?.fullName || ""}
                             />
@@ -694,7 +693,7 @@ export default function DashboardClient({
                     <div className="min-w-0">
                       <p className="text-sm font-medium"> Teléfono </p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo?.phones?.[0] || "N/A"}
+                        {clinicInfo?.phones?.[0].phone || "N/A"}
                       </p>
                     </div>
                   </div>

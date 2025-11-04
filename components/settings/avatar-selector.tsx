@@ -19,16 +19,14 @@ interface AvatarSelectorProps {
 
 // Lista de avatares predeterminados
 const AVATAR_OPTIONS = [
-  "/Avatar1.png",
-  "/Professional1.png",
-  "/Avatar1.png",
-  "/Professional1.png",
-  "/Avatar1.png",
-  "/Professional1.png",
-  "/Avatar1.png",
-  "/Professional1.png",
-  "/Avatar1.png",
-  "/Professional1.png",
+  "/avatars/1.svg",
+  "/avatars/2.svg",
+  "/avatars/3.svg",
+  "/avatars/4.svg",
+  "/avatars/5.svg",
+  "/avatars/6.svg",
+  "/avatars/7.svg",
+  "/avatars/8.svg",
 ];
 
 export const AvatarSelector: React.FC<AvatarSelectorProps> = ({

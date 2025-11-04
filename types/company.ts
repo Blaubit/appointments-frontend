@@ -13,7 +13,6 @@ type Company = {
   postalCode: string;
   country: string;
   description: string;
-  phone?: string; // legacy: primer teléfono como string
   createdAt: string;
   phones?: Phone[]; // array de objetos { id, phone }
 };

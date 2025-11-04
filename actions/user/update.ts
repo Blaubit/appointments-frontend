@@ -9,12 +9,30 @@ import { UpdateUserDto } from "@/types/dto/User/updateUserDto";
 import { User } from "@/types";
 import { getUser, getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+
+/**
+ * updateUser:
+ * - Ahora acepta opcionalmente professionalIds y secretaryIds para actualizar relaciones.
+ * - Incluye en el body sólo los campos definidos. Si professionalIds/secretaryIds
+ *   se pasan como [] también se incluirán (permite limpiar asignaciones).
+ */
 export async function updateUser({
   userId,
   email,
   password,
   avatar,
-}: UpdateUserDto): Promise<SuccessReponse<User> | ErrorResponse> {
+  fullName,
+  bio,
+  roleId,
+  professionalIds,
+  secretaryIds,
+}: UpdateUserDto & {
+  fullName?: string;
+  bio?: string;
+  roleId?: string;
+  professionalIds?: string[] | undefined | null;
+  secretaryIds?: string[] | undefined | null;
+}): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
   try {
@@ -36,16 +54,80 @@ export async function updateUser({
       };
     }
 
-    // Construir el body solo con los campos que se van a actualizar
+    // Construir el body solo con los campos que se van a actualizar.
+    // Nota: para professionalIds/secretaryIds incluimos el campo si es !== undefined
+    // (permitiendo arrays vacíos para limpiar asignaciones).
     const body: Partial<{
       email: string;
       password: string;
       avatar: string;
+      fullName: string;
+      bio: string;
+      roleId: string;
+      professionalIds: string[]; // relaciones: a qué profesionales está asignado este usuario (si es secretaria)
+      secretaryIds: string[]; // relaciones: a qué secretarias está asignado este usuario (si es profesional)
     }> = {};
 
-    if (email !== undefined && email !== null) body.email = email;
-    if (password !== undefined && password !== null) body.password = password;
-    if (avatar !== undefined && avatar !== null) body.avatar = avatar;
+    if (
+      email !== undefined &&
+      email !== null &&
+      typeof email === "string" &&
+      email.trim() !== ""
+    ) {
+      body.email = email.trim();
+    }
+
+    if (
+      password !== undefined &&
+      password !== null &&
+      typeof password === "string" &&
+      password.trim() !== ""
+    ) {
+      body.password = password;
+    }
+
+    if (
+      avatar !== undefined &&
+      avatar !== null &&
+      typeof avatar === "string" &&
+      avatar.trim() !== ""
+    ) {
+      body.avatar = avatar.trim();
+    }
+
+    if (
+      fullName !== undefined &&
+      fullName !== null &&
+      typeof fullName === "string" &&
+      fullName.trim() !== ""
+    ) {
+      body.fullName = fullName.trim();
+    }
+
+    if (bio !== undefined && bio !== null && typeof bio === "string") {
+      // permitimos bio vacío (para limpiar la biografía)
+      body.bio = bio.trim();
+    }
+
+    if (
+      roleId !== undefined &&
+      roleId !== null &&
+      typeof roleId === "string" &&
+      roleId.trim() !== ""
+    ) {
+      body.roleId = roleId.trim();
+    }
+
+    // Relaciones: incluimos si vienen definidas (aunque sean arrays vacíos).
+    if (professionalIds !== undefined && professionalIds !== null) {
+      body.professionalIds = Array.isArray(professionalIds)
+        ? professionalIds
+        : [];
+    }
+
+    if (secretaryIds !== undefined && secretaryIds !== null) {
+      body.secretaryIds = Array.isArray(secretaryIds) ? secretaryIds : [];
+    }
 
     // Validar que al menos un campo se está actualizando
     if (Object.keys(body).length === 0) {
@@ -64,8 +146,9 @@ export async function updateUser({
 
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
+      // Revalidar ambas rutas por seguridad (profile y listado de usuarios)
       revalidatePath("/profile");
-      revalidatePath("/users");
+      revalidatePath("/settings?ta=users");
 
       return {
         data: response.data,
@@ -100,7 +183,7 @@ export async function updateUser({
   }
 }
 
-// Interface para updateProfile con todos los campos opcionales
+// Interface para updateProfile con todos los campos opcionales, ahora con relaciones
 interface UpdateProfileParams {
   userId: string;
   email?: string;
@@ -108,6 +191,8 @@ interface UpdateProfileParams {
   fullName?: string;
   bio?: string;
   roleId?: string;
+  professionalIds?: string[] | null;
+  secretaryIds?: string[] | null;
 }
 
 // Función específica para actualizar el perfil (sin password)
@@ -118,6 +203,8 @@ export async function updateProfile({
   fullName,
   bio,
   roleId,
+  professionalIds,
+  secretaryIds,
 }: UpdateProfileParams): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
@@ -145,28 +232,61 @@ export async function updateProfile({
       fullName: string;
       bio: string;
       roleId: string;
+      professionalIds: string[];
+      secretaryIds: string[];
     }> = {};
 
-    // Solo agregar campos que no sean undefined, null o string vacío
-    if (email !== undefined && email !== null && email.trim() !== "") {
+    // Solo agregar campos que no sean undefined, null o string vacío (salvo bio)
+    if (
+      email !== undefined &&
+      email !== null &&
+      typeof email === "string" &&
+      email.trim() !== ""
+    ) {
       body.email = email.trim();
     }
 
-    if (avatar !== undefined && avatar !== null && avatar.trim() !== "") {
+    if (
+      avatar !== undefined &&
+      avatar !== null &&
+      typeof avatar === "string" &&
+      avatar.trim() !== ""
+    ) {
       body.avatar = avatar.trim();
     }
 
-    if (fullName !== undefined && fullName !== null && fullName.trim() !== "") {
+    if (
+      fullName !== undefined &&
+      fullName !== null &&
+      typeof fullName === "string" &&
+      fullName.trim() !== ""
+    ) {
       body.fullName = fullName.trim();
     }
 
-    if (bio !== undefined && bio !== null) {
+    if (bio !== undefined && bio !== null && typeof bio === "string") {
       // Para bio permitimos string vacío (para limpiar la biografía)
       body.bio = bio.trim();
     }
 
-    if (roleId !== undefined && roleId !== null && roleId.trim() !== "") {
+    if (
+      roleId !== undefined &&
+      roleId !== null &&
+      typeof roleId === "string" &&
+      roleId.trim() !== ""
+    ) {
       body.roleId = roleId.trim();
+    }
+
+    // Relaciones: incluimos si vienen definidas (permitiendo arrays vacíos para limpiar)
+    if (professionalIds !== undefined && professionalIds !== null) {
+      body.professionalIds = Array.isArray(professionalIds)
+        ? professionalIds
+        : [];
+    }
+
+    if (secretaryIds !== undefined && secretaryIds !== null) {
+      body.secretaryIds = Array.isArray(secretaryIds) ? secretaryIds : [];
     }
 
     // Validar que al menos un campo se está actualizando
@@ -186,6 +306,7 @@ export async function updateProfile({
     console.log("Update profile response:", response.data);
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/profile");
+      revalidatePath("/settings?ta=users");
 
       return {
         data: response.data,

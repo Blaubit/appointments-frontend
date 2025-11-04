@@ -23,7 +23,9 @@ export function TopClientsList({ topClients }: { topClients: any[] }) {
           {topClients.map((client, index) => (
             <div key={index} className="flex items-center space-x-4">
               <Avatar>
-                <AvatarImage src="/Avatar1.png?height=40&width=40" />
+                <AvatarImage
+                  src={`/avatars/${client.avatarId}.svg?height=40&width=40`}
+                />
                 <AvatarFallback>
                   {client.name
                     .split(" ")

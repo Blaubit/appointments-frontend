@@ -195,7 +195,7 @@ export function DataView({
 
         return (
           <Avatar className="h-8 w-8">
-            <AvatarImage src={image || "/Avatar1.png"} alt={name} />
+            <AvatarImage src={image || "/avatars/1.svg"} alt={name} />
             <AvatarFallback className="text-xs">{fallback}</AvatarFallback>
           </Avatar>
         );
@@ -255,7 +255,7 @@ export function DataView({
           const primaryField = fields.find((f) => f.primary);
           const secondaryField = fields.find((f) => f.secondary);
           const cardFields = fields.filter(
-            (f) => f.showInCard !== false && !f.primary && !f.secondary,
+            (f) => f.showInCard !== false && !f.primary && !f.secondary
           );
 
           return (
@@ -272,7 +272,7 @@ export function DataView({
                         {renderFieldValue(
                           fields.find((f) => f.type === "avatar")!,
                           item[fields.find((f) => f.type === "avatar")!.key],
-                          item,
+                          item
                         )}
                       </div>
                     )}
@@ -282,7 +282,7 @@ export function DataView({
                           {renderFieldValue(
                             primaryField,
                             item[primaryField.key],
-                            item,
+                            item
                           )}
                         </CardTitle>
                       )}
@@ -291,7 +291,7 @@ export function DataView({
                           {renderFieldValue(
                             secondaryField,
                             item[secondaryField.key],
-                            item,
+                            item
                           )}
                         </CardDescription>
                       )}
@@ -358,7 +358,7 @@ export function DataView({
                       {renderFieldValue(
                         fields.find((f) => f.type === "tags")!,
                         item[fields.find((f) => f.type === "tags")!.key],
-                        item,
+                        item
                       )}
                     </div>
                   </>
@@ -418,7 +418,7 @@ export function DataView({
                             {
                               item[
                                 fields.find(
-                                  (f) => f.primary && f.key !== field.key,
+                                  (f) => f.primary && f.key !== field.key
                                 )?.key || "name"
                               ]
                             }
