@@ -44,8 +44,6 @@ export default function ReportsPageClient({
           <TopServicesList topServices={topServices} />
           <TopClientsList topClients={topClients} />
         </div>
-        <PerformanceMetricsGrid />
-        <SummaryTable />
       </div>
     </div>
   );
