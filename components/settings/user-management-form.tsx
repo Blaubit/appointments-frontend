@@ -378,7 +378,8 @@ export function UserManagementForm({
   };
 
   const isProfessional = (user: User) => {
-    return getUserRoleName(user).toLowerCase().includes("profesional");
+    const role = (getUserRoleName(user) || "").toLowerCase();
+    return role.includes("profesional") || role.includes("admin_empresa");
   };
 
   return (
