@@ -88,10 +88,6 @@ export function ClientCard({
 
                 {/* z-index alto y ancho controlado para mobile */}
                 <DropdownMenuContent align="end" className="z-50 w-44 sm:w-48">
-                  <DropdownMenuItem onClick={() => onView(client)}>
-                    <Eye className="h-4 w-4 mr-2" />
-                    Ver Detalles
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onEdit(client)}>
                     <Edit className="h-4 w-4 mr-2" />
                     Editar

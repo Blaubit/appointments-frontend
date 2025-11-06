@@ -23,13 +23,11 @@ export async function update({
     const body = {
       status,
     };
-    console.log("Updating appointment status with body:", body);
     const response = await axios.patch<Appointment>(url, body, {
       headers: {
         Authorization: `Bearer ${session}`,
       },
     });
-    console.log("Appointment status updated successfully:", response.data);
     return {
       data: response.data,
       status: response.status,

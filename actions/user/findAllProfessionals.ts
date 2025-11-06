@@ -36,7 +36,6 @@ export async function findAllProfessionals(
       meta: response.data.meta,
     };
   } catch (error) {
-    console.log(error);
     if (isAxiosError(error)) {
       return {
         message: error.message,

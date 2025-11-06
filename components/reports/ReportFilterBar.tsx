@@ -70,12 +70,6 @@ export function ReportFilterBar({
               <SelectTrigger>
                 <SelectValue placeholder="Tipo de reporte" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="overview">Resumen General</SelectItem>
-                <SelectItem value="financial">Financiero</SelectItem>
-                <SelectItem value="appointments">Citas</SelectItem>
-                <SelectItem value="clients">pacientes</SelectItem>
-              </SelectContent>
             </Select>
           </div>
         </div>

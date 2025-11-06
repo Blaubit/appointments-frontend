@@ -83,7 +83,6 @@ export function AppointmentDetailsDialog({
       setError(null);
       try {
         const result = await findOne(appointmentId);
-        console.log("Fetch appointment result:", result); // Debug log
         if ("data" in result) {
           setAppointment(result.data);
         } else {
@@ -717,17 +716,7 @@ export function AppointmentDetailsDialog({
                 <Edit className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate">Editar</span>
               </Button>
-              {appointment.status !== "cancelled" &&
-                appointment.status !== "completed" && (
-                  <Button
-                    onClick={handleRescheduleAppointment}
-                    variant="outline"
-                    className="w-full h-10 text-sm text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-600 dark:hover:bg-blue-950"
-                  >
-                    <CalendarClock className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">Reprogramar</span>
-                  </Button>
-                )}
+
               {appointment.status === "scheduled" && (
                 <Button
                   onClick={() => handleConfirmAppointment(appointment)}

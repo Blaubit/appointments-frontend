@@ -15,8 +15,8 @@ import { Separator } from "@/components/ui/separator";
 import { updateSchedule } from "@/actions/user/updateSchedule";
 import findAvailabilities from "@/actions/user/findAvailabilities";
 import type { ScheduleSettings, WorkingDaySettings, User } from "@/types";
-import update from "@/actions/services/update";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // Configuración por defecto
 const defaultScheduleSettings: ScheduleSettings = {
@@ -108,6 +108,8 @@ export function ScheduleForm({
   // Estado para el dialog
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const { toast } = useToast();
+
   // Cierra el diálogo automáticamente después de 1 segundo
   useEffect(() => {
     if (dialogOpen) {
@@ -122,6 +124,17 @@ export function ScheduleForm({
   // Preselecciona profesional si el usuario es profesional
   useEffect(() => {
     if (!userSession) return;
+
+    // Si la lista de professionals está vacía (p. ej. 403), pero el usuario actual es profesional,
+    // lo seleccionamos directamente para que pueda editar sus propios horarios.
+    if (
+      userSession.role?.name === "profesional" &&
+      (!professionals || professionals.length === 0)
+    ) {
+      setSelectedProfessional(userSession);
+      return;
+    }
+
     if (userSession.role?.name === "profesional") {
       const professional = professionals.find(
         (p) =>
@@ -129,6 +142,13 @@ export function ScheduleForm({
           p.id.toString() === userSession.id.toString()
       );
       if (professional) setSelectedProfessional(professional);
+      else {
+        // Si no está en la lista pero la lista existe (por ejemplo limitado),
+        // podemos optar por seleccionar al propio userSession para permitir edición de su horario.
+        if (professionals && professionals.length > 0) {
+          // no hacemos nada; se mantiene null
+        }
+      }
     }
   }, [userSession, professionals]);
 
@@ -137,15 +157,33 @@ export function ScheduleForm({
     const fetchAvailabilities = async () => {
       if (!selectedProfessional) return;
       setIsLoading(true);
+      try {
+        const result = await findAvailabilities(selectedProfessional.id);
 
-      const result = await findAvailabilities(selectedProfessional.id);
-
-      setIsLoading(false);
-
-      if ("data" in result) {
-        setScheduleSettings(mapAvailabilitiesToScheduleSettings(result.data));
-      } else {
+        if ("data" in result) {
+          setScheduleSettings(mapAvailabilitiesToScheduleSettings(result.data));
+        } else {
+          // Si la respuesta no contiene data, dejamos el default y avisamos
+          setScheduleSettings(defaultScheduleSettings);
+          toast({
+            title: "No hay horarios",
+            description:
+              "No se encontraron horarios para este profesional. Se usarán valores por defecto.",
+            variant: "default",
+          });
+        }
+      } catch (error: any) {
+        console.error("Error obteniendo disponibilidades:", error);
+        toast({
+          title: "Error",
+          description:
+            error?.message ||
+            "No se pudieron cargar las disponibilidades. Puede que no tengas permisos.",
+          variant: "destructive",
+        });
         setScheduleSettings(defaultScheduleSettings);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -224,12 +262,33 @@ export function ScheduleForm({
     }
     setIsLoading(true);
     const dto = mapToDto(scheduleSettings, selectedProfessional.id);
-    const result = await updateSchedule(dto);
-    setIsLoading(false);
+    try {
+      const result = await updateSchedule(dto);
 
-    // Si result.status === 200 o como lo manejes en tu backend
-    if ("data" in result) {
-      setDialogOpen(true); // Muestra el dialog de éxito
+      // Si result.status === 200 o como lo manejes en tu backend
+      if ("data" in result) {
+        setDialogOpen(true); // Muestra el dialog de éxito
+      } else {
+        // Manejar errores en la respuesta
+        toast({
+          title: "Error guardando horario",
+          description:
+            result?.message ||
+            "No se pudo guardar el horario. Revisa permisos o intenta de nuevo.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error al guardar horario:", error);
+      toast({
+        title: "Error guardando horario",
+        description:
+          error?.message ||
+          "Error de red o permisos al intentar guardar el horario.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
   return (

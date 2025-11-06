@@ -12,7 +12,6 @@ type Props = {
 
 export default async function Page({ params }: Props) {
   try {
-    // Fetch appointment data
     const paramsM = await params;
     const appointmentResponse = await findOne(paramsM.id.toString());
     if (
