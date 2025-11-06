@@ -54,16 +54,28 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
     }
   }, [validInitialDate]);
 
+  // Si no hay profesional seleccionado, limpiar estados relevantes (evita que queden días del profesional anterior)
+  useEffect(() => {
+    if (!selectedProfessional) {
+      setNonWorkingDays(new Set());
+      setCachedMonths(new Map());
+      return;
+    }
+    // No hacemos nada aquí si sí hay profesional: la carga del mes se maneja abajo.
+  }, [selectedProfessional]);
+
   // Cargar datos del mes completo cuando cambian profesional o mes
   useEffect(() => {
     if (!selectedProfessional) return;
 
     const loadMonthData = async () => {
       const monthStr = currentMonth.toISOString().slice(0, 7);
+      const profId = selectedProfessional.id?.toString() ?? "unknown";
+      const monthKey = `${profId}:${monthStr}`;
 
-      // Verificar si ya está en caché
-      if (cachedMonths.has(monthStr)) {
-        setNonWorkingDays(cachedMonths.get(monthStr)!);
+      // Verificar si ya está en caché (ahora la clave incluye el profesional)
+      if (cachedMonths.has(monthKey)) {
+        setNonWorkingDays(cachedMonths.get(monthKey)!);
         return;
       }
 
@@ -95,10 +107,10 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
           }
 
           setNonWorkingDays(nonWorking);
-          // Guardar en caché
+          // Guardar en caché usando la clave con profesional
           setCachedMonths((prev) => {
             const next = new Map(prev);
-            next.set(monthStr, nonWorking);
+            next.set(monthKey, nonWorking);
             return next;
           });
         }
