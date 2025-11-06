@@ -1,19 +1,17 @@
 "use server";
 
 import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Role } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
-import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getSession } from "@/actions/auth";
 type Props = {
   searchParams?: URLSearchParams;
 };
 
 export async function findAll(
-  props: Props = {},
+  props: Props = {}
 ): Promise<SuccessReponse<Role[]> | ErrorResponse | any> {
   const session = await getSession();
   try {
@@ -26,7 +24,6 @@ export async function findAll(
       params: {
         ...parsedParams,
         query: undefined,
-        q: parsedParams.query,
       },
     });
     return {
@@ -42,7 +39,6 @@ export async function findAll(
       },
     };
   } catch (error) {
-    console.log(error);
     if (isAxiosError(error)) {
       return {
         message: error.message,

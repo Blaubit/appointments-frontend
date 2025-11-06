@@ -39,6 +39,7 @@ import { PrintPrescription } from "@/components/PrintPrescription";
 import { getInitials } from "@/utils/functions/getInitials";
 import { update } from "@/actions/appointments/appointmentStatus";
 import { RateClientDialog } from "@/components/client/RateClientDialog";
+import { ClinicalHistoryDialog } from "@/components/client/clinical-history/ClinicalHistoryDialog";
 
 interface ConsultationPageClientProps {
   appointment: Appointment;
@@ -57,6 +58,7 @@ export default function ConsultationPageClient({
   const [startTime] = useState(new Date());
   const [showPrescription, setShowPrescription] = useState(false);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [showClinicalHistory, setShowClinicalHistory] = useState(false);
 
   const client = appointment.client;
   const services = appointment.services || [];
@@ -421,10 +423,19 @@ export default function ConsultationPageClient({
                 {/* Información Personal */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
-                      Información del Paciente
-                    </CardTitle>
+                    <div className="flex items-center justify-between w-full">
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Información del Paciente
+                      </CardTitle>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowClinicalHistory(true)}
+                      >
+                        Ver Historial Clínico
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-3">
@@ -578,6 +589,13 @@ export default function ConsultationPageClient({
             open={showRatingDialog}
             onOpenChange={setShowRatingDialog}
             onRate={handleRatingComplete}
+          />
+
+          {/* Diálogo de Historial Clínico */}
+          <ClinicalHistoryDialog
+            client={client}
+            open={showClinicalHistory}
+            onOpenChange={setShowClinicalHistory}
           />
 
           {/* Overlay cuando se muestra el diálogo de calificación */}

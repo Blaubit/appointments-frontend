@@ -21,6 +21,7 @@ import { findPeriod } from "@/actions/calendar/findPeriod";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
 import ProfessionalSelectorCard from "@/components/professional-selector";
 import { redirect } from "next/navigation";
+import { getUser } from "@/actions/auth"; // <- import agregado
 
 interface CalendarPageClientProps {
   userId: string;
@@ -59,6 +60,37 @@ export default function CalendarPageClient({
     professionals.find((p) => p.id === userId) || null
   );
 
+  // Si la lista de professionals viene vacía, intentar obtener el user actual y seleccionarlo.
+  useEffect(() => {
+    let mounted = true;
+    const trySelectCurrentUser = async () => {
+      try {
+        if (Array.isArray(professionals) && professionals.length === 0) {
+          // Solo intentar si no hay ya un seleccionado
+          if (!selectedProfessional) {
+            const current = await getUser();
+            if (!mounted) return;
+            if (current) {
+              setSelectedProfessional(current);
+            } else {
+              console.warn(
+                "getUser devolvió null/undefined al intentar auto-seleccionar."
+              );
+            }
+          }
+        }
+      } catch (err) {
+        // No queremos romper la UI por un fallo en getUser; log y continuar
+        console.error("Error obteniendo usuario para auto-selección:", err);
+      }
+    };
+    trySelectCurrentUser();
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [professionals]);
+
   // ID del profesional actual para usar en las consultas
   const currentProfessionalId = selectedProfessional?.id || userId;
 
@@ -73,12 +105,22 @@ export default function CalendarPageClient({
     const fetchSchedule = async () => {
       setLoading(true);
       const dateStr = formatDateForPeriod(currentDate, viewMode);
-      const result = await findPeriod(currentProfessionalId, dateStr, viewMode);
-      setSchedule(result?.data || null);
-      setLoading(false);
+      try {
+        const result = await findPeriod(
+          currentProfessionalId,
+          dateStr,
+          viewMode
+        );
+        setSchedule(result?.data || null);
+      } catch (err) {
+        console.error("Error fetching schedule:", err);
+        setSchedule(null);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchSchedule();
-  }, [currentProfessionalId, currentDate, viewMode]);
+  }, [currentProfessionalId, currentDate, viewMode, selectedProfessional]);
 
   // Navigation helpers
   const navigateMonth = (direction: "prev" | "next") => {
@@ -158,17 +200,17 @@ export default function CalendarPageClient({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Professional Selector */}
-      {professionals.length >= 1 && (
-        <ProfessionalSelectorCard
-          professionals={professionals}
-          selectedProfessional={selectedProfessional}
-          onSelectionChange={setSelectedProfessional}
-          title="Filtrar por Profesional"
-          description="Selecciona el profesional para ver su calendario"
-          className="mb-6"
-          isLocked={isProfessionalLocked}
-        />
-      )}
+
+      <ProfessionalSelectorCard
+        professionals={professionals}
+        selectedProfessional={selectedProfessional}
+        onSelectionChange={setSelectedProfessional}
+        title="Filtrar por Profesional"
+        description="Selecciona el profesional para ver su calendario"
+        className="mb-6"
+        isLocked={isProfessionalLocked}
+      />
+
       {/* Calendar Controls */}
       <Card className="mb-8">
         <CardHeader>

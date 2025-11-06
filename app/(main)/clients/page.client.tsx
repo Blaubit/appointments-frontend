@@ -455,15 +455,6 @@ export default function ClientsPageClient({
         />
       )}
 
-      <ClientDetailsDialog
-        open={showDetailsDialog}
-        onOpenChange={setShowDetailsDialog}
-        client={selectedClient}
-        getInitials={getInitials}
-        renderStars={renderStars}
-        formatDate={formatDate}
-      />
-
       {/* Diálogos de Confirmación */}
       <ConfirmationDialog
         open={confirmationDialogs.editClient.open}

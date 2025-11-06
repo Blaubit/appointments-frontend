@@ -61,7 +61,7 @@ const TAB_PERMISSIONS = {
   business: ["admin_empresa", "profesional", "secretaria", "super_admin"],
   users: ["admin_empresa", "super_admin"],
   schedule: ["admin_empresa", "super_admin", "profesional"],
-  security: ["admin_empresa", "super_admin"],
+  security: ["admin_empresa", "super_admin", "profesional", "secretaria"],
   appearance: ["admin_empresa", "profesional", "secretaria", "super_admin"],
 } as const;
 
@@ -262,9 +262,23 @@ export function SettingsPageClient({
         if (result && result.data) {
           setUsers(result.data);
           setUsersMeta(result.meta);
+        } else {
+          // Cuando el backend responde sin data podemos vaciar la lista y notificar
+          setUsers([]);
+          setUsersMeta(undefined);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error cargando usuarios:", error);
+        // Mostrar toast al usuario si hay error (p. ej. 401/403)
+        toast({
+          title: "Error cargando usuarios",
+          description:
+            error?.message ||
+            "No se pudieron cargar los usuarios. Puede que no tengas permisos.",
+          variant: "destructive",
+        });
+        setUsers([]);
+        setUsersMeta(undefined);
       } finally {
         setIsLoading(false);
       }
@@ -273,6 +287,7 @@ export function SettingsPageClient({
     if (activeTab === "users") {
       fetchUsers(pageFromUrl, qValue, roleValue);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageFromUrl, qValue, roleValue, activeTab]);
 
   // Handler functions para guardar cambios

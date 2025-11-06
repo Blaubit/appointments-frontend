@@ -10,7 +10,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
-
+import { getUser } from "@/actions/auth";
 interface ProfessionalSelectorCardProps {
   professionals: User[];
   selectedProfessional: User | null;
@@ -39,7 +39,7 @@ export default function ProfessionalSelectorCard({
   className = "",
   isLocked = false,
 }: ProfessionalSelectorCardProps) {
-  // Locked mode: solo muestra la tarjeta del profesional seleccionado, sin input ni cambiar
+  // Si el padre bloqueo y ya hay seleccionado, mostramos sólo la tarjeta bloqueada
   if (isLocked && selectedProfessional) {
     return (
       <Card
@@ -92,7 +92,7 @@ export default function ProfessionalSelectorCard({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filteredProfessionals = professionals.filter((professional) =>
-    professional.fullName.toLowerCase().includes(search.toLowerCase()),
+    professional.fullName.toLowerCase().includes(search.toLowerCase())
   );
 
   // Cierra el dropdown al hacer clic fuera
@@ -108,6 +108,35 @@ export default function ProfessionalSelectorCard({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Nuevo: si la lista de profesionales viene vacía y aún no hay seleccionado,
+  // obtenemos el usuario actual con getUser() (await) y lo contamos como seleccionado.
+  useEffect(() => {
+    let mounted = true;
+    const trySelectCurrentUser = async () => {
+      if (!mounted) return;
+      try {
+        // Solo actuar si no hay profesionales y no hay ya un seleccionado
+        if (
+          (!professionals || professionals.length === 0) &&
+          !selectedProfessional
+        ) {
+          const current = await getUser();
+          if (!mounted || !current) return;
+          // Llamamos al callback para que el padre registre al usuario como seleccionado
+          onSelectionChange(current);
+        }
+      } catch (err) {
+        // Ignoramos errores de fetch; no bloqueamos la UI
+        // console.error("Error obteniendo usuario:", err);
+      }
+    };
+    trySelectCurrentUser();
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [professionals, selectedProfessional, onSelectionChange]);
 
   // Abrir dropdown al focus
   const handleInputFocus = () => {
@@ -136,7 +165,7 @@ export default function ProfessionalSelectorCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4" ref={containerRef}>
-        {/* Buscador y dropdown */}
+        {/* Si no hay seleccionado mostramos el buscador (siempre que no esté bloqueado) */}
         {!selectedProfessional && (
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

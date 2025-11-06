@@ -50,7 +50,6 @@ const getInitialFormData = (
   postalCode: company?.postalCode || "",
   country: company?.country || "",
   description: company?.description || "",
-  phone: company?.phone || "",
   phones: company?.phones ? company.phones.map((p) => ({ ...p })) : [],
 });
 
@@ -270,10 +269,6 @@ export function BusinessInfoForm({
         country: formData.country,
         description: formData.description,
         phones: formData.phones,
-        phone:
-          (formData.phones && formData.phones.length > 0
-            ? formData.phones[0].phone
-            : formData.phone) || "",
       });
 
       if ("data" in result) {
@@ -553,11 +548,6 @@ export function BusinessInfoForm({
                         <span>{p.phone || "-"}</span>
                       </div>
                     ))
-                  ) : formData.phone ? (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Phone className="h-4 w-4 mr-2" />
-                      <span>{formData.phone}</span>
-                    </div>
                   ) : (
                     <div className="text-sm text-muted-foreground">
                       No especificado
