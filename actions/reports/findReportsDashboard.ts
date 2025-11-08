@@ -1,10 +1,11 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 type Props = {
   searchParams?: URLSearchParams;
@@ -16,48 +17,44 @@ export async function findAll(
   const session = await getSession();
   const companyId = await getCompanyId();
 
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+      data: [],
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+      data: [],
+    };
+  }
+
   try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/reports/dashboard`;
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(companyId)}/reports/dashboard`;
 
-    // Ya no necesitas construir params ni searchParamsObject
-    // Si quieres conservarlo, puedes comentar o eliminar esta parte:
-    // const searchParamsObject: Record<string, string> = {};
-    // if (props.searchParams) {
-    //   props.searchParams.forEach((value, key) => {
-    //     searchParamsObject[key] = value;
-    //   });
-    // }
-    //
-    // const params: Record<string, any> = {
-    //   page: searchParamsObject.page || "1",
-    // };
-    // if (searchParamsObject.search) {
-    //   params.q = searchParamsObject.search;
-    // }
+    const response = await axiosInstance.get(url);
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-      // params,
-    });
-
-    // SOLO loguea lo serializable
-    //console.log("Response data:", response.data);
-
-    // SOLO retorna datos serializables
     return {
       data: response.data,
       status: response.status,
       statusText: response.statusText,
     };
-  } catch (error) {
-    console.log("Error in findAll services:", error);
+  } catch (error: unknown) {
+    console.error("findAll reports error:", error);
     if (isAxiosError(error)) {
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        message:
+          (error as any).response?.data?.message || (error as any).message,
+        code: (error as any).code,
+        status: (error as any).response?.status,
         data: [],
       };
     } else {

@@ -1,12 +1,13 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Company } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 interface EditCompanyParams {
   id: string;
@@ -37,23 +38,22 @@ export default async function edit({
 }: EditCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
+
+  // Early validations so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    if (!companyId) {
-      return {
-        message: "Company ID not found. Please log in again.",
-        status: 401,
-      };
-    }
-
-    const url = `${parsedEnv.API_URL}/companies/${id}`;
-
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
-
     const body: Partial<{
       name: string;
       companyType: string;
@@ -133,9 +133,16 @@ export default async function edit({
         status: 400,
       };
     }
-    const response = await axios.patch<Company>(url, body, {
+
+    // Use centralized server-side axios instance (baseURL + Authorization)
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(id)}`;
+
+    const response = await axiosInstance.patch<Company>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
@@ -155,16 +162,17 @@ export default async function edit({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error updating company:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
+      const errorMessage =
+        (error as any).response?.data?.message || error.message;
+      const errorStatus = (error as any).response?.status;
 
       return {
         message: errorMessage,
-        code: error.code,
+        code: (error as any).code,
         status: errorStatus,
       };
     } else {

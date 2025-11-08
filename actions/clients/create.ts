@@ -1,14 +1,15 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { ClientFormData } from "@/types";
 import { Client } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+
 export async function create({
   fullName,
   email,
@@ -16,33 +17,38 @@ export async function create({
 }: ClientFormData): Promise<SuccessReponse<Client> | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();
+
+  // Validaciones tempranas para que la lógica global (middleware/interceptor) pueda manejar 401
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    // Validar que tenemos companyId
-    if (!companyId) {
-      return {
-        message: "Company ID not found. Please log in again.",
-        status: 401,
-      };
-    }
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients`;
-
-    // Validar que tenemos session
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
-
+    const url = `/companies/${companyId}/clients`;
     const body = {
       fullName,
       email,
       phone,
     };
 
-    const response = await axios.post<Client>(url, body, {
+    // Instancia server-side de axios con baseURL y token
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+
+    const response = await axiosInstance.post<Client>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
@@ -67,12 +73,13 @@ export async function create({
     console.error("Error creating client:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
+      const errorMessage =
+        (error as any).response?.data?.message || error.message;
+      const errorStatus = (error as any).response?.status;
 
       return {
         message: errorMessage,
-        code: error.code,
+        code: (error as any).code,
         status: errorStatus,
       };
     } else {

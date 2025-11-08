@@ -1,9 +1,9 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import { LoginDto } from "@/types/dto/auth";
 import { parsedEnv } from "@/app/env";
+import { getServerAxios } from "@/lib/axios";
 
 //interface
 interface LostPasswordDto {
@@ -14,9 +14,10 @@ export async function LostPassword({
   email,
 }: LostPasswordDto): Promise<SuccessReponse<string> | ErrorResponse> {
   try {
-    const url = parsedEnv.API_URL + "/auth/lost-password";
+    // Usamos la instancia server-side centralizada (no session necesaria para este endpoint público)
+    const axiosInstance = getServerAxios(parsedEnv.API_URL);
 
-    const response = await axios.post(url, {
+    const response = await axiosInstance.post("/auth/lost-password", {
       email,
     });
 

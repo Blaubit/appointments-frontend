@@ -1,12 +1,12 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 // DTO para el body
 export interface CreateSecretaryProfessionalAssignmentsDto {
@@ -31,23 +31,29 @@ export async function create({
   const companyId = await getCompanyId();
   const session = await getSession();
 
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    // Validar que tenemos companyId y session
-    if (!companyId) {
-      return {
-        message: "Company ID not found. Please log in again.",
-        status: 401,
-      };
-    }
-
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
-
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/secretary-professional-assignments`;
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(
+      companyId
+    )}/secretary-professional-assignments`;
 
     const body = {
       secretaryId,
@@ -55,9 +61,8 @@ export async function create({
       isActive,
     };
 
-    const response = await axios.post(url, body, {
+    const response = await axiosInstance.post(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
@@ -75,16 +80,17 @@ export async function create({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error creating secretary-professional assignments:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
+      const err = error as any;
+      const errorMessage = err.response?.data?.message || err.message;
+      const errorStatus = err.response?.status;
 
       return {
         message: errorMessage,
-        code: error.code,
+        code: err.code,
         status: errorStatus,
       };
     } else {

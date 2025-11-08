@@ -27,7 +27,6 @@ import {
   User as UserIcon,
   FileText,
   Stethoscope,
-  CalendarClock,
   History,
   CreditCard,
 } from "lucide-react";
@@ -74,28 +73,32 @@ export function AppointmentDetailsDialog({
   const [isPaymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [isRateDialogOpen, setRateDialogOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchAppointment() {
-      // Solo ejecutar si el modal está abierto y hay un appointmentId
-      if (!appointmentId || !isOpen) return;
-
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await findOne(appointmentId);
-        if ("data" in result) {
-          setAppointment(result.data);
-        } else {
-          setError(result.message || "No se pudo cargar la cita.");
-        }
-      } catch (err) {
-        setError("Error inesperado al cargar la cita.");
-      } finally {
-        setLoading(false);
+  // helper: refresh appointment data from backend
+  async function refreshAppointment() {
+    if (!appointmentId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await findOne(appointmentId);
+      if ("data" in result) {
+        setAppointment(result.data);
+      } else {
+        setError(result.message || "No se pudo cargar la cita.");
       }
+    } catch (err) {
+      console.error("Error refrescando la cita:", err);
+      setError("Error inesperado al cargar la cita.");
+    } finally {
+      setLoading(false);
     }
-    fetchAppointment();
-  }, [appointmentId, isOpen]); // Agregar isOpen como dependencia
+  }
+
+  useEffect(() => {
+    // solo cuando el diálogo principal está abierto y hay appointmentId
+    if (!appointmentId || !isOpen) return;
+    refreshAppointment();
+  }, [appointmentId, isOpen]);
+
   // Limpiar el estado cuando se cierre el modal
   useEffect(() => {
     if (!isOpen) {
@@ -141,7 +144,6 @@ export function AppointmentDetailsDialog({
     );
   }
 
-  // ... resto del código igual ...
   const getInitials = (name: string) => {
     if (!name) return "";
     return name
@@ -179,6 +181,11 @@ export function AppointmentDetailsDialog({
         color:
           "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
         label: "Pendiente",
+      },
+      partial: {
+        color:
+          "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+        label: "Parcial",
       },
       completed: {
         color:
@@ -225,9 +232,6 @@ export function AppointmentDetailsDialog({
     }
   }
 
-  const handleRescheduleAppointment = () => {
-    //console.log("Reprogramar cita:", appointment?.id);
-  };
   const handleEditAppointment = () => {
     router.push(`/appointments/${appointment?.id}/edit`);
   };
@@ -249,7 +253,6 @@ export function AppointmentDetailsDialog({
     router.push(`/clients/${appointment?.client.id}/history`);
   };
 
-  // Suma total de precios y duración
   const totalPrice = appointment?.services?.reduce(
     (acc: number, service: any) => acc + (Number(service.price) || 0),
     0
@@ -259,29 +262,37 @@ export function AppointmentDetailsDialog({
     0
   );
 
-  // PaymentDialog -> RateDialog flow handlers
   const handleOpenPaymentDialog = () => setPaymentDialogOpen(true);
   const handleClosePaymentDialog = () => setPaymentDialogOpen(false);
 
-  // Cuando el pago se realiza, cierra el payment y abre el rate
+  // Simplified: close payment dialog and refresh appointment after backend update.
   const handlePayAppointment = async (
-    appointment: Appointment,
+    appt: Appointment,
     paymentData: { amount: number; method: string }
   ) => {
-    const paymentresponse = await updateAppointmentPayment({
-      id: appointment.id,
-      paymentStatus: "completed",
-      paymentMethod: paymentData.method,
-      paymentDate: new Date().toISOString(),
-    });
+    // Cerrar el diálogo de pago inmediatamente (acción visual).
     setPaymentDialogOpen(false);
-    // Usar setTimeout para asegurar que el estado se actualice correctamente
-    setTimeout(() => {
-      setRateDialogOpen(true);
-    }, 100);
+
+    try {
+      // Llamada al backend para registrar el pago
+      await updateAppointmentPayment({
+        id: appt.id,
+        paidAmount: paymentData.amount,
+        paymentMethod: paymentData.method,
+        paymentDate: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Error al enviar el pago al backend:", err);
+      // no retornamos; intentaremos refrescar para mantener consistencia visual
+    }
+
+    // Refrescar la cita para que el diálogo principal muestre los valores actualizados
+    await refreshAppointment();
+
+    // Abrir diálogo de calificación después de refrescar datos
+    setTimeout(() => setRateDialogOpen(true), 100);
   };
 
-  // Cuando el rating se guarda, cierra el rate
   const handleRateClient = (clientId: string, rating: number) => {
     setRateDialogOpen(false);
   };
@@ -547,10 +558,20 @@ export function AppointmentDetailsDialog({
                     </div>
                     <div>
                       <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Precio Total
+                        Total a pagar
                       </Label>
                       <p className="text-sm font-medium">
                         {formatCurrency(totalPrice || 0)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Total Pagado
+                      </Label>
+                      <p className="text-sm font-medium">
+                        {formatCurrency(
+                          Number(appointment.payment?.paidAmount) || 0
+                        )}
                       </p>
                     </div>
                     <div>
@@ -559,7 +580,7 @@ export function AppointmentDetailsDialog({
                       </Label>
                       <div className="mt-1">
                         {getPaymentStatusBadge(
-                          appointment.payment.status || "pending"
+                          appointment.payment?.status || "pending"
                         )}
                       </div>
                     </div>
@@ -760,7 +781,6 @@ export function AppointmentDetailsDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Payment Dialog separado */}
       <AppointmentPaymentDialog
         appointment={appointment}
         isOpen={isPaymentDialogOpen}
@@ -768,7 +788,6 @@ export function AppointmentDetailsDialog({
         onPay={handlePayAppointment}
       />
 
-      {/* RateClientDialog separado, se abre después de pagar */}
       <RateClientDialog
         client={appointment.client}
         onRate={handleRateClient}
