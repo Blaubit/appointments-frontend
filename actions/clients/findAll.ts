@@ -1,15 +1,30 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Client } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 type Props = {
   searchParams?: URLSearchParams;
+  page?: number;
+  limit?: number;
+  q?: string;
+};
+
+const FALLBACK_META = {
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  itemsPerPage: 10,
+  hasNextPage: false,
+  hasPreviousPage: false,
+  nextPage: null,
+  previousPage: null,
 };
 
 export async function findAll(
@@ -18,48 +33,67 @@ export async function findAll(
   const session = await getSession();
   const companyId = await getCompanyId();
 
-  try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/`;
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+      data: [],
+      meta: FALLBACK_META,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+      data: [],
+      meta: FALLBACK_META,
+    };
+  }
 
+  try {
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
     const parsedParams = parsePaginationParams(props.searchParams);
 
-    // Solo page y q para el backend (puedes agregar limit según tu paginación)
-    const params: Record<string, any> = {};
-    if (parsedParams.page) params.page = parsedParams.page;
-    if (parsedParams.q) params.q = parsedParams.q;
-    if (1) params.limit = 6; // Solo si lo usas
+    const page = props.page ?? parsedParams.page ?? 1;
+    const limit = props.limit ?? parsedParams.limit ?? 10;
+    const q = props.q ?? parsedParams.q ?? "";
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-      params,
-    });
-    const statsUrl = `${parsedEnv.API_URL}/companies/${companyId}/clients/statistics`;
-    const statsResponse = await axios.get(statsUrl, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-    });
-    // La respuesta ya viene en el formato correcto
-    return {
-      data: response.data.data,
-      meta: response.data.meta,
-      searchInfo: response.data.searchInfo,
-      stats: statsResponse.data,
-      status: 200,
-      statusText: response.statusText,
+    const params: Record<string, any> = {
+      page,
+      limit,
     };
-  } catch (error) {
+    if (q) params.q = q;
+
+    const url = `/companies/${encodeURIComponent(companyId)}/clients`;
+
+    const response = await axiosInstance.get(url, { params });
+
+    return {
+      data: response.data?.data ?? [],
+      status: response.status,
+      statusText: response.statusText,
+      meta: response.data?.meta ?? FALLBACK_META,
+    };
+  } catch (error: unknown) {
+    console.error("findAllClients error:", error);
     if (isAxiosError(error)) {
+      const err = error as any;
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        message: err.response?.data?.message || err.message,
+        code: err.code,
+        status: err.response?.status || 500,
+        data: [],
+        meta: FALLBACK_META,
       };
     } else {
       return {
         message: "An unexpected error occurred.",
+        data: [],
+        meta: FALLBACK_META,
       };
     }
   }

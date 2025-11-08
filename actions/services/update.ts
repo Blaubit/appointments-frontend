@@ -1,15 +1,14 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { serviceDto } from "@/types/dto/service/serviceDto";
 import { Appointment } from "@/types/";
 import { updateServiceDto } from "@/types/dto/service/updateServiceDto";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 export default async function update({
   id,
@@ -20,8 +19,27 @@ export default async function update({
 }: updateServiceDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
+
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/services/${id}`;
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(companyId)}/services/${encodeURIComponent(id)}`;
 
     const body: any = {
       name,
@@ -31,9 +49,10 @@ export default async function update({
     if (professionalsIds && professionalsIds.length > 0) {
       body.professionalsIds = professionalsIds;
     }
-    const response = await axios.patch<Appointment>(url, body, {
+
+    const response = await axiosInstance.patch<Appointment>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
+        "Content-Type": "application/json",
       },
     });
 
@@ -44,16 +63,18 @@ export default async function update({
       status: response.status,
       statusText: response.statusText,
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error("update_service error:", error);
     if (isAxiosError(error)) {
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        message: (error as any).response?.data?.message || error.message,
+        code: (error as any).code,
+        status: (error as any).response?.status,
       };
     } else {
       return {
         message: "An unexpected error occurred.",
+        status: 500,
       };
     }
   }

@@ -1,17 +1,19 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { Subscription } from "@/types";
 import { getSession } from "@/actions/auth";
+import { getServerAxios } from "@/lib/axios";
 
 type UpdateSubscriptionData = {
-  id?: string; // Optional, in case you want to update an existing subscription
+  id?: string;
   companyId: string;
   planId: string;
-  endDate: string;
-  status: "active" | "cancelled";
+  endDate?: string;
+  status?: "active" | "cancelled";
+  reason?: string;
 };
 
 export async function updateSubscription(
@@ -26,35 +28,54 @@ export async function updateSubscription(
     };
   }
 
-  try {
-    const url = `${parsedEnv.API_URL}/companies/${data.companyId}/subscriptions/request-plan-change`;
+  if (!data?.companyId) {
+    return {
+      message: "Company ID is required.",
+      status: 400,
+    };
+  }
 
-    const response = await axios.post(
-      url,
-      {
-        requestedPlanId: data.planId,
-        reason: "Necesitamos mas funcionalidades",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${session}`,
-          "Content-Type": "application/json",
-        },
-      }
+  try {
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
     );
-    console.log("updateSubscription response:", response.data);
+    const url = `/companies/${encodeURIComponent(
+      data.companyId
+    )}/subscriptions/request-plan-change`;
+
+    const body: Record<string, any> = {
+      requestedPlanId: data.planId,
+    };
+
+    if (data.reason) body.reason = data.reason;
+    if (data.endDate) body.endDate = data.endDate;
+    if (data.status) body.status = data.status;
+
+    const response = await axiosInstance.post(url, body, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.debug("updateSubscription response:", {
+      status: response.status,
+      data: response.data,
+    });
+
     return {
       data: response.data,
-      status: 200,
+      status: response.status,
       statusText: response.statusText,
     };
-  } catch (error) {
-    console.log("Error in updateSubscription:", error);
+  } catch (error: unknown) {
+    console.error("Error in updateSubscription:", error);
     if (isAxiosError(error)) {
       return {
-        message: error.response?.data?.message || error.message,
-        code: error.code,
-        status: error.response?.status || 500,
+        message:
+          (error as any).response?.data?.message || (error as any).message,
+        code: (error as any).code,
+        status: (error as any).response?.status || 500,
       };
     } else {
       return {

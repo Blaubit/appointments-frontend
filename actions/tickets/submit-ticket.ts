@@ -1,9 +1,10 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { getSession } from "@/actions/auth";
+import { getServerAxios } from "@/lib/axios";
 
 type TicketPayload = {
   subject: string;
@@ -21,25 +22,47 @@ export default async function submitTicket(
   payload: TicketPayload
 ): Promise<SuccessReponse<any> | ErrorResponse | any> {
   const session = await getSession();
+
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
+  if (!parsedEnv.TICKETS_URL) {
+    return {
+      message: "Ticket service URL is not configured.",
+      status: 500,
+    };
+  }
+
   try {
-    const url = `${parsedEnv.TICKETS_URL}/tickets`;
-    const response = await axios.post(url, payload, {
+    const axiosInstance = getServerAxios(
+      parsedEnv.TICKETS_URL,
+      session || undefined
+    );
+    const url = `/tickets`;
+
+    const response = await axiosInstance.post(url, payload, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session}`,
       },
     });
+
     return {
       data: response.data,
       status: response.status,
       statusText: response.statusText,
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error("submitTicket error:", error);
     if (isAxiosError(error)) {
       return {
-        message: error.response?.data?.message || error.message,
-        code: error.code,
-        status: error.response?.status,
+        message:
+          (error as any).response?.data?.message || (error as any).message,
+        code: (error as any).code,
+        status: (error as any).response?.status,
       };
     } else {
       return {

@@ -1,38 +1,52 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { ScheduleResponse } from "@/types";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { getSession } from "@/actions/auth";
+import { getServerAxios } from "@/lib/axios";
+
 export default async function findAvailabilities(
-  id: string,
+  id: string
 ): Promise<SuccessReponse<ScheduleResponse> | ErrorResponse> {
   const session = await getSession();
+
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    const url = `${parsedEnv.API_URL}/availabilities/professional/${id}`;
-    const response = await axios.get<ScheduleResponse>(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-    });
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/availabilities/professional/${encodeURIComponent(id)}`;
+
+    const response = await axiosInstance.get<ScheduleResponse>(url);
 
     return {
       data: response.data,
-      status: 200,
+      status: response.status,
       statusText: response.statusText,
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error("findAvailabilities error:", error);
     if (isAxiosError(error)) {
+      const err = error as any;
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        message: err.response?.data?.message || err.message,
+        code: err.code,
+        status: err.response?.status || 500,
       };
     } else {
       return {
         message: "An unexpected error occurred.",
+        status: 500,
       };
     }
   }

@@ -1,14 +1,14 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { UpdateUserDto } from "@/types/dto/User/updateUserDto";
 import { User } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 /**
  * updateUser:
@@ -35,24 +35,29 @@ export async function updateUser({
 }): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
-  try {
-    // Validar que tenemos companyId
-    if (!companyId) {
-      return {
-        message: "Company ID not found. Please log in again.",
-        status: 401,
-      };
-    }
-    // Construir la URL correctamente
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/users/${userId}`;
 
-    // Validar que tenemos session
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
+  try {
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(companyId)}/users/${encodeURIComponent(
+      userId
+    )}`;
 
     // Construir el body solo con los campos que se van a actualizar.
     // Nota: para professionalIds/secretaryIds incluimos el campo si es !== undefined
@@ -64,8 +69,8 @@ export async function updateUser({
       fullName: string;
       bio: string;
       roleId: string;
-      professionalIds: string[]; // relaciones: a qué profesionales está asignado este usuario (si es secretaria)
-      secretaryIds: string[]; // relaciones: a qué secretarias está asignado este usuario (si es profesional)
+      professionalIds: string[];
+      secretaryIds: string[];
     }> = {};
 
     if (
@@ -137,9 +142,8 @@ export async function updateUser({
       };
     }
 
-    const response = await axios.patch<User>(url, body, {
+    const response = await axiosInstance.patch<User>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
@@ -162,17 +166,15 @@ export async function updateUser({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error updating user:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
-
+      const err = error as any;
       return {
-        message: errorMessage,
-        code: error.code,
-        status: errorStatus,
+        message: err.response?.data?.message || err.message,
+        code: err.code,
+        status: err.response?.status ?? 500,
       };
     } else {
       return {
@@ -208,22 +210,30 @@ export async function updateProfile({
 }: UpdateProfileParams): Promise<SuccessReponse<User> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
-  try {
-    if (!companyId) {
-      return {
-        message: "Company ID not found. Please log in again.",
-        status: 401,
-      };
-    }
-    console.log("Updating profile for userId:", userId);
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/users/${userId}`;
 
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
+  // Early validation
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
+  try {
+    console.log("Updating profile for userId:", userId);
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(companyId)}/users/${encodeURIComponent(
+      userId
+    )}`;
 
     // Construir el body solo con los campos que tienen valores válidos
     const body: Partial<{
@@ -297,9 +307,8 @@ export async function updateProfile({
       };
     }
 
-    const response = await axios.patch<User>(url, body, {
+    const response = await axiosInstance.patch<User>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
@@ -319,17 +328,15 @@ export async function updateProfile({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error updating profile:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
-
+      const err = error as any;
       return {
-        message: errorMessage,
-        code: error.code,
-        status: errorStatus,
+        message: err.response?.data?.message || err.message,
+        code: err.code,
+        status: err.response?.status ?? 500,
       };
     } else {
       return {

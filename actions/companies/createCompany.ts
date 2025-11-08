@@ -1,11 +1,12 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Company, CompanyRegistrationPayload } from "@/types";
-import { getSession, getUser } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
+import { getServerAxios } from "@/lib/axios";
 
 export default async function createCompany({
   // company data
@@ -31,36 +32,38 @@ export default async function createCompany({
   SuccessReponse<Company> | ErrorResponse
 > {
   const session = await getSession();
-  try {
-    const url = `${parsedEnv.API_URL}/registration/register`;
 
-    // Para crear una empresa nueva, NO necesitamos session ni companyId
-    // Esto debería ser un endpoint público para registro
+  try {
+    // Este endpoint es público, pero si existe session la paso a la instancia.
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/registration/register`;
 
     const body = {
-      companyName: name.trim(),
-      companyType: companyType,
-      companyAddress: address.trim(),
-      companyCity: city.trim(),
-      companyState: state.trim(),
-      companyPostalCode: postal_code.trim(),
-      companyCountry: country.trim(),
-      companyPhone: phone.trim(),
+      companyName: (name || "").trim(),
+      companyType,
+      companyAddress: (address || "").trim(),
+      companyCity: (city || "").trim(),
+      companyState: (state || "").trim(),
+      companyPostalCode: (postal_code || "").trim(),
+      companyCountry: (country || "").trim(),
+      companyPhone: (phone || "").trim(),
       companyDescription: description?.trim() || "",
       // Admin data
-      adminFullName: adminFullName.trim(),
-      adminEmail: adminEmail.trim(),
+      adminFullName: (adminFullName || "").trim(),
+      adminEmail: (adminEmail || "").trim(),
       adminBio: adminBio?.trim() || "",
       // Subscription data
       planId,
       startDate,
       endDate,
-      createdById: createdById,
+      createdById,
     };
 
-    const response = await axios.post(url, body, {
+    const response = await axiosInstance.post(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
@@ -79,14 +82,14 @@ export default async function createCompany({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error creating company:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
+      const errorMessage =
+        (error as any).response?.data?.message || error.message;
+      const errorStatus = (error as any).response?.status;
 
-      // Manejar errores específicos
       if (errorStatus === 409) {
         return {
           message: "Ya existe una empresa con este nombre",
@@ -103,7 +106,7 @@ export default async function createCompany({
 
       return {
         message: errorMessage,
-        code: error.code,
+        code: (error as any).code,
         status: errorStatus,
       };
     } else {

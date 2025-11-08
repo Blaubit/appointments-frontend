@@ -1,11 +1,12 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { ClinicalHistoryResponse } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 export async function getClinicalHistory(
   clientId: string
@@ -13,22 +14,38 @@ export async function getClinicalHistory(
   const companyId = await getCompanyId();
   const session = await getSession();
 
-  try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/client-personal-info/${clientId}`;
+  // Early validation so global handlers (middleware / client interceptor) can act on 401
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-    });
+  try {
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${companyId}/client-personal-info/${encodeURIComponent(
+      clientId
+    )}`;
+
+    const response = await axiosInstance.get(url);
 
     return {
       data: response.data.data,
-      status: 200,
+      status: response.status,
       statusText: response.statusText,
     };
-  } catch (error) {
-    console.log(error);
+  } catch (error: unknown) {
+    console.error("getClinicalHistory error:", error);
     if (isAxiosError(error)) {
       return {
         message: error.message,

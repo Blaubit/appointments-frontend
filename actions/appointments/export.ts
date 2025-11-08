@@ -1,10 +1,11 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse } from "@/types/api";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 type ExportFormat = "pdf" | "excel";
 
@@ -38,6 +39,20 @@ export async function exportAppointments(
   const session = await getSession();
   const companyId = await getCompanyId();
 
+  // Validaciones básicas: si falta company o session devolvemos 401 para que el caller actúe
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
     const {
       format = "excel",
@@ -51,8 +66,6 @@ export async function exportAppointments(
       includeServices = false,
     } = options;
 
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/export/${format}`;
-
     const params: Record<string, any> = {
       includeStatistics: includeStatistics.toString(),
       includePaymentInfo: includePaymentInfo.toString(),
@@ -65,10 +78,15 @@ export async function exportAppointments(
     if (professionalId) params.professionalId = professionalId;
     if (clientId) params.clientId = clientId;
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
+    // Usamos el singleton server-side con baseURL y token
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+
+    const url = `/companies/${companyId}/appointments/export/${format}`;
+
+    const response = await axiosInstance.get(url, {
       params,
       responseType: "arraybuffer",
     });

@@ -1,9 +1,10 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { getSession } from "@/actions/auth";
+import { getServerAxios } from "@/lib/axios";
 
 export interface ChangePasswordRequest {
   currentPassword: string;
@@ -40,15 +41,20 @@ export const changePassword = async (
       };
     }
 
-    const response = await axios.post(
-      `${parsedEnv.API_URL}/auth/change-password`,
+    // Usar instancia server-side de axios con baseURL y token
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+
+    const response = await axiosInstance.post(
+      `/auth/change-password`,
       {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       },
       {
         headers: {
-          Authorization: `Bearer ${session}`,
           "Content-Type": "application/json",
         },
       }
@@ -71,14 +77,14 @@ export const changePassword = async (
 
     if (isAxiosError(error)) {
       const errorMessage =
-        error.response?.data?.message ||
+        (error.response as any)?.data?.message ||
         error.message ||
         "Error changing password";
-      const errorStatus = error.response?.status || 500;
+      const errorStatus = (error.response as any)?.status || 500;
 
       return {
         message: errorMessage,
-        code: error.code,
+        code: (error as any).code,
         status: errorStatus,
       };
     } else {

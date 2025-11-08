@@ -1,13 +1,15 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { pacienteditFormData } from "@/types";
 import { Client } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+
 export default async function edit({
   id,
   fullName,
@@ -26,9 +28,6 @@ export default async function edit({
       };
     }
 
-    // ✅ Fixed: Removed the extra colon before id
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/${id}`;
-
     // Validar que tenemos session
     if (!session) {
       return {
@@ -37,23 +36,30 @@ export default async function edit({
       };
     }
 
+    // URL relativa (la baseURL la maneja la instancia)
+    const url = `/companies/${companyId}/clients/${id}`;
+
     const body = {
       fullName,
       email,
       phone,
     };
 
-    // ✅ Changed from POST to PUT for update operations
-    const response = await axios.patch<Client>(url, body, {
+    // Usar instancia server-side con baseURL y token
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+
+    const response = await axiosInstance.patch<Client>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
 
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
-      revalidatePath("/clients"); // ✅ Fixed path (was "/Client")
+      revalidatePath("/clients");
 
       return {
         data: response.data,
@@ -68,15 +74,16 @@ export default async function edit({
       status: response.status,
     };
   } catch (error) {
-    console.error("Error editing client:", error); // ✅ Updated error message
+    console.error("Error editing client:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
+      const errorMessage =
+        (error as any).response?.data?.message || error.message;
+      const errorStatus = (error as any).response?.status;
 
       return {
         message: errorMessage,
-        code: error.code,
+        code: (error as any).code,
         status: errorStatus,
       };
     } else {

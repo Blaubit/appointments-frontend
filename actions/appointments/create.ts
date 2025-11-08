@@ -1,14 +1,15 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { appointmentDto } from "@/types/dto/appointment/appointmentDto";
 import { Appointment } from "@/types/";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+
 export default async function create({
   clientId,
   professionalId,
@@ -21,23 +22,29 @@ export default async function create({
 }: appointmentDto): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const session = await getSession();
   const companyId = await getCompanyId();
+
   try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments`;
-    const body = {
-      clientId,
-      professionalId,
-      serviceId,
-      appointmentDate,
-      startTime,
-      status,
-      notes,
-      amount,
-    };
-    const response = await axios.post<Appointment>(url, body, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-    });
+    // Usamos getServerAxios con baseURL tomado de parsedEnv
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+
+    // Con la baseURL ya seteada, enviamos la petición usando la ruta relativa
+    const response = await axiosInstance.post<Appointment>(
+      `/companies/${companyId}/appointments`,
+      {
+        clientId,
+        professionalId,
+        serviceId,
+        appointmentDate,
+        startTime,
+        status,
+        notes,
+        amount,
+      }
+    );
+
     revalidatePath("/appointments");
 
     return {
@@ -45,12 +52,13 @@ export default async function create({
       status: response.status,
       statusText: response.statusText,
     };
-  } catch (error) {
-    if (isAxiosError(error)) {
+  } catch (error: unknown) {
+    if (isAxiosError(error as any)) {
+      const err = error as any;
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        message: err.message,
+        code: err.code,
+        status: err.response?.status,
       };
     } else {
       return {
