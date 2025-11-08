@@ -1,12 +1,13 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { CreateScheduleDto } from "@/types/dto/User/createSchedule.dto";
 import { ScheduleResponse } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
+import { getServerAxios } from "@/lib/axios";
 
 export async function create({
   professionalId,
@@ -28,15 +29,21 @@ export async function create({
   SuccessReponse<ScheduleResponse> | ErrorResponse
 > {
   const session = await getSession();
+
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    const url = `${parsedEnv.API_URL}/availabilities`;
-    // Validar que tenemos session
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/availabilities`;
 
     const body = {
       professionalId,
@@ -56,12 +63,12 @@ export async function create({
       sundayEnd,
     };
 
-    const response = await axios.post<ScheduleResponse>(url, body, {
+    const response = await axiosInstance.post<ScheduleResponse>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
+        "Content-Type": "application/json",
       },
     });
-    console.log("Response from create User:", response);
+
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
       revalidatePath("/settings?tab=schedule");
@@ -78,17 +85,15 @@ export async function create({
       message: `Unexpected status code: ${response.status}`,
       status: response.status,
     };
-  } catch (error) {
-    console.error("Error creating User:", error);
+  } catch (error: unknown) {
+    console.error("Error creating schedule:", error);
 
     if (isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || error.message;
-      const errorStatus = error.response?.status;
-
+      const err = error as any;
       return {
-        message: errorMessage,
-        code: error.code,
-        status: errorStatus,
+        message: err.response?.data?.message || err.message,
+        code: err.code,
+        status: err.response?.status ?? 500,
       };
     } else {
       return {

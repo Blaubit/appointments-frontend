@@ -1,15 +1,27 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { Service } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 type Props = {
   // aceptar string | URLSearchParams | objeto plano para robustez al llamar desde paciente
   searchParams?: URLSearchParams | string | Record<string, any>;
+};
+
+const FALLBACK_META = {
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  itemsPerPage: 10,
+  hasNextPage: false,
+  hasPreviousPage: false,
+  nextPage: null,
+  previousPage: null,
 };
 
 export async function findAllPayments(
@@ -19,9 +31,25 @@ export async function findAllPayments(
   // companyId no usado en payments endpoint actual, pero lo mantenemos por consistencia
   const companyId = await getCompanyId();
 
-  try {
-    const url = `${parsedEnv.API_URL}/payments`;
+  // Early validations so global handlers can act on 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+      data: [],
+      meta: FALLBACK_META,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+      data: [],
+      meta: FALLBACK_META,
+    };
+  }
 
+  try {
     // Normalize incoming searchParams into a URLSearchParams instance
     let localUrlSearchParams = new URLSearchParams();
     if (props.searchParams) {
@@ -58,16 +86,21 @@ export async function findAllPayments(
     if (searchParamsObject.status && searchParamsObject.status !== "all") {
       params.status = searchParamsObject.status;
     }
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
+
+    // Use centralized server-side axios instance (baseURL + Authorization)
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/payments`;
+
+    const response = await axiosInstance.get(url, {
       params,
     });
 
     return {
       data: response.data.data,
-      status: 200,
+      status: response.status,
       statusText: response.statusText,
       meta: response.data.meta,
       stats: {
@@ -78,39 +111,22 @@ export async function findAllPayments(
         total_appointments: response.data.stats?.total_appointments ?? 0,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[findAllPayments] error ->", error);
     if (isAxiosError(error)) {
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        message:
+          (error as any).response?.data?.message || (error as any).message,
+        code: (error as any).code,
+        status: (error as any).response?.status || 500,
         data: [],
-        meta: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPreviousPage: false,
-          nextPage: null,
-          previousPage: null,
-        },
+        meta: FALLBACK_META,
       };
     } else {
       return {
         message: "An unexpected error occurred.",
         data: [],
-        meta: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPreviousPage: false,
-          nextPage: null,
-          previousPage: null,
-        },
+        meta: FALLBACK_META,
       };
     }
   }

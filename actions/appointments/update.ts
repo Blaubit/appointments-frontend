@@ -1,13 +1,14 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { revalidatePath } from "next/cache";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { Appointment } from "@/types/";
 import { appointmentDto } from "@/types/dto/appointment/appointmentDto";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 /*
   updateAppointment: realiza un PATCH a:
@@ -55,7 +56,7 @@ export default async function update(
       return { message: "Appointment id is required for update.", status: 400 };
     }
 
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${encodeURIComponent(id)}`;
+    const url = `/companies/${companyId}/appointments/${encodeURIComponent(id)}`;
 
     const body: any = {
       clientId,
@@ -72,9 +73,15 @@ export default async function update(
     } else if (serviceId !== undefined) {
       body.serviceId = serviceId;
     }
-    const response = await axios.patch<Appointment>(url, body, {
+
+    // Usar instancia server-side con baseURL y token
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+
+    const response = await axiosInstance.patch<Appointment>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });

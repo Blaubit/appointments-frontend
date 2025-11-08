@@ -7,6 +7,7 @@ interface Payment {
   id: string;
   appointmentId: string;
   amount: string;
+  paidAmount: string;
   status: string;
   paymentMethod: string;
   paymentDate: string;

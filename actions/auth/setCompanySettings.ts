@@ -1,31 +1,49 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import { LoginDto } from "@/types/dto/auth";
 import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
-import { LoginResponse } from "@/types";
-import getSession from "./getSession";
-
-import { getCompanyId } from "../user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+import { getSession } from "@/actions/auth";
+import { getCompanyId } from "@/actions/user/getCompanyId";
 
 export async function SetCompanySettings(): Promise<
   SuccessReponse<string> | ErrorResponse
 > {
   const session = await getSession();
   const companyId = await getCompanyId();
+
+  // Validaciones tempranas para que la lógica global pueda manejar 401
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    const url = parsedEnv.API_URL + `/companies/${companyId}/settings/current`;
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${session}` },
-    });
+    // Usar instancia server-side con baseURL y token
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${companyId}/settings/current`;
+
+    const response = await axiosInstance.get(url);
+
     const token = JSON.stringify(response.data);
     const cookieStore = await cookies();
-    // Cookie de sesión segura
+    // Cookie de configuración de la empresa (HttpOnly)
     cookieStore.set("CompanySettings", token, {
       httpOnly: true,
-      secure: false, //process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
       // No maxAge ni expires para que se borre al cerrar el navegador
@@ -33,7 +51,7 @@ export async function SetCompanySettings(): Promise<
 
     return {
       data: "Company settings set",
-      status: 200,
+      status: response.status,
       statusText: response.statusText,
     };
   } catch (error) {

@@ -1,13 +1,15 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { Appointment } from "@/types/";
 import { updateAppointmentStatusDto } from "@/types/dto/appointment/appointmentDto";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+
 // actualizar estado de la cita
 export async function update({
   appointmentId,
@@ -18,16 +20,24 @@ export async function update({
   const session = await getSession();
   const companyId = await getCompanyId();
   try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${appointmentId}/status`;
+    const url = `/companies/${companyId}/appointments/${appointmentId}/status`;
+
+    // Instancia server-side de axios con baseURL y token (si existe)
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
 
     const body = {
       status,
     };
-    const response = await axios.patch<Appointment>(url, body, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-    });
+    const response = await axiosInstance.patch<Appointment>(url, body);
+
+    // Opcional: revalidar si es necesario
+    try {
+      revalidatePath("/appointments");
+    } catch {}
+
     return {
       data: response.data,
       status: response.status,

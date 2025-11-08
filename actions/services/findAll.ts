@@ -1,15 +1,26 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
-import { cookies } from "next/headers";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { Service } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 type Props = {
   searchParams?: URLSearchParams;
+};
+
+const FALLBACK_META = {
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  itemsPerPage: 10,
+  hasNextPage: false,
+  hasPreviousPage: false,
+  nextPage: null,
+  previousPage: null,
 };
 
 export async function findAll(
@@ -18,9 +29,25 @@ export async function findAll(
   const session = await getSession();
   const companyId = await getCompanyId();
 
-  try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/services`;
+  // Early validation so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+      data: [],
+      meta: FALLBACK_META,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+      data: [],
+      meta: FALLBACK_META,
+    };
+  }
 
+  try {
     // Convertir URLSearchParams a objeto plano
     const searchParamsObject: Record<string, string> = {};
     if (props.searchParams) {
@@ -38,58 +65,43 @@ export async function findAll(
       params.q = searchParamsObject.q;
     }
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-      params,
-    });
+    // Use centralized server-side axios instance (baseURL + Authorization)
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(companyId)}/services`;
+
+    const response = await axiosInstance.get(url, { params });
 
     return {
       data: response.data.data,
-      status: 200,
+      status: response.status,
       statusText: response.statusText,
       meta: response.data.meta,
       stats: {
-        total: response.data.meta.totalItems,
+        total: response.data.meta?.totalItems ?? 0,
         active: 10,
         total_income: 5,
         total_appointments: 2,
       },
     };
-  } catch (error) {
-    console.log("Error in findAll services:", error);
+  } catch (error: unknown) {
+    console.error("Error in findAll services:", error);
     if (isAxiosError(error)) {
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        message:
+          (error as any).response?.data?.message || (error as any).message,
+        code: (error as any).code,
+        status: (error as any).response?.status || 500,
         data: [],
-        meta: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPreviousPage: false,
-          nextPage: null,
-          previousPage: null,
-        },
+        meta: FALLBACK_META,
       };
     } else {
       return {
         message: "An unexpected error occurred.",
         data: [],
-        meta: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPreviousPage: false,
-          nextPage: null,
-          previousPage: null,
-        },
+        meta: FALLBACK_META,
       };
     }
   }

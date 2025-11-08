@@ -1,12 +1,14 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import parsePaginationParams from "@/utils/functions/parsePaginationParams";
 import { Appointment, AppointmentStats } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+
 type Props = {
   searchParams?: URLSearchParams;
 };
@@ -21,26 +23,40 @@ export async function upcomingAppointments(
 ): Promise<UpcomingAppointmentsResponse | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();
-  try {
-    if (!companyId) {
-      return {
-        message: "Company ID not found in cookies",
-        status: 400,
-      };
-    }
 
+  // Validaciones tempranas para que la lógica global (middleware + interceptor) pueda expulsar al usuario si corresponde.
+  if (!companyId) {
+    return {
+      message: "Company ID not found in cookies",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
+  try {
     const parsedParams = parsePaginationParams(props.searchParams);
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/upcoming-with-stats`;
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
+
+    // Instancia server-side de axios con baseURL y token
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+
+    const url = `/companies/${companyId}/appointments/upcoming-with-stats`;
+
+    const response = await axiosInstance.get(url, {
       params: {
         ...parsedParams,
         query: undefined,
         q: parsedParams.q,
       },
     });
+
     return {
       data: response.data.data,
       status: response.status,

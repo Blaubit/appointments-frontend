@@ -1,29 +1,45 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import { cookies } from "next/headers";
 import { parsedEnv } from "@/app/env";
 import { Appointment } from "@/types";
-import { getUser, getSession } from "@/actions/auth";
+import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+
 export async function findOne(
   id: string
 ): Promise<SuccessReponse<Appointment> | ErrorResponse> {
   const companyId = await getCompanyId();
   const session = await getSession();
-  try {
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${id}`;
 
-    const response = await axios.get<Appointment>(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
-    });
+  // Validaciones tempranas para que la lógica global (middleware/interceptor) pueda manejar 401
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
+  try {
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${companyId}/appointments/${encodeURIComponent(id)}`;
+
+    const response = await axiosInstance.get<Appointment>(url);
 
     return {
       data: response.data,
-      status: 200,
+      status: response.status,
       statusText: response.statusText,
     };
   } catch (error) {

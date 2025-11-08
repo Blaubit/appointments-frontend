@@ -1,13 +1,15 @@
 "use server";
 
 import { parsedEnv } from "@/app/env";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { AttendAppointmentData } from "@/types";
 import { Client } from "@/types";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
+
 export async function AttendAppointment({
   id,
   observations,
@@ -17,25 +19,28 @@ export async function AttendAppointment({
   const session = await getSession();
   const companyId = await getCompanyId();
 
+  // Validaciones tempranas para que la lógica global (middleware/interceptor) pueda manejar 401
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
-    // Validar que tenemos companyId
-    if (!companyId) {
-      return {
-        message: "Company ID not found. Please log in again.",
-        status: 401,
-      };
-    }
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
 
-    // appointment details url
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/appointments/${id}/details`;
-
-    // Validar que tenemos session
-    if (!session) {
-      return {
-        message: "Session not found. Please log in again.",
-        status: 401,
-      };
-    }
+    // appointment details url (ruta relativa, la baseURL la proporciona axiosInstance)
+    const url = `/companies/${companyId}/appointments/${encodeURIComponent(id)}/details`;
 
     const body = {
       observations,
@@ -43,18 +48,18 @@ export async function AttendAppointment({
       diagnosis,
     };
 
-    // ✅ Changed from POST to PUT for update operations
-    console.log("url:", url); // ✅ Added log for URL
-    const response = await axios.post(url, body, {
+    // Ejecutar petición (la instancia ya incluye el Authorization si session existe)
+    console.log("AttendAppointment url:", url);
+    const response = await axiosInstance.post(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
         "Content-Type": "application/json",
       },
     });
-    console.log("AttendAppointment response:", response); // ✅ Added log for response
+    console.log("AttendAppointment response:", response);
+
     // Los códigos 200-299 son exitosos
     if (response.status >= 200 && response.status < 300) {
-      revalidatePath("/clients"); // ✅ Fixed path (was "/Client")
+      revalidatePath("/clients");
 
       return {
         data: response.data,
@@ -69,7 +74,7 @@ export async function AttendAppointment({
       status: response.status,
     };
   } catch (error) {
-    console.error("Error editing client:", error); // ✅ Updated error message
+    console.error("Error editing client (AttendAppointment):", error);
 
     if (isAxiosError(error)) {
       const errorMessage = error.response?.data?.message || error.message;

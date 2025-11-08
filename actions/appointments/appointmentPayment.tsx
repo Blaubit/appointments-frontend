@@ -10,12 +10,12 @@ import { getCompanyId } from "@/actions/user/getCompanyId";
 
 export default async function updateAppointmentPayment(payload: {
   id: string;
-  paymentStatus?: string;
+  paidAmount?: number;
   paymentMethod?: string;
   paymentDate?: string;
   paymentReference?: string;
 }): Promise<SuccessReponse<Appointment> | ErrorResponse> {
-  const { id, paymentStatus, paymentMethod, paymentDate, paymentReference } =
+  const { id, paidAmount, paymentMethod, paymentDate, paymentReference } =
     payload;
 
   const session = await getSession();
@@ -44,7 +44,7 @@ export default async function updateAppointmentPayment(payload: {
 
     // Construir body solo con los campos de pago proporcionados
     const body: any = {};
-    if (paymentStatus !== undefined) body.paymentStatus = paymentStatus;
+    if (paidAmount !== undefined) body.paidAmount = paidAmount;
     if (paymentMethod !== undefined) body.paymentMethod = paymentMethod;
     if (paymentDate !== undefined) body.paymentDate = paymentDate;
     if (paymentReference !== undefined)

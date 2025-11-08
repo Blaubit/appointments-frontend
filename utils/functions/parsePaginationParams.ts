@@ -5,6 +5,7 @@ const paginationSchema = z.object({
   limit: z.coerce.number().default(12),
   page: z.coerce.number().default(1),
   q: z.string().optional(),
+  role: z.string().optional(),
 });
 
 export type PaginationParams = z.infer<typeof paginationSchema>;

@@ -1,10 +1,10 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
-import { ErrorResponse } from "@/types/api";
 import { getSession } from "@/actions/auth";
 import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
 type ExportFormat = "pdf" | "excel" | "both";
 
@@ -49,6 +49,20 @@ export async function exportClients(
   const session = await getSession();
   const companyId = await getCompanyId();
 
+  // Validaciones tempranas para que la lógica global (middleware/interceptor) maneje 401
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
+
   try {
     const {
       format = "excel",
@@ -56,8 +70,6 @@ export async function exportClients(
       startDate,
       endDate,
     } = options;
-
-    const url = `${parsedEnv.API_URL}/companies/${companyId}/clients/export`;
 
     const params: Record<string, any> = {
       format,
@@ -67,15 +79,19 @@ export async function exportClients(
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${session}`,
-      },
+    // Usar instancia server-side centralizada (baseURL + Authorization si session existe)
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${companyId}/clients/export`;
+
+    const response = await axiosInstance.get(url, {
       params,
       responseType: format === "both" ? "json" : "arraybuffer",
     });
 
-    // Si es formato 'both', la respuesta es JSON
+    // Si es formato 'both', asumimos que el backend devuelve JSON con ambos archivos ya codificados o datos estructurados
     if (format === "both") {
       return {
         data: response.data,
@@ -110,7 +126,7 @@ export async function exportClients(
       },
       status: response.status,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Export error:", error);
 
     if (isAxiosError(error)) {

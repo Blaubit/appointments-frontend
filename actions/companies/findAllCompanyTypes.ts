@@ -1,44 +1,184 @@
 "use server";
 
-import axios, { isAxiosError } from "axios";
 import { parsedEnv } from "@/app/env";
+import { isAxiosError } from "axios";
 import { ErrorResponse, SuccessReponse } from "@/types/api";
-import { CompanyTypes } from "@/types";
+import { revalidatePath } from "next/cache";
+import { Company } from "@/types";
 import { getSession } from "@/actions/auth";
+import { getCompanyId } from "@/actions/user/getCompanyId";
+import { getServerAxios } from "@/lib/axios";
 
-type Props = {
-  searchParams?: URLSearchParams;
-};
+interface EditCompanyParams {
+  id: string;
+  name?: string;
+  companyType?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  description?: string;
+  phone?: string; // legacy
+  phones?: { id?: string; phone: string }[]; // nuevo: array de objetos
+}
 
-export async function findAllCompanyTypes(
-  props: Props = {},
-): Promise<SuccessReponse<CompanyTypes[]> | ErrorResponse | any> {
+export default async function edit({
+  id,
+  name,
+  companyType,
+  address,
+  city,
+  state,
+  postalCode,
+  country,
+  description,
+  phone,
+  phones,
+}: EditCompanyParams): Promise<SuccessReponse<Company> | ErrorResponse> {
   const session = await getSession();
+  const companyId = await getCompanyId();
+
+  // Early validations so global middleware/interceptor can handle 401 uniformly
+  if (!companyId) {
+    return {
+      message: "Company ID not found. Please log in again.",
+      status: 401,
+    };
+  }
+  if (!session) {
+    return {
+      message: "Session not found. Please log in again.",
+      status: 401,
+    };
+  }
 
   try {
-    const url = `${parsedEnv.API_URL}/company-types`;
-    const response = await axios.get(url, {
+    const body: Partial<{
+      name: string;
+      companyType: string;
+      address: string;
+      city: string;
+      state: string;
+      postalCode: string;
+      country: string;
+      description: string;
+      phone: string;
+      phones: { id?: string; phone: string }[];
+    }> = {};
+
+    if (name !== undefined && name !== null && name.trim() !== "") {
+      body.name = name.trim();
+    }
+
+    if (
+      companyType !== undefined &&
+      companyType !== null &&
+      companyType.trim() !== ""
+    ) {
+      body.companyType = companyType.trim();
+    }
+
+    if (address !== undefined && address !== null && address.trim() !== "") {
+      body.address = address.trim();
+    }
+
+    if (city !== undefined && city !== null && city.trim() !== "") {
+      body.city = city.trim();
+    }
+
+    if (state !== undefined && state !== null && state.trim() !== "") {
+      body.state = state.trim();
+    }
+
+    if (
+      postalCode !== undefined &&
+      postalCode !== null &&
+      postalCode.trim() !== ""
+    ) {
+      body.postalCode = postalCode.trim();
+    }
+
+    if (country !== undefined && country !== null && country.trim() !== "") {
+      body.country = country.trim();
+    }
+
+    if (description !== undefined && description !== null) {
+      body.description = description.trim();
+    }
+
+    // phones: acepta el array de objetos si se proporciona (incluye [] para limpiar)
+    if (phones !== undefined) {
+      if (Array.isArray(phones)) {
+        // Normalizar cada objeto: trim a phone y mantener id si existe
+        body.phones = phones.map((p) => ({
+          ...(p.id ? { id: p.id } : {}),
+          phone: p.phone ? p.phone.trim() : p.phone,
+        }));
+      } else {
+        console.warn(
+          "edit_company: 'phones' debe ser un array de objetos {id?, phone}"
+        );
+      }
+    }
+
+    // phone (legacy): incluir solo si no es string vacío
+    if (phone !== undefined && phone !== null && phone.trim() !== "") {
+      body.phone = phone.trim();
+    }
+
+    if (Object.keys(body).length === 0) {
+      return {
+        message: "No se proporcionaron campos válidos para actualizar.",
+        status: 400,
+      };
+    }
+
+    // Use centralized server-side axios instance (baseURL + Authorization)
+    const axiosInstance = getServerAxios(
+      parsedEnv.API_URL,
+      session || undefined
+    );
+    const url = `/companies/${encodeURIComponent(id)}`;
+
+    const response = await axiosInstance.patch<Company>(url, body, {
       headers: {
-        Authorization: `Bearer ${session}`,
+        "Content-Type": "application/json",
       },
     });
 
-    return {
-      data: response.data,
-      status: 200,
-      statusText: response.statusText,
-    };
-  } catch (error) {
-    console.log(error);
-    if (isAxiosError(error)) {
+    if (response.status >= 200 && response.status < 300) {
+      revalidatePath("/settings");
+      revalidatePath("/dashboard");
+
       return {
-        message: error.message,
-        code: error.code,
-        status: error.response?.status,
+        data: response.data,
+        status: response.status,
+        statusText: response.statusText,
+      };
+    }
+
+    return {
+      message: `Unexpected status code: ${response.status}`,
+      status: response.status,
+    };
+  } catch (error: unknown) {
+    console.error("Error updating company:", error);
+
+    if (isAxiosError(error)) {
+      const errorMessage =
+        (error as any).response?.data?.message || error.message;
+      const errorStatus = (error as any).response?.status;
+
+      return {
+        message: errorMessage,
+        code: (error as any).code,
+        status: errorStatus,
       };
     } else {
       return {
         message: "An unexpected error occurred.",
+        status: 500,
       };
     }
   }
