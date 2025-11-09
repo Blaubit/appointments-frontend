@@ -156,7 +156,7 @@ export default function SupportPageClient() {
               Encuentra respuestas a las preguntas más comunes sobre el uso de
               PlanitGT. Si necesitas ayuda adicional, ¡contáctanos!
             </p>
-            <div className="flex justify-center mt-8">
+            {/* <div className="flex justify-center mt-8">
               <Link href="/support/client" passHref>
                 <Button
                   className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 px-4 py-2"
@@ -166,7 +166,7 @@ export default function SupportPageClient() {
                   Enviar ticket de soporte
                 </Button>
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
