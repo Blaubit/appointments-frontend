@@ -14,9 +14,23 @@ const ROLE_RESTRICTIONS = {
     "/admin",
     "/billing",
     "/support/admin",
+    "/support/client",
   ],
-  profesional: ["/bot", "/register", "/admin", "/billing", "/support/admin"],
-  admin_empresa: ["/bot", "/register", "/admin", "/support/admin"],
+  profesional: [
+    "/bot",
+    "/register",
+    "/admin",
+    "/billing",
+    "/support/admin",
+    "/support/client",
+  ],
+  admin_empresa: [
+    "/bot",
+    "/register",
+    "/admin",
+    "/support/admin",
+    "/support/client",
+  ],
   super_admin: [],
 };
 
