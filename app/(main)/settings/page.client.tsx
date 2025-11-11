@@ -31,6 +31,7 @@ import { findAll as findAllUsers } from "@/actions/user/findAll";
 import { changePassword } from "@/actions/auth/change-password";
 import { useToast } from "@/hooks/use-toast";
 import { logout } from "@/actions/auth/logout";
+import { deleteUser } from "@/actions/user/delete";
 
 interface SettingsPageClientProps {
   profileData: User;
@@ -336,6 +337,12 @@ export function SettingsPageClient({
 
   const handleDeleteUser = async (userId: string) => {
     try {
+      await deleteUser(userId);
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario ha sido eliminado correctamente.",
+        variant: "default",
+      });
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       console.error("Error deleting user:", error);

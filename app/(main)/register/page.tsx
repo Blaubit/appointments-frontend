@@ -26,9 +26,13 @@ export default async function RegisterPage() {
   // Obtener datos necesarios del servidor
   const [responseCompanyTypes, responseRoles, responsePlans] =
     await Promise.all([findAllCompanyTypes(), findAllRoles(), findAllPlans()]);
+  let companyTypes = [];
 
   // Manejar el caso de error o datos faltantes
-  const companyTypes = responseCompanyTypes?.data || [];
+  if ("data" in responseCompanyTypes) {
+    companyTypes = responseCompanyTypes?.data || [];
+  }
+
   const roles = responseRoles?.data || [];
   const plans = responsePlans?.data || [];
   const userId = await getUserId();
@@ -55,8 +59,6 @@ export default async function RegisterPage() {
   // ✅ Función actualizada para manejar SuccessResponse<Company> | ErrorResponse
   const handleRegister = async (formData: CompanyRegistrationPayload) => {
     "use server";
-
-    console.log("handleRegister invoked with formData:", formData);
 
     try {
       console.log("Ejecutando Server Action createCompany...");

@@ -11,7 +11,7 @@ import { getServerAxios } from "@/lib/axios";
  * Obtiene todos los tipos de compañía disponibles.
  */
 export async function findAllCompanyTypes(): Promise<
-  SuccessReponse<CompanyTypes[]> | ErrorResponse
+  SuccessReponse<any> | ErrorResponse
 > {
   const session = await getSession();
 
@@ -31,9 +31,8 @@ export async function findAllCompanyTypes(): Promise<
     const url = `/company-types`;
 
     const response = await axiosInstance.get<{ data: CompanyTypes[] }>(url);
-
     return {
-      data: response.data?.data ?? [],
+      data: response.data ?? [],
       status: response.status,
       statusText: response.statusText,
     };
