@@ -55,8 +55,14 @@ function generateHourLines(start: number, end: number, stepMinutes = 30) {
 /* Calcula posición vertical (px) relativa a startHour */
 function timeToPosition(time: string, startHour: number) {
   const [h, m] = time.split(":").map(Number);
-  const totalMinutes = (h - startHour) * 60 + m;
-  const slotHeight = 64;
+  console.log(
+    "Calculando posición para tiempo:",
+    time,
+    "con startHour:",
+    startHour
+  );
+  const totalMinutes = (h - startHour) * 60 + m - 5; // ajuste visual de 5 minutos por el padding superior
+  const slotHeight = 80;
   const pixelsPerMinute = slotHeight / 60;
   return totalMinutes * pixelsPerMinute;
 }
