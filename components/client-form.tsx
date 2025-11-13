@@ -42,11 +42,8 @@ const clientSchema = z.object({
   phone: z
     .string()
     .trim()
-    .optional()
+    .min(1, "El teléfono es requerido")
     .refine((phone) => {
-      // Si está vacío, es válido (es opcional)
-      if (!phone) return true;
-
       // Validar que tenga solo dígitos y espacios
       // Acepta formatos como: "3247 0635" o "32470635"
       const digitsOnly = phone.replace(/\D/g, "");
@@ -310,7 +307,7 @@ export function ClientForm({
                   }}
                   label="Teléfono"
                   placeholder="Ingrese su número"
-                  required={false}
+                  required={true}
                   error={errors.phone ? errors.phone.message : ""}
                 />
               )}
