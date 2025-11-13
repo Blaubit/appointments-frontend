@@ -1,570 +1,311 @@
 "use client";
-
-import React, { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, CheckCircle, AlertCircle } from "lucide-react";
-import Link from "next/link";
-import { Header } from "@/components/header";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { appointmentSchema } from "@/lib/validations/appointments";
-import { z } from "zod";
-import ProfessionalSelectorCard from "@/components/professional-selector";
-import { ClientSelectorCard } from "@/components/appointments/new/ClientSelector";
-import { ServiceSelectorCard } from "@/components/appointments/new/ServiceSelector";
-import { DateTimeSelectorCard } from "@/components/appointments/new/DateTimeSelector";
-import { AppointmentSuccessDialog } from "@/components/appointments/new/appointmentSuccesDialog";
-import { findProfessionalServices } from "@/actions/services/findProfessionalServices";
-import { create as createClient } from "@/actions/clients/create";
-import updateAppointment from "@/actions/appointments/update";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, UserPlus, CheckCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import type {
-  Service,
-  Client,
-  User,
-  Appointment,
-  ClientFormData,
-} from "@/types";
-
-/*
-  EditAppointmentClient
-
-  Reutiliza los componentes de "new" para editar una cita existente.
-  Principales cuidados implementados:
-  - Lectura de servicios iniciales desde appointment.services (fallback a appointment.serviceId).
-  - Normalización de startTime ("HH:MM:SS" -> "HH:MM") para permitir preselección.
-  - Paso de appointment.id a DateTimeSelectorCard para que ignore la propia cita en occupiedSlots.
-  - Sincronización de selectedServices con los servicios disponibles del profesional cuando se cargan.
-  - Conversión de "HH:MM" -> "HH:MM:00" al enviar a la API.
-  - UI del campo "Notas" igual que en la página de creación (Label + Textarea).
-  - Cambiado: ahora el payload de actualización envía los servicios como array (serviceId: string[]).
-*/
+import type { Client } from "@/types";
+import { create as createClient } from "@/actions/clients/create";
+import { PhoneInput } from "@/components/phone-input";
 
 type Props = {
-  appointment: Appointment;
   clients: Client[];
-  professionals?: User[];
-  userSession?: User;
+  selectedClient: Client | null;
+  onSelect: (client: Client | null) => void;
+  clientIdFromUrl?: string;
 };
 
-interface LocalFormData {
-  clientName: string;
-  pacientemail?: string;
-  clientPhone?: string;
-  professionalId: string;
-  duration: string;
-  price: string;
-  notes: string;
-  date: string; // "YYYY-MM-DD"
-  time: string; // "HH:MM"
-  status: string;
-}
-
-export default function EditAppointmentClient({
-  appointment,
+export function ClientSelectorCard({
   clients,
-  professionals,
-  userSession,
+  selectedClient,
+  onSelect,
+  clientIdFromUrl,
 }: Props) {
-  const router = useRouter();
-  // --- Helpers / normalizaciones ---
-  const normalizeToHHMM = (timeRaw?: string | null) => {
-    if (!timeRaw) return "";
-    // timeRaw could be "09:30:00" or "09:30"
-    const parts = timeRaw.split(":");
-    if (parts.length >= 2) {
-      const hh = parts[0].padStart(2, "0");
-      const mm = parts[1].padStart(2, "0");
-      return `${hh}:${mm}`;
-    }
-    return String(timeRaw);
-  };
-
-  const normalizeToHHMMSS = (hhmm?: string) => {
-    if (!hhmm) return "";
-    const parts = hhmm.split(":");
-    if (parts.length === 3) return hhmm;
-    if (parts.length === 2) return `${hhmm}:00`;
-    return hhmm;
-  };
-
-  // --- initial service ids: prefer appointment.services, fallback a appointment.serviceId (legacy) ---
-  const initialServiceIds: string[] =
-    Array.isArray((appointment as any).services) &&
-    (appointment as any).services.length > 0
-      ? (appointment as any).services.map((s: any) => String(s.id))
-      : Array.isArray((appointment as any).serviceId)
-        ? (appointment as any).serviceId.map((s: any) => String(s))
-        : (appointment as any).serviceId
-          ? [String((appointment as any).serviceId)]
-          : [];
-
-  // --- selected client (match por id) ---
-  const [selectedClient, setSelectedClient] = useState<Client | null>(() => {
-    // appointment.client es un objeto Client según tus types
-    return clients.find((c) => c.id === appointment.client.id) || null;
-  });
-
-  // --- selected professional (match por id) ---
-  const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
-    () => {
-      return (
-        professionals?.find(
-          (p) =>
-            p.id === appointment.professional.id ||
-            p.id.toString() === appointment.professional.id?.toString()
-        ) || null
-      );
-    }
-  );
-
-  // --- selected services (ids normalizados a string) ---
-  const [selectedServices, setSelectedServices] =
-    useState<string[]>(initialServiceIds);
-
-  // --- selected date/time (date string YYYY-MM-DD, time "HH:MM") ---
-  const [selectedDate, setSelectedDate] = useState<string>(
-    appointment.appointmentDate
-      ? typeof appointment.appointmentDate === "string"
-        ? appointment.appointmentDate
-        : appointment.appointmentDate.toISOString().split("T")[0]
-      : ""
-  );
-
-  const [selectedTime, setSelectedTime] = useState<string>(
-    normalizeToHHMM(appointment.startTime)
-  );
-
-  const [professionalSearch, setProfessionalSearch] = useState("");
+  const [search, setSearch] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
-
-  // --- professional services ---
-  const [professionalServices, setProfessionalServices] = useState<Service[]>(
-    []
-  );
-  const [isLoadingServices, setIsLoadingServices] = useState(false);
-  const [servicesError, setServicesError] = useState<string | null>(null);
-
-  // --- formData local (strings) ---
-  const [formData, setFormData] = useState<LocalFormData>({
-    clientName: selectedClient?.fullName || appointment.client.fullName || "",
-    pacientemail:
-      selectedClient?.email || (appointment as any).pacientemail || "",
-    clientPhone:
-      selectedClient?.phone || (appointment as any).clientPhone || "",
-    professionalId:
-      selectedProfessional?.id?.toString() ||
-      appointment.professional.id?.toString() ||
-      "",
-    duration: "",
-    price:
-      appointment.payment && appointment.payment.amount
-        ? String(appointment.payment.amount)
-        : "",
-    notes: appointment.notes || "",
-    date: selectedDate,
-    time: selectedTime,
-    status: appointment.status || "pending",
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    countryCode: "+502",
   });
+  const [isCreating, setIsCreating] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
-  // --- fetch professional services ---
-  const fetchProfessionalServices = useCallback(
-    async (professionalId: string) => {
-      if (!professionalId) {
-        setProfessionalServices([]);
-        return;
-      }
-      setIsLoadingServices(true);
-      setServicesError(null);
-      try {
-        const result = await findProfessionalServices(professionalId);
-        if (
-          result &&
-          "data" in result &&
-          result.data &&
-          Array.isArray(result.data)
-        ) {
-          setProfessionalServices(result.data);
-        } else {
-          setProfessionalServices([]);
-          setServicesError(
-            "No se pudieron cargar los servicios del profesional"
-          );
-        }
-      } catch (err) {
-        console.error("Error fetching professional services:", err);
-        setProfessionalServices([]);
-        setServicesError("Error al cargar los servicios del profesional");
-      } finally {
-        setIsLoadingServices(false);
-      }
-    },
-    []
-  );
-
-  // load services when professional changes
+  // Selección automática por clientIdFromUrl SOLO al montar
   useEffect(() => {
-    if (selectedProfessional) {
-      fetchProfessionalServices(selectedProfessional.id.toString()).catch(
-        (err) => {
-          console.error("Failed to fetch services:", err);
-          setServicesError("Error al cargar los servicios del profesional");
-        }
-      );
-    } else {
-      setProfessionalServices([]);
+    if (clientIdFromUrl && !selectedClient) {
+      const found = clients.find((c) => c.id === clientIdFromUrl);
+      if (found) onSelect(found);
     }
-  }, [selectedProfessional, fetchProfessionalServices]);
-
-  // When professionalServices are loaded, try to auto-select appointment services that belong to this professional
-  useEffect(() => {
-    if (!professionalServices || professionalServices.length === 0) return;
-
-    const profIds = new Set(professionalServices.map((s) => String(s.id)));
-
-    // appointment services ids (source of truth)
-    const apptServiceIds: string[] = Array.isArray(
-      (appointment as any).services
-    )
-      ? (appointment as any).services.map((s: any) => String(s.id))
-      : Array.isArray((appointment as any).serviceId)
-        ? (appointment as any).serviceId.map((s: any) => String(s))
-        : (appointment as any).serviceId
-          ? [String((appointment as any).serviceId)]
-          : [];
-
-    const filtered = apptServiceIds.filter((id) => profIds.has(id));
-
-    if (filtered.length > 0) {
-      setSelectedServices(filtered);
-    }
-    // if none matched, do not override user's current selection
-  }, [professionalServices, appointment]);
-
-  // --- derived UIs ---
-  const selectedServicesData = selectedServices.map(
-    (id) => professionalServices.find((s) => s.id.toString() === id)?.name || ""
-  );
-
-  const totalPrice = selectedServices.reduce((sum, id) => {
-    const service = professionalServices.find((s) => s.id.toString() === id);
-    return sum + (service ? Number(service.price) : 0);
-  }, 0);
-
-  const totalDuration = selectedServices.reduce((sum, id) => {
-    const service = professionalServices.find((s) => s.id.toString() === id);
-    return sum + (service ? Number(service.durationMinutes) : 0);
-  }, 0);
-
-  const formatDuration = (totalMinutes: number) => {
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours === 0) {
-      return `${minutes} min`;
-    } else if (minutes === 0) {
-      return `${hours}h`;
-    } else {
-      return `${hours}h ${minutes}min`;
-    }
-  };
-
-  // --- handlers ---
-  const handleClientSelect = (client: any) => {
-    setSelectedClient(client);
-    setFormData((prev) => ({
-      ...prev,
-      clientName: client.fullName,
-      pacientemail: client.email,
-      clientPhone: client.phone,
-    }));
-    setShowNewClientForm(false);
-  };
-
-  const handleProfessionalSelect = (professional: User | null) => {
-    setSelectedProfessional(professional);
-    setFormData((prev) => ({
-      ...prev,
-      professionalId: professional ? professional.id.toString() : "",
-    }));
-    setProfessionalSearch("");
-    // reset services/time because professional changed
-    setSelectedServices([]);
-    setSelectedTime("");
-    setFormData((prev) => ({ ...prev, time: "" }));
-  };
-
-  const handleServiceSelect = (serviceId: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(serviceId)
-        ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId]
-    );
-  };
-
-  const handleDateTimeChange = useCallback((date: string, time: string) => {
-    setSelectedDate(date);
-    setSelectedTime(time);
-    setFormData((prev) => ({ ...prev, date, time }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- submit (update appointment) ---
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  const filteredClients = clients.filter((client) =>
+    client.fullName.toLowerCase().includes(search.toLowerCase())
+  );
 
-    const dataToValidate = {
-      clientName: formData.clientName,
-      pacientemail: formData.pacientemail,
-      clientPhone: formData.clientPhone,
-      professionalId: formData.professionalId,
-      selectedServices,
-      date: selectedDate,
-      time: selectedTime,
-      notes: formData.notes,
-      status: formData.status,
-    };
+  // Validar número de teléfono (opcional)
+  const validatePhone = (phone: string, countryCode: string): boolean => {
+    // Si el teléfono está vacío, es válido (es opcional)
+    if (!phone.trim()) {
+      setPhoneError("");
+      return true;
+    }
 
+    // Si hay contenido, validar según el país
+    const digitsOnly = phone.replace(/\D/g, "");
+
+    if (countryCode === "+502") {
+      // Guatemala: 8 dígitos
+      if (digitsOnly.length !== 8) {
+        setPhoneError("El número de Guatemala debe tener 8 dígitos");
+        return false;
+      }
+    } else if (countryCode === "+1") {
+      // USA: 10 dígitos
+      if (digitsOnly.length !== 10) {
+        setPhoneError("El número de USA debe tener 10 dígitos");
+        return false;
+      }
+    } else if (countryCode === "+52") {
+      // Mexico: 10 dígitos
+      if (digitsOnly.length !== 10) {
+        setPhoneError("El número de Mexico debe tener 10 dígitos");
+        return false;
+      }
+    } else if (countryCode === "+503" || countryCode === "+504") {
+      // El Salvador / Honduras: 8 dígitos
+      if (digitsOnly.length !== 8) {
+        setPhoneError("El número debe tener 8 dígitos");
+        return false;
+      }
+    }
+
+    setPhoneError("");
+    return true;
+  };
+
+  // Crear paciente y seleccionarlo automáticamente
+  const handleCreateClient = async () => {
+    if (!form.fullName.trim()) {
+      setPhoneError("El nombre es requerido");
+      return;
+    }
+
+    if (!validatePhone(form.phone, form.countryCode)) {
+      return;
+    }
+
+    setIsCreating(true);
     try {
-      appointmentSchema.parse(dataToValidate);
-
-      let clientId = selectedClient?.id;
-      if (!clientId || clientId === "temp") {
-        const newClientData: ClientFormData = {
-          fullName: formData.clientName,
-          email: formData.pacientemail || "",
-          phone: formData.clientPhone || "",
-        };
-        const clientResult = await createClient(newClientData);
-        if ("data" in clientResult) {
-          clientId = clientResult.data.id;
-        } else {
-          throw new Error(clientResult.message || "Error creating client");
-        }
+      const result = await createClient({
+        fullName: form.fullName,
+        phone: form.phone,
+        email: form.email,
+      });
+      if ("data" in result) {
+        // Selecciona el paciente recién creado
+        onSelect(result.data);
+        setShowNewClientForm(false);
+        setForm({ fullName: "", phone: "", email: "", countryCode: "+502" });
+        setSearch("");
+        setPhoneError("");
       }
-
-      if (!clientId || clientId === "temp") {
-        throw new Error("Debe seleccionar o crear un paciente");
-      }
-      if (!selectedProfessional) {
-        throw new Error("Debe seleccionar un profesional");
-      }
-      if (selectedServices.length === 0) {
-        throw new Error("Debe seleccionar al menos un servicio");
-      }
-      if (!selectedDate) {
-        throw new Error("Debe seleccionar una fecha");
-      }
-      if (!selectedTime) {
-        throw new Error("Debe seleccionar una hora");
-      }
-
-      // IMPORTANT: backend now accepts string[] for services — send array
-      const normalizedStartTime = normalizeToHHMM(selectedTime); // ensure HH:MM:SS
-      const appointmentData: any = {
-        id: appointment.id,
-        clientId: clientId.toString(),
-        professionalId: selectedProfessional.id.toString(),
-        // send array of service ids
-        serviceId: selectedServices,
-        appointmentDate: selectedDate,
-        startTime: normalizedStartTime,
-        status: formData.status || "confirmed",
-        notes: formData.notes || " ",
-        amount: totalPrice,
-      };
-      const result = await updateAppointment(appointmentData);
-
-      if ("message" in result) {
-        throw new Error(result.message || "Error actualizando la cita");
-      }
-
-      setSuccess(true);
-      setOpenDialog(true);
-      setTimeout(() => {
-        router.push("/appointments");
-      }, 1000);
-    } catch (err: any) {
-      if (err instanceof z.ZodError) {
-        setError(err.errors.map((e: any) => e.message).join(", "));
-      } else {
-        setError(err.message || "Error inesperado en la validación");
-      }
-      setIsLoading(false);
+      // Si hay error, puedes agregar manejo de errores aquí
     } finally {
-      setIsLoading(false);
+      setIsCreating(false);
     }
   };
 
-  const isFormValid = () => {
-    const hasClient =
-      selectedClient ||
-      (showNewClientForm &&
-        formData.clientName.trim() &&
-        formData.clientPhone?.trim());
-    const hasProfessional = selectedProfessional;
-    const hasServices = selectedServices.length > 0;
-    const hasDateTime = selectedDate && selectedTime;
-
-    return (
-      hasClient && hasProfessional && hasServices && hasDateTime && !isLoading
-    );
+  const handlePhoneChange = (phone: string, countryCode: string) => {
+    setForm({ ...form, phone, countryCode });
+    setPhoneError(""); // Limpiar error cuando el usuario escribe
   };
 
-  const isProfessionalUser = userSession?.role?.name === "profesional";
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header
-        title="Editar Cita"
-        showBackButton={true}
-        backButtonText="Citas"
-        backButtonHref="/appointments"
-      />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <Alert className="mb-6" variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        {success && (
-          <Alert className="mb-6" variant="default">
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>
-              ¡Cita actualizada exitosamente! Redirigiendo...
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <ClientSelectorCard
-            clients={clients}
-            selectedClient={selectedClient}
-            onSelect={handleClientSelect}
-            clientIdFromUrl={selectedClient?.id || ""}
-          />
-
-          <ProfessionalSelectorCard
-            professionals={professionals || []}
-            selectedProfessional={selectedProfessional}
-            onSelectionChange={handleProfessionalSelect}
-            title="Seleccionar Profesional"
-            description="Elige el profesional que atenderá la cita"
-            className="mb-6 sm:mb-8"
-            isLocked={isProfessionalUser}
-          />
-
-          <ServiceSelectorCard
-            services={professionalServices}
-            selectedServices={selectedServices}
-            onSelectService={handleServiceSelect}
-            isLoading={isLoadingServices}
-            error={servicesError}
-            isLocked={false}
-          />
-
-          <DateTimeSelectorCard
-            selectedProfessional={selectedProfessional}
-            selectedDate={selectedDate}
-            initialTime={selectedTime}
-            onChange={handleDateTimeChange}
-            selectedServices={selectedServices}
-            professionalServices={professionalServices}
-            appointmentId={appointment.id} // <-- permite ignore de la propia cita en occupiedSlots
-          />
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="notes">Notas</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
-                placeholder="Información adicional, instrucciones especiales, etc."
-                rows={3}
-              />
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <span>Seleccionar paciente</span>
+        </CardTitle>
+        <CardDescription>
+          Busca un paciente existente o crea uno nuevo
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Selección o formulario */}
+        {!selectedClient && !showNewClientForm && (
+          <>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar paciente por nombre..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowNewClientForm(true)}
+                className="whitespace-nowrap"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Nuevo paciente
+              </Button>
             </div>
-
-            {selectedServicesData.length > 0 && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                  Servicios Seleccionados
-                </h4>
-                <ul className="space-y-2">
-                  {selectedServicesData.map((service, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center justify-between"
-                    >
-                      <span>{service}</span>
-                      <span className="text-sm text-gray-500">
-                        $
-                        {professionalServices.find((s) => s.name === service)
-                          ?.price || "0"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-4 border-t pt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Total:</span>
-                    <span className="font-bold text-lg">
-                      ${totalPrice.toFixed(2)}
-                    </span>
+            {search && (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {filteredClients.map((client) => (
+                  <div
+                    key={client.id}
+                    className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                    onClick={() => onSelect(client)}
+                  >
+                    <Avatar>
+                      <AvatarImage src={client.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>
+                        {client.fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {client.fullName}
+                      </p>
+                      <p className="text-sm text-gray-500">{client.email}</p>
+                      <p className="text-xs text-gray-400">
+                        {client.totalAppointments} citas • Última visita:{" "}
+                        {client.createdAt}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span>Duración Total:</span>
-                    <span className="font-medium">
-                      {formatDuration(totalDuration)}
-                    </span>
-                  </div>
-                </div>
+                ))}
+                {filteredClients.length === 0 && (
+                  <p className="text-center text-gray-500 py-4">
+                    No se encontraron pacientes
+                  </p>
+                )}
               </div>
             )}
+          </>
+        )}
+        {/* paciente seleccionado */}
+        {selectedClient && (
+          <div className="flex items-start sm:items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <Avatar className="flex-shrink-0">
+              <AvatarImage src={selectedClient.avatar || "/placeholder.svg"} />
+              <AvatarFallback>
+                {selectedClient.fullName
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-gray-900 dark:text-white truncate">
+                {selectedClient.fullName}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {selectedClient.email}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {selectedClient.phone}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onSelect(null)}
+                className="text-xs px-2 py-1 h-auto"
+              >
+                Cambiar
+              </Button>
+            </div>
           </div>
-
-          <div className="flex justify-end space-x-4">
-            <Link href="/appointments">
-              <Button type="button" variant="outline" disabled={isLoading}>
+        )}
+        {/* Formulario nuevo paciente */}
+        {showNewClientForm && (
+          <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
+            <h4 className="font-medium text-gray-900 dark:text-white">
+              Nuevo paciente
+            </h4>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="clientName">
+                  Nombre completo <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="clientName"
+                  value={form.fullName}
+                  onChange={(e) =>
+                    setForm({ ...form, fullName: e.target.value })
+                  }
+                  placeholder="Nombre del paciente"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="clientPhone">Teléfono</Label>
+                <PhoneInput
+                  id="clientPhone"
+                  value={form.phone}
+                  onChange={handlePhoneChange}
+                  label=""
+                  placeholder="Ingrese su número"
+                  required={false}
+                  error={phoneError}
+                />
+              </div>
+              <div>
+                <Label htmlFor="clientEmail">Email</Label>
+                <Input
+                  id="clientEmail"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="paciente@email.com"
+                />
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowNewClientForm(false);
+                  setPhoneError("");
+                }}
+              >
                 Cancelar
               </Button>
-            </Link>
-            <Button
-              type="submit"
-              disabled={!isFormValid()}
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Actualizar Cita
-                </>
-              )}
-            </Button>
+              <Button
+                type="button"
+                onClick={handleCreateClient}
+                disabled={!form.fullName.trim() || isCreating}
+              >
+                {isCreating ? "Creando..." : "Seleccionar paciente"}
+              </Button>
+            </div>
           </div>
-
-          <AppointmentSuccessDialog
-            isOpen={openDialog}
-            onClose={() => setOpenDialog(false)}
-            onGoToAppointments={() => router.push("/appointments")}
-          />
-        </form>
-      </div>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -49,8 +49,8 @@ export interface ClientFilters {
 
 export interface ClientFormData {
   fullName: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface pacienteditFormData {
