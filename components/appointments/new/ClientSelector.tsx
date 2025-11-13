@@ -14,6 +14,7 @@ import { Search, UserPlus, CheckCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import type { Client } from "@/types";
 import { create as createClient } from "@/actions/clients/create";
+import { PhoneInput } from "@/components/phone-input";
 
 type Props = {
   clients: Client[];
@@ -30,8 +31,14 @@ export function ClientSelectorCard({
 }: Props) {
   const [search, setSearch] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
-  const [form, setForm] = useState({ fullName: "", phone: "", email: "" });
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    countryCode: "+502",
+  });
   const [isCreating, setIsCreating] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
   // Selección automática por clientIdFromUrl SOLO al montar
   useEffect(() => {
@@ -46,9 +53,52 @@ export function ClientSelectorCard({
     client.fullName.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Validar número de teléfono
+  const validatePhone = (phone: string, countryCode: string): boolean => {
+    // Remover espacios para contar dígitos
+    const digitsOnly = phone.replace(/\D/g, "");
+
+    if (countryCode === "+502") {
+      // Guatemala: 8 dígitos
+      if (digitsOnly.length !== 8) {
+        setPhoneError("El número de Guatemala debe tener 8 dígitos");
+        return false;
+      }
+    } else if (countryCode === "+1") {
+      // USA: 10 dígitos
+      if (digitsOnly.length !== 10) {
+        setPhoneError("El número de USA debe tener 10 dígitos");
+        return false;
+      }
+    } else if (countryCode === "+52") {
+      // Mexico: 10 dígitos
+      if (digitsOnly.length !== 10) {
+        setPhoneError("El número de Mexico debe tener 10 dígitos");
+        return false;
+      }
+    } else if (countryCode === "+503" || countryCode === "+504") {
+      // El Salvador / Honduras: 8 dígitos
+      if (digitsOnly.length !== 8) {
+        setPhoneError("El número debe tener 8 dígitos");
+        return false;
+      }
+    }
+
+    setPhoneError("");
+    return true;
+  };
+
   // Crear paciente y seleccionarlo automáticamente
   const handleCreateClient = async () => {
-    if (!form.fullName.trim() || !form.phone.trim()) return;
+    if (!form.fullName.trim()) {
+      setPhoneError("El nombre es requerido");
+      return;
+    }
+
+    if (!validatePhone(form.phone, form.countryCode)) {
+      return;
+    }
+
     setIsCreating(true);
     try {
       const result = await createClient({
@@ -60,13 +110,19 @@ export function ClientSelectorCard({
         // Selecciona el paciente recién creado
         onSelect(result.data);
         setShowNewClientForm(false);
-        setForm({ fullName: "", phone: "", email: "" });
+        setForm({ fullName: "", phone: "", email: "", countryCode: "+502" });
         setSearch("");
+        setPhoneError("");
       }
       // Si hay error, puedes agregar manejo de errores aquí
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handlePhoneChange = (phone: string, countryCode: string) => {
+    setForm({ ...form, phone, countryCode });
+    setPhoneError(""); // Limpiar error cuando el usuario escribe
   };
 
   return (
@@ -83,7 +139,7 @@ export function ClientSelectorCard({
         {/* Selección o formulario */}
         {!selectedClient && !showNewClientForm && (
           <>
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -198,13 +254,14 @@ export function ClientSelectorCard({
                 />
               </div>
               <div>
-                <Label htmlFor="clientPhone">Teléfono *</Label>
-                <Input
+                <PhoneInput
                   id="clientPhone"
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+502 12344567"
+                  onChange={handlePhoneChange}
+                  label="Teléfono"
+                  placeholder="Ingrese su número"
                   required
+                  error={phoneError}
                 />
               </div>
             </div>
@@ -222,7 +279,10 @@ export function ClientSelectorCard({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowNewClientForm(false)}
+                onClick={() => {
+                  setShowNewClientForm(false);
+                  setPhoneError("");
+                }}
               >
                 Cancelar
               </Button>

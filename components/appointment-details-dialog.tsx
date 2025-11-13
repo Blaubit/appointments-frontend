@@ -60,7 +60,6 @@ export function AppointmentDetailsDialog({
   appointmentId,
   isOpen,
   onClose,
-  onDelete,
   onCall,
   onEmail,
 }: AppointmentDetailsDialogProps) {
@@ -296,11 +295,6 @@ export function AppointmentDetailsDialog({
   const handleRateClient = (clientId: string, rating: number) => {
     setRateDialogOpen(false);
   };
-
-  const handleCloseRateDialog = () => {
-    setRateDialogOpen(false);
-  };
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -759,14 +753,7 @@ export function AppointmentDetailsDialog({
                     <span className="truncate">Cancelar</span>
                   </Button>
                 )}
-              <Button
-                onClick={() => onDelete(appointment)}
-                variant="destructive"
-                className="w-full h-10 text-sm"
-              >
-                <Trash2 className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">Eliminar</span>
-              </Button>
+
               {/* Botón para pagar */}
               <Button
                 onClick={handleOpenPaymentDialog}

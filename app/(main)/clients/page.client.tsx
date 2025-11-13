@@ -87,7 +87,7 @@ export default function ClientsPageClient({
     },
     editClient: {
       open: false,
-      data: null as ClientFormData | null,
+      data: null as (ClientFormData & { countryCode?: string }) | null,
     },
     success: {
       open: false,
@@ -303,15 +303,15 @@ export default function ClientsPageClient({
     const { data } = confirmationDialogs.editClient;
     if (!data || !editingClient) return;
 
-    const data2: pacienteditFormData = {
-      id: editingClient?.id,
+    const editData: pacienteditFormData = {
+      id: editingClient.id,
       fullName: data.fullName,
-      email: data.email,
-      phone: data.phone,
+      email: data.email || "",
+      phone: data.phone || "",
     };
 
     try {
-      const response = await edit(data2);
+      const response = await edit(editData);
       if (response.status === 200) {
         router.refresh();
         setEditingClient(null);

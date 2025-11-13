@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Plus, User } from "lucide-react";
+import { PhoneInput } from "@/components/phone-input";
 import type { Client } from "@/types";
 
 // 1️⃣ Esquema de validación con Zod
@@ -33,12 +34,24 @@ const clientSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, "El email es requerido")
-    .email("El email no tiene un formato válido"),
+    .optional()
+    .refine(
+      (email) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+      "El email no tiene un formato válido"
+    ),
   phone: z
     .string()
     .trim()
-    .regex(/^\+?[1-9]\d{6,14}$/, "Debe ser un número telefónico válido"),
+    .min(1, "El teléfono es requerido")
+    .refine((phone) => {
+      // Validar que tenga solo dígitos y espacios
+      // Acepta formatos como: "3247 0635" o "32470635"
+      const digitsOnly = phone.replace(/\D/g, "");
+
+      // Debe tener entre 7 y 15 dígitos
+      return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+    }, "Debe ser un número telefónico válido (7-15 dígitos)"),
+  countryCode: z.string().optional(),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -50,6 +63,76 @@ interface ClientFormProps {
   onCancel?: () => void;
 }
 
+// Función para extraer código de país del número de teléfono plano
+const extractCountryCodeFromPhone = (phone: string): string => {
+  if (!phone) return "+502"; // Guatemala por defecto
+
+  // Mapeo de códigos de país a prefijos
+  const countryPrefixes: Record<string, string> = {
+    "+502": "GT", // Guatemala
+    "+1": "US", // USA
+    "+52": "MX", // Mexico
+    "+503": "SV", // El Salvador
+    "+504": "HN", // Honduras
+  };
+
+  for (const [code, _] of Object.entries(countryPrefixes)) {
+    if (phone.startsWith(code)) {
+      return code;
+    }
+  }
+
+  return "+502"; // Default a Guatemala
+};
+
+// Función para limpiar y formatear número plano
+const formatPlainPhone = (phone: string, countryCode: string): string => {
+  if (!phone) return "";
+
+  // Remover todos los caracteres no numéricos
+  const digitsOnly = phone.replace(/\D/g, "");
+
+  // Remover el código de país si está al inicio
+  let cleanPhone = digitsOnly;
+  const countryDigits = countryCode.replace("+", "");
+  if (digitsOnly.startsWith(countryDigits)) {
+    cleanPhone = digitsOnly.slice(countryDigits.length);
+  }
+
+  // Aplicar formato según el país
+  if (
+    countryCode === "+502" ||
+    countryCode === "+503" ||
+    countryCode === "+504"
+  ) {
+    // Guatemala, El Salvador, Honduras: 1234 5678
+    if (cleanPhone.length >= 4) {
+      return `${cleanPhone.slice(0, 4)} ${cleanPhone.slice(4, 8)}`;
+    }
+    return cleanPhone;
+  } else if (countryCode === "+1") {
+    // USA: (123) 456-7890
+    if (cleanPhone.length >= 3) {
+      if (cleanPhone.length >= 6) {
+        return `(${cleanPhone.slice(0, 3)}) ${cleanPhone.slice(3, 6)}-${cleanPhone.slice(6, 10)}`;
+      }
+      return `(${cleanPhone.slice(0, 3)}) ${cleanPhone.slice(3)}`;
+    }
+    return cleanPhone;
+  } else if (countryCode === "+52") {
+    // Mexico: 12 3456 7890
+    if (cleanPhone.length >= 2) {
+      if (cleanPhone.length >= 6) {
+        return `${cleanPhone.slice(0, 2)} ${cleanPhone.slice(2, 6)} ${cleanPhone.slice(6, 10)}`;
+      }
+      return `${cleanPhone.slice(0, 2)} ${cleanPhone.slice(2)}`;
+    }
+    return cleanPhone;
+  }
+
+  return cleanPhone;
+};
+
 export function ClientForm({
   client,
   trigger,
@@ -57,6 +140,7 @@ export function ClientForm({
   onCancel,
 }: ClientFormProps) {
   const [open, setOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string>("GT");
   const isEditMode = !!client;
 
   // 2️⃣ React Hook Form con Zod
@@ -65,22 +149,51 @@ export function ClientForm({
     handleSubmit,
     formState: { errors },
     reset,
+    control,
+    setValue,
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       fullName: "",
       email: "",
       phone: "",
+      countryCode: "+502",
     },
   });
 
   // Cargar datos si es edición
   useEffect(() => {
-    if (client) {
+    if (client && client.phone) {
+      // Extraer el código de país del número plano
+      const detectedCountryCode = extractCountryCodeFromPhone(client.phone);
+      const countryCodeMap: Record<string, string> = {
+        "+502": "GT",
+        "+1": "US",
+        "+52": "MX",
+        "+503": "SV",
+        "+504": "HN",
+      };
+      const countryCode = countryCodeMap[detectedCountryCode] || "GT";
+      setSelectedCountry(countryCode);
+
+      // Formatear el número plano
+      const formattedPhone = formatPlainPhone(
+        client.phone,
+        detectedCountryCode
+      );
+
       reset({
         fullName: client.fullName,
-        email: client.email,
-        phone: client.phone,
+        email: client.email || "",
+        phone: formattedPhone,
+        countryCode: detectedCountryCode,
+      });
+    } else {
+      reset({
+        fullName: client?.fullName || "",
+        email: client?.email || "",
+        phone: "",
+        countryCode: "+502",
       });
     }
   }, [client, reset]);
@@ -146,7 +259,9 @@ export function ClientForm({
         <form onSubmit={handleSubmit(onSubmitHandler)} className="space-y-4">
           {/* Nombre */}
           <div className="space-y-2">
-            <Label htmlFor="fullName">Nombre Completo *</Label>
+            <Label htmlFor="fullName">
+              Nombre Completo <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="fullName"
               {...register("fullName")}
@@ -160,7 +275,7 @@ export function ClientForm({
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
@@ -173,18 +288,30 @@ export function ClientForm({
             )}
           </div>
 
-          {/* Teléfono */}
+          {/* Teléfono con PhoneInput */}
           <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono *</Label>
-            <Input
-              id="phone"
-              {...register("phone")}
-              placeholder="Ej: +34 600 123 456"
-              className={errors.phone ? "border-red-500" : ""}
+            <Controller
+              name="phone"
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  id="phone"
+                  value={field.value || ""}
+                  onChange={(phone: string, countryCode: string) => {
+                    field.onChange(phone);
+                    setValue("countryCode", countryCode);
+                  }}
+                  onCountryChange={(country) => {
+                    setSelectedCountry(country.code);
+                    setValue("countryCode", country.countryCode);
+                  }}
+                  label="Teléfono"
+                  placeholder="Ingrese su número"
+                  required={true}
+                  error={errors.phone ? errors.phone.message : ""}
+                />
+              )}
             />
-            {errors.phone && (
-              <p className="text-sm text-red-500">{errors.phone.message}</p>
-            )}
           </div>
 
           <Separator />
