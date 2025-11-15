@@ -25,6 +25,7 @@ export async function updateSchedule({
   saturdayEnd,
   sundayStart,
   sundayEnd,
+  allowOverlap,
 }: CreateScheduleDto): Promise<
   SuccessReponse<ScheduleResponse> | ErrorResponse
 > {
@@ -60,6 +61,7 @@ export async function updateSchedule({
       saturdayEnd,
       sundayStart,
       sundayEnd,
+      allowOverlap,
     };
 
     const response = await axiosInstance.patch<ScheduleResponse>(url, body, {
