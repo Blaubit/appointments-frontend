@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -29,11 +27,13 @@ interface TimeSlotStatus {
   time: string;
   isAvailable: boolean;
   reason?: string;
+  overlaps?: boolean; // flag para indicar solapamiento cuando overlap está permitido
 }
 
 interface CustomTimeValidation {
   isValid: boolean;
   reason?: string;
+  overlaps?: boolean;
 }
 
 export function DateTimeSelectorCard({
@@ -87,17 +87,19 @@ export function DateTimeSelectorCard({
     return hours * 60 + minutes;
   };
 
-  // Verificar si un horario de inicio es válido (ocupados ya deben venir filtrados si se edita)
+  // Verificar si un horario de inicio es válido.
+  // allowOverlap controla si los solapamientos invalidan el horario (false) o se permiten con advertencia (true).
   const isTimeSlotValid = (
     startTime: string,
     totalDuration: number,
     occupiedSlots: any[],
-    workingHours: any
-  ): { isValid: boolean; reason?: string } => {
+    workingHours: any,
+    allowOverlap: boolean = false
+  ): { isValid: boolean; reason?: string; overlaps?: boolean } => {
     const startMinutes = timeToMinutes(startTime);
     const endMinutes = startMinutes + totalDuration;
 
-    // Verificar límite de horario laboral
+    // Límite de horario laboral: siempre se aplica (no permitimos citas que se extiendan fuera del horario)
     const workStart = timeToMinutes(workingHours.start.slice(0, 5));
     const workEnd = timeToMinutes(workingHours.end.slice(0, 5));
 
@@ -113,12 +115,23 @@ export function DateTimeSelectorCard({
       const slotStart = timeToMinutes(slot.startTime.slice(0, 5));
       const slotEnd = timeToMinutes(slot.endTime.slice(0, 5));
 
-      // Verificar si hay solapamiento (intersección de intervalos)
+      // hay intersección de intervalos?
       if (startMinutes < slotEnd && endMinutes > slotStart) {
-        return {
-          isValid: false,
-          reason: `Conflicto con cita de ${slot.clientName || "otro paciente"} (${slot.serviceName || "servicio"})`,
-        };
+        const reason = `Solapa con cita de ${slot.clientName || "otro paciente"} (${slot.serviceName || "servicio"})`;
+        if (!allowOverlap) {
+          // No permitido -> invalida el horario
+          return {
+            isValid: false,
+            reason,
+          };
+        } else {
+          // Permitido -> marcamos como válido aunque con overlap warning
+          return {
+            isValid: true,
+            reason,
+            overlaps: true,
+          };
+        }
       }
     }
 
@@ -164,10 +177,15 @@ export function DateTimeSelectorCard({
       time,
       totalDuration,
       dataToUse.occupiedSlots,
-      dataToUse.workingHours
+      dataToUse.workingHours,
+      dataToUse.allowOverlap // usar allowOverlap del schedule
     );
 
-    return validation;
+    return {
+      isValid: validation.isValid,
+      reason: validation.reason,
+      overlaps: validation.overlaps,
+    };
   };
 
   // Manejar cambio en input de tiempo personalizado
@@ -178,6 +196,7 @@ export function DateTimeSelectorCard({
     if (!time) {
       setCustomTimeError(null);
       setCustomTimeValid(false);
+      setSelectedTime("");
       return;
     }
 
@@ -202,26 +221,19 @@ export function DateTimeSelectorCard({
     return t;
   };
 
-  // -----------------------
-  // Optimistic pre-render:
-  // Si tenemos initialTime + profesional + fecha, añadir inmediatamente un slot
-  // optimista para que sea renderizado antes de que termine el fetch de findPeriod.
-  // -----------------------
+  // Optimistic pre-render for initialTime
   useEffect(() => {
     if (!selectedProfessional || !selectedDate || !initialTime) return;
 
     const normalizedInitial = normalizeToHHMM(initialTime);
     if (!normalizedInitial) return;
 
-    // Si ya existe en timeSlots, no hacemos nada
     setTimeSlots((prev) => {
       if (prev.some((s) => s.time === normalizedInitial)) return prev;
-      // insertarlo al inicio (no ordenado aún); el fetch posterior reordenará
       const optimistic: TimeSlotStatus = {
         time: normalizedInitial,
         isAvailable: true,
       };
-      // Si no hay selección de hora, preseleccionamos optimísticamente
       if (!selectedTime) {
         setSelectedTime(normalizedInitial);
         setCustomTime(normalizedInitial);
@@ -230,10 +242,8 @@ export function DateTimeSelectorCard({
       }
       return [optimistic, ...prev];
     });
-    // Nota: el fetch que viene después reemplazará timeSlots con la lista definitiva.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProfessional?.id, selectedDate, initialTime]);
-
   // Cargar y filtrar horarios disponibles
   useEffect(() => {
     if (!selectedProfessional || !selectedDate) {
@@ -251,6 +261,8 @@ export function DateTimeSelectorCard({
     findPeriod(selectedProfessional.id.toString(), selectedDate, "day")
       .then((result: any) => {
         if ("data" in result && result.data) {
+          // Guardamos la bandera global allowOverlap que viene en la respuesta
+          const globalAllowOverlap = result.data.allowOverlap ?? false;
           const daySchedule = result.data.schedule.find(
             (day: any) => day.date === selectedDate
           );
@@ -266,10 +278,11 @@ export function DateTimeSelectorCard({
                 )
               : rawOccupied.slice(); // clon
 
-            // Creamos una copia del daySchedule que usaremos para validaciones (ocupado filtrado)
+            // dayScheduleForValidation incluirá allowOverlap para que validaciones lo usen
             const dayScheduleForValidation = {
               ...daySchedule,
               occupiedSlots: filteredOccupied,
+              allowOverlap: globalAllowOverlap,
             };
 
             // Normalizamos initialTime a HH:MM para posibles inserciones
@@ -304,7 +317,7 @@ export function DateTimeSelectorCard({
 
             const totalDuration = getTotalDuration();
 
-            // Si no hay servicios seleccionados, mostrar todos los horarios disponibles tal cual vienen (pero usando availableHoursForRender)
+            // Si no hay servicios seleccionados, mostrar todos los horarios disponibles tal cual vienen
             if (totalDuration === 0) {
               const slots: TimeSlotStatus[] = availableHoursForRender.map(
                 (hour: string) => ({
@@ -318,33 +331,39 @@ export function DateTimeSelectorCard({
               return;
             }
 
-            // Filtrar horarios válidos considerando la duración total, usando occupiedSlots filtrados
+            // --- NUEVA LÓGICA: cuando allowOverlap === true mostramos TODAS las availableHours (siempre que no se extiendan fuera del horario laboral),
+            // marcando aquellas que solapan con occupiedSlots con overlaps=true y mostrando la razón.
+            // Cuando allowOverlap === false, mantenemos el comportamiento previo: sólo permitir slots que no solapen y que quepan.
             const validSlots: TimeSlotStatus[] = availableHoursForRender.map(
               (hour: string) => {
                 const validation = isTimeSlotValid(
                   hour,
                   totalDuration,
                   dayScheduleForValidation.occupiedSlots,
-                  dayScheduleForValidation.workingHours
+                  dayScheduleForValidation.workingHours,
+                  dayScheduleForValidation.allowOverlap
                 );
 
+                // Si allowOverlap === true, isTimeSlotValid devolverá isValid:true y overlaps:true para solapamientos.
+                // En cualquier caso, respetamos la validación sobre horario laboral (endMinutes > workEnd) y bloqueamos esos.
                 return {
                   time: hour,
                   isAvailable: validation.isValid,
                   reason: validation.reason,
+                  overlaps: validation.overlaps,
                 };
               }
             );
 
-            // Ordenar por hora ascendente (aunque availableHoursForRender ya lo está)
+            // Ordenar por hora ascendente
             validSlots.sort(
               (a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)
             );
 
-            // Reemplazamos los slots (esto sobrescribe el optimistic slot si es necesario)
             setTimeSlots(validSlots);
 
-            // Verificar si hay al menos un horario válido
+            // Si allowOverlap === true y hay slots que sólo solapan (isAvailable true but overlaps true), no consideramos esto como "no hay horarios".
+            // Sólo mostramos mensaje de error si no existe ningún slot isAvailable === true.
             const hasValidSlots = validSlots.some((slot) => slot.isAvailable);
             if (!hasValidSlots) {
               setHoursError(
@@ -394,19 +413,20 @@ export function DateTimeSelectorCard({
       setCustomTimeValid(true);
       setCustomTimeError(null);
     } else if (normalizedInitial && !selectedTime && scheduleData) {
-      // En caso el slot no esté en los timeSlots, intentamos validar manualmente usando scheduleData (filtrada)
+      // Intentamos validar manualmente usando scheduleData (filtrada)
       const totalDuration = getTotalDuration();
       const manualValidation = isTimeSlotValid(
         normalizedInitial,
         totalDuration,
         scheduleData.occupiedSlots,
-        scheduleData.workingHours
+        scheduleData.workingHours,
+        scheduleData.allowOverlap
       );
       if (manualValidation.isValid) {
         setSelectedTime(normalizedInitial);
         setCustomTime(normalizedInitial);
         setCustomTimeValid(true);
-        setCustomTimeError(null);
+        setCustomTimeError(manualValidation.reason || null);
       }
     }
   }, [timeSlots, initialTime, selectedTime, scheduleData]);
@@ -436,7 +456,8 @@ export function DateTimeSelectorCard({
       setSelectedTime(time);
       setCustomTime(time);
       setCustomTimeValid(true);
-      setCustomTimeError(null);
+      // Si el slot tiene overlaps true, mostramos la razón como aviso (pero la selección sigue permitida)
+      setCustomTimeError(slot.overlaps ? slot.reason || null : null);
     }
   };
 
@@ -533,10 +554,19 @@ export function DateTimeSelectorCard({
                     </div>
                   )}
                 </div>
+
+                {/* Mostrar mensaje: si la hora es válida pero tiene reason (overlap permitido), mostrar warning en amarillo.
+                    Si la hora no es válida, mostrar error en rojo (comportamiento previo). */}
                 {customTime && customTimeError && (
-                  <p className="text-xs text-red-500">{customTimeError}</p>
+                  <p
+                    className={`text-xs ${
+                      customTimeValid ? "text-yellow-700" : "text-red-500"
+                    }`}
+                  >
+                    {customTimeError}
+                  </p>
                 )}
-                {customTime && customTimeValid && (
+                {customTime && customTimeValid && !customTimeError && (
                   <p className="text-xs text-green-500">✓ Hora disponible</p>
                 )}
               </div>
@@ -573,9 +603,20 @@ export function DateTimeSelectorCard({
                       >
                         {slot.time}
                       </button>
+
+                      {/* Si NO está disponible y hay razón -> tooltip roja (como antes) */}
                       {!slot.isAvailable && slot.reason && (
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-red-500 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
                           {slot.reason}
+                        </div>
+                      )}
+
+                      {/* Si está disponible pero tiene reason y overlaps === true -> mostrar warning (amarillo) */}
+                      {slot.isAvailable && slot.overlaps && slot.reason && (
+                        <div className="mt-1 text-center">
+                          <p className="text-xs text-yellow-700">
+                            {slot.reason}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -588,7 +629,9 @@ export function DateTimeSelectorCard({
                 <strong>Duración de la cita:</strong> {durationText}
                 <br />
                 <span className="text-xs">
-                  Mostrando solo horarios que permiten agendar la cita completa.
+                  Si el profesional permite traslapes, todas las horas
+                  disponibles se muestran y se indicará cuando una hora
+                  seleccionada solapa con otra cita.
                 </span>
               </div>
             </div>
