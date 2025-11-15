@@ -61,6 +61,21 @@ interface LocalFormData {
   status: string;
 }
 
+// Helper para obtener el nombre del cliente de forma segura
+const getClientFullName = (client: any): string => {
+  return client?.fullName || client?.name || client?.firstName || "";
+};
+
+// Helper para obtener el email del cliente de forma segura
+const getClientEmail = (client: any): string => {
+  return client?.email || "";
+};
+
+// Helper para obtener el teléfono del cliente de forma segura
+const getClientPhone = (client: any): string => {
+  return client?.phone || client?.phoneNumber || "";
+};
+
 export default function EditAppointmentClient({
   appointment,
   clients,
@@ -153,11 +168,9 @@ export default function EditAppointmentClient({
 
   // --- formData local (strings) ---
   const [formData, setFormData] = useState<LocalFormData>({
-    clientName: selectedClient?.fullName || appointment.client.fullName || "",
-    pacientemail:
-      selectedClient?.email || (appointment as any).pacientemail || "",
-    clientPhone:
-      selectedClient?.phone || (appointment as any).clientPhone || "",
+    clientName: getClientFullName(selectedClient || appointment.client),
+    pacientemail: getClientEmail(selectedClient || appointment.client),
+    clientPhone: getClientPhone(selectedClient || appointment.client),
     professionalId:
       selectedProfessional?.id?.toString() ||
       appointment.professional.id?.toString() ||
@@ -279,9 +292,9 @@ export default function EditAppointmentClient({
     setSelectedClient(client);
     setFormData((prev) => ({
       ...prev,
-      clientName: client.fullName,
-      pacientemail: client.email,
-      clientPhone: client.phone,
+      clientName: getClientFullName(client),
+      pacientemail: getClientEmail(client),
+      clientPhone: getClientPhone(client),
     }));
     setShowNewClientForm(false);
   };

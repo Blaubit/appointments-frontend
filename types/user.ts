@@ -51,6 +51,7 @@ export type ScheduleResponse = {
   sundayEnd: string | null;
   createdAt: string;
   professional: User;
+  allowOverlap: boolean;
 };
 
 // Roles predefinidos del sistema

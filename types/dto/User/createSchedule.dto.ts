@@ -14,4 +14,5 @@ export interface CreateScheduleDto {
   saturdayEnd: string | null;
   sundayStart: string | null;
   sundayEnd: string | null;
+  allowOverlap?: boolean;
 }

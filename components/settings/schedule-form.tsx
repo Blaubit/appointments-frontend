@@ -25,11 +25,11 @@ const defaultScheduleSettings: ScheduleSettings = {
   bufferTime: 15,
   maxAdvanceBooking: 30,
   workingDays: {
-    monday: { enabled: true, start: "09:00", end: "17:00" },
-    tuesday: { enabled: true, start: "09:00", end: "17:00" },
-    wednesday: { enabled: true, start: "09:00", end: "17:00" },
-    thursday: { enabled: true, start: "09:00", end: "17:00" },
-    friday: { enabled: true, start: "09:00", end: "17:00" },
+    monday: { enabled: false, start: "09:00", end: "17:00" },
+    tuesday: { enabled: false, start: "09:00", end: "17:00" },
+    wednesday: { enabled: false, start: "09:00", end: "17:00" },
+    thursday: { enabled: false, start: "09:00", end: "17:00" },
+    friday: { enabled: false, start: "09:00", end: "17:00" },
     saturday: { enabled: false, start: "09:00", end: "13:00" },
     sunday: { enabled: false, start: "09:00", end: "13:00" },
   },
@@ -105,6 +105,12 @@ export function ScheduleForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Nuevo estado para allowOverlap (si el profesional permite traslapar citas)
+  const [allowOverlap, setAllowOverlap] = useState<boolean>(
+    // initialSettings may or may not contain allowOverlap; use a safe cast
+    (initialSettings as any)?.allowOverlap ?? false
+  );
+
   // Estado para el dialog
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -162,9 +168,12 @@ export function ScheduleForm({
 
         if ("data" in result) {
           setScheduleSettings(mapAvailabilitiesToScheduleSettings(result.data));
+          // Si el backend retorna allowOverlap, sincronizamos el estado del switch
+          setAllowOverlap(result.data.allowOverlap ?? false);
         } else {
           // Si la respuesta no contiene data, dejamos el default y avisamos
           setScheduleSettings(defaultScheduleSettings);
+          setAllowOverlap(false);
           toast({
             title: "No hay horarios",
             description:
@@ -182,6 +191,7 @@ export function ScheduleForm({
           variant: "destructive",
         });
         setScheduleSettings(defaultScheduleSettings);
+        setAllowOverlap(false);
       } finally {
         setIsLoading(false);
       }
@@ -207,7 +217,11 @@ export function ScheduleForm({
     }));
   };
 
-  function mapToDto(settings: ScheduleSettings, professionalId: string) {
+  function mapToDto(
+    settings: ScheduleSettings,
+    professionalId: string,
+    allowOverlap?: boolean
+  ) {
     return {
       professionalId,
       mondayStart: settings.workingDays.monday.enabled
@@ -252,6 +266,7 @@ export function ScheduleForm({
       sundayEnd: settings.workingDays.sunday.enabled
         ? settings.workingDays.sunday.end
         : null,
+      allowOverlap: !!allowOverlap,
     };
   }
 
@@ -261,7 +276,11 @@ export function ScheduleForm({
       return;
     }
     setIsLoading(true);
-    const dto = mapToDto(scheduleSettings, selectedProfessional.id);
+    const dto = mapToDto(
+      scheduleSettings,
+      selectedProfessional.id,
+      allowOverlap
+    );
     try {
       const result = await updateSchedule(dto);
 
@@ -437,6 +456,30 @@ export function ScheduleForm({
                   </div>
                 )
               )}
+            </div>
+          </div>
+
+          {/* Opción allowOverlap */}
+          <div className="pt-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <Switch
+                  checked={allowOverlap}
+                  onCheckedChange={(checked) =>
+                    isEditing && setAllowOverlap(checked)
+                  }
+                  disabled={!isEditing}
+                />
+                <div>
+                  <span className="text-sm font-medium">
+                    Permitir traslape de citas
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Si está activado, este profesional acepta citas que se
+                    solapen.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 

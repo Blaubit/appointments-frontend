@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ScheduleResponse, OccupiedSlot, PeriodResponse } from "@/types";
+import { OccupiedSlot, PeriodResponse } from "@/types";
 
 type SlotWithDate = OccupiedSlot & { date: string };
 
@@ -25,12 +25,6 @@ function generateHourLines(start: number, end: number, stepMinutes = 30) {
 function timeStringToMinutes(timeString: string): number {
   const [hours, minutes] = timeString.split(":").map(Number);
   return hours * 60 + minutes;
-}
-
-function minutesToTimeString(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 }
 
 function isTimeWithinWorkingHours(
@@ -108,7 +102,123 @@ function positionToTime(position: number, visualStartHour: number): string {
   const finalHours = roundedMinutes >= 60 ? hours + 1 : hours;
   const finalMinutes = roundedMinutes >= 60 ? 0 : roundedMinutes;
 
-  return `${finalHours.toString().padStart(2, "0")}:${finalMinutes.toString().padStart(2, "0")}`;
+  return `${finalHours.toString().padStart(2, "0")}:${finalMinutes
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+/**
+ * computeSlotLayouts
+ * - Agrupa las citas que se solapan (clusters).
+ * - Dentro de cada cluster asigna columnas (colIndex) usando un algoritmo greedy.
+ * - Devuelve para cada slot: top, height, colIndex y columnsCount para renderizar lado a lado.
+ */
+function computeSlotLayouts(
+  slots: any[],
+  visualStartHour: number
+): Array<
+  {
+    appointmentId: string;
+    startTime: string;
+    endTime: string;
+    clientName?: string;
+    serviceName?: string;
+    top: number;
+    height: number;
+    colIndex: number;
+    columnsCount: number;
+  } & any
+> {
+  if (!slots || slots.length === 0) return [];
+
+  // Convertir y ordenar por inicio en minutos
+  const normalized = slots
+    .map((s) => {
+      const start = s.startTime.slice(0, 5);
+      const end = s.endTime ? s.endTime.slice(0, 5) : s.startTime.slice(0, 5);
+      const startMin = timeStringToMinutes(start);
+      const endMin = timeStringToMinutes(end);
+      return { ...s, start, end, startMin, endMin };
+    })
+    .sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+
+  // Construir clusters (grupos de solapamiento)
+  const groups: any[][] = [];
+  let currentGroup: any[] = [];
+  let currentGroupEnd = -Infinity;
+
+  for (const slot of normalized) {
+    if (currentGroup.length === 0) {
+      currentGroup.push(slot);
+      currentGroupEnd = slot.endMin;
+    } else {
+      if (slot.startMin < currentGroupEnd) {
+        // Solapa -> agregamos al grupo
+        currentGroup.push(slot);
+        currentGroupEnd = Math.max(currentGroupEnd, slot.endMin);
+      } else {
+        // No solapa -> cerrar grupo y empezar nuevo
+        groups.push(currentGroup);
+        currentGroup = [slot];
+        currentGroupEnd = slot.endMin;
+      }
+    }
+  }
+  if (currentGroup.length > 0) groups.push(currentGroup);
+
+  const layouts: any[] = [];
+
+  // Para cada grupo asignar columnas
+  for (const group of groups) {
+    // columnsEndTimes almacena el endMin de cada columna
+    const columnsEndTimes: number[] = [];
+
+    // recorremos los slots por startMin asc
+    for (const slot of group) {
+      // buscar columna libre
+      let assignedCol = -1;
+      for (let ci = 0; ci < columnsEndTimes.length; ci++) {
+        if (columnsEndTimes[ci] <= slot.startMin) {
+          assignedCol = ci;
+          break;
+        }
+      }
+      if (assignedCol === -1) {
+        // crear nueva columna
+        columnsEndTimes.push(slot.endMin);
+        assignedCol = columnsEndTimes.length - 1;
+      } else {
+        columnsEndTimes[assignedCol] = slot.endMin;
+      }
+
+      // top y height en px usando funciones existentes
+      const top = timeToPosition(slot.start, visualStartHour);
+      const durationMinutes = slot.endMin - slot.startMin;
+      const height = Math.max((durationMinutes / 60) * 80, 40);
+
+      layouts.push({
+        ...slot,
+        top,
+        height,
+        colIndex: assignedCol,
+        columnsCount: columnsEndTimes.length,
+      });
+    }
+
+    // Ajustar columnsCount de todos los slots del grupo al máximo final del grupo.
+    const maxCols = Math.max(
+      ...layouts
+        .filter((l) => group.some((g) => g.appointmentId === l.appointmentId))
+        .map((l) => l.columnsCount)
+    );
+    for (const l of layouts) {
+      if (group.some((g) => g.appointmentId === l.appointmentId)) {
+        l.columnsCount = maxCols;
+      }
+    }
+  }
+
+  return layouts;
 }
 
 export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
@@ -168,6 +278,9 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
         date: daySchedule.date,
       }))
     : [];
+
+  // Pre-computar layouts que dividen visualmente las citas que se solapan
+  const slotLayouts = computeSlotLayouts(slots, visualStartHour);
 
   const freeAreas = getFreeAreas(slots, visualStartHour, visualEndHour);
 
@@ -247,34 +360,14 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
     }
   }
 
-  if (!daySchedule || !hasWorkingHours) {
-    return (
-      <div className="overflow-hidden">
-        <div className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm mx-auto min-h-[600px] flex items-center justify-center">
-          <div className="text-center p-8">
-            <div className="text-gray-400 dark:text-gray-500 text-lg mb-2">
-              📅
-            </div>
-            <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
-              No hay horarios laborales configurados
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Este día no tiene horarios de trabajo establecidos
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const containerHeight = Math.max(hourLines.length * 40, 600);
-
-  if (filteredAvailableHours.length === 0) {
+  // Mostrar overlay de "No hay horarios" sólo cuando no hay availableHours *y* no hay citas ocupadas.
+  // Esto evita bloquear la vista cuando el backend no devuelve availableHours pero sí hay citas (por ejemplo cuando allowOverlap = false).
+  if (filteredAvailableHours.length === 0 && slots.length === 0) {
     return (
       <div className="overflow-hidden">
         <div
           className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm mx-auto"
-          style={{ height: `${containerHeight}px` }}
+          style={{ height: `${Math.max(hourLines.length * 40, 600)}px` }}
         >
           {/* Líneas de hora */}
           <div className="absolute left-0 w-full z-0 pointer-events-none">
@@ -307,78 +400,7 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
             ))}
           </div>
 
-          {/* Slots ocupados */}
-          <div className="relative w-full h-full z-20">
-            {slots.map((slot: any) => {
-              const top = timeToPosition(
-                slot.startTime.slice(0, 5),
-                visualStartHour
-              );
-              const end = slot.endTime
-                ? slot.endTime.slice(0, 5)
-                : slot.startTime.slice(0, 5);
-              const durationMinutes =
-                parseInt(end.split(":")[0]) * 60 +
-                parseInt(end.split(":")[1]) -
-                (parseInt(slot.startTime.split(":")[0]) * 60 +
-                  parseInt(slot.startTime.split(":")[1]));
-              const slotHeight = Math.max((durationMinutes / 60) * 80, 40);
-              const isHovered = hoverSlotId === slot.appointmentId;
-
-              return (
-                <div
-                  key={slot.appointmentId}
-                  data-slot="true"
-                  style={{
-                    position: "absolute",
-                    left: "70px",
-                    top: `${top}px`,
-                    width: "calc(100% - 80px)",
-                    height: `${slotHeight}px`,
-                    zIndex: 15,
-                    overflow: "hidden",
-                    boxShadow: isHovered
-                      ? "0 4px 24px rgba(0,0,128,0.30)"
-                      : "0 2px 12px rgba(0,0,0,0.15)",
-                    transform: isHovered ? "scale(1.04)" : "scale(1)",
-                    transition: "all 0.18s cubic-bezier(.4,2,.3,1)",
-                    pointerEvents: "auto",
-                  }}
-                  className={`
-                    bg-blue-500 dark:bg-blue-700
-                    border-l-4 border-blue-600 dark:border-blue-400
-                    rounded-xl
-                    px-4 py-3
-                    mb-2
-                    cursor-pointer
-                    flex flex-row items-center justify-between
-                    hover:bg-blue-600 dark:hover:bg-blue-800
-                    text-white
-                  `}
-                  onClick={() => onSlotClick && onSlotClick(slot)}
-                  tabIndex={0}
-                  onMouseEnter={() => setHoverSlotId(slot.appointmentId)}
-                  onMouseLeave={() => setHoverSlotId(null)}
-                >
-                  <div className="flex flex-col text-left w-2/3">
-                    <div className="font-bold text-lg truncate">
-                      {slot.clientName}
-                    </div>
-                    <div className="truncate text-base font-medium">
-                      {slot.serviceName}
-                    </div>
-                  </div>
-                  <div className="text-right w-1/3 pl-4">
-                    <div className="text-base font-semibold">
-                      {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mensaje superpuesto cuando no hay horas disponibles */}
+          {/* Mensaje superpuesto cuando no hay horas disponibles y tampoco hay citas */}
           <div className="absolute inset-0 flex items-center justify-center z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
             <div className="text-center p-8">
               <div className="text-gray-400 dark:text-gray-500 text-lg mb-2">
@@ -408,12 +430,12 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
     );
   }
 
-  // Renderizado normal cuando hay horas disponibles
+  // Renderizado normal cuando hay horas disponibles o cuando hay citas ocupadas (aunque availableHours esté vacío).
   return (
     <div className="overflow-hidden">
       <div
         className="relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm mx-auto cursor-pointer"
-        style={{ height: `${containerHeight}px` }}
+        style={{ height: `${Math.max(hourLines.length * 40, 600)}px` }}
         onMouseMove={handleMouseMoveCalendar}
         onMouseLeave={handleMouseLeaveCalendar}
         onClick={handleCalendarClick}
@@ -449,78 +471,74 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
           ))}
         </div>
 
-        {/* Slots ocupados */}
+        {/* Slots ocupados: inner container para layout por columnas */}
         <div className="relative w-full h-full z-20">
-          {slots.map((slot: any) => {
-            const top = timeToPosition(
-              slot.startTime.slice(0, 5),
-              visualStartHour
-            );
-            const end = slot.endTime
-              ? slot.endTime.slice(0, 5)
-              : slot.startTime.slice(0, 5);
-            const durationMinutes =
-              parseInt(end.split(":")[0]) * 60 +
-              parseInt(end.split(":")[1]) -
-              (parseInt(slot.startTime.split(":")[0]) * 60 +
-                parseInt(slot.startTime.split(":")[1]));
-            const slotHeight = Math.max((durationMinutes / 60) * 80, 40);
-            const isHovered = hoverSlotId === slot.appointmentId;
+          <div
+            style={{
+              position: "absolute",
+              left: "70px",
+              width: "calc(100% - 80px)",
+              height: "100%",
+              top: 0,
+            }}
+          >
+            {slotLayouts.map((slot) => {
+              const leftPercent =
+                (slot.colIndex / Math.max(1, slot.columnsCount)) * 100;
+              const widthPercent = 100 / Math.max(1, slot.columnsCount);
+              const isHovered = hoverSlotId === slot.appointmentId;
 
-            return (
-              <div
-                key={slot.appointmentId}
-                data-slot="true"
-                style={{
-                  position: "absolute",
-                  left: "70px",
-                  top: `${top}px`,
-                  width: "calc(100% - 80px)",
-                  height: `${slotHeight}px`,
-                  zIndex: 25, // Mayor z-index para que esté sobre las áreas libres
-                  overflow: "hidden",
-                  boxShadow: isHovered
-                    ? "0 4px 24px rgba(0,0,128,0.30)"
-                    : "0 2px 12px rgba(0,0,0,0.15)",
-                  transform: isHovered ? "scale(1.04)" : "scale(1)",
-                  transition: "all 0.18s cubic-bezier(.4,2,.3,1)",
-                  pointerEvents: "auto",
-                }}
-                className={`
-                  bg-blue-500 dark:bg-blue-700
-                  border-l-4 border-blue-600 dark:border-blue-400
-                  rounded-xl
-                  px-4 py-3
-                  mb-2
-                  cursor-pointer
-                  flex flex-row items-center justify-between
-                  hover:bg-blue-600 dark:hover:bg-blue-800
-                  text-white
-                `}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSlotClick && onSlotClick(slot);
-                }}
-                tabIndex={0}
-                onMouseEnter={() => setHoverSlotId(slot.appointmentId)}
-                onMouseLeave={() => setHoverSlotId(null)}
-              >
-                <div className="flex flex-col text-left w-2/3">
-                  <div className="font-bold text-lg truncate">
-                    {slot.clientName}
-                  </div>
-                  <div className="truncate text-base font-medium">
-                    {slot.serviceName}
-                  </div>
-                </div>
-                <div className="text-right w-1/3 pl-4">
-                  <div className="text-base font-semibold">
-                    {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
+              return (
+                <div
+                  key={slot.appointmentId}
+                  data-slot="true"
+                  style={{
+                    position: "absolute",
+                    top: `${slot.top}px`,
+                    left: `${leftPercent}%`,
+                    width: `calc(${widthPercent}% - 8px)`, // pequeño gap
+                    height: `${slot.height}px`,
+                    zIndex: isHovered ? 40 : 25,
+                    overflow: "hidden",
+                    boxShadow: isHovered
+                      ? "0 4px 24px rgba(0,0,128,0.30)"
+                      : "0 2px 12px rgba(0,0,0,0.15)",
+                    transform: isHovered ? "scale(1.02)" : "scale(1)",
+                    transition: "all 0.12s ease",
+                    cursor: "pointer",
+                    marginRight: 8,
+                  }}
+                  className={`
+                    bg-blue-500 dark:bg-blue-700
+                    border-l-4 border-blue-600 dark:border-blue-400
+                    rounded-xl
+                    px-4 py-3
+                    mb-2
+                    text-white
+                  `}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSlotClick && onSlotClick(slot);
+                  }}
+                  tabIndex={0}
+                  onMouseEnter={() => setHoverSlotId(slot.appointmentId)}
+                  onMouseLeave={() => setHoverSlotId(null)}
+                >
+                  <div className="flex flex-col text-left w-full">
+                    <div className="font-bold text-lg truncate">
+                      {slot.clientName}
+                    </div>
+                    <div className="truncate text-base font-medium">
+                      {slot.serviceName}
+                    </div>
+                    <div className="text-right mt-2 text-sm font-semibold">
+                      {slot.start.slice(0, 5)} - {slot.end.slice(0, 5)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* Indicador flotante azul */}
