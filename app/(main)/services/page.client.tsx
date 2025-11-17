@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
 import { ServiceForm } from "@/components/services/service-form";
 import { ServicePagination } from "@/components/service-pagination";
-import type { Service as ServiceType } from "@/types";
+import type { Service as ServiceType, User } from "@/types";
 import deleteService from "@/actions/services/delete";
 import { useDebounceSearch } from "@/hooks/useDebounce";
 import { ServicesHeader } from "@/components/services/ServicesHeader";
@@ -23,12 +23,14 @@ type Props = {
     q: string;
     status: string;
   };
+  user: User;
 };
 
 export default function PageClient({
   services,
   pagination,
   initialSearchParams,
+  user,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,6 +57,12 @@ export default function PageClient({
   const [selectedService, setSelectedService] = useState<ServiceType | null>(
     null
   );
+
+  // Lógica de rol: restringir creación a profesional/secretaria
+  const roleName =
+    (user?.role?.name && String(user.role.name).toLowerCase()) || "";
+  const restrictedCreate =
+    roleName === "profesional" || roleName === "secretaria";
 
   // Función para actualizar filtros en la URL
   const updateFilters = (newFilters: { search?: string; status?: string }) => {
@@ -108,7 +116,6 @@ export default function PageClient({
     setSelectedService(null);
     setIsEditDialogOpen(false);
   };
-  console.log("selectedService", selectedService);
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header
@@ -119,7 +126,12 @@ export default function PageClient({
       />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Card className="p-4">
-          <ServicesHeader onNewService={() => setIsCreateDialogOpen(true)} />
+          {/* Si restrictedCreate es true, no se pasa onNewService */}
+          <ServicesHeader
+            onNewService={
+              !restrictedCreate ? () => setIsCreateDialogOpen(true) : undefined
+            }
+          />
           <div>
             <ServicesFilters
               searchTerm={searchTerm}
@@ -148,6 +160,7 @@ export default function PageClient({
                 onEdit={openEdit}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDelete}
+                user={user}
               />
               {pagination && (
                 <ServicePagination
@@ -167,6 +180,7 @@ export default function PageClient({
                 onEdit={openEdit}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDelete}
+                user={user}
               />
               {pagination && (
                 <ServicePagination
@@ -186,12 +200,14 @@ export default function PageClient({
             isOpen={isCreateDialogOpen}
             onClose={() => setIsCreateDialogOpen(false)}
             onSuccess={handleCreateSuccess}
+            user={user}
           />
           <ServiceForm
             isOpen={isEditDialogOpen}
             onClose={closeEditDialog}
             service={selectedService}
             onSuccess={handleEditSuccess}
+            user={user}
           />
         </Card>
       </div>

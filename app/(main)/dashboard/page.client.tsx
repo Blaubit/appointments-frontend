@@ -63,6 +63,11 @@ export default function DashboardClient({
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
 
+  // Determinar si el usuario tiene un role restringido (profesional o secretaria)
+  const isRestrictedRole = ["profesional", "secretaria"].includes(
+    (user?.role?.name ?? "").toLowerCase()
+  );
+
   // Helpers seguros
   const getInitials = (name?: string) => {
     if (!name) return "";
@@ -142,10 +147,6 @@ export default function DashboardClient({
   };
 
   const handleCloseDialog = () => {
-    setSelectedAppointment(null);
-  };
-  const handleEditAppointment = (_appointment: Appointment) => {
-    // redirigir a /appointments/:id/edit
     setSelectedAppointment(null);
   };
   const handleCancelAppointment = (_appointment: Appointment) => {
@@ -634,15 +635,18 @@ export default function DashboardClient({
                     Servicios
                   </Button>
                 </Link>
-                <Link href="/reports">
-                  <Button
-                    className="w-full justify-start text-sm my-1"
-                    variant="outline"
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Reportes
-                  </Button>
-                </Link>
+                {/* Mostrar Reports solo si el user NO es profesional ni secretaria */}
+                {!isRestrictedRole && (
+                  <Link href="/reports">
+                    <Button
+                      className="w-full justify-start text-sm my-1"
+                      variant="outline"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Reportes
+                    </Button>
+                  </Link>
+                )}
                 {/* Aquí el botón de Bot cuando exista la funcionalidad */}
               </CardContent>
             </Card>

@@ -1,6 +1,7 @@
 import { PageClient } from "./page.client";
 import findAll from "@/actions/appointments/findAll";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
+import { getUser } from "@/actions/auth";
 interface AppointmentsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
@@ -26,7 +27,12 @@ export default async function AppointmentsPage({
 
   const appointmentsResponse = await findAll({ searchParams: urlSearchParams });
   const professionalsResponse = await findAllProfessionals();
+  const getUserResponse = await getUser();
 
+  // Handle errors if any
+  if (!getUserResponse) {
+    return <div>Error loading user</div>;
+  }
   if ("error" in professionalsResponse) {
     return (
       <div>
@@ -49,6 +55,7 @@ export default async function AppointmentsPage({
       meta={appointmentsResponse.meta}
       professionals={professionalsResponse.data}
       stats={appointmentsResponse.stats}
+      currentUser={getUserResponse}
     />
   );
 }

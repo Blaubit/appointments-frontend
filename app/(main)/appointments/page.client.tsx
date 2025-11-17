@@ -38,6 +38,7 @@ interface PageClientProps {
     cancelledCount: number;
     pendingCount: number;
   };
+  currentUser: User;
 }
 
 type ViewMode = "cards" | "table";
@@ -47,6 +48,7 @@ export function PageClient({
   meta,
   professionals,
   stats,
+  currentUser,
 }: PageClientProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const router = useRouter();
@@ -228,7 +230,10 @@ export function PageClient({
                 </div>
               </CardHeader>
               <CardContent>
-                <AppointmentFilters professionals={professionals} />
+                <AppointmentFilters
+                  professionals={professionals}
+                  currentUser={currentUser}
+                />
               </CardContent>
             </Card>
 

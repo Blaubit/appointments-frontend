@@ -1,7 +1,7 @@
 import PageClient from "./page.client";
 import { findAll } from "@/actions/services/findAll";
 import { Service } from "@/types";
-
+import { getUser } from "@/actions/auth/getUser";
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
@@ -33,7 +33,10 @@ export default async function Page({ searchParams }: Props) {
   params.set("limit", limit.toString());
   if (q) params.set("q", q);
   if (status && status !== "all") params.set("status", status);
-
+  const user = await getUser();
+  if (!user) {
+    throw new Error("User not found");
+  }
   const responseServices = await findAll({ searchParams: params });
 
   const services: Service[] = responseServices.data || [];
@@ -41,6 +44,7 @@ export default async function Page({ searchParams }: Props) {
 
   return (
     <PageClient
+      user={user}
       services={services}
       pagination={pagination}
       initialSearchParams={{
