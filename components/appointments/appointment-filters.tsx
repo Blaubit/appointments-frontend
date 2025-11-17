@@ -12,11 +12,13 @@ import { User } from "@/types";
 interface AppointmentFiltersProps {
   className?: string;
   professionals?: User[];
+  currentUser?: User;
 }
 
 export function AppointmentFilters({
   className = "",
   professionals = [],
+  currentUser,
 }: AppointmentFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,9 +51,10 @@ export function AppointmentFilters({
         />
         <AppointmentStatusFilter />
         <AppointmentDateFilter />
-        {professionals.length > 0 && (
+        {(professionals.length > 0 || currentUser) && (
           <AppointmentProfessionalFilter
             professionals={professionals}
+            currentUser={currentUser}
             className="w-full sm:w-auto"
           />
         )}

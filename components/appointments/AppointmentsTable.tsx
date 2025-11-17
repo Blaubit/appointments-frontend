@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { Appointment } from "@/types";
 import { AppointmentActions } from "./appointment-actions";
 import { useState } from "react";
@@ -70,11 +68,18 @@ export function AppointmentsTable({
   >();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const formatDate = (date: Date) => {
+  // Formatea la fecha usando los getters UTC para evitar desplazamientos por zona horaria del navegador.
+  // Acepta tanto Date como string (ISO).
+  const formatDate = (dateInput: Date | string) => {
     try {
-      return format(date, "dd/MM/yyyy", { locale: es });
+      const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+      // Usamos getters UTC para preservar la fecha tal como viene en la representación ISO (evita shift por timezone)
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const year = d.getUTCFullYear();
+      return `${day}/${month}/${year}`;
     } catch {
-      return date;
+      return String(dateInput);
     }
   };
 
@@ -163,7 +168,7 @@ export function AppointmentsTable({
                 <TableCell>
                   <div>
                     <div className="font-medium">
-                      {String(formatDate(appointment.appointmentDate))}
+                      {formatDate(appointment.appointmentDate)}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {appointment.startTime} - {appointment.endTime}
