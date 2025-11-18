@@ -11,10 +11,12 @@ import type { User } from "@/types";
 interface AppointmentProfessionalFilterProps {
   professionals: User[];
   className?: string;
+  currentUser?: User;
 }
 
 export function AppointmentProfessionalFilter({
   professionals,
+  currentUser,
   className = "",
 }: AppointmentProfessionalFilterProps) {
   const router = useRouter();
@@ -23,15 +25,40 @@ export function AppointmentProfessionalFilter({
   const [isOpen, setIsOpen] = useState(false);
 
   const professionalId = searchParams.get("professionalId");
-  const selectedProfessional = professionals.find(
-    (p) => p.id.toString() === professionalId
-  );
+
+  // If there are no professionals provided but there's a currentUser,
+  // we preselect currentUser and make it immutable (can't change/clear).
+  const noProfessionals = professionals.length === 0 && !!currentUser;
+
+  const selectedProfessional = noProfessionals
+    ? currentUser
+    : professionals.find((p) => p.id.toString() === professionalId);
 
   const filteredProfessionals = professionals.filter((professional) =>
     professional.fullName
       .toLowerCase()
       .includes(searchTerm.trim().toLowerCase())
   );
+
+  // Ensure that when we force-select currentUser (noProfessionals),
+  // the professionalId is present in the URL so parent components and
+  // server-side queries see the filter applied.
+  useEffect(() => {
+    if (noProfessionals && currentUser) {
+      const params = new URLSearchParams(searchParams);
+      const currentId = currentUser.id.toString();
+      if (params.get("professionalId") !== currentId) {
+        params.set("professionalId", currentId);
+        params.delete("page"); // Reset pagination when applying filter
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        // Use replace to avoid adding a new history entry, but push is also OK.
+        router.replace(newUrl);
+      }
+    }
+    // We intentionally ignore searchParams in deps to avoid loops;
+    // depend on noProfessionals and currentUser.id only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noProfessionals, currentUser?.id, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -46,6 +73,10 @@ export function AppointmentProfessionalFilter({
   }, []);
 
   const handleProfessionalSelect = (professional: User) => {
+    // If there are no professionals to choose from (we're using currentUser as immutable),
+    // prevent changing selection.
+    if (noProfessionals) return;
+
     const params = new URLSearchParams(searchParams);
     params.set("professionalId", professional.id.toString());
     params.delete("page"); // Reset pagination when filtering
@@ -58,6 +89,9 @@ export function AppointmentProfessionalFilter({
   };
 
   const clearProfessionalFilter = () => {
+    // When currentUser is forced as preselected (no professionals), don't allow clearing.
+    if (noProfessionals) return;
+
     const params = new URLSearchParams(searchParams);
     params.delete("professionalId");
     params.delete("page"); // Reset pagination when clearing filter
@@ -76,7 +110,10 @@ export function AppointmentProfessionalFilter({
               placeholder="Filtrar por profesional..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onFocus={() => setIsOpen(true)}
+              onFocus={() => {
+                // Only open the dropdown if there are professionals to choose from
+                if (!noProfessionals) setIsOpen(true);
+              }}
               className="pl-10 w-full sm:w-64"
             />
           </div>
@@ -127,7 +164,13 @@ export function AppointmentProfessionalFilter({
           )}
         </div>
       ) : (
-        <div className="flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div
+          className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
+            noProfessionals
+              ? "bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+              : "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+          }`}
+        >
           <Avatar className="h-6 w-6">
             <AvatarImage
               src={selectedProfessional.avatar || "/placeholder.svg"}
@@ -139,17 +182,27 @@ export function AppointmentProfessionalFilter({
                 .join("")}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-32">
+          <span
+            className={`text-sm font-medium text-gray-900 dark:text-white truncate max-w-32 ${
+              noProfessionals ? "opacity-90" : ""
+            }`}
+          >
             {selectedProfessional.fullName}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearProfessionalFilter}
-            className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-blue-800"
-          >
-            <X className="h-3 w-3" />
-          </Button>
+
+          {/* If we're in the "no professionals" state (currentUser preselected),
+              do not render the clear button so the selection can't be changed. */}
+          {!noProfessionals && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearProfessionalFilter}
+              className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-blue-800"
+              aria-label="Quitar filtro de profesional"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       )}
     </div>

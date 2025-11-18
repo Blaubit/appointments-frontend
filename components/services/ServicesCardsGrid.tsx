@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Clock, DollarSign } from "lucide-react";
-import type { Service as ServiceType } from "@/types";
+import type { Service as ServiceType, User } from "@/types";
 import { ServiceCardActions } from "./ServiceCardActions";
 import formatCurrency from "@/utils/functions/formatCurrency";
 
@@ -9,11 +9,13 @@ export function ServicesCardsGrid({
   onEdit,
   onToggleStatus,
   onDelete,
+  user,
 }: {
   services: ServiceType[];
   onEdit: (s: ServiceType) => void;
   onToggleStatus: (s: ServiceType) => void;
   onDelete: (id: string) => void;
+  user?: User;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -37,6 +39,7 @@ export function ServicesCardsGrid({
                 onEdit={onEdit}
                 onToggleStatus={onToggleStatus}
                 onDelete={onDelete}
+                user={user}
               />
             </div>
           </CardContent>

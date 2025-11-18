@@ -23,6 +23,7 @@ const ROLE_RESTRICTIONS = {
     "/billing",
     "/support/admin",
     "/support/client",
+    "/reports",
   ],
   admin_empresa: [
     "/bot",

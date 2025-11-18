@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Service as ServiceType } from "@/types";
+import type { Service as ServiceType, User } from "@/types";
 import { ServiceCardActions } from "./ServiceCardActions";
 
 export function ServicesTable({
@@ -15,11 +15,13 @@ export function ServicesTable({
   onEdit,
   onToggleStatus,
   onDelete,
+  user,
 }: {
   services: ServiceType[];
   onEdit: (s: ServiceType) => void;
   onToggleStatus: (s: ServiceType) => void;
   onDelete: (id: string) => void;
+  user?: User;
 }) {
   return (
     <Card>
@@ -45,6 +47,7 @@ export function ServicesTable({
                     onEdit={onEdit}
                     onToggleStatus={onToggleStatus}
                     onDelete={onDelete}
+                    user={user}
                   />
                 </TableCell>
               </TableRow>

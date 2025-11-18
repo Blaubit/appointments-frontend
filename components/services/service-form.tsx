@@ -19,12 +19,14 @@ import type { Service as ServiceType, User } from "@/types";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User as UserIcon } from "lucide-react";
+import { getUser } from "@/actions/auth";
 
 interface ServiceFormProps {
   isOpen: boolean;
   onClose: () => void;
   service?: ServiceType | null;
   onSuccess?: () => void;
+  user: User;
 }
 
 interface FormData {
@@ -39,8 +41,8 @@ export function ServiceForm({
   onClose,
   service,
   onSuccess,
+  user,
 }: ServiceFormProps) {
-  console.log("ServiceForm service:", service);
   const isEditing = !!service;
 
   const [formData, setFormData] = useState<FormData>({
@@ -56,26 +58,59 @@ export function ServiceForm({
   const [loadingProfessionals, setLoadingProfessionals] = useState(true);
 
   useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        name: service?.name || "",
-        durationMinutes: service?.durationMinutes?.toString() || "",
-        price: service?.price?.toString() || "",
-        professionalsIds: service?.professionals?.map((p) => p.id) || [],
-      });
-      setErrors({});
+    // Cuando se abre el dialogo, cargamos los profesionales.
+    // Usamos un async/try-catch para capturar errores y fallback al `user` recibido como prop.
+    if (!isOpen) return;
+
+    let mounted = true;
+
+    const mergeUniqueById = (list: User[], candidate: User) => {
+      const exists = list.some((p) => p.id === candidate.id);
+      return exists ? list : [candidate, ...list];
+    };
+
+    const fetchProfessionals = async () => {
       setLoadingProfessionals(true);
-      findAllProfessionals()
-        .then((result) => {
-          if (result?.data) {
-            setProfessionals(result.data);
-          } else {
-            setProfessionals([]);
-          }
-        })
-        .finally(() => setLoadingProfessionals(false));
-    }
-  }, [service, isOpen]);
+      try {
+        const result = await findAllProfessionals();
+        const data = result?.data ?? [];
+
+        if (Array.isArray(data) && data.length > 0) {
+          // Si el backend devolvió profesionales, asegurar que el `user` también esté presente (evitar duplicados).
+          const merged = mergeUniqueById(data, user);
+          if (mounted) setProfessionals(merged);
+        } else {
+          // Si la respuesta fue vacía, usar el user como fallback.
+          if (mounted) setProfessionals([user]);
+        }
+      } catch (err) {
+        // Si hay un error en la petición, fallback al user y log.
+        console.error(
+          "Error loading professionals, falling back to user:",
+          err
+        );
+        if (mounted) setProfessionals([user]);
+      } finally {
+        if (mounted) setLoadingProfessionals(false);
+      }
+    };
+
+    // Resetear el formulario según el servicio (cuando se abre)
+    setFormData({
+      name: service?.name || "",
+      durationMinutes: service?.durationMinutes?.toString() || "",
+      price: service?.price?.toString() || "",
+      professionalsIds: service?.professionals?.map((p) => p.id) || [],
+    });
+    setErrors({});
+
+    fetchProfessionals();
+
+    return () => {
+      mounted = false;
+    };
+    // incluimos `user` en las dependencias para que cambios en user sean respetados
+  }, [service, isOpen, user]);
 
   const handleClose = () => {
     setErrors({});
@@ -170,7 +205,6 @@ export function ServiceForm({
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
