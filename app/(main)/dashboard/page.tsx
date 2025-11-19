@@ -15,13 +15,14 @@ export default async function DashboardPage({ searchParams }: Props) {
   let user: User | null = null;
   let companyInfo: Company | undefined = undefined;
   let errorMessage: string | undefined = undefined;
-
+  let errorcode: number | undefined = undefined;
   // Obtener citas próximas y estadísticas
   try {
     const response = await upcomingAppointments();
 
     if ("message" in response) {
       errorMessage = response.message || "Error al cargar citas próximas.";
+      errorcode = response.status;
     } else {
       upcomingAppointmentsData = response.data ?? [];
       stats = response.stats;
@@ -65,6 +66,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       user={user}
       clinicInfo={user?.company}
       errorMessage={errorMessage}
+      errorcode={errorcode}
     />
   );
 }

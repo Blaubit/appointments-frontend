@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,6 +43,15 @@ import {
 } from "@/utils/functions/appointmentStatus";
 import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { openWhatsApp } from "@/utils/functions/openWhatsapp";
+import { useRouter } from "next/navigation";
+
+/**
+ * DashboardClient corregido:
+ * - useRouter() se llama DENTRO del componente (antes estaba a nivel top-level -> Invalid hook call)
+ * - No se importan/llaman server-actions directamente desde cliente
+ * - Se agregó handleLogout que llama a /api/logout y luego router.replace("/login")
+ * - La detección de error 401 ahora dispara el logout dentro de useEffect (no en render)
+ */
 
 type Props = {
   upcomingAppointments?: Appointment[];
@@ -50,15 +59,22 @@ type Props = {
   user: User | null;
   clinicInfo?: Company;
   errorMessage?: string;
+  errorcode?: number;
 };
 
 export default function DashboardClient({
-  upcomingAppointments,
+  upcomingAppointments = [],
   appointmentStats,
   user,
   clinicInfo,
   errorMessage,
+  errorcode,
 }: Props) {
+  console.log(errorcode);
+  // Hooks deben estar dentro del componente
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   // Estado para manejar el dialog
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
@@ -67,6 +83,33 @@ export default function DashboardClient({
   const isRestrictedRole = ["profesional", "secretaria"].includes(
     (user?.role?.name ?? "").toLowerCase()
   );
+
+  // logout vía API route (cliente) -> borra cookies en el servidor
+  async function handleLogout() {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await fetch("/api/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      // Redirigir siempre desde el cliente después de intentar logout
+      router.replace("/login");
+      setIsLoggingOut(false);
+    }
+  }
+
+  // Ejecutar logout cuando recibimos un 401 del server (no en render)
+  useEffect(() => {
+    if (errorcode === 401) {
+      handleLogout();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [errorcode]);
 
   // Helpers seguros
   const getInitials = (name?: string) => {
@@ -83,23 +126,17 @@ export default function DashboardClient({
     if (!dateString) return "";
 
     try {
-      // Manejar diferentes formatos de fecha
       let date: Date;
 
-      // Si es un ISO string con timezone
       if (typeof dateString === "string" && dateString.includes("T")) {
-        // Extraer solo la parte de la fecha para evitar cambios de zona horaria
         const datePart = dateString.split("T")[0];
         const [year, month, day] = datePart.split("-").map(Number);
-        // Crear fecha en UTC al mediodía para evitar cambios de día
         date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
       } else if (typeof dateString === "string") {
-        // Formato YYYY-MM-DD simple
         const [year, month, day] = dateString.split("-").map(Number);
         date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
       } else {
-        // Si es un objeto Date
-        date = new Date(dateString);
+        date = new Date(dateString as any);
       }
 
       const today = new Date();
@@ -123,7 +160,6 @@ export default function DashboardClient({
       } else if (appointmentDateUTC.getTime() === tomorrow.getTime()) {
         return "Mañana";
       } else {
-        // Usar formato de fecha en español
         return new Intl.DateTimeFormat("es-ES", {
           day: "2-digit",
           month: "2-digit",
@@ -173,7 +209,8 @@ export default function DashboardClient({
       appointmentStats.pendingCount === 0
     );
   };
-  // Componente para estado vacío de citas
+
+  // Componentes internos (EmptyAppointmentsState, LowActivityMessage) se mantienen
   const EmptyAppointmentsState = () => (
     <div className="text-center py-12">
       <div className="flex justify-center mb-6">
@@ -235,7 +272,6 @@ export default function DashboardClient({
     </div>
   );
 
-  // Componente para mensaje motivacional cuando hay pocas citas
   const LowActivityMessage = () => {
     if (
       appointmentStats &&
@@ -265,7 +301,6 @@ export default function DashboardClient({
     return null;
   };
 
-  // No bloquea toda la página, solo muestra errores en stats y tabla
   const showStatsError = !!errorMessage || !appointmentStats;
   const showAppointmentsError =
     !!errorMessage ||
@@ -298,7 +333,7 @@ export default function DashboardClient({
               </p>
             ))}
         </div>
-        {/* Mensaje de baja actividad */}
+
         {!showStatsError && <LowActivityMessage />}
 
         {/* Stats Cards */}
@@ -341,6 +376,7 @@ export default function DashboardClient({
                   </CardContent>
                 </Link>
               </Card>
+
               <Card className="hover:shadow-lg transition-shadow">
                 <Link href="/appointments">
                   <CardContent className="p-3 sm:p-6">
@@ -362,6 +398,7 @@ export default function DashboardClient({
                   </CardContent>
                 </Link>
               </Card>
+
               <Card className="hover:shadow-lg transition-shadow">
                 <Link href="/appointments">
                   <CardContent className="p-3 sm:p-6">
@@ -383,6 +420,7 @@ export default function DashboardClient({
                   </CardContent>
                 </Link>
               </Card>
+
               <Card className="hover:shadow-lg transition-shadow">
                 <Link href="/appointments">
                   <CardContent className="p-3 sm:p-6">
@@ -407,6 +445,7 @@ export default function DashboardClient({
             </>
           )}
         </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Upcoming Appointments */}
           <div className="lg:col-span-2">
@@ -453,7 +492,6 @@ export default function DashboardClient({
                         className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-3 sm:p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
                         onClick={() => handleViewAppointment(appointment)}
                       >
-                        {/* Avatar and main info */}
                         <div className="flex items-center space-x-3 flex-1 min-w-0">
                           <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                             <AvatarImage
@@ -482,7 +520,7 @@ export default function DashboardClient({
                                 </div>
                               </Badge>
                             </div>
-                            {/* Mostrar todos los servicios (services[]) */}
+
                             <ul className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
                               {Array.isArray(appointment.services) &&
                               appointment.services.length > 0 ? (
@@ -500,6 +538,7 @@ export default function DashboardClient({
                                 <li>No hay servicios</li>
                               )}
                             </ul>
+
                             <div className="flex items-center space-x-3 sm:space-x-4 mt-1">
                               <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                                 <Clock className="h-3 w-3 mr-1" />
@@ -517,7 +556,7 @@ export default function DashboardClient({
                             </div>
                           </div>
                         </div>
-                        {/* Action buttons */}
+
                         <div className="flex space-x-2 sm:flex-shrink-0">
                           <Button
                             variant="outline"
@@ -531,6 +570,7 @@ export default function DashboardClient({
                             <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="ml-1 sm:hidden">Ver</span>
                           </Button>
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -545,6 +585,7 @@ export default function DashboardClient({
                             <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="ml-1 sm:hidden">Llamar</span>
                           </Button>
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -557,9 +598,7 @@ export default function DashboardClient({
                               ) {
                                 openWhatsApp(
                                   appointment.client.phone,
-                                  `Hola, le saluda la clínica del Dr. ${encodeURIComponent(
-                                    appointment.professional.fullName
-                                  )}`
+                                  `Hola, le saluda la clínica del Dr. ${encodeURIComponent(appointment.professional.fullName)}`
                                 );
                               }
                             }}
@@ -574,6 +613,7 @@ export default function DashboardClient({
                         </div>
                       </div>
                     ))}
+
                     <div className="mt-4 sm:mt-6 text-center">
                       <Link href="/appointments">
                         <Button variant="outline" className="w-full text-sm">
@@ -583,7 +623,6 @@ export default function DashboardClient({
                     </div>
                   </div>
                 )}
-                {/* Botón "Ver Todas las Citas" SIEMPRE VISIBLE */}
                 {upcomingAppointments &&
                   upcomingAppointments.length === 0 &&
                   !showAppointmentsError && (
@@ -598,9 +637,9 @@ export default function DashboardClient({
               </CardContent>
             </Card>
           </div>
+
           {/* Quick Actions & Info */}
           <div className="space-y-4 sm:space-y-6">
-            {/* Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg sm:text-xl">
@@ -635,7 +674,6 @@ export default function DashboardClient({
                     Servicios
                   </Button>
                 </Link>
-                {/* Mostrar Reports solo si el user NO es profesional ni secretaria */}
                 {!isRestrictedRole && (
                   <Link href="/reports">
                     <Button
@@ -647,10 +685,9 @@ export default function DashboardClient({
                     </Button>
                   </Link>
                 )}
-                {/* Aquí el botón de Bot cuando exista la funcionalidad */}
               </CardContent>
             </Card>
-            {/* Profile Info */}
+
             <Card>
               <Link href="/settings?tab=business">
                 <CardHeader>
@@ -659,7 +696,6 @@ export default function DashboardClient({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 sm:space-y-6">
-                  {/* Nombre del consultorio */}
                   <div className="flex items-start space-x-3">
                     <Building2 className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
@@ -669,7 +705,7 @@ export default function DashboardClient({
                       </p>
                     </div>
                   </div>
-                  {/* Dirección completa */}
+
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
@@ -680,7 +716,7 @@ export default function DashboardClient({
                       </p>
                     </div>
                   </div>
-                  {/* pais y ciudad */}
+
                   <div className="flex items-start space-x-3">
                     <Globe className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
@@ -691,13 +727,13 @@ export default function DashboardClient({
                       </p>
                     </div>
                   </div>
-                  {/* descripcion */}
+
                   <div className="flex items-start space-x-3">
                     <Phone className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium"> Teléfono </p>
                       <p className="text-xs text-gray-500 break-words">
-                        {clinicInfo?.phones?.[0].phone || "N/A"}
+                        {clinicInfo?.phones?.[0]?.phone || "N/A"}
                       </p>
                     </div>
                   </div>
@@ -707,6 +743,7 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
+
       {/* Dialog de detalles de la cita */}
       <AppointmentDetailsDialog
         appointmentId={selectedAppointment?.id}
