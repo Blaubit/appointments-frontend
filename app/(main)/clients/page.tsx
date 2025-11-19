@@ -31,7 +31,6 @@ export default async function ClientsPage({
   if (search && search.length >= 2) params.set("q", search);
 
   const clients = await findAll({ searchParams: params });
-
   // Calcular estadísticas basadas en pacientes filtrados
 
   return (

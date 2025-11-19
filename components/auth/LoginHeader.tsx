@@ -4,11 +4,10 @@ import { Calendar } from "lucide-react";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface LoginHeaderProps {
-  step: "email" | "password";
   email?: string;
 }
 
-export function LoginHeader({ step, email }: LoginHeaderProps) {
+export function LoginHeader({ email }: LoginHeaderProps) {
   return (
     <CardHeader className="text-center space-y-6 pb-8">
       {/* Logo de Planit */}
@@ -20,10 +19,10 @@ export function LoginHeader({ step, email }: LoginHeaderProps) {
 
       <div>
         <CardTitle className="text-2xl font-normal text-gray-900 dark:text-white mb-2">
-          {step === "email" ? "Inicia sesión" : "Bienvenido"}
+          Inicia sesión
         </CardTitle>
         <CardDescription className="text-base text-gray-600 dark:text-gray-400">
-          {step === "email" ? "Utiliza tu cuenta de Planit" : `Hola ${email}`}
+          {email ? `Hola ${email}` : "Utiliza tu cuenta de Planit"}
         </CardDescription>
       </div>
     </CardHeader>

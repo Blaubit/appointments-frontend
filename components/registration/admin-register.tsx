@@ -84,9 +84,12 @@ export default function UserRegistrationCard({
   showRoleInfo = true,
 }: UserRegistrationCardProps) {
   const updateField = (field: keyof UserData, value: string) => {
+    // Normalizar email a minúsculas al actualizar el campo
+    const normalizedValue =
+      field === "email" ? value.trim().toLowerCase() : value;
     onUserDataChange({
       ...userData,
-      [field]: value,
+      [field]: normalizedValue,
     });
   };
 

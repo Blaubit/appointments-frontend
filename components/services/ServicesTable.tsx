@@ -9,6 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import type { Service as ServiceType, User } from "@/types";
 import { ServiceCardActions } from "./ServiceCardActions";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 export function ServicesTable({
   services,
@@ -40,7 +41,7 @@ export function ServicesTable({
               <TableRow key={s.id}>
                 <TableCell>{s.name}</TableCell>
                 <TableCell>{s.durationMinutes} min</TableCell>
-                <TableCell>Q{s.price}</TableCell>
+                <TableCell>{formatCurrency(Number(s.price))}</TableCell>
                 <TableCell className="text-right">
                   <ServiceCardActions
                     service={s}

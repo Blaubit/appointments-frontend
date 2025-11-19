@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -87,7 +87,12 @@ const COUNTRIES: Record<string, Country> = {
 };
 
 interface PhoneInputProps {
+  // value expected by parent can be:
+  // - raw full: "+50232470635" (best, this will be preserved as the form value)
+  // - or display formatted like "3247 0635" (component will normalize)
   value: string;
+  // onChange will be called with (rawFullPhone, countryCode)
+  // rawFullPhone should be concatenated as "+50232470635" (no spaces)
   onChange: (phone: string, countryCode: string) => void;
   onCountryChange?: (country: Country) => void;
   label?: string;
@@ -96,6 +101,34 @@ interface PhoneInputProps {
   disabled?: boolean;
   error?: string;
   id?: string;
+}
+
+function parseIncomingValue(value: string): {
+  countryCode?: string;
+  localDigits: string;
+} {
+  if (!value) return { countryCode: undefined, localDigits: "" };
+
+  // If value starts with +, try to match known country prefixes (longest match)
+  if (value.startsWith("+")) {
+    const digitsOnly = value.replace(/\D/g, "");
+    // Build list of known country digits
+    const prefixes = Object.values(COUNTRIES)
+      .map((c) => c.countryCode.replace("+", ""))
+      .sort((a, b) => b.length - a.length); // longest first
+    for (const prefix of prefixes) {
+      if (digitsOnly.startsWith(prefix)) {
+        const local = digitsOnly.slice(prefix.length);
+        return { countryCode: `+${prefix}`, localDigits: local };
+      }
+    }
+    // If no known prefix, just strip + and return
+    return { countryCode: "+" + digitsOnly, localDigits: "" };
+  }
+
+  // Otherwise treat value as local: strip non-digits
+  const localDigits = value.replace(/\D/g, "");
+  return { countryCode: undefined, localDigits };
 }
 
 export function PhoneInput({
@@ -109,42 +142,95 @@ export function PhoneInput({
   error,
   id = "phone-input",
 }: PhoneInputProps) {
-  const [selectedCountryCode, setSelectedCountryCode] = useState<string>("GT");
+  const parsed = parseIncomingValue(value);
+  // Determine initial selected country from incoming value if present
+  const initialCountryCode =
+    parsed.countryCode &&
+    Object.values(COUNTRIES).some((c) => c.countryCode === parsed.countryCode)
+      ? Object.values(COUNTRIES).find(
+          (c) => c.countryCode === parsed.countryCode
+        )!.code
+      : "GT";
+
+  const [selectedCountryCode, setSelectedCountryCode] =
+    useState<string>(initialCountryCode);
   const selectedCountry = COUNTRIES[selectedCountryCode];
 
+  // Sync selected country when parent value changes and contains a country code
+  useEffect(() => {
+    if (parsed.countryCode) {
+      const found = Object.values(COUNTRIES).find(
+        (c) => c.countryCode === parsed.countryCode
+      );
+      if (found && found.code !== selectedCountryCode) {
+        setSelectedCountryCode(found.code);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  // Compute display value from incoming value and selected country
+  const computeDisplayValue = (): string => {
+    // If incoming value had an explicit countryCode, use its localDigits and format according to selected country
+    const { localDigits } = parsed;
+    return selectedCountry.format(localDigits);
+  };
+
+  const displayValue = computeDisplayValue();
+
+  const getLocalLimit = (code: string) => {
+    if (code === "GT") return 8;
+    if (code === "US") return 10;
+    if (code === "MX") return 10;
+    if (code === "SV") return 8;
+    if (code === "HN") return 8;
+    return 10;
+  };
+
   const handleCountryChange = (countryCode: string) => {
-    setSelectedCountryCode(countryCode);
     const country = COUNTRIES[countryCode];
+    setSelectedCountryCode(countryCode);
     if (onCountryChange) {
       onCountryChange(country);
     }
-    // Limpiar el número cuando cambia el país
-    onChange("", country.countryCode);
+
+    // Preserve local digits if any from current value, and re-emit with new country
+    const currentParsed = parseIncomingValue(value);
+    const local = currentParsed.localDigits || "";
+    const limited = local.slice(0, getLocalLimit(countryCode));
+    const rawFull = limited ? `${country.countryCode}${limited}` : "";
+    // Emit raw full phone (concatenated) and the country code
+    onChange(rawFull, country.countryCode);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let phoneValue = e.target.value;
 
-    // Remover caracteres no numéricos
+    // Remove non-numeric
     const digitsOnly = phoneValue.replace(/\D/g, "");
 
-    // Limitar según el país
-    let limitedDigits = digitsOnly;
-    if (selectedCountryCode === "GT") {
-      limitedDigits = digitsOnly.slice(0, 8);
-    } else if (selectedCountryCode === "US") {
-      limitedDigits = digitsOnly.slice(0, 10);
-    } else if (selectedCountryCode === "MX") {
-      limitedDigits = digitsOnly.slice(0, 10);
-    } else if (selectedCountryCode === "SV" || selectedCountryCode === "HN") {
-      limitedDigits = digitsOnly.slice(0, 8);
-    }
+    // Limit according to current country
+    const limit = getLocalLimit(selectedCountryCode);
+    const limitedDigits = digitsOnly.slice(0, limit);
 
-    // Aplicar formato
-    const formattedPhone = selectedCountry.format(limitedDigits);
+    // Build raw full (country code + digits, no spaces)
+    const rawFull = limitedDigits
+      ? `${selectedCountry.countryCode}${limitedDigits}`
+      : "";
 
-    onChange(formattedPhone, selectedCountry.countryCode);
+    // Call onChange with raw full + countryCode so parent stores the raw form value
+    onChange(rawFull, selectedCountry.countryCode);
   };
+
+  // Determine maxLength for input (visual), approximate taking separators into account
+  const visualMaxLength =
+    selectedCountryCode === "GT" ||
+    selectedCountryCode === "SV" ||
+    selectedCountryCode === "HN"
+      ? 9
+      : selectedCountryCode === "US"
+        ? 14
+        : 14; // MX etc.
 
   return (
     <div className="space-y-2">
@@ -175,18 +261,12 @@ export function PhoneInput({
           <Input
             id={id}
             type="tel"
-            value={value}
+            value={displayValue}
             onChange={handlePhoneChange}
             placeholder={placeholder}
             disabled={disabled}
             className={error ? "border-red-500" : ""}
-            maxLength={
-              selectedCountryCode === "GT" ||
-              selectedCountryCode === "SV" ||
-              selectedCountryCode === "HN"
-                ? 9
-                : 14
-            }
+            maxLength={visualMaxLength}
           />
         </div>
       </div>
