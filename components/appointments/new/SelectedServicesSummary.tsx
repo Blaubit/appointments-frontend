@@ -1,3 +1,4 @@
+import formatCurrency from "@/utils/functions/formatCurrency";
 import React from "react";
 
 type Service = {
@@ -36,7 +37,7 @@ export const SelectedServicesSummary: React.FC<Props> = ({
             <li key={index} className="flex items-center justify-between">
               <span>{serviceName}</span>
               <span className="text-sm text-gray-500">
-                ${service?.price ?? "0"}
+                {formatCurrency(Number(service?.price ?? "0"))}
               </span>
             </li>
           );
@@ -45,7 +46,9 @@ export const SelectedServicesSummary: React.FC<Props> = ({
       <div className="mt-4 border-t pt-2">
         <div className="flex items-center justify-between">
           <span className="font-medium">Total:</span>
-          <span className="font-bold text-lg">${totalPrice.toFixed(2)}</span>
+          <span className="font-bold text-lg">
+            {formatCurrency(Number(totalPrice.toFixed(2)))}
+          </span>
         </div>
         <div className="flex items-center justify-between mt-1">
           <span>Duración Total:</span>

@@ -29,6 +29,7 @@ import { ServiceSelectorCard } from "@/components/appointments/new/ServiceSelect
 import { AppointmentSuccessDialog } from "@/components/appointments/new/appointmentSuccesDialog";
 import { findProfessionalServices } from "@/actions/services/findProfessionalServices";
 import { DateTimeSelectorCard } from "@/components/appointments/new/DateTimeSelector";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 type Props = {
   clients: Client[];
@@ -474,9 +475,13 @@ export default function PageClient({
                       >
                         <span>{service}</span>
                         <span className="text-sm text-gray-500">
-                          $
-                          {professionalServices.find((s) => s.name === service)
-                            ?.price || "0"}
+                          {formatCurrency(
+                            Number(
+                              professionalServices.find(
+                                (s) => s.name === service
+                              )?.price || "0"
+                            )
+                          )}
                         </span>
                       </li>
                     ))}
@@ -485,7 +490,7 @@ export default function PageClient({
                     <div className="flex items-center justify-between">
                       <span className="font-medium">Total:</span>
                       <span className="font-bold text-lg">
-                        ${totalPrice.toFixed(2)}
+                        {formatCurrency(Number(totalPrice.toFixed(2)))}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mt-1">

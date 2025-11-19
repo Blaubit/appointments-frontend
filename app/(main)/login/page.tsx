@@ -112,7 +112,7 @@ async function checkAuth() {
 // Información adicional que puedes pasar al paciente
 async function getServerMetadata() {
   return {
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toLocaleDateString(),
     environment: process.env.NODE_ENV || "development",
     version: process.env.APP_VERSION || "1.0.0",
   };

@@ -40,6 +40,7 @@ import { getInitials } from "@/utils/functions/getInitials";
 import { update } from "@/actions/appointments/appointmentStatus";
 import { RateClientDialog } from "@/components/client/RateClientDialog";
 import { ClinicalHistoryDialog } from "@/components/client/clinical-history/ClinicalHistoryDialog";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 interface ConsultationPageClientProps {
   appointment: Appointment;
@@ -155,8 +156,8 @@ export default function ConsultationPageClient({
       <ul className="space-y-1">
         {services.map((service, idx) => (
           <li key={service.id || idx}>
-            <strong>{service.name}</strong> - {service.durationMinutes} min - €
-            {service.price}
+            <strong>{service.name}</strong> - {service.durationMinutes} min -
+            {formatCurrency(Number(service.price))}
           </li>
         ))}
       </ul>
@@ -231,7 +232,8 @@ export default function ConsultationPageClient({
                               {service.durationMinutes} min
                             </p>
                             <p className="text-xs text-blue-700 dark:text-blue-300">
-                              Precio: €{service.price || "N/A"}
+                              Precio:{" "}
+                              {formatCurrency(Number(service.price)) || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -380,10 +382,11 @@ export default function ConsultationPageClient({
                             Precio Total:
                           </span>
                           <p className="font-medium">
-                            €
-                            {services.reduce(
-                              (sum, s) => sum + (Number(s.price) || 0),
-                              0
+                            {formatCurrency(
+                              services.reduce(
+                                (sum, s) => sum + (Number(s.price) || 0),
+                                0
+                              )
                             )}
                           </p>
                         </div>
@@ -562,7 +565,7 @@ export default function ConsultationPageClient({
                       </div>
                       <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
                         <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                          €{client.totalSpent || 0}
+                          {formatCurrency(Number(client.totalSpent) || 0)}
                         </div>
                         <div className="text-xs text-gray-600 dark:text-gray-400">
                           Total Gastado

@@ -208,7 +208,7 @@ export function UserForm({
 
         setFormData({
           fullName: data.fullName || "",
-          email: data.email || "",
+          email: data.email ? String(data.email).trim().toLowerCase() : "",
           phone: data.bio ?? data.phone ?? "",
           role: data.role?.id ?? data.role ?? "",
           assignedDoctors: extractAssignedDoctorIds(data),
@@ -250,7 +250,11 @@ export function UserForm({
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Normalizar emails a minúsculas (y trim) al actualizar el estado
+    const normalizedValue =
+      field === "email" ? value.trim().toLowerCase() : value;
+
+    setFormData((prev) => ({ ...prev, [field]: normalizedValue }));
 
     // Limpiar errores cuando el usuario empiece a escribir
     if (validationErrors[field]) {

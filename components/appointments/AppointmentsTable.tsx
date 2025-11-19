@@ -181,7 +181,8 @@ export function AppointmentsTable({
                       <div key={service.id} className="text-sm">
                         <div className="font-medium">{service.name}</div>
                         <div className="text-muted-foreground">
-                          {service.durationMinutes} min - €{service.price}
+                          {service.durationMinutes} min -{" "}
+                          {formatCurrency(Number(service.price))}
                         </div>
                       </div>
                     ))}
