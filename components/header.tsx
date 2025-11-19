@@ -64,7 +64,7 @@ export function Header({
     address: "Calle Falsa 123",
     city: "Ciudad",
     state: "Estado",
-    postal_code: "12345",
+    postalCode: "12345",
     country: "País",
     description: "Empresa de citas por defecto",
     createdAt: "2023-01-01T00:00:00Z",
