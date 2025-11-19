@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import formatCurrency from "@/utils/functions/formatCurrency";
 import { CheckCircle, XCircle, UserX, Clock } from "lucide-react";
 
 export function useAppointmentHelpers() {
@@ -123,8 +124,8 @@ export function useAppointmentHelpers() {
       <ul className="space-y-1">
         {services.map((service, idx) => (
           <li key={service.id || idx}>
-            <strong>{service.name}</strong> - {service.durationMinutes} min - €
-            {service.price}
+            <strong>{service.name}</strong> - {service.durationMinutes} min -
+            {formatCurrency(Number(service.price))}
           </li>
         ))}
       </ul>

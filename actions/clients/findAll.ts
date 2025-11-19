@@ -69,14 +69,35 @@ export async function findAll(
     if (q) params.q = q;
 
     const url = `/companies/${encodeURIComponent(companyId)}/clients`;
+    const statsUrl = `${url}/statistics`;
+    // Hacemos ambas peticiones en paralelo y manejamos fallos de forma aislada
+    const [clientsResult, statsResult] = await Promise.allSettled([
+      axiosInstance.get(url, { params }),
+      axiosInstance.get(statsUrl),
+    ]);
+    if (clientsResult.status === "rejected") {
+      // Si la petición principal falla, lanzamos para que el catch la maneje
+      throw clientsResult.reason;
+    }
 
-    const response = await axiosInstance.get(url, { params });
+    const clientsResponse = clientsResult.value;
+    const statsResponse =
+      statsResult.status === "fulfilled" ? statsResult.value : null;
+
+    if (statsResult.status === "rejected") {
+      console.warn(
+        "findAllClients stats request failed:",
+        (statsResult as any).reason
+      );
+    }
 
     return {
-      data: response.data?.data ?? [],
-      status: response.status,
-      statusText: response.statusText,
-      meta: response.data?.meta ?? FALLBACK_META,
+      data: clientsResponse.data?.data ?? [],
+      status: clientsResponse.status,
+      statusText: clientsResponse.statusText,
+      meta: clientsResponse.data?.meta ?? FALLBACK_META,
+      // agregamos stats (puede ser null si la petición de stats falló)
+      stats: statsResponse?.data ?? null,
     };
   } catch (error: unknown) {
     console.error("findAllClients error:", error);
@@ -88,12 +109,14 @@ export async function findAll(
         status: err.response?.status || 500,
         data: [],
         meta: FALLBACK_META,
+        stats: null,
       };
     } else {
       return {
         message: "An unexpected error occurred.",
         data: [],
         meta: FALLBACK_META,
+        stats: null,
       };
     }
   }
