@@ -53,33 +53,67 @@ export function ClientSelectorCard({
     client.fullName.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Validar número de teléfono
+  // Helper: obtiene solo los dígitos locales (sin prefijo de país)
+  const getLocalDigits = (phone: string, countryCode: string) => {
+    const digitsOnly = (phone || "").replace(/\D/g, "");
+    const countryDigits = (countryCode || "").replace("+", "");
+    if (countryDigits && digitsOnly.startsWith(countryDigits)) {
+      return digitsOnly.slice(countryDigits.length);
+    }
+    // También puede venir sin prefijo, en ese caso digitsOnly ya es local
+    return digitsOnly;
+  };
+
+  // Preparar teléfono para enviar: asegura que venga con +prefijo y solo dígitos después
+  const preparePhoneToSend = (phone: string, countryCode: string) => {
+    const digitsOnly = (phone || "").replace(/\D/g, "");
+    if (!digitsOnly) return "";
+    // Si digitsOnly ya empieza con el código del país (sin +), devuelve con +
+    const countryDigits = (countryCode || "").replace("+", "");
+    if (countryDigits && digitsOnly.startsWith(countryDigits)) {
+      return `+${digitsOnly}`;
+    }
+    // Si no, concatena countryCode + digitsOnly
+    return `${countryCode}${digitsOnly}`;
+  };
+
+  // Validar número de teléfono (ahora valida únicamente los dígitos locales)
   const validatePhone = (phone: string, countryCode: string): boolean => {
-    // Remover espacios para contar dígitos
-    const digitsOnly = phone.replace(/\D/g, "");
+    const localDigits = getLocalDigits(phone, countryCode);
+
+    if (!localDigits) {
+      setPhoneError("El teléfono es requerido");
+      return false;
+    }
 
     if (countryCode === "+502") {
-      // Guatemala: 8 dígitos
-      if (digitsOnly.length !== 8) {
+      // Guatemala: 8 dígitos locales
+      if (localDigits.length !== 8) {
         setPhoneError("El número de Guatemala debe tener 8 dígitos");
         return false;
       }
     } else if (countryCode === "+1") {
-      // USA: 10 dígitos
-      if (digitsOnly.length !== 10) {
+      // USA: 10 dígitos locales
+      if (localDigits.length !== 10) {
         setPhoneError("El número de USA debe tener 10 dígitos");
         return false;
       }
     } else if (countryCode === "+52") {
-      // Mexico: 10 dígitos
-      if (digitsOnly.length !== 10) {
-        setPhoneError("El número de Mexico debe tener 10 dígitos");
+      // Mexico: 10 dígitos locales
+      if (localDigits.length !== 10) {
+        setPhoneError("El número de México debe tener 10 dígitos");
         return false;
       }
     } else if (countryCode === "+503" || countryCode === "+504") {
-      // El Salvador / Honduras: 8 dígitos
-      if (digitsOnly.length !== 8) {
+      // El Salvador / Honduras: 8 dígitos locales
+      if (localDigits.length !== 8) {
         setPhoneError("El número debe tener 8 dígitos");
+        return false;
+      }
+    } else {
+      // Fallback: aceptar entre 7 y 15 dígitos locales
+      if (localDigits.length < 7 || localDigits.length > 15) {
+        setPhoneError("El número debe tener entre 7 y 15 dígitos");
         return false;
       }
     }
@@ -101,9 +135,10 @@ export function ClientSelectorCard({
 
     setIsCreating(true);
     try {
+      const phoneToSend = preparePhoneToSend(form.phone, form.countryCode);
       const result = await createClient({
         fullName: form.fullName,
-        phone: form.phone,
+        phone: phoneToSend,
         email: form.email,
       });
       if ("data" in result) {
@@ -182,8 +217,7 @@ export function ClientSelectorCard({
                       </p>
                       <p className="text-sm text-gray-500">{client.email}</p>
                       <p className="text-xs text-gray-400">
-                        {client.totalAppointments} citas • Última visita:{" "}
-                        {client.createdAt}
+                        {client.totalAppointments} citas
                       </p>
                     </div>
                   </div>

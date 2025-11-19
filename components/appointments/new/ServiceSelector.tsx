@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { CheckCircle, Clock, DollarSign, AlertCircle } from "lucide-react";
 import { Service } from "@/types";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 type Props = {
   services: Service[];
@@ -73,7 +74,7 @@ export const ServiceSelectorCard: React.FC<Props> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {services.map((service) => {
               const isSelected = selectedServices.includes(
-                service.id.toString(),
+                service.id.toString()
               );
               return (
                 <div
@@ -104,8 +105,7 @@ export const ServiceSelectorCard: React.FC<Props> = ({
                       {formatDuration(service.durationMinutes)}
                     </span>
                     <span className="flex items-center font-medium">
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      {service.price}
+                      {formatCurrency(Number(service.price))}
                     </span>
                   </div>
                 </div>

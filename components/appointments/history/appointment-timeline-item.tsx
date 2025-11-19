@@ -11,6 +11,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { Appointment } from "@/types/appointments";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 interface AppointmentTimelineItemProps {
   appointment: Appointment;
@@ -221,13 +222,14 @@ export function AppointmentTimelineItem({
               <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
                 <div className="flex items-center gap-2">
                   <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                    €
-                    {Array.isArray(appointment.services)
-                      ? appointment.services.reduce(
-                          (sum, s) => sum + Number(s.price || 0),
-                          0
-                        )
-                      : 0}
+                    {formatCurrency(
+                      Array.isArray(appointment.services)
+                        ? appointment.services.reduce(
+                            (sum, s) => sum + Number(s.price || 0),
+                            0
+                          )
+                        : 0
+                    )}
                   </span>
                   <span className="text-xs text-gray-500">
                     •{" "}

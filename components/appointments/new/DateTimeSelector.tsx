@@ -12,6 +12,7 @@ import { CalendarCard } from "@/components/calendar-card";
 import { Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { findPeriod } from "@/actions/calendar/findPeriod";
 import type { Service, User } from "@/types";
+import formatCurrency from "@/utils/functions/formatCurrency";
 
 type Props = {
   selectedProfessional: User | null;

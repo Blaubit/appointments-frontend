@@ -4,16 +4,22 @@ import type React from "react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Mail,
+  Loader2,
+  AlertCircle,
+  User,
+  Eye,
+  EyeOff,
+  Lock,
+} from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
 import { z } from "zod";
 
-// Importar los nuevos componentes
 import { LoginHeader } from "@/components/auth/LoginHeader";
-import { EmailStep } from "@/components/auth/EmailStep";
-import { PasswordStep } from "@/components/auth/PasswordStep";
 import { LoginFooter } from "@/components/auth/LoginFooter";
 import { ErrorAlert } from "@/components/auth/ErrorAlert";
 
@@ -35,8 +41,6 @@ export default function LoginClient({
   serverAction,
   serverMetadata,
 }: LoginClientProps) {
-  // Estados del paciente
-  const [step, setStep] = useState<"email" | "password">("email");
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
@@ -48,6 +52,7 @@ export default function LoginClient({
     password?: string[];
   }>({});
   const [isLoading, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
 
   // Validación en tiempo real del campo
   const validateField = (field: keyof LoginFormData, value: any) => {
@@ -93,9 +98,17 @@ export default function LoginClient({
 
   // Manejar cambios en los campos
   const handleFieldChange = (field: keyof LoginFormData, value: any) => {
+    // Normalizar email a minúsculas y trim al actualizar el state para consistencia
+    const normalizedValue =
+      field === "email"
+        ? String(value ?? "")
+            .trim()
+            .toLowerCase()
+        : value;
+
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: normalizedValue,
     }));
 
     if (errors.general) {
@@ -103,31 +116,11 @@ export default function LoginClient({
     }
 
     setTimeout(() => {
-      validateField(field, value);
+      validateField(field, normalizedValue);
     }, 300);
   };
 
-  // Manejar siguiente paso (email -> password)
-  const handleNextStep = () => {
-    if (!formData.email.trim()) {
-      setErrors({ email: ["El correo electrónico es requerido"] });
-      return;
-    }
-
-    try {
-      loginSchema.shape.email.parse(formData.email);
-      setErrors((prev) => ({ ...prev, email: undefined }));
-      setStep("password");
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        setErrors({
-          email: error.errors.map((e) => e.message),
-        });
-      }
-    }
-  };
-
-  // ✅ Manejar envío del formulario - Ahora es async
+  // Submit único (email + password en la misma página)
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
@@ -141,7 +134,11 @@ export default function LoginClient({
     startTransition(async () => {
       try {
         const formDataObj = new FormData();
-        formDataObj.append("email", formData.email);
+        // Aseguramos normalización final antes de enviar
+        formDataObj.append(
+          "email",
+          String(formData.email).trim().toLowerCase()
+        );
         formDataObj.append("password", formData.password);
         if (formData.remember) {
           formDataObj.append("remember", "on");
@@ -183,7 +180,7 @@ export default function LoginClient({
         {/* Header con botón de regreso y theme toggle */}
         <div className="flex justify-between items-center mb-8">
           <Link href="/">
-            <Button variant="ghost" size="sm" disabled={isLoading}>
+            <Button variant="ghost" size="sm" disabled={isLoading as boolean}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver al inicio
             </Button>
@@ -193,44 +190,174 @@ export default function LoginClient({
 
         {/* Card principal */}
         <Card className="shadow-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
-          <LoginHeader step={step} email={formData.email} />
+          {/* Mantengo LoginHeader para consistencia visual */}
+          <LoginHeader email={formData.email} />
 
           <CardContent className="px-8 pb-8">
             {/* Mostrar error general */}
             {errors.general && <ErrorAlert message={errors.general} />}
 
-            {step === "email" ? (
-              <EmailStep
-                email={formData.email}
-                onEmailChange={(email) => handleFieldChange("email", email)}
-                onNext={handleNextStep}
-                hasError={hasFieldError("email")}
-                errorMessage={getFieldError("email")}
-                isLoading={isLoading}
-              />
-            ) : (
-              <PasswordStep
-                email={formData.email}
-                password={formData.password}
-                remember={formData.remember}
-                onPasswordChange={(password) =>
-                  handleFieldChange("password", password)
-                }
-                onRememberChange={(remember) =>
-                  handleFieldChange("remember", remember)
-                }
-                onBackToEmail={() => setStep("email")}
-                onSubmit={handleSubmit} // ✅ Ahora el tipo coincide
-                hasError={hasFieldError("password")}
-                errorMessage={getFieldError("password")}
-                isLoading={isLoading}
-              />
-            )}
+            {/* Formulario único con email, password y recordar */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email */}
+              <div className="space-y-2">
+                <label htmlFor="email" className="sr-only">
+                  Correo electrónico
+                </label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200">
+                    <Mail
+                      className={`h-5 w-5 ${
+                        hasFieldError("email")
+                          ? "text-red-500"
+                          : formData.email
+                            ? "text-blue-500"
+                            : "text-gray-400 group-focus-within:text-blue-500"
+                      }`}
+                    />
+                  </div>
+
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Correo electrónico"
+                    value={formData.email}
+                    onChange={(e) => handleFieldChange("email", e.target.value)}
+                    className={`
+                      h-14 pl-14 pr-4 text-base font-medium w-full
+                      bg-white dark:bg-gray-800
+                      border-2 rounded-xl
+                      transition-all duration-300 ease-in-out
+                      placeholder:text-gray-400 placeholder:font-normal
+                      focus:outline-none focus:ring-4
+                      ${
+                        hasFieldError("email")
+                          ? "border-red-400 bg-red-50 dark:bg-red-950/20 focus:border-red-500 focus:ring-red-100 dark:focus:ring-red-900/20"
+                          : formData.email
+                            ? "border-blue-400 bg-blue-50/30 dark:bg-blue-950/20 focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/20"
+                            : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/20"
+                      }
+                    `}
+                    disabled={isLoading as boolean}
+                    autoFocus
+                    autoComplete="email"
+                  />
+                </div>
+
+                {hasFieldError("email") && getFieldError("email") && (
+                  <div className="mt-2 text-sm text-red-600 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    {getFieldError("email")}
+                  </div>
+                )}
+              </div>
+
+              {/* Password (ahora con ícono a la izquierda y padding consistente) */}
+              <div className="space-y-2">
+                <label htmlFor="password" className="sr-only">
+                  Contraseña
+                </label>
+
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200">
+                    <Lock
+                      className={`h-5 w-5 ${
+                        hasFieldError("password")
+                          ? "text-red-500"
+                          : formData.password
+                            ? "text-blue-500"
+                            : "text-gray-400 group-focus-within:text-blue-500"
+                      }`}
+                    />
+                  </div>
+
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Introduce tu contraseña"
+                    value={formData.password}
+                    onChange={(e) =>
+                      handleFieldChange("password", e.target.value)
+                    }
+                    className={`h-14 text-base pr-12 pl-14 w-full
+        bg-white dark:bg-gray-800
+        border-2 rounded-xl
+        transition-all duration-300 ease-in-out
+        placeholder:text-gray-400 placeholder:font-normal
+        focus:outline-none focus:ring-4
+        ${hasFieldError("password") ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-gray-200 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/20"}
+      `}
+                    disabled={isLoading as boolean}
+                    autoComplete="current-password"
+                  />
+
+                  <button
+                    type="button"
+                    aria-label={
+                      showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading as boolean}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+
+                {hasFieldError("password") && getFieldError("password") && (
+                  <div className="mt-2 text-sm text-red-600 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    {getFieldError("password")}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center pt-4">
+                <button
+                  type="button"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
+                  disabled={isLoading as boolean}
+                  onClick={() => {
+                    // Redirigir a forgot password
+                    window.location.href = "/login/forgot-password";
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+
+                <Button
+                  type="submit"
+                  disabled={
+                    (isLoading as boolean) ||
+                    !formData.password.trim() ||
+                    !formData.email.trim()
+                  }
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 h-10"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Iniciando...
+                    </>
+                  ) : (
+                    "Iniciar sesión"
+                  )}
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
         {/* Footer */}
-        <LoginFooter serverMetadata={serverMetadata} isLoading={isLoading} />
+        <LoginFooter
+          serverMetadata={serverMetadata}
+          isLoading={isLoading as boolean}
+        />
       </div>
     </div>
   );
