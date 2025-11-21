@@ -76,6 +76,9 @@ export default function ClientsPageClient({
   );
 
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  // key para forzar remonte del ClientForm cuando se abre la edición
+  const [editingFormKey, setEditingFormKey] = useState<number>(0);
+
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
@@ -287,7 +290,14 @@ export default function ClientsPageClient({
     }
   };
 
-  // Handler para preparar edición de paciente
+  // Handler para preparar edición de paciente: ahora forzamos remonte del ClientForm
+  const handleOpenEditClient = (client: Client) => {
+    setEditingClient(client);
+    // Incrementamos la key para forzar remonte del form y que vuelva a su estado inicial (abierto)
+    setEditingFormKey((k) => k + 1);
+  };
+
+  // Handler para preparar edición de paciente (guardar cambios desde el formulario)
   const handleEditClient = (data: ClientFormData) => {
     setConfirmationDialogs((prev) => ({
       ...prev,
@@ -435,7 +445,8 @@ export default function ClientsPageClient({
         pagination={pagination}
         viewMode={viewMode}
         onView={handleViewClient}
-        onEdit={setEditingClient}
+        // Usamos handleOpenEditClient en lugar de setEditingClient directo
+        onEdit={handleOpenEditClient}
         onDelete={handleDeleteClient}
         onCall={handleCallClient}
         onEmail={handleEmailClient}
@@ -448,7 +459,9 @@ export default function ClientsPageClient({
 
       {/* Dialogs */}
       {editingClient && (
+        // forzamos remonte con key para que el ClientForm vuelva a su estado inicial cada vez
         <ClientForm
+          key={editingFormKey}
           trigger={<button>Editar</button>}
           client={editingClient}
           onSubmit={handleEditClient}
