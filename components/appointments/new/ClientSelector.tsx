@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import type { Client } from "@/types";
 import { create as createClient } from "@/actions/clients/create";
 import { PhoneInput } from "@/components/phone-input";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDebounceSearch } from "@/hooks/useDebounce";
 
 type Props = {
   clients: Client[];
@@ -29,7 +31,37 @@ export function ClientSelectorCard({
   onSelect,
   clientIdFromUrl,
 }: Props) {
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Inicializamos el valor inicial desde el query 'search' si existe
+  const initialSearch =
+    typeof window !== "undefined"
+      ? new URL(window.location.href).searchParams.get("search") || ""
+      : (searchParams?.get("search") as string) || "";
+
+  // Reuse existing hook. Provide onSearch to update the URL param `search`
+  const { searchTerm, setSearchTerm } = useDebounceSearch(initialSearch, {
+    delay: 500,
+    minLength: 2,
+    resetPage: true,
+    skipInitialSearch: true,
+    onSearch: (value: string) => {
+      // Use current window.location to ensure we preserve latest tab param
+      const currentParams = new URL(window.location.href).searchParams;
+      const params = new URLSearchParams(currentParams.toString());
+      if (value && value.trim().length >= 2) {
+        params.set("search", value.trim());
+      } else {
+        params.delete("search");
+      }
+      // reset pagination when searching
+      params.set("page", "1");
+      const query = params.toString();
+      router.push(query ? `?${query}` : window.location.pathname);
+    },
+  });
+
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
@@ -50,7 +82,7 @@ export function ClientSelectorCard({
   }, []);
 
   const filteredClients = clients.filter((client) =>
-    client.fullName.toLowerCase().includes(search.toLowerCase())
+    client.fullName.toLowerCase().includes((searchTerm || "").toLowerCase())
   );
 
   // Helper: obtiene solo los dígitos locales (sin prefijo de país)
@@ -60,7 +92,6 @@ export function ClientSelectorCard({
     if (countryDigits && digitsOnly.startsWith(countryDigits)) {
       return digitsOnly.slice(countryDigits.length);
     }
-    // También puede venir sin prefijo, en ese caso digitsOnly ya es local
     return digitsOnly;
   };
 
@@ -68,12 +99,10 @@ export function ClientSelectorCard({
   const preparePhoneToSend = (phone: string, countryCode: string) => {
     const digitsOnly = (phone || "").replace(/\D/g, "");
     if (!digitsOnly) return "";
-    // Si digitsOnly ya empieza con el código del país (sin +), devuelve con +
     const countryDigits = (countryCode || "").replace("+", "");
     if (countryDigits && digitsOnly.startsWith(countryDigits)) {
       return `+${digitsOnly}`;
     }
-    // Si no, concatena countryCode + digitsOnly
     return `${countryCode}${digitsOnly}`;
   };
 
@@ -146,10 +175,17 @@ export function ClientSelectorCard({
         onSelect(result.data);
         setShowNewClientForm(false);
         setForm({ fullName: "", phone: "", email: "", countryCode: "+502" });
-        setSearch("");
         setPhoneError("");
+        // Opcional: agregar clientId al URL para deep-link y limpiar search
+        const currentParams = new URL(window.location.href).searchParams;
+        const params = new URLSearchParams(currentParams.toString());
+        params.set("clientId", result.data.id);
+        params.delete("search");
+        params.set("page", "1");
+        router.push(
+          params.toString() ? `?${params.toString()}` : window.location.pathname
+        );
       }
-      // Si hay error, puedes agregar manejo de errores aquí
     } finally {
       setIsCreating(false);
     }
@@ -158,6 +194,20 @@ export function ClientSelectorCard({
   const handlePhoneChange = (phone: string, countryCode: string) => {
     setForm({ ...form, phone, countryCode });
     setPhoneError(""); // Limpiar error cuando el usuario escribe
+  };
+
+  // Si quieres que al seleccionar un cliente existente también se agregue clientId al URL,
+  // puedes hacerlo aquí para facilitar deep-linking.
+  const handleSelectExisting = (client: Client) => {
+    onSelect(client);
+    const currentParams = new URL(window.location.href).searchParams;
+    const params = new URLSearchParams(currentParams.toString());
+    params.set("clientId", client.id);
+    params.delete("search"); // clear the text search since user selected a client
+    params.set("page", "1");
+    router.push(
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
   };
 
   return (
@@ -179,8 +229,8 @@ export function ClientSelectorCard({
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar paciente por nombre..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchTerm || ""}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -194,13 +244,13 @@ export function ClientSelectorCard({
                 Nuevo paciente
               </Button>
             </div>
-            {search && (
+            {searchTerm && (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {filteredClients.map((client) => (
                   <div
                     key={client.id}
                     className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                    onClick={() => onSelect(client)}
+                    onClick={() => handleSelectExisting(client)}
                   >
                     <Avatar>
                       <AvatarImage src={client.avatar || "/placeholder.svg"} />
@@ -260,7 +310,19 @@ export function ClientSelectorCard({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => onSelect(null)}
+                onClick={() => {
+                  onSelect(null);
+                  // also remove clientId from url when clearing selection but preserve other params (including tab)
+                  const currentParams = new URL(window.location.href)
+                    .searchParams;
+                  const params = new URLSearchParams(currentParams.toString());
+                  params.delete("clientId");
+                  router.push(
+                    params.toString()
+                      ? `?${params.toString()}`
+                      : window.location.pathname
+                  );
+                }}
                 className="text-xs px-2 py-1 h-auto"
               >
                 Cambiar
