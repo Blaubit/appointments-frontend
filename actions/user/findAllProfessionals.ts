@@ -30,7 +30,6 @@ export async function findAllProfessionals(
   const session = await getSession();
   const companyId = await getCompanyId();
 
-  // Early validation so global middleware/interceptor can handle 401 uniformly
   if (!companyId) {
     return {
       message: "Company ID not found. Please log in again.",
@@ -55,17 +54,24 @@ export async function findAllProfessionals(
     );
     const parsedParams = parsePaginationParams(props.searchParams);
 
+    // parsedParams likely contains page, limit, q
+    // Map parsedParams.q to the backend query param (q) — consistent with clients/findAll
+    const params: Record<string, any> = {
+      page: parsedParams.page ?? 1,
+      limit: parsedParams.limit ?? 10,
+    };
+    if (parsedParams.q) {
+      params.q = parsedParams.q;
+    }
+
     const url = `/companies/${encodeURIComponent(companyId)}/users/professionals`;
 
     const response = await axiosInstance.get(url, {
-      params: {
-        ...parsedParams,
-        query: undefined,
-      },
+      params,
     });
 
     return {
-      data: response.data, // keep original shape (response body)
+      data: response.data, // keep original shape
       status: response.status,
       statusText: response.statusText,
       meta: response.data.meta ?? FALLBACK_META,

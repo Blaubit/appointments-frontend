@@ -110,9 +110,9 @@ export function SettingsPageClient({
   scheduleSettings: initialScheduleSettings,
   securityData: initialSecurityData,
   appearanceSettings: initialAppearanceSettings,
-  doctors,
-  users: initialUsers,
-  roles,
+  doctors = [], // aseguramos valor por defecto
+  users: initialUsers = [],
+  roles = [],
   usersMeta: initialUsersMeta,
 }: SettingsPageClientProps) {
   const searchParams = useSearchParams();

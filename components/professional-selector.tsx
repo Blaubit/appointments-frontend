@@ -11,6 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
 import { getUser } from "@/actions/auth";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDebounceSearch } from "@/hooks/useDebounce";
+
 interface ProfessionalSelectorCardProps {
   professionals: User[];
   selectedProfessional: User | null;
@@ -39,7 +42,10 @@ export default function ProfessionalSelectorCard({
   className = "",
   isLocked = false,
 }: ProfessionalSelectorCardProps) {
-  // Si el padre bloqueo y ya hay seleccionado, mostramos sólo la tarjeta bloqueada
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Si está bloqueado y existe seleccionado, mostramos sólo la tarjeta bloqueada
   if (isLocked && selectedProfessional) {
     return (
       <Card
@@ -85,17 +91,49 @@ export default function ProfessionalSelectorCard({
     );
   }
 
-  // Selector normal con input y dropdown
-  const [search, setSearch] = useState("");
+  // Selector normal con debounce usando useDebounceSearch
+  // Usamos window.location.href al actualizar la URL para asegurarnos de
+  // leer los params actuales al momento del push y NO sobrescribir tab
+  const initialProfQ =
+    typeof window !== "undefined"
+      ? new URL(window.location.href).searchParams.get("professionalSearch") ||
+        ""
+      : (searchParams?.get("professionalSearch") as string) || "";
+
+  const {
+    searchTerm: professionalSearchTerm,
+    setSearchTerm: setProfessionalSearch,
+  } = useDebounceSearch(initialProfQ, {
+    delay: 400,
+    minLength: 2,
+    resetPage: true,
+    skipInitialSearch: true,
+    onSearch: (value: string) => {
+      // Leer params actuales de la URL en el momento del push (evita races)
+      const currentParams = new URL(window.location.href).searchParams;
+      const params = new URLSearchParams(currentParams.toString());
+      if (value && value.trim().length >= 2) {
+        params.set("professionalSearch", value.trim());
+      } else {
+        params.delete("professionalSearch");
+      }
+      params.set("page", "1");
+      const query = params.toString();
+      router.push(query ? `?${query}` : `${window.location.pathname}`);
+    },
+  });
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Filtrado local para mejor UX mientras el servidor responde
   const filteredProfessionals = professionals.filter((professional) =>
-    professional.fullName.toLowerCase().includes(search.toLowerCase())
+    professional.fullName
+      .toLowerCase()
+      .includes((professionalSearchTerm || "").toLowerCase())
   );
 
-  // Cierra el dropdown al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -109,26 +147,31 @@ export default function ProfessionalSelectorCard({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Nuevo: si la lista de profesionales viene vacía y aún no hay seleccionado,
-  // obtenemos el usuario actual con getUser() (await) y lo contamos como seleccionado.
+  // Si no hay profesionales y no hay seleccionado, intentamos seleccionar al user actual
   useEffect(() => {
     let mounted = true;
     const trySelectCurrentUser = async () => {
       if (!mounted) return;
       try {
-        // Solo actuar si no hay profesionales y no hay ya un seleccionado
         if (
           (!professionals || professionals.length === 0) &&
           !selectedProfessional
         ) {
           const current = await getUser();
           if (!mounted || !current) return;
-          // Llamamos al callback para que el padre registre al usuario como seleccionado
           onSelectionChange(current);
+          // Push professionalId to URL for deep-link without removing other params
+          const currentParams = new URL(window.location.href).searchParams;
+          const params = new URLSearchParams(currentParams.toString());
+          params.set("professionalId", current.id);
+          router.push(
+            params.toString()
+              ? `?${params.toString()}`
+              : window.location.pathname
+          );
         }
-      } catch (err) {
-        // Ignoramos errores de fetch; no bloqueamos la UI
-        // console.error("Error obteniendo usuario:", err);
+      } catch {
+        // ignore
       }
     };
     trySelectCurrentUser();
@@ -138,16 +181,25 @@ export default function ProfessionalSelectorCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [professionals, selectedProfessional, onSelectionChange]);
 
-  // Abrir dropdown al focus
   const handleInputFocus = () => {
     setIsDropdownOpen(true);
   };
 
-  // Seleccionar profesional y cerrar dropdown
   const handleSelectProfessional = (professional: User) => {
     onSelectionChange(professional);
     setIsDropdownOpen(false);
-    setSearch("");
+    setProfessionalSearch(""); // limpia el input
+
+    // Añadir professionalId al URL y limpiar professionalSearch para deep-link
+    const currentParams = new URL(window.location.href).searchParams;
+    const params = new URLSearchParams(currentParams.toString());
+    params.set("professionalId", professional.id);
+    params.delete("professionalSearch");
+    params.set("page", "1");
+    router.push(
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
+
     if (inputRef.current) inputRef.current.blur();
   };
 
@@ -164,33 +216,30 @@ export default function ProfessionalSelectorCard({
           {description}
         </CardDescription>
       </CardHeader>
+
       <CardContent className="space-y-4" ref={containerRef}>
-        {/* Si no hay seleccionado mostramos el buscador (siempre que no esté bloqueado) */}
         {!selectedProfessional && (
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               ref={inputRef}
               placeholder="Buscar profesional por nombre..."
-              value={search}
+              value={professionalSearchTerm || ""}
               onChange={(e) => {
-                setSearch(e.target.value);
+                setProfessionalSearch(e.target.value);
                 setIsDropdownOpen(true);
               }}
               onFocus={handleInputFocus}
               className="pl-10"
               autoComplete="off"
             />
-            {/* Dropdown solo si está abierto */}
             {isDropdownOpen && (
               <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                 {filteredProfessionals.length > 0 ? (
                   filteredProfessionals.map((professional) => (
                     <div
                       key={professional.id}
-                      className={`flex items-center space-x-3 px-4 py-3 cursor-pointer transition-colors
-                        hover:bg-gray-50 dark:hover:bg-gray-700
-                      `}
+                      className={`flex items-center space-x-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700`}
                       onClick={() => handleSelectProfessional(professional)}
                     >
                       <Avatar className="h-10 w-10">
@@ -230,7 +279,6 @@ export default function ProfessionalSelectorCard({
           </div>
         )}
 
-        {/* Profesional seleccionado */}
         {selectedProfessional && !isLocked && (
           <div className="flex items-start sm:items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-2">
             <Avatar className="h-12 w-12 flex-shrink-0">
@@ -262,7 +310,17 @@ export default function ProfessionalSelectorCard({
                 className="text-xs px-2 py-1 h-auto border rounded bg-white dark:bg-gray-900 border-blue-200 dark:border-blue-800"
                 onClick={() => {
                   onSelectionChange(null);
-                  setSearch("");
+                  setProfessionalSearch("");
+                  // Remove professionalId from URL but preserve other params (including tab)
+                  const currentParams = new URL(window.location.href)
+                    .searchParams;
+                  const params = new URLSearchParams(currentParams.toString());
+                  params.delete("professionalId");
+                  router.push(
+                    params.toString()
+                      ? `?${params.toString()}`
+                      : window.location.pathname
+                  );
                 }}
               >
                 Cambiar
