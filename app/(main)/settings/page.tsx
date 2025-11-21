@@ -51,6 +51,30 @@ interface SettingsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+/**
+ * Helper de normalización: acepta varias formas que pueda devolver una action
+ * y garantiza devolver siempre un array (o []).
+ */
+function normalizeList(raw: any): any[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  // Si la action retorna { data: [...] }
+  if (Array.isArray(raw.data)) return raw.data;
+  // Si la action retorna { data: { data: [...] } } (doble envoltura)
+  if (Array.isArray(raw.data?.data)) return raw.data.data;
+  return [];
+}
+
+/**
+ * Normaliza meta/paginación en varias formas posibles.
+ */
+function normalizeMeta(raw: any) {
+  if (!raw) return undefined;
+  if (raw.meta) return raw.meta;
+  if (raw.data?.meta) return raw.data.meta;
+  return undefined;
+}
+
 export default async function SettingsPage({
   searchParams,
 }: SettingsPageProps) {
@@ -80,6 +104,10 @@ export default async function SettingsPage({
   let rolesRaw: any = null;
 
   try {
+    // Llamamos a findAllProfessionals con searchParams explícito para evitar posibles
+    // efectos secundarios si la action espera un URLSearchParams.
+    const emptyProfParams = new URLSearchParams();
+
     // Intentamos lanzar todas las llamadas en paralelo
     const [
       _scheduleSettings,
@@ -92,8 +120,8 @@ export default async function SettingsPage({
       getScheduleSettings(),
       getSecurityData(),
       getAppearanceSettings(),
-      // findAllProfessionals puede fallar si el usuario no tiene permiso
-      findAllProfessionals(),
+      // Pasamos URLSearchParams vacío para profesionales
+      findAllProfessionals({ searchParams: emptyProfParams }),
       // Solo hacer la llamada con paginación si estamos en el tab de usuarios
       currentTab === "users"
         ? findAll({ page: currentPage, limit: 10 })
@@ -110,6 +138,7 @@ export default async function SettingsPage({
   } catch (err: any) {
     // Si hay un error (por ejemplo 401/403 al obtener profesionales), caemos a valores por defecto
     // Logging para debugging en el servidor
+    console.error("SettingsPage fetch error:", err);
 
     // Intentamos obtener los defaults independientes si las llamadas en paralelo fallaron
     scheduleSettings = await getScheduleSettings();
@@ -121,25 +150,11 @@ export default async function SettingsPage({
 
   // Normalizar los resultados para asegurar que siempre pasamos arrays al cliente.
   // Esto evita errores en el cliente como "professionals.filter is not a function" cuando la API devolvió null o lanzó 403.
-  const doctorsArray = Array.isArray(doctorsRaw?.data)
-    ? doctorsRaw.data
-    : Array.isArray(doctorsRaw)
-      ? doctorsRaw
-      : []; // fallback a []
+  const doctorsArray = normalizeList(doctorsRaw);
+  const usersArray = normalizeList(usersRaw);
+  const rolesArray = normalizeList(rolesRaw);
 
-  const usersArray = Array.isArray(usersRaw?.data)
-    ? usersRaw.data
-    : Array.isArray(usersRaw)
-      ? usersRaw
-      : []; // fallback a []
-
-  const rolesArray = Array.isArray(rolesRaw?.data)
-    ? rolesRaw.data
-    : Array.isArray(rolesRaw)
-      ? rolesRaw
-      : []; // fallback a []
-
-  const usersMeta = usersRaw?.meta ?? undefined;
+  const usersMeta = normalizeMeta(usersRaw);
 
   return (
     <SettingsPageClient

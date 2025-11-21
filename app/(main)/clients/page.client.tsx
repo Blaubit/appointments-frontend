@@ -23,7 +23,6 @@ import { ClientsHeader } from "@/components/client/ClientsHeader";
 import { ClientsStatsCards } from "@/components/client/ClientsStatsCards";
 import { ClientsFiltersCard } from "@/components/client/ClientsFiltersCard";
 import { ClientsListCard } from "@/components/client/ClientsListCard";
-import { ClientDetailsDialog } from "@/components/client/ClientsDetailsDialog";
 import { EmptyClientsState } from "@/components/client/EmptyClientsState";
 
 // Tipos para export
