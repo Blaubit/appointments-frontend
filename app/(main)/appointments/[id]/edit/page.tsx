@@ -6,7 +6,8 @@ import { findOne as findAppointmentById } from "@/actions/appointments/findOne";
 import type { Client, User, Appointment } from "@/types";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 /*
@@ -15,40 +16,95 @@ interface Props {
    - profesionales
    - sesión del usuario
    - datos de la cita por id (params.id)
-
-  Nota: Se asume que existe la acción `@/actions/appointments/findById`
-  que recibe un id y devuelve { data: Appointment }. Si tu acción tiene
-  otra firma, ajusta la llamada.
 */
-export default async function Page({ params }: Props) {
-  const appointmentId = params.id;
+export default async function Page({ params, searchParams }: Props) {
+  // await params antes de usar sus propiedades para evitar:
+  // "Route ... used `params.id`. `params` should be awaited before using its properties."
+  const resolvedParams = await params;
+  const appointmentId = resolvedParams.id;
 
-  // Cargar datos necesarios en el servidor
-  const clients: Client[] = (await findAllClients()).data || [];
-  const professionals: User[] = (await findAllProfessionals()).data || [];
-  const userSession = await getUser();
+  // Resolver searchParams si los necesitas (opcional)
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+
+  // Clientes: leer page/limit/search (la UI actual usa 'search' como parámetro)
+  const clientPage =
+    typeof (resolvedSearchParams as any).page === "string"
+      ? parseInt((resolvedSearchParams as any).page)
+      : 1;
+  const clientLimit =
+    typeof (resolvedSearchParams as any).limit === "string"
+      ? parseInt((resolvedSearchParams as any).limit)
+      : 10;
+  const clientSearch =
+    typeof (resolvedSearchParams as any).search === "string"
+      ? (resolvedSearchParams as any).search
+      : "";
+
+  const clientsParams = new URLSearchParams();
+  clientsParams.set("page", clientPage.toString());
+  clientsParams.set("limit", clientLimit.toString());
+  if (clientSearch && clientSearch.length >= 2)
+    clientsParams.set("q", clientSearch);
+
+  // Professionals: read professionalSearch param (separate from clients)
+  const profSearch =
+    typeof (resolvedSearchParams as any).professionalSearch === "string"
+      ? (resolvedSearchParams as any).professionalSearch
+      : "";
+
+  const profParams = new URLSearchParams();
+  profParams.set("page", "1");
+  profParams.set("limit", "10");
+  if (profSearch && profSearch.length >= 2) profParams.set("q", profSearch);
+
+  // Cargar datos necesarios en el servidor (paralelo)
+  const [clientsResult, professionalsResult, userSession, appointmentResult] =
+    await Promise.all([
+      // Pasamos los URLSearchParams para que las actions puedan enviarlos al backend
+      findAllClients({ searchParams: clientsParams }),
+      findAllProfessionals({ searchParams: profParams }),
+      getUser(),
+      findAppointmentById(appointmentId),
+    ]);
 
   if (!userSession) {
-    // Redirigir o lanzar error según tu flujo de auth
     throw new Error("User not authenticated");
   }
 
-  const appointmentResult = await findAppointmentById(appointmentId);
   if (
     !appointmentResult ||
     "message" in appointmentResult ||
     !appointmentResult.data
   ) {
-    // Manejo simple: lanzar para que Next muestre error o 404
     throw new Error("Appointment not found");
   }
 
   const appointment: Appointment = appointmentResult.data;
+
+  const clients: Client[] =
+    clientsResult &&
+    "data" in clientsResult &&
+    Array.isArray(clientsResult.data)
+      ? clientsResult.data
+      : Array.isArray(clientsResult)
+        ? clientsResult
+        : [];
+
+  const professionals: User[] =
+    professionalsResult &&
+    "data" in professionalsResult &&
+    Array.isArray(professionalsResult.data)
+      ? professionalsResult.data
+      : Array.isArray(professionalsResult)
+        ? professionalsResult
+        : [];
+
   return (
     <EditAppointmentClient
       appointment={appointment}
       clients={clients}
       professionals={professionals}
+      userSession={userSession}
     />
   );
 }

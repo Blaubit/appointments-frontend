@@ -38,7 +38,7 @@ import type {
   - Sincronización de selectedServices con los servicios disponibles del profesional cuando se cargan.
   - Conversión de "HH:MM" -> "HH:MM:00" al enviar a la API.
   - UI del campo "Notas" igual que en la página de creación (Label + Textarea).
-  - Cambiado: ahora el payload de actualización envía los servicios como array (serviceId: string[]).
+  - Ahora el payload de actualización envía los servicios como array (serviceId: string[]).
 */
 
 type Props = {
@@ -117,20 +117,18 @@ export default function EditAppointmentClient({
 
   // --- selected client (match por id) ---
   const [selectedClient, setSelectedClient] = useState<Client | null>(() => {
-    // appointment.client es un objeto Client según tus types
-    return clients.find((c) => c.id === appointment.client.id) || null;
+    // Primero intentar encontrar el cliente en la lista 'clients' (puede venir paginada)
+    const appointmentClientId = String(appointment.client?.id ?? "");
+    const found = clients.find((c) => String(c.id) === appointmentClientId);
+    // Si no lo encontramos en la lista, usar appointment.client directamente (debe contener los datos)
+    return found ?? (appointment.client as Client) ?? null;
   });
 
   // --- selected professional (match por id) ---
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(
     () => {
-      return (
-        professionals?.find(
-          (p) =>
-            p.id === appointment.professional.id ||
-            p.id.toString() === appointment.professional.id?.toString()
-        ) || null
-      );
+      const apptProfId = String(appointment.professional?.id ?? "");
+      return professionals?.find((p) => String(p.id) === apptProfId) || null;
     }
   );
 
@@ -379,7 +377,7 @@ export default function EditAppointmentClient({
       }
 
       // IMPORTANT: backend now accepts string[] for services — send array
-      const normalizedStartTime = normalizeToHHMM(selectedTime); // ensure HH:MM:SS
+      const normalizedStartTime = normalizeToHHMM(selectedTime); // ensure HH:MM
       const appointmentData: any = {
         id: appointment.id,
         clientId: clientId.toString(),
@@ -461,7 +459,11 @@ export default function EditAppointmentClient({
             clients={clients}
             selectedClient={selectedClient}
             onSelect={handleClientSelect}
-            clientIdFromUrl={selectedClient?.id || ""}
+            // Pasamos el id del cliente de la cita para forzar la preselección incluso si
+            // el cliente no está en la página actual de 'clients' (paginación)
+            clientIdFromUrl={String(
+              selectedClient?.id ?? appointment.client?.id ?? ""
+            )}
           />
 
           <ProfessionalSelectorCard
