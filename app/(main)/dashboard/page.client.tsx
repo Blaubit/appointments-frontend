@@ -70,7 +70,7 @@ export default function DashboardClient({
   errorMessage,
   errorcode,
 }: Props) {
-  console.log(errorcode);
+  console.log("DashboardClient errorcode:", errorcode);
   // Hooks deben estar dentro del componente
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -89,9 +89,11 @@ export default function DashboardClient({
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
+      // Usar include para asegurar envío/recepción de cookies cross-origin/localhost
+      // y esperar la respuesta antes de redirigir para reducir condiciones de carrera.
       await fetch("/api/logout", {
         method: "POST",
-        credentials: "same-origin",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
     } catch (err) {
@@ -210,7 +212,7 @@ export default function DashboardClient({
     );
   };
 
-  // Componentes internos (EmptyAppointmentsState, LowActivityMessage) se mantienen
+  // Componentes internos (EmptyAppointmentsState, LowActivityMessage)
   const EmptyAppointmentsState = () => (
     <div className="text-center py-12">
       <div className="flex justify-center mb-6">
