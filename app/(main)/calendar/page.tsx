@@ -5,6 +5,7 @@ import { findAll as findAllServices } from "@/actions/services/findAll";
 import { User } from "@/types";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import { getUserId } from "@/actions/user/getUserId";
+import { getUser } from "@/actions/auth"; // <- agregado para fallback al usuario actual
 // Forzar renderizado dinámico
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,37 @@ export default async function CalendarPage() {
   ]);
 
   const services = servicesResult?.data || [];
-  const professionals: User[] = (await findAllProfessionals()).data;
+
+  // Intentar obtener la lista de profesionales; si falla o viene vacía,
+  // usamos getUser() como fallback (si devuelve un usuario lo ponemos en un array)
+  let professionals: User[] = [];
+  try {
+    const profResult = await findAllProfessionals();
+    professionals = profResult?.data || [];
+
+    if (!Array.isArray(professionals) || professionals.length === 0) {
+      // Si la lista está vacía, intentar obtener al usuario actual
+      const current = await getUser();
+      if (current) {
+        professionals = [current];
+      } else {
+        professionals = [];
+      }
+    }
+  } catch (err) {
+    // Si la llamada a findAllProfessionals falla, intentar getUser como fallback.
+    console.error(
+      "Error obteniendo profesionales con findAllProfessionals(), intentando getUser():",
+      err
+    );
+    const current = await getUser();
+    if (current) {
+      professionals = [current];
+    } else {
+      professionals = [];
+    }
+  }
+
   if (!userId) {
     // Manejar caso donde no hay usuario
     return <div>No tienes permisos para ver este calendario</div>;
@@ -43,7 +74,7 @@ export default async function CalendarPage() {
         <CalendarPageClient
           userId={userId}
           services={services}
-          professionals={professionals} // Pasar profesionales
+          professionals={professionals} // Pasar profesionales (puede ser [currentUser] como fallback)
         />
       </Suspense>
     </div>
