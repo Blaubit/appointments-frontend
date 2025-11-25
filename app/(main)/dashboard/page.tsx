@@ -60,7 +60,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       id: "default",
       name: "CitasFácil",
       companyType: "default",
-      address: "Calle Falsa 123",
+      address: "Calle 123",
       city: "Ciudad",
       state: "Estado",
       postalCode: "12345",
@@ -76,7 +76,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       upcomingAppointments={upcomingAppointmentsData}
       appointmentStats={stats}
       user={user}
-      clinicInfo={companyInfo || user?.company}
+      clinicInfo={user?.company}
       errorMessage={errorMessage}
       errorcode={errorcode}
     />

@@ -7,12 +7,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Client,
   ClinicalHistoryResponse,
@@ -37,18 +37,31 @@ import {
   Loader2,
   Plus,
   Edit,
+  Phone,
+  Trash2,
+  FileText,
 } from "lucide-react";
 import { getClinicalHistory } from "@/actions/clients/findClinicalHistory";
 import { toast } from "sonner";
+import { openWhatsApp } from "@/utils/functions/openWhatsapp";
+import WhatsappIcon from "@/components/icons/whatsapp-icon";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ClinicalHistoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: Client;
+  // Handlers opcionales para delegado desde el padre (si el padre quiere controlar)
+  onEdit?: (client: Client) => void;
+  onDelete?: (client: Client) => void;
+  onCall?: (client: Client) => void;
+  onEmail?: (client: Client) => void;
+  onSchedule?: (client: Client) => void;
+  onWhatsApp?: (phone: string, message: string) => void;
 }
 
 const getSeverityColor = (severity: string) => {
-  switch (severity.toLowerCase()) {
+  switch (severity?.toLowerCase()) {
     case "leve":
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
     case "moderada":
@@ -61,18 +74,23 @@ const getSeverityColor = (severity: string) => {
   }
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("es-ES", {
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString("es-ES", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-};
 
 export function ClinicalHistoryDialog({
   open,
   onOpenChange,
   client,
+  onEdit,
+  onDelete,
+  onCall,
+  onEmail,
+  onSchedule,
+  onWhatsApp,
 }: ClinicalHistoryDialogProps) {
   const router = useRouter();
   const [clinicalData, setClinicalData] = useState<
@@ -123,14 +141,171 @@ export function ClinicalHistoryDialog({
     onOpenChange(false);
   };
 
+  // ACTIONS: si el padre ha pasado un handler, lo usamos; si no, hacemos un fallback
+  const handleEditClient = () => {
+    if (onEdit) {
+      onEdit(client);
+    } else {
+      // fallback: navegar a una ruta de edición si existe
+      router.push(`/clients/${client.id}/edit`);
+    }
+    onOpenChange(false);
+  };
+
+  const handleDeleteClient = () => {
+    if (onDelete) {
+      onDelete(client);
+      onOpenChange(false);
+    } else {
+      toast.error("No hay handler de eliminación configurado.");
+    }
+  };
+
+  const handleCallClient = () => {
+    if (onCall) {
+      onCall(client);
+    } else {
+      window.open(`tel:${client.phone}`, "_self");
+    }
+  };
+
+  const handleViewClientHistory = () => {
+    if (onEmail) {
+      onEmail(client);
+    } else {
+      // fallback: navegar a la vista de historial (ruta utilizada en el proyecto)
+      router.push(`/clients/${client.id}/history`);
+    }
+    onOpenChange(false);
+  };
+
+  const handleScheduleAppointment = () => {
+    if (onSchedule) {
+      onSchedule(client);
+    } else {
+      router.push(`/appointments/new?clientId=${client.id}`);
+    }
+    onOpenChange(false);
+  };
+
+  const handleWhatsApp = () => {
+    const message = "Buen dia";
+    if (onWhatsApp) {
+      onWhatsApp(client.phone, message);
+    } else {
+      // fallback: abrir WhatsApp web / app
+      openWhatsApp(client.phone, message);
+    }
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
-            Historial Clínico - {client.fullName}
-          </DialogTitle>
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Información básica */}
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={client.avatar || "/placeholder.svg"} />
+                    <AvatarFallback>
+                      {client.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div>
+                    <div className="text-sm text-muted-foreground">Nombre</div>
+                    <div className="font-medium">{client.fullName}</div>
+
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <div className="text-muted-foreground">Teléfono</div>
+                        <div className="font-medium">{client.phone || "-"}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Correo</div>
+                        <div className="font-medium">{client.email || "-"}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botones de acción dentro de la card.
+                    Agrego el botón "Editar Historial" aquí, pero solo si existe historial.
+                    Si no hay historial se mostrará el botón "Crear Historial" más abajo. */}
+                <div className="flex flex-wrap items-center gap-2 justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleEditClient}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+
+                  <Button size="sm" variant="ghost" onClick={handleCallClient}>
+                    <Phone className="w-4 h-4 mr-2" />
+                    Llamar
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleViewClientHistory}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Ver historial
+                  </Button>
+
+                  <Button size="sm" variant="ghost" onClick={handleWhatsApp}>
+                    <WhatsappIcon width={16} height={16} className="mr-2" />
+                    WhatsApp
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleScheduleAppointment}
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Agendar
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleDeleteClient}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </Button>
+
+                  {/* Editar Historial solo aparece si ya existe historial */}
+                  {hasHistory && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleEditHistory}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar Historial
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </DialogHeader>
+
+        {/* Card que contiene la información inicial + botones */}
+        <div className="px-4"></div>
 
         {isLoading ? (
           <div className="flex items-center justify-center h-[400px]">
@@ -142,7 +317,7 @@ export function ClinicalHistoryDialog({
             </div>
           </div>
         ) : !hasHistory ? (
-          <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+          <div className="flex flex-col items-center justify-center h-[400px] gap-4 px-4">
             <div className="text-center space-y-2">
               <p className="text-lg font-medium">
                 Este paciente no tiene historial clínico
@@ -159,8 +334,8 @@ export function ClinicalHistoryDialog({
           </div>
         ) : (
           <>
-            <ScrollArea className="h-[calc(90vh-200px)] pr-4">
-              <div className="space-y-6">
+            <ScrollArea className="h-[calc(90vh-260px)] pr-4">
+              <div className="space-y-6 px-4">
                 {/* Información Personal */}
                 <section>
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -171,19 +346,21 @@ export function ClinicalHistoryDialog({
                     <div>
                       <p className="text-sm text-muted-foreground">DPI</p>
                       <p className="font-medium">
-                        {clinicalData?.personalInfo.nationalId}
+                        {clinicalData?.personalInfo.nationalId || "-"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Género</p>
                       <p className="font-medium">
-                        {clinicalData?.personalInfo.gender}
+                        {clinicalData?.personalInfo.gender || "-"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Edad</p>
                       <p className="font-medium">
-                        {clinicalData?.personalInfo.age} años
+                        {clinicalData?.personalInfo.age
+                          ? `${clinicalData.personalInfo.age} años`
+                          : "-"}
                       </p>
                     </div>
                     <div>
@@ -192,8 +369,9 @@ export function ClinicalHistoryDialog({
                       </p>
                       <p className="font-medium flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        {clinicalData?.personalInfo.birthDate &&
-                          formatDate(clinicalData.personalInfo.birthDate)}
+                        {clinicalData?.personalInfo.birthDate
+                          ? formatDate(clinicalData.personalInfo.birthDate)
+                          : "-"}
                       </p>
                     </div>
                     <div>
@@ -202,7 +380,7 @@ export function ClinicalHistoryDialog({
                       </p>
                       <p className="font-medium flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
-                        {clinicalData?.personalInfo.birthPlace}
+                        {clinicalData?.personalInfo.birthPlace || "-"}
                       </p>
                     </div>
                     <div>
@@ -210,20 +388,20 @@ export function ClinicalHistoryDialog({
                         Estado Civil
                       </p>
                       <p className="font-medium">
-                        {clinicalData?.personalInfo.maritalStatus}
+                        {clinicalData?.personalInfo.maritalStatus || "-"}
                       </p>
                     </div>
                     <div className="col-span-2">
                       <p className="text-sm text-muted-foreground">Dirección</p>
                       <p className="font-medium">
-                        {clinicalData?.personalInfo.address}
+                        {clinicalData?.personalInfo.address || "-"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Ocupación</p>
                       <p className="font-medium flex items-center gap-1">
                         <Briefcase className="w-4 h-4" />
-                        {clinicalData?.personalInfo.occupation}
+                        {clinicalData?.personalInfo.occupation || "-"}
                       </p>
                     </div>
                   </div>
@@ -572,16 +750,6 @@ export function ClinicalHistoryDialog({
                   )}
               </div>
             </ScrollArea>
-
-            <DialogFooter className="border-t pt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cerrar
-              </Button>
-              <Button onClick={handleEditHistory}>
-                <Edit className="w-4 h-4 mr-2" />
-                Editar Historial
-              </Button>
-            </DialogFooter>
           </>
         )}
       </DialogContent>
