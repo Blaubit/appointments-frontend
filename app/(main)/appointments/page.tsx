@@ -2,6 +2,7 @@ import { PageClient } from "./page.client";
 import findAll from "@/actions/appointments/findAll";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import { getUser } from "@/actions/auth";
+import { redirect } from "next/navigation";
 interface AppointmentsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
@@ -33,6 +34,7 @@ export default async function AppointmentsPage({
   if (!getUserResponse) {
     return <div>Error loading user</div>;
   }
+
   if ("error" in professionalsResponse) {
     return (
       <div>
@@ -42,6 +44,11 @@ export default async function AppointmentsPage({
   }
 
   if ("error" in appointmentsResponse) {
+    if (appointmentsResponse.status === 401) {
+      //redirect to login
+      redirect("/api/logout");
+    }
+
     return (
       <div>
         Error loading appointments: {appointmentsResponse.error.message}

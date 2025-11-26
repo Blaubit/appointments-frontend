@@ -84,65 +84,35 @@ export async function middleware(request: NextRequest) {
     sessionToken = await getSession();
   } catch (err: any) {
     if (isUnauthorized(err)) {
-      console.log(
-        "Middleware: detectado 401 al obtener sesión. Limpiando cookies y redirigiendo a /login",
-        err
-      );
       return redirectToLogin(request);
     }
-    console.log(
-      "Middleware: error al obtener sesión (no necesariamente 401). Redirigiendo a /login",
-      err
-    );
+
     return redirectToLogin(request);
   }
-
   // Si getSession devolvió un objeto que representa un 401
   if (isUnauthorized(sessionToken)) {
-    console.log(
-      "Middleware: getSession devolvió 401. Limpiando cookies y redirigiendo a /login",
-      sessionToken
-    );
     return redirectToLogin(request);
   }
-
   // Si NO hay sesión, redirigir a login
   if (!sessionToken) {
-    console.log("Middleware: no hay sesión. Redirigiendo a /login");
     return redirectToLogin(request);
   }
-
   // Obtener el rol del usuario con manejo de errores y detección de 401
   let userRole: any = null;
   try {
     userRole = await getRoleName();
   } catch (err: any) {
     if (isUnauthorized(err)) {
-      console.log(
-        "Middleware: detectado 401 al obtener role. Limpiando cookies y redirigiendo a /login",
-        err
-      );
       return redirectToLogin(request);
     }
-    console.log(
-      "Middleware: error al obtener role. Limpiando cookies y redirigiendo a /login",
-      err
-    );
     return redirectToLogin(request);
   }
 
   if (isUnauthorized(userRole)) {
-    console.log(
-      "Middleware: getRoleName devolvió 401. Limpiando cookies y redirigiendo a /login",
-      userRole
-    );
     return redirectToLogin(request);
   }
 
   if (!userRole) {
-    console.log(
-      "Middleware: no se pudo obtener el rol del usuario. Limpiando cookies y redirigiendo a /login"
-    );
     return redirectToLogin(request);
   }
 
@@ -156,12 +126,9 @@ export async function middleware(request: NextRequest) {
     );
 
     if (isRestricted) {
-      console.log(`Acceso denegado: ${userRole} intentó acceder a ${pathname}`);
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
-
-  console.log(`Acceso permitido: ${userRole} puede acceder a ${pathname}`);
   return NextResponse.next();
 }
 

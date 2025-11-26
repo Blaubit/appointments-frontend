@@ -47,9 +47,6 @@ export async function AttendAppointment({
       treatment,
       diagnosis,
     };
-
-    // Ejecutar petición (la instancia ya incluye el Authorization si session existe)
-    console.log("AttendAppointment url:", url);
     const response = await axiosInstance.post(url, body, {
       headers: {
         "Content-Type": "application/json",

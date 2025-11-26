@@ -32,18 +32,12 @@ export async function savePatientRecord(clientId: string, data: PatientRecord) {
     const axiosInstance = getServerAxios(parsedEnv.API_URL, token || undefined);
     const url = `/companies/${companyId}/client-personal-info/${encodeURIComponent(clientId)}`;
 
-    console.log("=== CREATE PATIENT RECORD ===");
-    console.log("API URL (relative):", url);
-    console.log("Payload:", JSON.stringify(data, null, 2));
-
     // Enviar directamente el PatientRecord sin transformar
     const response = await axiosInstance.post(url, data, {
       headers: {
         "Content-Type": "application/json",
       },
     });
-
-    console.log("✅ Response:", response.data);
 
     return {
       success: true,

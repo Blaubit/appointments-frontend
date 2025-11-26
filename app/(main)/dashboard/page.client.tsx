@@ -70,7 +70,6 @@ export default function DashboardClient({
   errorMessage,
   errorcode,
 }: Props) {
-  console.log("DashboardClient errorcode:", errorcode);
   // Hooks deben estar dentro del componente
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);

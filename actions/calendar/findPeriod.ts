@@ -48,7 +48,6 @@ export async function findPeriod(
       statusText: response.statusText,
     };
   } catch (error) {
-    console.log("findPeriod error:", error);
     if (isAxiosError(error)) {
       return {
         message: error.message,
