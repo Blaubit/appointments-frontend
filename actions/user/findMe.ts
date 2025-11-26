@@ -26,9 +26,7 @@ export default async function findMe(): Promise<
       session || undefined
     );
     const url = `/auth/me`;
-
     const response = await axiosInstance.get(url);
-
     return {
       data: response.data.data,
       status: response.status,
