@@ -9,29 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Edit,
-  Trash2,
-  Eye,
-  Phone,
-  Calendar,
-  MoreHorizontal,
-  FileText,
-  History,
-} from "lucide-react";
-import WhatsappIcon from "@/components/icons/whatsapp-icon";
 import { ClientPagination } from "@/components/ui/client-pagination";
 import { ClinicalHistoryDialog } from "@/components/client/clinical-history/ClinicalHistoryDialog";
 import type { Client, Pagination } from "@/types";
 import { JSX } from "react";
+import type { KeyboardEvent } from "react";
+import { FileText } from "lucide-react";
 
 interface ClientsTableViewProps {
   clients: Client[];
@@ -65,9 +49,19 @@ export function ClientsTableView({
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isClinicalHistoryOpen, setIsClinicalHistoryOpen] = useState(false);
 
-  const handleOpenClinicalHistory = (client: Client) => {
+  const openClinicalHistoryFor = (client: Client) => {
     setSelectedClient(client);
     setIsClinicalHistoryOpen(true);
+  };
+
+  const rowKeyDownHandler = (
+    e: KeyboardEvent<HTMLTableRowElement>,
+    client: Client
+  ) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openClinicalHistoryFor(client);
+    }
   };
 
   return (
@@ -85,7 +79,15 @@ export function ClientsTableView({
           </TableHeader>
           <TableBody>
             {clients.map((client) => (
-              <TableRow key={client.id} className="hover:bg-muted/50">
+              <TableRow
+                key={client.id}
+                className="hover:bg-muted/50 cursor-pointer"
+                tabIndex={0}
+                role="button"
+                onClick={() => openClinicalHistoryFor(client)}
+                onKeyDown={(e) => rowKeyDownHandler(e, client)}
+                aria-label={`Abrir historial clínico de ${client.fullName}`}
+              >
                 <TableCell>
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
@@ -122,54 +124,12 @@ export function ClientsTableView({
                   <div className="text-sm">{formatDate(client.createdAt)}</div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit(client)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onCall(client)}>
-                        <Phone className="h-4 w-4 mr-2" />
-                        Llamar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEmail(client)}>
-                        <History className="h-4 w-4 mr-2" />
-                        Ver historial
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleOpenClinicalHistory(client)}
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Historial Clínico
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onWhatsApp(client.phone, "Buen dia")}
-                      >
-                        <WhatsappIcon
-                          className="text-green-500 dark:bg-gray-900"
-                          width={16}
-                          height={16}
-                        />
-                        WhatsApp
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onSchedule(client)}>
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Programar Cita
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onDelete(client)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Columna de acciones visual; ahora la fila completa abre el diálogo.
+                      Mantenemos un ícono pequeño como indicador visual, pero no es
+                      necesario que sea interactivo por separado. */}
+                  <div className="flex items-center justify-end text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -194,6 +154,12 @@ export function ClientsTableView({
           open={isClinicalHistoryOpen}
           onOpenChange={setIsClinicalHistoryOpen}
           client={selectedClient}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onCall={onCall}
+          onEmail={onEmail}
+          onSchedule={onSchedule}
+          onWhatsApp={onWhatsApp}
         />
       )}
     </>

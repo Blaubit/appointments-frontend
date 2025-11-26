@@ -2,28 +2,11 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Edit,
-  Trash2,
-  Eye,
-  Phone,
-  Calendar,
-  MoreHorizontal,
-  History,
-  FileText,
-} from "lucide-react";
-import WhatsappIcon from "@/components/icons/whatsapp-icon";
-import { ClinicalHistoryDialog } from "@/components/client/clinical-history/ClinicalHistoryDialog";
-import type { Client } from "@/types";
+import { Client } from "@/types";
 import { JSX } from "react";
+import type { KeyboardEvent } from "react";
+import { ClinicalHistoryDialog } from "@/components/client/clinical-history/ClinicalHistoryDialog";
 
 interface ClientCardProps {
   client: Client;
@@ -54,81 +37,36 @@ export function ClientCard({
 }: ClientCardProps) {
   const [isClinicalHistoryOpen, setIsClinicalHistoryOpen] = useState(false);
 
+  const openClinicalHistory = () => setIsClinicalHistoryOpen(true);
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openClinicalHistory();
+    }
+  };
+
   return (
     <>
-      {/* overflow-visible para permitir que el dropdown no quede recortado */}
-      <Card className="hover:shadow-lg transition-shadow overflow-visible">
+      {/* Hacemos toda la tarjeta "clickable" y accesible por teclado */}
+      <Card
+        className="hover:shadow-lg transition-shadow overflow-visible cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onClick={openClinicalHistory}
+        onKeyDown={handleKeyDown}
+        aria-label={`Abrir historial clínico de ${client.fullName}`}
+      >
         <CardContent className="p-6">
-          {/* contenedor relativo para posicionar el botón absolute */}
-          <div className="relative mb-4">
-            <div className="flex items-center space-x-3 pr-10">
+          <div className="mb-4">
+            <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={client.avatar} alt={client.fullName} />
                 <AvatarFallback>{getInitials(client.fullName)}</AvatarFallback>
               </Avatar>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold">{client.fullName}</h3>
                 <p className="text-sm text-muted-foreground">{client.email}</p>
               </div>
-            </div>
-
-            {/* Botón de acciones posicionado absolute para no salirse en pantallas pequeñas */}
-            <div className="absolute top-2 right-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-1 flex-shrink-0"
-                    aria-label={`Acciones de ${client.fullName}`}
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-
-                {/* z-index alto y ancho controlado para mobile */}
-                <DropdownMenuContent align="end" className="z-50 w-44 sm:w-48">
-                  <DropdownMenuItem onClick={() => onEdit(client)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onCall(client)}>
-                    <Phone className="h-4 w-4 mr-2" />
-                    Llamar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEmail(client)}>
-                    <History className="h-4 w-4 mr-2" />
-                    Ver historial
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setIsClinicalHistoryOpen(true)}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Historial Clínico
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onWhatsApp(client.phone, "Buen dia")}
-                  >
-                    <WhatsappIcon
-                      className="text-green-500 dark:bg-gray-900"
-                      width={16}
-                      height={16}
-                    />
-                    WhatsApp
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onSchedule(client)}>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Programar Cita
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onDelete(client)}
-                    className="text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Eliminar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
 
@@ -156,11 +94,17 @@ export function ClientCard({
         </CardContent>
       </Card>
 
-      {/* Dialog de Historial Clínico */}
+      {/* Dialog de Historial Clínico: pasamos handlers para que el diálogo ejecute las acciones */}
       <ClinicalHistoryDialog
         open={isClinicalHistoryOpen}
         onOpenChange={setIsClinicalHistoryOpen}
         client={client}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onCall={onCall}
+        onEmail={onEmail}
+        onSchedule={onSchedule}
+        onWhatsApp={onWhatsApp}
       />
     </>
   );
