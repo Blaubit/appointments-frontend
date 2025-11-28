@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Grid, Plus, Table, Calendar } from "lucide-react";
+import { Grid, Plus, Table, Calendar, Ban, AlertCircle } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -26,6 +26,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import RestrictionPreviewModal from "@/components/appointments/restrictionPreviewModal";
+import PendingConflictsModal from "@/components/appointments/pendingConflictsModal";
 
 interface PageClientProps {
   appointments: Appointment[];
@@ -51,6 +53,8 @@ export function PageClient({
   currentUser,
 }: PageClientProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [restrictionModalOpen, setRestrictionModalOpen] = useState(false);
+  const [conflictsModalOpen, setConflictsModalOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -61,12 +65,11 @@ export function PageClient({
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", page.toString());
-    router.push(`?${params.toString()}`);
+    router.push(`? ${params.toString()}`);
   };
 
   const renderPaginationItems = () => {
     const items = [];
-    // Reducir páginas visibles en móvil
     const maxVisiblePages = window.innerWidth < 640 ? 3 : 5;
     const startPage = Math.max(
       1,
@@ -74,7 +77,6 @@ export function PageClient({
     );
     const endPage = Math.min(meta.totalPages, startPage + maxVisiblePages - 1);
 
-    // Mostrar primera página si no está visible
     if (startPage > 1) {
       items.push(
         <PaginationItem key={1}>
@@ -111,7 +113,6 @@ export function PageClient({
       );
     }
 
-    // Mostrar última página si no está visible
     if (endPage < meta.totalPages) {
       if (endPage < meta.totalPages - 1) {
         items.push(
@@ -137,7 +138,6 @@ export function PageClient({
     return items;
   };
 
-  // Obtener filtros activos para mostrar en el header
   const activeFilters = {
     search: searchParams.get("q"),
     status: searchParams.get("status"),
@@ -192,6 +192,29 @@ export function PageClient({
                       <span className="hidden sm:inline">Nueva Cita</span>
                       <span className="sm:hidden">Nueva</span>
                     </Button>
+
+                    {/* Botón Restricciones */}
+                    <Button
+                      onClick={() => setRestrictionModalOpen(true)}
+                      variant="outline"
+                      className="border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950 flex items-center gap-2"
+                    >
+                      <Ban className="h-4 w-4" />
+                      <span className="hidden sm:inline">Restricciones</span>
+                      <span className="sm:hidden">Rest. </span>
+                    </Button>
+
+                    {/* Botón Ver Conflictos */}
+                    <Button
+                      onClick={() => setConflictsModalOpen(true)}
+                      variant="outline"
+                      className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-2"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="hidden sm:inline">Conflictos</span>
+                      <span className="sm:hidden">Conf.</span>
+                    </Button>
+
                     <AppointmentExport />
 
                     {/* Separador */}
@@ -263,7 +286,6 @@ export function PageClient({
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* Contenido de appointments */}
                     <div>
                       {viewMode === "cards" ? (
                         <AppointmentsCardList appointments={appointments} />
@@ -272,11 +294,9 @@ export function PageClient({
                       )}
                     </div>
 
-                    {/* Paginación integrada - Mejorada para móvil */}
                     {meta.totalPages > 1 && (
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-4 sm:pt-6">
                         <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
-                          {/* Info de paginación - Oculta en móvil muy pequeño */}
                           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left">
                             <span className="hidden sm:inline">
                               Página {meta.currentPage} de {meta.totalPages} •{" "}
@@ -287,7 +307,6 @@ export function PageClient({
                             </span>
                           </div>
 
-                          {/* Controles de paginación */}
                           <Pagination className="justify-center">
                             <PaginationContent className="gap-1">
                               <PaginationItem>
@@ -308,7 +327,6 @@ export function PageClient({
                                 {renderPaginationItems()}
                               </div>
 
-                              {/* Paginación simplificada para móvil */}
                               <div className="flex sm:hidden items-center space-x-2">
                                 <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
                                   {meta.currentPage}
@@ -336,7 +354,6 @@ export function PageClient({
                           </Pagination>
                         </div>
 
-                        {/* Info adicional para móvil */}
                         <div className="sm:hidden text-center mt-2">
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {meta.totalItems} appointments total
@@ -351,6 +368,20 @@ export function PageClient({
           </div>
         </div>
       </div>
+
+      {/* Modal de Restricciones */}
+      <RestrictionPreviewModal
+        professionals={professionals || []}
+        open={restrictionModalOpen}
+        onOpenChange={setRestrictionModalOpen}
+      />
+
+      {/* Modal de Conflictos Pendientes */}
+      <PendingConflictsModal
+        professionals={professionals || []}
+        open={conflictsModalOpen}
+        onOpenChange={setConflictsModalOpen}
+      />
     </div>
   );
 }
