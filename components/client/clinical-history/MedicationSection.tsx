@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Pill, Plus, Trash2 } from "lucide-react";
+import { Pill, Plus, Trash2, AlertCircle } from "lucide-react";
 import { PatientRecord } from "@/types";
 import { DatePicker } from "@/components/client/clinical-history/DatePicker";
 
@@ -20,6 +20,7 @@ interface MedicationsSectionProps {
   onRemove: (index: number) => void;
   onUpdate: (index: number, field: string, value: any) => void;
   isLoading?: boolean;
+  errors?: Record<string, string>;
 }
 
 export function MedicationsSection({
@@ -28,7 +29,11 @@ export function MedicationsSection({
   onRemove,
   onUpdate,
   isLoading = false,
+  errors = {},
 }: MedicationsSectionProps) {
+  const hasError = (field: string) => !!errors[field];
+  const getError = (field: string) => errors[field];
+
   return (
     <AccordionItem value="medications">
       <Card>
@@ -45,7 +50,15 @@ export function MedicationsSection({
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Medicamento</Label>
+                      <Label
+                        className={
+                          hasError(`currentMedications.${index}.medicationName`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Medicamento *
+                      </Label>
                       <Input
                         value={med.medicationName}
                         onChange={(e) =>
@@ -53,10 +66,35 @@ export function MedicationsSection({
                         }
                         placeholder="Ej: Metformina"
                         disabled={isLoading}
+                        className={
+                          hasError(
+                            `currentMedications. ${index}.medicationName`
+                          )
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(
+                        `currentMedications.${index}.medicationName`
+                      ) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(
+                            `currentMedications.${index}.medicationName`
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Dosis</Label>
+                      <Label
+                        className={
+                          hasError(`currentMedications.${index}.dosage`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Dosis *
+                      </Label>
                       <Input
                         value={med.dosage}
                         onChange={(e) =>
@@ -64,10 +102,29 @@ export function MedicationsSection({
                         }
                         placeholder="Ej: 850mg"
                         disabled={isLoading}
+                        className={
+                          hasError(`currentMedications.${index}.dosage`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`currentMedications.${index}.dosage`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`currentMedications.${index}.dosage`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Frecuencia</Label>
+                      <Label
+                        className={
+                          hasError(`currentMedications.${index}.frequency`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Frecuencia *
+                      </Label>
                       <Input
                         value={med.frequency}
                         onChange={(e) =>
@@ -75,10 +132,31 @@ export function MedicationsSection({
                         }
                         placeholder="Ej: 2 veces al día"
                         disabled={isLoading}
+                        className={
+                          hasError(`currentMedications.${index}.frequency`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`currentMedications.${index}.frequency`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`currentMedications.${index}.frequency`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Fecha de Prescripción</Label>
+                      <Label
+                        className={
+                          hasError(
+                            `currentMedications. ${index}.prescriptionDate`
+                          )
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Fecha de Prescripción *
+                      </Label>
                       <DatePicker
                         date={
                           med.prescriptionDate
@@ -94,20 +172,65 @@ export function MedicationsSection({
                         }
                         disabled={isLoading}
                       />
+                      {hasError(
+                        `currentMedications.${index}.prescriptionDate`
+                      ) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(
+                            `currentMedications.${index}.prescriptionDate`
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Médico Prescriptor</Label>
+                      <Label
+                        className={
+                          hasError(
+                            `currentMedications. ${index}.prescribingDoctor`
+                          )
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Médico Prescriptor *
+                      </Label>
                       <Input
                         value={med.prescribingDoctor}
                         onChange={(e) =>
                           onUpdate(index, "prescribingDoctor", e.target.value)
                         }
-                        placeholder="Ej: Dr. Hernández"
+                        placeholder="Ej: Dr.  Hernández"
                         disabled={isLoading}
+                        className={
+                          hasError(
+                            `currentMedications. ${index}.prescribingDoctor`
+                          )
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(
+                        `currentMedications.${index}.prescribingDoctor`
+                      ) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(
+                            `currentMedications.${index}.prescribingDoctor`
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Propósito</Label>
+                      <Label
+                        className={
+                          hasError(`currentMedications. ${index}.purpose`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Propósito *
+                      </Label>
                       <Input
                         value={med.purpose}
                         onChange={(e) =>
@@ -115,7 +238,18 @@ export function MedicationsSection({
                         }
                         placeholder="Ej: Control de glucemia"
                         disabled={isLoading}
+                        className={
+                          hasError(`currentMedications.${index}.purpose`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`currentMedications.${index}.purpose`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`currentMedications.${index}.purpose`)}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <Button

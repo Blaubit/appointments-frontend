@@ -18,7 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Activity, Plus, Trash2 } from "lucide-react";
+import { Activity, Plus, Trash2, AlertCircle } from "lucide-react";
 import { PatientRecord } from "@/types";
 import { DatePicker } from "@/components/client/clinical-history/DatePicker";
 
@@ -28,6 +28,7 @@ interface HabitsSectionProps {
   onRemove: (index: number) => void;
   onUpdate: (index: number, field: string, value: any) => void;
   isLoading?: boolean;
+  errors?: Record<string, string>;
 }
 
 export function HabitsSection({
@@ -36,7 +37,11 @@ export function HabitsSection({
   onRemove,
   onUpdate,
   isLoading = false,
+  errors = {},
 }: HabitsSectionProps) {
+  const hasError = (field: string) => !!errors[field];
+  const getError = (field: string) => errors[field];
+
   return (
     <AccordionItem value="habits">
       <Card>
@@ -53,7 +58,15 @@ export function HabitsSection({
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Tipo de Hábito</Label>
+                      <Label
+                        className={
+                          hasError(`habits.${index}.habitType`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Tipo de Hábito *
+                      </Label>
                       <Select
                         value={habit.habitType}
                         onValueChange={(value) =>
@@ -61,7 +74,13 @@ export function HabitsSection({
                         }
                         disabled={isLoading}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={
+                            hasError(`habits.${index}.habitType`)
+                              ? "border-destructive"
+                              : ""
+                          }
+                        >
                           <SelectValue placeholder="Seleccione" />
                         </SelectTrigger>
                         <SelectContent>
@@ -74,9 +93,23 @@ export function HabitsSection({
                           <SelectItem value="Otro">Otro</SelectItem>
                         </SelectContent>
                       </Select>
+                      {hasError(`habits.${index}. habitType`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`habits.${index}.habitType`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Frecuencia</Label>
+                      <Label
+                        className={
+                          hasError(`habits.${index}.frequency`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Frecuencia *
+                      </Label>
                       <Input
                         value={habit.frequency}
                         onChange={(e) =>
@@ -84,10 +117,29 @@ export function HabitsSection({
                         }
                         placeholder="Ej: 3 veces por semana"
                         disabled={isLoading}
+                        className={
+                          hasError(`habits.${index}.frequency`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`habits.${index}.frequency`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`habits.${index}.frequency`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Cantidad</Label>
+                      <Label
+                        className={
+                          hasError(`habits.${index}.quantity`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Cantidad *
+                      </Label>
                       <Input
                         value={habit.quantity}
                         onChange={(e) =>
@@ -95,10 +147,29 @@ export function HabitsSection({
                         }
                         placeholder="Ej: 1 paquete diario"
                         disabled={isLoading}
+                        className={
+                          hasError(`habits.${index}. quantity`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`habits.${index}.quantity`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`habits.${index}.quantity`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Descripción</Label>
+                      <Label
+                        className={
+                          hasError(`habits. ${index}.description`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Descripción *
+                      </Label>
                       <Input
                         value={habit.description}
                         onChange={(e) =>
@@ -106,10 +177,29 @@ export function HabitsSection({
                         }
                         placeholder="Ej: Caminata y natación"
                         disabled={isLoading}
+                        className={
+                          hasError(`habits.${index}. description`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`habits.${index}.description`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`habits.${index}.description`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Fecha de Inicio</Label>
+                      <Label
+                        className={
+                          hasError(`habits. ${index}.startDate`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Fecha de Inicio *
+                      </Label>
                       <DatePicker
                         date={
                           habit.startDate
@@ -125,9 +215,23 @@ export function HabitsSection({
                         }
                         disabled={isLoading}
                       />
+                      {hasError(`habits. ${index}.startDate`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`habits.${index}.startDate`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Fecha de Fin (si aplica)</Label>
+                      <Label
+                        className={
+                          hasError(`habits.${index}.endDate`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Fecha de Fin (si aplica)
+                      </Label>
                       <DatePicker
                         date={
                           habit.endDate ? new Date(habit.endDate) : undefined
@@ -142,6 +246,12 @@ export function HabitsSection({
                         disabled={isLoading}
                         placeholder="Opcional"
                       />
+                      {hasError(`habits.${index}.endDate`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`habits.${index}.endDate`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label>Notas</Label>
