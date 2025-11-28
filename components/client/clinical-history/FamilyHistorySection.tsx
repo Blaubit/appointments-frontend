@@ -18,7 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Users, Plus, Trash2 } from "lucide-react";
+import { Users, Plus, Trash2, AlertCircle } from "lucide-react";
 import { PatientRecord } from "@/types";
 
 interface FamilyHistorySectionProps {
@@ -27,6 +27,7 @@ interface FamilyHistorySectionProps {
   onRemove: (index: number) => void;
   onUpdate: (index: number, field: string, value: any) => void;
   isLoading?: boolean;
+  errors?: Record<string, string>;
 }
 
 export function FamilyHistorySection({
@@ -35,7 +36,11 @@ export function FamilyHistorySection({
   onRemove,
   onUpdate,
   isLoading = false,
+  errors = {},
 }: FamilyHistorySectionProps) {
+  const hasError = (field: string) => !!errors[field];
+  const getError = (field: string) => errors[field];
+
   return (
     <AccordionItem value="family-history">
       <Card>
@@ -52,7 +57,15 @@ export function FamilyHistorySection({
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Familiar</Label>
+                      <Label
+                        className={
+                          hasError(`familyHistory.${index}.relative`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Familiar *
+                      </Label>
                       <Select
                         value={history.relative}
                         onValueChange={(value) =>
@@ -60,7 +73,13 @@ export function FamilyHistorySection({
                         }
                         disabled={isLoading}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={
+                            hasError(`familyHistory.${index}.relative`)
+                              ? "border-destructive"
+                              : ""
+                          }
+                        >
                           <SelectValue placeholder="Seleccione" />
                         </SelectTrigger>
                         <SelectContent>
@@ -74,9 +93,23 @@ export function FamilyHistorySection({
                           <SelectItem value="Tía">Tía</SelectItem>
                         </SelectContent>
                       </Select>
+                      {hasError(`familyHistory. ${index}.relative`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`familyHistory.${index}.relative`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Enfermedad</Label>
+                      <Label
+                        className={
+                          hasError(`familyHistory.${index}.diseaseName`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Enfermedad *
+                      </Label>
                       <Input
                         value={history.diseaseName}
                         onChange={(e) =>
@@ -84,10 +117,29 @@ export function FamilyHistorySection({
                         }
                         placeholder="Ej: Diabetes Tipo 2"
                         disabled={isLoading}
+                        className={
+                          hasError(`familyHistory. ${index}.diseaseName`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`familyHistory. ${index}.diseaseName`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`familyHistory.${index}.diseaseName`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Edad al Diagnóstico</Label>
+                      <Label
+                        className={
+                          hasError(`familyHistory.${index}. ageAtDiagnosis`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Edad al Diagnóstico *
+                      </Label>
                       <Input
                         type="number"
                         value={history.ageAtDiagnosis}
@@ -100,7 +152,18 @@ export function FamilyHistorySection({
                         }
                         placeholder="Ej: 55"
                         disabled={isLoading}
+                        className={
+                          hasError(`familyHistory.${index}.ageAtDiagnosis`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`familyHistory.${index}.ageAtDiagnosis`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`familyHistory.${index}.ageAtDiagnosis`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label>Notas</Label>

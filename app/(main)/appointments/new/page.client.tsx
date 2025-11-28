@@ -45,7 +45,7 @@ export default function PageClient({
   const searchParams = useSearchParams();
   const clientIdFromUrl = searchParams.get("clientId") ?? "";
   const professionalIdFromUrl = searchParams.get("professionalId") ?? "";
-  const fechaHoraFromUrl = searchParams.get("fechaHora"); // Ej: "2025-09-01T14:30"
+  const fechaHoraFromUrl = searchParams.get("fechaHora");
   const router = useRouter();
   const horaFromUrl = fechaHoraFromUrl?.split("T")[1] ?? "";
 
@@ -68,13 +68,23 @@ export default function PageClient({
   const [success, setSuccess] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [initialTimeFromUrl, setInitialTimeFromUrl] = useState(horaFromUrl);
+
+  // NUEVO: Estado para controlar qué errores mostrar
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({
+    client: false,
+    professional: false,
+    services: false,
+    date: false,
+    time: false,
+  });
+
   // Servicios del profesional
   const [professionalServices, setProfessionalServices] = useState<Service[]>(
     []
   );
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
-  // Control de parámetros de URL
   const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -90,7 +100,7 @@ export default function PageClient({
     status: "pending" as const,
   });
 
-  // Obtener servicios del profesional - Mejorada con mejor manejo de errores
+  // Obtener servicios del profesional
   const fetchProfessionalServices = useCallback(
     async (professionalId: string) => {
       if (!professionalId) {
@@ -128,7 +138,7 @@ export default function PageClient({
     []
   );
 
-  // Procesamiento de parámetros de URL y auto-selección profesional y fecha/hora
+  // Procesamiento de parámetros de URL
   useEffect(() => {
     if (!professionals || urlParamsProcessed) return;
 
@@ -184,7 +194,7 @@ export default function PageClient({
     urlParamsProcessed,
   ]);
 
-  // Cargar servicios cuando cambia el profesional - Corregido para usar Promise correctamente
+  // Cargar servicios cuando cambia el profesional
   useEffect(() => {
     if (selectedProfessional) {
       fetchProfessionalServices(selectedProfessional.id.toString()).catch(
@@ -200,12 +210,30 @@ export default function PageClient({
     }
   }, [selectedProfessional, fetchProfessionalServices]);
 
-  // Para mostrar nombres de los servicios seleccionados
+  // NUEVO: Validación en tiempo real de campos
+  useEffect(() => {
+    if (showValidationErrors) {
+      setFieldErrors({
+        client: !selectedClient,
+        professional: !selectedProfessional,
+        services: selectedServices.length === 0,
+        date: !selectedDate,
+        time: !selectedTime,
+      });
+    }
+  }, [
+    selectedClient,
+    selectedProfessional,
+    selectedServices,
+    selectedDate,
+    selectedTime,
+    showValidationErrors,
+  ]);
+
   const selectedServicesData = selectedServices.map(
     (id) => professionalServices.find((s) => s.id.toString() === id)?.name || ""
   );
 
-  // Para mostrar totales
   const totalPrice = selectedServices.reduce((sum, id) => {
     const service = professionalServices.find((s) => s.id === id);
     return sum + (service ? Number(service.price) : 0);
@@ -246,7 +274,6 @@ export default function PageClient({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handlers
   const handleClientSelect = (client: any) => {
     setSelectedClient(client);
     setFormData({
@@ -277,16 +304,42 @@ export default function PageClient({
     );
   };
 
-  // Función estable para recibir fecha y hora del selector
   const handleDateTimeChange = useCallback((date: string, time: string) => {
     setSelectedDate(date);
     setSelectedTime(time);
     setFormData((prev) => ({ ...prev, date, time }));
   }, []);
 
-  // Submit (enviar todos los serviceId juntos!)
+  // NUEVO: Validar formulario y mostrar errores específicos
+  const validateForm = (): boolean => {
+    const errors = {
+      client: !selectedClient,
+      professional: !selectedProfessional,
+      services: selectedServices.length === 0,
+      date: !selectedDate,
+      time: !selectedTime,
+    };
+
+    setFieldErrors(errors);
+    setShowValidationErrors(true);
+
+    // Retornar true si NO hay errores
+    return !Object.values(errors).some((error) => error);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // NUEVO: Validar antes de enviar
+    if (!validateForm()) {
+      setError(
+        "Por favor completa todos los campos requeridos antes de continuar"
+      );
+      // Scroll al primer error
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -334,11 +387,10 @@ export default function PageClient({
         throw new Error("Debe seleccionar una hora");
       }
 
-      // Enviar UN solo objeto con todos los IDs de servicio
       const appointmentData = {
         clientId: clientId.toString(),
         professionalId: selectedProfessional.id.toString(),
-        serviceId: selectedServices, // <-- Array aquí
+        serviceId: selectedServices,
         appointmentDate: selectedDate,
         startTime: selectedTime,
         status: "confirmed",
@@ -385,6 +437,19 @@ export default function PageClient({
 
   const isProfessionalUser = userSession?.role?.name === "profesional";
 
+  // NUEVO: Resumen de campos faltantes
+  const getMissingFields = () => {
+    const missing: string[] = [];
+    if (!selectedClient) missing.push("Paciente");
+    if (!selectedProfessional) missing.push("Profesional");
+    if (selectedServices.length === 0) missing.push("Servicios");
+    if (!selectedDate) missing.push("Fecha");
+    if (!selectedTime) missing.push("Hora");
+    return missing;
+  };
+
+  const missingFields = getMissingFields();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header
@@ -408,12 +473,35 @@ export default function PageClient({
             </AlertDescription>
           </Alert>
         )}
+
+        {/* NUEVO: Indicador de progreso */}
+        {!isFormValid() && missingFields.length > 0 && (
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Campos pendientes:</strong> {missingFields.join(", ")}
+              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${((5 - missingFields.length) / 5) * 100}%`,
+                  }}
+                />
+              </div>
+              <p className="text-xs mt-1">
+                {5 - missingFields.length} de 5 campos completados
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-8">
           <ClientSelectorCard
             clients={clients}
             selectedClient={selectedClient}
             onSelect={handleClientSelect}
             clientIdFromUrl={clientIdFromUrl}
+            showError={fieldErrors.client}
           />
           <ProfessionalSelectorCard
             professionals={filteredProfessionals}
@@ -431,6 +519,7 @@ export default function PageClient({
             isLoading={isLoadingServices}
             error={servicesError}
             isLocked={false}
+            showError={fieldErrors.services}
           />
 
           <DateTimeSelectorCard
@@ -440,6 +529,7 @@ export default function PageClient({
             onChange={handleDateTimeChange}
             selectedServices={selectedServices}
             professionalServices={professionalServices}
+            showError={fieldErrors.date || fieldErrors.time}
           />
 
           <Card>
@@ -451,7 +541,7 @@ export default function PageClient({
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="notes">Notas</Label>
+                <Label htmlFor="notes">Notas (opcional)</Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}

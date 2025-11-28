@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Building2, Plus, Trash2 } from "lucide-react";
+import { Building2, Plus, Trash2, AlertCircle } from "lucide-react";
 import { PatientRecord } from "@/types";
 import { DatePicker } from "@/components/client/clinical-history/DatePicker";
 
@@ -21,6 +21,7 @@ interface HospitalizationsSectionProps {
   onRemove: (index: number) => void;
   onUpdate: (index: number, field: string, value: any) => void;
   isLoading?: boolean;
+  errors?: Record<string, string>;
 }
 
 export function HospitalizationsSection({
@@ -29,7 +30,11 @@ export function HospitalizationsSection({
   onRemove,
   onUpdate,
   isLoading = false,
+  errors = {},
 }: HospitalizationsSectionProps) {
+  const hasError = (field: string) => !!errors[field];
+  const getError = (field: string) => errors[field];
+
   return (
     <AccordionItem value="hospitalizations">
       <Card>
@@ -46,7 +51,15 @@ export function HospitalizationsSection({
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Hospital</Label>
+                      <Label
+                        className={
+                          hasError(`hospitalizations.${index}.hospital`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Hospital *
+                      </Label>
                       <Input
                         value={hosp.hospital}
                         onChange={(e) =>
@@ -54,10 +67,29 @@ export function HospitalizationsSection({
                         }
                         placeholder="Ej: Hospital Universitario"
                         disabled={isLoading}
+                        className={
+                          hasError(`hospitalizations.${index}.hospital`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`hospitalizations.${index}.hospital`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`hospitalizations.${index}.hospital`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Motivo</Label>
+                      <Label
+                        className={
+                          hasError(`hospitalizations.${index}.reason`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Motivo *
+                      </Label>
                       <Input
                         value={hosp.reason}
                         onChange={(e) =>
@@ -65,10 +97,29 @@ export function HospitalizationsSection({
                         }
                         placeholder="Ej: Neumonía aguda"
                         disabled={isLoading}
+                        className={
+                          hasError(`hospitalizations.${index}.reason`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`hospitalizations.${index}.reason`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`hospitalizations.${index}.reason`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Fecha de Admisión</Label>
+                      <Label
+                        className={
+                          hasError(`hospitalizations.${index}.admissionDate`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Fecha de Admisión *
+                      </Label>
                       <DatePicker
                         date={
                           hosp.admissionDate
@@ -84,9 +135,23 @@ export function HospitalizationsSection({
                         }
                         disabled={isLoading}
                       />
+                      {hasError(`hospitalizations.${index}.admissionDate`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`hospitalizations.${index}.admissionDate`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Fecha de Alta</Label>
+                      <Label
+                        className={
+                          hasError(`hospitalizations.${index}.dischargeDate`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Fecha de Alta *
+                      </Label>
                       <DatePicker
                         date={
                           hosp.dischargeDate
@@ -102,9 +167,23 @@ export function HospitalizationsSection({
                         }
                         disabled={isLoading}
                       />
+                      {hasError(`hospitalizations.${index}.dischargeDate`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`hospitalizations. ${index}.dischargeDate`)}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <Label>Diagnóstico</Label>
+                      <Label
+                        className={
+                          hasError(`hospitalizations.${index}.diagnosis`)
+                            ? "text-destructive"
+                            : ""
+                        }
+                      >
+                        Diagnóstico *
+                      </Label>
                       <Textarea
                         value={hosp.diagnosis}
                         onChange={(e) =>
@@ -113,7 +192,18 @@ export function HospitalizationsSection({
                         placeholder="Diagnóstico completo"
                         rows={2}
                         disabled={isLoading}
+                        className={
+                          hasError(`hospitalizations.${index}. diagnosis`)
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
+                      {hasError(`hospitalizations.${index}.diagnosis`) && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {getError(`hospitalizations.${index}.diagnosis`)}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <Button
