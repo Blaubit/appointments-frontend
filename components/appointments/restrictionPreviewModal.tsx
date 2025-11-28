@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   createRestriction,
   RestrictionPreviewFormData,
 } from "@/actions/user/restriction/previewRestriction";
-import { User } from "@/types";
+import { findPeriod } from "@/actions/calendar/findPeriod";
+import { User, PeriodResponse } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -26,17 +27,20 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   X,
-  Plus,
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   User as UserIcon,
   AlertTriangle,
   Eye,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { AppointmentDetailsDialog } from "@/components/appointment-details-dialog";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 type RestrictionPreviewModalProps = {
   professionals: User[];
@@ -70,8 +74,16 @@ export default function RestrictionPreviewModal({
     endTime: "",
   });
 
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
-  const [currentDate, setCurrentDate] = useState("");
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [currentMonth, setCurrentMonth] = useState<Date>(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
+
+  const [nonWorkingDays, setNonWorkingDays] = useState<Set<string>>(new Set());
+  const [isLoadingMonth, setIsLoadingMonth] = useState<boolean>(false);
+  const [cachedMonths, setCachedMonths] = useState<Map<string, Set<string>>>(
+    new Map()
+  );
 
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCreate, setLoadingCreate] = useState(false);
@@ -85,20 +97,176 @@ export default function RestrictionPreviewModal({
   >(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
-  const handleAddDate = () => {
-    if (currentDate && !selectedDates.includes(currentDate)) {
-      const newDates = [...selectedDates, currentDate].sort();
-      setSelectedDates(newDates);
-      setFormData({ ...formData, restrictionDate: newDates });
-      setCurrentDate("");
-    }
-  };
+  // Convertir Date a string YYYY-MM-DD
+  const dateToString = useCallback((date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
 
-  const handleRemoveDate = (dateToRemove: string) => {
-    const newDates = selectedDates.filter((date) => date !== dateToRemove);
-    setSelectedDates(newDates);
-    setFormData({ ...formData, restrictionDate: newDates });
-  };
+  // Genera "slots" del mes actual
+  const getCalendarSlots = useCallback((date: Date): (Date | null)[] => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const totalDays = lastDayOfMonth.getDate();
+
+    const leadingBlanks = (firstDayOfMonth.getDay() + 6) % 7;
+    const slots: (Date | null)[] = [];
+
+    for (let i = 0; i < leadingBlanks; i++) {
+      slots.push(null);
+    }
+
+    for (let day = 1; day <= totalDays; day++) {
+      slots.push(new Date(year, month, day));
+    }
+
+    while (slots.length % 7 !== 0) {
+      slots.push(null);
+    }
+
+    return slots;
+  }, []);
+
+  // Cargar datos del mes completo cuando cambian profesional o mes
+  useEffect(() => {
+    if (!formData.professionalId) {
+      setNonWorkingDays(new Set());
+      return;
+    }
+
+    const loadMonthData = async () => {
+      const monthStr = currentMonth.toISOString().slice(0, 7);
+      const monthKey = `${formData.professionalId}:${monthStr}`;
+
+      // Verificar caché sin incluirlo en dependencias
+      if (cachedMonths.has(monthKey)) {
+        const cached = cachedMonths.get(monthKey)!;
+        setNonWorkingDays(cached);
+        return;
+      }
+
+      setIsLoadingMonth(true);
+      try {
+        const result = await findPeriod(
+          formData.professionalId,
+          monthStr,
+          "month"
+        );
+
+        if (result && "data" in result && result.data) {
+          const monthSchedule = result.data as PeriodResponse;
+          const nonWorking = new Set<string>();
+
+          if (monthSchedule.schedule && Array.isArray(monthSchedule.schedule)) {
+            monthSchedule.schedule.forEach((day: any) => {
+              const hasWorkingHours =
+                day.workingHours &&
+                day.workingHours.start !== null &&
+                day.workingHours.end !== null;
+
+              if (!hasWorkingHours) {
+                nonWorking.add(day.date);
+              }
+            });
+          }
+
+          setNonWorkingDays(nonWorking);
+
+          // Actualizar caché
+          setCachedMonths((prev) => {
+            const next = new Map(prev);
+            next.set(monthKey, nonWorking);
+            return next;
+          });
+        }
+      } catch (error) {
+        console.error("Error loading month data:", error);
+        setNonWorkingDays(new Set());
+      } finally {
+        setIsLoadingMonth(false);
+      }
+    };
+
+    loadMonthData();
+    // Eliminamos cachedMonths de las dependencias para evitar el loop
+  }, [formData.professionalId, currentMonth]);
+
+  // Manejar selección/deselección de fechas
+  const handleDateToggle = useCallback(
+    (date: Date) => {
+      if (isNaN(date.getTime())) return;
+
+      const dateStr = dateToString(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const isPast = date.getTime() < today.getTime();
+
+      setSelectedDates((prevDates) => {
+        const isNonWorking = nonWorkingDays.has(dateStr);
+
+        if (isPast || isNonWorking) return prevDates;
+
+        const isAlreadySelected = prevDates.some(
+          (d) => dateToString(d) === dateStr
+        );
+
+        let newDates: Date[];
+        if (isAlreadySelected) {
+          newDates = prevDates.filter((d) => dateToString(d) !== dateStr);
+        } else {
+          newDates = [...prevDates, date];
+        }
+
+        // Ordenar fechas
+        const sortedDates = newDates.sort((a, b) => a.getTime() - b.getTime());
+
+        // Actualizar formData
+        setFormData((prev) => ({
+          ...prev,
+          restrictionDate: sortedDates.map(dateToString),
+        }));
+
+        return sortedDates;
+      });
+    },
+    [dateToString, nonWorkingDays]
+  );
+
+  const handleRemoveDate = useCallback(
+    (dateToRemove: Date) => {
+      setSelectedDates((prevDates) => {
+        const newDates = prevDates.filter(
+          (date) => date.getTime() !== dateToRemove.getTime()
+        );
+
+        setFormData((prev) => ({
+          ...prev,
+          restrictionDate: newDates.map(dateToString),
+        }));
+
+        return newDates;
+      });
+    },
+    [dateToString]
+  );
+
+  const handleClearAllDates = useCallback(() => {
+    setSelectedDates([]);
+    setFormData((prev) => ({ ...prev, restrictionDate: [] }));
+  }, []);
+
+  const changeMonth = useCallback((offset: number) => {
+    setCurrentMonth((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + offset);
+      return new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+    });
+  }, []);
 
   const handlePreview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,7 +331,7 @@ export default function RestrictionPreviewModal({
     }
   };
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setFormData({
       professionalId: "",
       restrictionDate: [],
@@ -171,27 +339,28 @@ export default function RestrictionPreviewModal({
       endTime: "",
     });
     setSelectedDates([]);
-    setCurrentDate("");
     setError(null);
     setPreviewData(null);
     setSuccessMessage(null);
-  };
+    setNonWorkingDays(new Set());
+    setCachedMonths(new Map());
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     handleReset();
     onOpenChange(false);
-  };
+  }, [handleReset, onOpenChange]);
 
-  const handleAppointmentClick = (appointmentId: string) => {
+  const handleAppointmentClick = useCallback((appointmentId: string) => {
     setSelectedAppointmentId(appointmentId);
     setIsDetailsDialogOpen(true);
-  };
+  }, []);
 
-  const formatTime = (time: string) => {
+  const formatTime = useCallback((time: string) => {
     return time.substring(0, 5);
-  };
+  }, []);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString + "T00:00:00");
     return date.toLocaleDateString("es-ES", {
       weekday: "long",
@@ -199,17 +368,34 @@ export default function RestrictionPreviewModal({
       month: "long",
       year: "numeric",
     });
-  };
+  }, []);
+
+  const formatShortDate = useCallback((date: Date) => {
+    return format(date, "dd/MM/yyyy", { locale: es });
+  }, []);
+
+  const calendarSlots = useMemo(
+    () => getCalendarSlots(currentMonth),
+    [currentMonth, getCalendarSlots]
+  );
+
+  const today = useMemo(() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t;
+  }, []);
+
+  const todayStr = useMemo(() => dateToString(today), [today, dateToString]);
 
   const isFormValid = formData.professionalId && selectedDates.length > 0;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-blue-500" />
+              <CalendarIcon className="h-6 w-6 text-blue-500" />
               Crear Restricción de Disponibilidad
             </DialogTitle>
             <DialogDescription>
@@ -226,9 +412,15 @@ export default function RestrictionPreviewModal({
               </Label>
               <Select
                 value={formData.professionalId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, professionalId: value })
-                }
+                onValueChange={(value) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    professionalId: value,
+                    restrictionDate: [],
+                  }));
+                  setSelectedDates([]);
+                  setNonWorkingDays(new Set());
+                }}
                 disabled={loadingPreview || loadingCreate}
               >
                 <SelectTrigger id="professional">
@@ -244,61 +436,196 @@ export default function RestrictionPreviewModal({
               </Select>
             </div>
 
-            {/* Date Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="date">
-                Fechas de Restricción <span className="text-red-500">*</span>
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  type="date"
-                  id="date"
-                  value={currentDate}
-                  onChange={(e) => setCurrentDate(e.target.value)}
-                  className="flex-1"
-                  disabled={loadingPreview || loadingCreate}
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddDate}
-                  disabled={!currentDate || loadingPreview || loadingCreate}
-                  size="sm"
-                  variant="outline"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Agregar
-                </Button>
-              </div>
-
-              {selectedDates.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedDates.map((date) => (
-                    <span
-                      key={date}
-                      className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+            {/* Calendar Selection */}
+            {formData.professionalId && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>
+                    Fechas de Restricción{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  {selectedDates.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearAllDates}
+                      disabled={loadingPreview || loadingCreate}
+                      className="h-8 text-xs"
                     >
-                      <Calendar className="h-3 w-3" />
-                      {new Date(date + "T00:00:00").toLocaleDateString(
-                        "es-ES",
-                        {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        }
-                      )}
+                      <X className="h-3 w-3 mr-1" />
+                      Limpiar todo
+                    </Button>
+                  )}
+                </div>
+
+                {/* Calendar */}
+                <Card>
+                  <CardContent className="pt-6">
+                    {/* Month Navigation */}
+                    <div className="flex items-center justify-between mb-4">
                       <button
                         type="button"
-                        onClick={() => handleRemoveDate(date)}
-                        className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0. 5"
+                        onClick={() => changeMonth(-1)}
+                        className="hover:text-blue-600 p-2"
                         disabled={loadingPreview || loadingCreate}
                       >
-                        <X className="h-3 w-3" />
+                        <ChevronLeft className="h-5 w-5" />
                       </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+                      <span className="font-semibold text-lg capitalize">
+                        {currentMonth.toLocaleString("es-ES", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => changeMonth(1)}
+                        className="hover:text-blue-600 p-2"
+                        disabled={loadingPreview || loadingCreate}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    {/* Weekday Headers */}
+                    <div className="grid grid-cols-7 gap-2 mb-2">
+                      {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(
+                        (day) => (
+                          <div
+                            key={day}
+                            className="text-center text-sm font-medium text-gray-500 py-1"
+                          >
+                            {day}
+                          </div>
+                        )
+                      )}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="space-y-2">
+                      {Array.from({
+                        length: Math.ceil(calendarSlots.length / 7),
+                      }).map((_, weekIndex) => (
+                        <div key={weekIndex} className="grid grid-cols-7 gap-2">
+                          {calendarSlots
+                            .slice(weekIndex * 7, (weekIndex + 1) * 7)
+                            .map((slot, slotIndex) => {
+                              if (!slot) {
+                                return <div key={slotIndex} className="p-2" />;
+                              }
+
+                              const date = slot;
+                              if (isNaN(date.getTime()))
+                                return <div key={slotIndex} />;
+
+                              const dateStr = dateToString(date);
+                              const isSelected = selectedDates.some(
+                                (d) => dateToString(d) === dateStr
+                              );
+                              const isToday = dateStr === todayStr;
+                              const isPast = date.getTime() < today.getTime();
+                              const isNonWorking = nonWorkingDays.has(dateStr);
+                              const isDisabled = isPast || isNonWorking;
+
+                              return (
+                                <button
+                                  key={slotIndex}
+                                  type="button"
+                                  disabled={
+                                    isDisabled ||
+                                    loadingPreview ||
+                                    loadingCreate
+                                  }
+                                  title={
+                                    isPast
+                                      ? "Fecha pasada"
+                                      : isNonWorking
+                                        ? "Día no laboral"
+                                        : isSelected
+                                          ? "Click para deseleccionar"
+                                          : "Click para seleccionar"
+                                  }
+                                  className={`p-2 text-sm rounded-lg transition-colors relative ${
+                                    isDisabled
+                                      ? "text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800"
+                                      : isSelected
+                                        ? "bg-blue-500 text-white font-semibold ring-2 ring-blue-300"
+                                        : isToday
+                                          ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
+                                          : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  }`}
+                                  onClick={() => handleDateToggle(date)}
+                                >
+                                  {date.getDate()}
+                                  {isSelected && (
+                                    <span className="absolute top-0 right-0 flex h-2 w-2">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                        </div>
+                      ))}
+                    </div>
+
+                    {isLoadingMonth && (
+                      <div className="mt-2 text-xs text-gray-400 text-center">
+                        Cargando disponibilidad...
+                      </div>
+                    )}
+
+                    {/* Legend */}
+                    <div className="mt-4 pt-4 border-t text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                        <span>Día no laboral / Pasado</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-100 dark:bg-blue-900 rounded"></div>
+                        <span>Hoy</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                        <span>Seleccionado</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Selected Dates Display */}
+                {selectedDates.length > 0 && (
+                  <div className="mt-3">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDates.map((date) => (
+                        <span
+                          key={date.toISOString()}
+                          className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                        >
+                          <CalendarIcon className="h-3 w-3" />
+                          {formatShortDate(date)}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDate(date)}
+                            className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5"
+                            disabled={loadingPreview || loadingCreate}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {selectedDates.length} fecha
+                      {selectedDates.length !== 1 ? "s" : ""} seleccionada
+                      {selectedDates.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Time Selection */}
             <div className="grid grid-cols-2 gap-4">
@@ -312,7 +639,10 @@ export default function RestrictionPreviewModal({
                   id="startTime"
                   value={formData.startTime}
                   onChange={(e) =>
-                    setFormData({ ...formData, startTime: e.target.value })
+                    setFormData((prev) => ({
+                      ...prev,
+                      startTime: e.target.value,
+                    }))
                   }
                   disabled={loadingPreview || loadingCreate}
                 />
@@ -328,7 +658,10 @@ export default function RestrictionPreviewModal({
                   id="endTime"
                   value={formData.endTime}
                   onChange={(e) =>
-                    setFormData({ ...formData, endTime: e.target.value })
+                    setFormData((prev) => ({
+                      ...prev,
+                      endTime: e.target.value,
+                    }))
                   }
                   disabled={loadingPreview || loadingCreate}
                 />
@@ -410,7 +743,7 @@ export default function RestrictionPreviewModal({
                                     </h5>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 text-sm text-gray-600 dark:text-gray-400">
                                       <div className="flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
+                                        <CalendarIcon className="h-3 w-3" />
                                         <span>
                                           {formatDate(appointment.date)}
                                         </span>
