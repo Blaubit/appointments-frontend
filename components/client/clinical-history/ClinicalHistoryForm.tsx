@@ -6,9 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion } from "@/components/ui/accordion";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, AlertCircle } from "lucide-react";
 import { savePatientRecord } from "@/actions/clients/create-history";
-import { updatePatientRecord } from "@/actions/clients/update-history"; // NUEVA IMPORTACIÓN
+import { updatePatientRecord } from "@/actions/clients/update-history";
 import { PatientRecord } from "@/types";
 import { PersonalInfoSection } from "@/components/client/clinical-history/PersonalInfoSelection";
 import { ChronicDiseasesSection } from "@/components/client/clinical-history/ChronicDiseasesSection";
@@ -17,6 +17,8 @@ import { HospitalizationsSection } from "@/components/client/clinical-history/Ho
 import { MedicationsSection } from "@/components/client/clinical-history/MedicationSection";
 import { FamilyHistorySection } from "@/components/client/clinical-history/FamilyHistorySection";
 import { HabitsSection } from "@/components/client/clinical-history/HabitsSection";
+import { validatePatientRecord } from "@/lib/validations/clinical-history";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ClinicalHistoryFormProps {
   clientId: string;
@@ -50,6 +52,8 @@ export function ClinicalHistoryForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showErrors, setShowErrors] = useState(false);
 
   const [formData, setFormData] = useState<PatientRecord>(
     initialData || defaultFormData
@@ -65,6 +69,14 @@ export function ClinicalHistoryForm({
   // Manejadores para campos simples
   const handleInputChange = (field: keyof PatientRecord, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Limpiar error del campo cuando se modifica
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   // Manejadores para arrays
@@ -80,6 +92,17 @@ export function ClinicalHistoryForm({
       ...prev,
       [field]: (prev[field] as any[]).filter((_, i) => i !== index),
     }));
+
+    // Limpiar errores relacionados con este ítem
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      Object.keys(newErrors).forEach((key) => {
+        if (key.startsWith(`${field}. ${index}.`)) {
+          delete newErrors[key];
+        }
+      });
+      return newErrors;
+    });
   };
 
   const updateArrayItem = (
@@ -94,15 +117,56 @@ export function ClinicalHistoryForm({
         i === index ? { ...item, [fieldName]: value } : item
       ),
     }));
+
+    // Limpiar error del campo cuando se modifica
+    const errorKey = `${field}.${index}.${fieldName}`;
+    if (errors[errorKey]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[errorKey];
+        return newErrors;
+      });
+    }
   };
 
-  // Manejador de envío - MODIFICADO PARA USAR LA ACTION CORRECTA
+  // Manejador de envío con validación completa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setShowErrors(true);
+
+    // Validar todos los datos
+    const validation = validatePatientRecord(formData);
+
+    if (!validation.isValid) {
+      // Convertir errores a objeto para fácil acceso
+      const errorMap: Record<string, string> = {};
+      validation.errors.forEach((error) => {
+        errorMap[error.field] = error.message;
+      });
+      setErrors(errorMap);
+
+      // Mostrar toast con resumen de errores
+      const errorCount = validation.errors.length;
+      toast({
+        variant: "destructive",
+        title: "❌ Errores en el formulario",
+        description: `Se encontraron ${errorCount} error${errorCount > 1 ? "es" : ""}.  Por favor revisa todos los campos marcados en rojo.`,
+      });
+
+      // Scroll al primer error (CORRECCIÓN AQUÍ)
+      setTimeout(() => {
+        const firstError = document.querySelector(".border-destructive");
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Usar la action correcta según el modo
       const result =
         mode === "create"
           ? await savePatientRecord(clientId, formData)
@@ -143,14 +207,31 @@ export function ClinicalHistoryForm({
     }
   };
 
+  // Contar total de errores
+  const errorCount = Object.keys(errors).length;
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
+        {/* Alerta de errores global */}
+        {showErrors && errorCount > 0 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Se encontraron <strong>{errorCount}</strong> error
+              {errorCount > 1 ? "es" : ""} en el formulario. Por favor, revisa
+              todos los campos marcados en rojo y completa la información
+              requerida.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Información Personal */}
         <PersonalInfoSection
           formData={formData}
           onInputChange={handleInputChange}
           isLoading={isLoading}
+          errors={errors}
         />
 
         {/* Historial Médico - Accordion */}
@@ -171,6 +252,7 @@ export function ClinicalHistoryForm({
               updateArrayItem("chronicDiseases", index, field, value)
             }
             isLoading={isLoading}
+            errors={errors}
           />
 
           {/* Alergias */}
@@ -189,6 +271,7 @@ export function ClinicalHistoryForm({
               updateArrayItem("allergies", index, field, value)
             }
             isLoading={isLoading}
+            errors={errors}
           />
 
           {/* Hospitalizaciones */}
@@ -208,6 +291,7 @@ export function ClinicalHistoryForm({
               updateArrayItem("hospitalizations", index, field, value)
             }
             isLoading={isLoading}
+            errors={errors}
           />
 
           {/* Medicamentos Actuales */}
@@ -228,6 +312,7 @@ export function ClinicalHistoryForm({
               updateArrayItem("currentMedications", index, field, value)
             }
             isLoading={isLoading}
+            errors={errors}
           />
 
           {/* Historial Familiar */}
@@ -246,6 +331,7 @@ export function ClinicalHistoryForm({
               updateArrayItem("familyHistory", index, field, value)
             }
             isLoading={isLoading}
+            errors={errors}
           />
 
           {/* Hábitos */}
@@ -267,6 +353,7 @@ export function ClinicalHistoryForm({
               updateArrayItem("habits", index, field, value)
             }
             isLoading={isLoading}
+            errors={errors}
           />
         </Accordion>
 

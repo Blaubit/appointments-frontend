@@ -203,6 +203,7 @@ export function ClinicalHistoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
+          <DialogTitle>Historial Clínico</DialogTitle>
           <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
