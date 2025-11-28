@@ -13,6 +13,7 @@ import { Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { findPeriod } from "@/actions/calendar/findPeriod";
 import type { Service, User } from "@/types";
 import formatCurrency from "@/utils/functions/formatCurrency";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Props = {
   selectedProfessional: User | null;
@@ -21,14 +22,15 @@ type Props = {
   onChange: (date: string, time: string) => void;
   selectedServices: string[];
   professionalServices: Service[];
-  appointmentId?: string; // opcional: id de la cita que estamos editando
+  appointmentId?: string;
+  showError?: boolean;
 };
 
 interface TimeSlotStatus {
   time: string;
   isAvailable: boolean;
   reason?: string;
-  overlaps?: boolean; // flag para indicar solapamiento cuando overlap está permitido
+  overlaps?: boolean;
 }
 
 interface CustomTimeValidation {
@@ -45,6 +47,7 @@ export function DateTimeSelectorCard({
   selectedServices,
   professionalServices,
   appointmentId,
+  showError = false,
 }: Props) {
   const [timeSlots, setTimeSlots] = useState<TimeSlotStatus[]>([]);
   const [selectedTime, setSelectedTime] = useState("");
@@ -56,7 +59,9 @@ export function DateTimeSelectorCard({
   const [scheduleData, setScheduleData] = useState<any>(null);
   const [workingDays, setWorkingDays] = useState<Set<string>>(new Set());
 
-  // Calcular duración total de los servicios seleccionados
+  const hasDateError = showError && !selectedDate;
+  const hasTimeError = showError && selectedDate && !selectedTime;
+
   const getTotalDuration = (): number => {
     return selectedServices.reduce((sum, serviceId) => {
       const service = professionalServices.find(
@@ -66,7 +71,6 @@ export function DateTimeSelectorCard({
     }, 0);
   };
 
-  // Formatear duración de forma legible
   const formatDuration = (totalMinutes: number): string => {
     if (totalMinutes === 0) return "0 min";
 
@@ -82,14 +86,11 @@ export function DateTimeSelectorCard({
     }
   };
 
-  // Convertir tiempo a minutos desde medianoche
   const timeToMinutes = (time: string): number => {
     const [hours, minutes] = time.split(":").map(Number);
     return hours * 60 + minutes;
   };
 
-  // Verificar si un horario de inicio es válido.
-  // allowOverlap controla si los solapamientos invalidan el horario (false) o se permiten con advertencia (true).
   const isTimeSlotValid = (
     startTime: string,
     totalDuration: number,
@@ -100,7 +101,6 @@ export function DateTimeSelectorCard({
     const startMinutes = timeToMinutes(startTime);
     const endMinutes = startMinutes + totalDuration;
 
-    // Límite de horario laboral: siempre se aplica (no permitimos citas que se extiendan fuera del horario)
     const workStart = timeToMinutes(workingHours.start.slice(0, 5));
     const workEnd = timeToMinutes(workingHours.end.slice(0, 5));
 
@@ -111,22 +111,18 @@ export function DateTimeSelectorCard({
       };
     }
 
-    // Verificar solapamiento con citas ocupadas
     for (const slot of occupiedSlots) {
       const slotStart = timeToMinutes(slot.startTime.slice(0, 5));
       const slotEnd = timeToMinutes(slot.endTime.slice(0, 5));
 
-      // hay intersección de intervalos?
       if (startMinutes < slotEnd && endMinutes > slotStart) {
         const reason = `Solapa con cita de ${slot.clientName || "otro paciente"} (${slot.serviceName || "servicio"})`;
         if (!allowOverlap) {
-          // No permitido -> invalida el horario
           return {
             isValid: false,
             reason,
           };
         } else {
-          // Permitido -> marcamos como válido aunque con overlap warning
           return {
             isValid: true,
             reason,
@@ -139,7 +135,6 @@ export function DateTimeSelectorCard({
     return { isValid: true };
   };
 
-  // Validar tiempo personalizado
   const validateCustomTime = (
     time: string,
     schedule: any = null
@@ -148,7 +143,6 @@ export function DateTimeSelectorCard({
       return { isValid: false };
     }
 
-    // Validar formato HH:MM
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(time)) {
       return {
@@ -173,13 +167,12 @@ export function DateTimeSelectorCard({
       };
     }
 
-    // Usar la validación con occupiedSlots ya filtrados (scheduleData contiene la versión filtrada)
     const validation = isTimeSlotValid(
       time,
       totalDuration,
       dataToUse.occupiedSlots,
       dataToUse.workingHours,
-      dataToUse.allowOverlap // usar allowOverlap del schedule
+      dataToUse.allowOverlap
     );
 
     return {
@@ -189,7 +182,6 @@ export function DateTimeSelectorCard({
     };
   };
 
-  // Manejar cambio en input de tiempo personalizado
   const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const time = e.target.value;
     setCustomTime(time);
@@ -205,7 +197,6 @@ export function DateTimeSelectorCard({
     setCustomTimeValid(validation.isValid);
     setCustomTimeError(validation.reason || null);
 
-    // Auto-seleccionar si es válido
     if (validation.isValid) {
       setSelectedTime(time);
     } else {
@@ -213,7 +204,6 @@ export function DateTimeSelectorCard({
     }
   };
 
-  // Utility: normalizar "HH:MM:SS" -> "HH:MM"
   const normalizeToHHMM = (t?: string) => {
     if (!t) return "";
     const parts = t.split(":");
@@ -222,7 +212,6 @@ export function DateTimeSelectorCard({
     return t;
   };
 
-  // Optimistic pre-render for initialTime
   useEffect(() => {
     if (!selectedProfessional || !selectedDate || !initialTime) return;
 
@@ -243,9 +232,8 @@ export function DateTimeSelectorCard({
       }
       return [optimistic, ...prev];
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProfessional?.id, selectedDate, initialTime]);
-  // Cargar y filtrar horarios disponibles
+
   useEffect(() => {
     if (!selectedProfessional || !selectedDate) {
       setTimeSlots([]);
@@ -262,14 +250,12 @@ export function DateTimeSelectorCard({
     findPeriod(selectedProfessional.id.toString(), selectedDate, "day")
       .then((result: any) => {
         if ("data" in result && result.data) {
-          // Guardamos la bandera global allowOverlap que viene en la respuesta
           const globalAllowOverlap = result.data.allowOverlap ?? false;
           const daySchedule = result.data.schedule.find(
             (day: any) => day.date === selectedDate
           );
 
           if (daySchedule && daySchedule.availableHours) {
-            // FILTRAR occupiedSlots: eliminar la propia cita (si appointmentId fue pasado)
             const rawOccupied = Array.isArray(daySchedule.occupiedSlots)
               ? daySchedule.occupiedSlots
               : [];
@@ -277,21 +263,18 @@ export function DateTimeSelectorCard({
               ? rawOccupied.filter(
                   (s: any) => String(s.appointmentId) !== String(appointmentId)
                 )
-              : rawOccupied.slice(); // clon
+              : rawOccupied.slice();
 
-            // dayScheduleForValidation incluirá allowOverlap para que validaciones lo usen
             const dayScheduleForValidation = {
               ...daySchedule,
               occupiedSlots: filteredOccupied,
               allowOverlap: globalAllowOverlap,
             };
 
-            // Normalizamos initialTime a HH:MM para posibles inserciones
             const normalizedInitial = initialTime
               ? normalizeToHHMM(initialTime)
               : "";
 
-            // Construimos availableHours para render: añadimos normalizedInitial si no existe
             const baseAvailable = Array.isArray(daySchedule.availableHours)
               ? daySchedule.availableHours.map((h: string) =>
                   normalizeToHHMM(h)
@@ -306,19 +289,15 @@ export function DateTimeSelectorCard({
               availableHoursForRender.push(normalizedInitial);
             }
 
-            // Deduplicate and sort ascending
             availableHoursForRender = Array.from(
               new Set(availableHoursForRender)
             ).sort((a: any, b: any) => timeToMinutes(a) - timeToMinutes(b));
 
-            // Guardar datos de horario para validar tiempo personalizado (ya filtrados)
             setScheduleData(dayScheduleForValidation);
-            // Registrar que este día es laboral (tiene horarios disponibles)
             setWorkingDays((prev) => new Set([...prev, selectedDate]));
 
             const totalDuration = getTotalDuration();
 
-            // Si no hay servicios seleccionados, mostrar todos los horarios disponibles tal cual vienen
             if (totalDuration === 0) {
               const slots: TimeSlotStatus[] = availableHoursForRender.map(
                 (hour: string) => ({
@@ -332,9 +311,6 @@ export function DateTimeSelectorCard({
               return;
             }
 
-            // --- NUEVA LÓGICA: cuando allowOverlap === true mostramos TODAS las availableHours (siempre que no se extiendan fuera del horario laboral),
-            // marcando aquellas que solapan con occupiedSlots con overlaps=true y mostrando la razón.
-            // Cuando allowOverlap === false, mantenemos el comportamiento previo: sólo permitir slots que no solapen y que quepan.
             const validSlots: TimeSlotStatus[] = availableHoursForRender.map(
               (hour: string) => {
                 const validation = isTimeSlotValid(
@@ -345,8 +321,6 @@ export function DateTimeSelectorCard({
                   dayScheduleForValidation.allowOverlap
                 );
 
-                // Si allowOverlap === true, isTimeSlotValid devolverá isValid:true y overlaps:true para solapamientos.
-                // En cualquier caso, respetamos la validación sobre horario laboral (endMinutes > workEnd) y bloqueamos esos.
                 return {
                   time: hour,
                   isAvailable: validation.isValid,
@@ -356,15 +330,12 @@ export function DateTimeSelectorCard({
               }
             );
 
-            // Ordenar por hora ascendente
             validSlots.sort(
               (a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)
             );
 
             setTimeSlots(validSlots);
 
-            // Si allowOverlap === true y hay slots que sólo solapan (isAvailable true but overlaps true), no consideramos esto como "no hay horarios".
-            // Sólo mostramos mensaje de error si no existe ningún slot isAvailable === true.
             const hasValidSlots = validSlots.some((slot) => slot.isAvailable);
             if (!hasValidSlots) {
               setHoursError(
@@ -399,7 +370,6 @@ export function DateTimeSelectorCard({
     initialTime,
   ]);
 
-  // Preselección automática de hora
   useEffect(() => {
     const normalizedInitial = initialTime ? normalizeToHHMM(initialTime) : "";
     if (
@@ -414,7 +384,6 @@ export function DateTimeSelectorCard({
       setCustomTimeValid(true);
       setCustomTimeError(null);
     } else if (normalizedInitial && !selectedTime && scheduleData) {
-      // Intentamos validar manualmente usando scheduleData (filtrada)
       const totalDuration = getTotalDuration();
       const manualValidation = isTimeSlotValid(
         normalizedInitial,
@@ -432,7 +401,6 @@ export function DateTimeSelectorCard({
     }
   }, [timeSlots, initialTime, selectedTime, scheduleData]);
 
-  // Notificar cambios al padre
   useEffect(() => {
     if (selectedDate && selectedTime) {
       onChange(selectedDate, selectedTime);
@@ -441,7 +409,6 @@ export function DateTimeSelectorCard({
     }
   }, [selectedDate, selectedTime, onChange]);
 
-  // Cuando el usuario selecciona una fecha, limpiamos hora
   const handleDateSelect = (fecha: string) => {
     setSelectedTime("");
     setCustomTime("");
@@ -450,14 +417,12 @@ export function DateTimeSelectorCard({
     onChange(fecha, "");
   };
 
-  // Cuando el usuario selecciona una hora del botón
   const handleTimeSelect = (time: string) => {
     const slot = timeSlots.find((s) => s.time === time);
     if (slot && slot.isAvailable) {
       setSelectedTime(time);
       setCustomTime(time);
       setCustomTimeValid(true);
-      // Si el slot tiene overlaps true, mostramos la razón como aviso (pero la selección sigue permitida)
       setCustomTimeError(slot.overlaps ? slot.reason || null : null);
     }
   };
@@ -467,7 +432,19 @@ export function DateTimeSelectorCard({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <Card>
+      {/* CARD DE FECHA - Sin wrapper Card extra */}
+      <div
+        className={`${hasDateError ? "ring-2 ring-red-500 rounded-lg" : ""}`}
+      >
+        {hasDateError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Debes seleccionar una fecha para la cita
+            </AlertDescription>
+          </Alert>
+        )}
+
         <CalendarCard
           initialDate={
             selectedDate ? new Date(selectedDate + "T00:00:00") : new Date()
@@ -476,10 +453,33 @@ export function DateTimeSelectorCard({
           workingDays={workingDays}
           selectedProfessional={selectedProfessional}
         />
-      </Card>
-      <Card>
+
+        {selectedDate && (
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <p className="text-sm text-green-700 dark:text-green-300 flex items-center">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Fecha seleccionada:{" "}
+              {new Date(selectedDate + "T00:00:00").toLocaleDateString(
+                "es-ES",
+                {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* CARD DE HORARIO */}
+      <Card className={hasTimeError ? "border-red-500 border-2" : ""}>
         <CardHeader>
-          <CardTitle>Horario</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <span>Horario</span>
+            {hasTimeError && <AlertCircle className="h-5 w-5 text-red-500" />}
+          </CardTitle>
           <CardDescription>
             {!selectedProfessional
               ? "Primero selecciona un profesional"
@@ -491,6 +491,15 @@ export function DateTimeSelectorCard({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {hasTimeError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Debes seleccionar una hora para la cita
+              </AlertDescription>
+            </Alert>
+          )}
+
           {!selectedProfessional || !selectedDate ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -542,7 +551,9 @@ export function DateTimeSelectorCard({
                         ? customTimeValid
                           ? "border-green-500 focus:ring-green-500"
                           : "border-red-500 focus:ring-red-500"
-                        : ""
+                        : hasTimeError
+                          ? "border-red-500"
+                          : ""
                     }`}
                   />
                   {customTime && (
@@ -556,8 +567,6 @@ export function DateTimeSelectorCard({
                   )}
                 </div>
 
-                {/* Mostrar mensaje: si la hora es válida pero tiene reason (overlap permitido), mostrar warning en amarillo.
-                    Si la hora no es válida, mostrar error en rojo (comportamiento previo). */}
                 {customTime && customTimeError && (
                   <p
                     className={`text-xs ${
@@ -592,11 +601,11 @@ export function DateTimeSelectorCard({
                     <div key={slot.time} className="relative group">
                       <button
                         type="button"
-                        className={`w-full p-3 text-sm rounded-lg border transition-colors ${
+                        className={`w-full p-3 text-sm rounded-lg border-2 transition-all ${
                           slot.isAvailable
                             ? isSelected
-                              ? "border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300 cursor-pointer"
-                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 cursor-pointer"
+                              ? "border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300 cursor-pointer shadow-md"
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 cursor-pointer hover:shadow-sm"
                             : "border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-800 cursor-not-allowed opacity-50"
                         }`}
                         onClick={() => handleTimeSelect(slot.time)}
@@ -605,14 +614,12 @@ export function DateTimeSelectorCard({
                         {slot.time}
                       </button>
 
-                      {/* Si NO está disponible y hay razón -> tooltip roja (como antes) */}
                       {!slot.isAvailable && slot.reason && (
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-red-500 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
                           {slot.reason}
                         </div>
                       )}
 
-                      {/* Si está disponible pero tiene reason y overlaps === true -> mostrar warning (amarillo) */}
                       {slot.isAvailable && slot.overlaps && slot.reason && (
                         <div className="mt-1 text-center">
                           <p className="text-xs text-yellow-700">
@@ -625,16 +632,26 @@ export function DateTimeSelectorCard({
                 })}
               </div>
 
-              {/* Resumen de horarios válidos */}
+              {/* Resumen */}
               <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
                 <strong>Duración de la cita:</strong> {durationText}
                 <br />
                 <span className="text-xs">
-                  Si el profesional permite traslapes, todas las horas
-                  disponibles se muestran y se indicará cuando una hora
-                  seleccionada solapa con otra cita.
+                  {scheduleData?.allowOverlap
+                    ? "Este profesional permite traslapes.  Se mostrarán advertencias cuando una hora solape con otra cita."
+                    : "Solo se muestran horarios que no se traslapan con otras citas."}
                 </span>
               </div>
+
+              {/* Confirmación de selección */}
+              {selectedTime && (
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-sm text-green-700 dark:text-green-300 flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Hora seleccionada: {selectedTime}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

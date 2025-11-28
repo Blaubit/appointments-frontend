@@ -10,19 +10,21 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, UserPlus, CheckCircle } from "lucide-react";
+import { Search, UserPlus, CheckCircle, AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import type { Client } from "@/types";
 import { create as createClient } from "@/actions/clients/create";
 import { PhoneInput } from "@/components/phone-input";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDebounceSearch } from "@/hooks/useDebounce";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Props = {
   clients: Client[];
   selectedClient: Client | null;
   onSelect: (client: Client | null) => void;
   clientIdFromUrl?: string;
+  showError?: boolean; // Nueva prop para mostrar error cuando se intenta enviar sin seleccionar
 };
 
 export function ClientSelectorCard({
@@ -30,24 +32,22 @@ export function ClientSelectorCard({
   selectedClient,
   onSelect,
   clientIdFromUrl,
+  showError = false,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Inicializamos el valor inicial desde el query 'search' si existe
   const initialSearch =
     typeof window !== "undefined"
       ? new URL(window.location.href).searchParams.get("search") || ""
       : (searchParams?.get("search") as string) || "";
 
-  // Reuse existing hook. Provide onSearch to update the URL param `search`
   const { searchTerm, setSearchTerm } = useDebounceSearch(initialSearch, {
     delay: 500,
     minLength: 2,
     resetPage: true,
     skipInitialSearch: true,
     onSearch: (value: string) => {
-      // Use current window.location to ensure we preserve latest tab param
       const currentParams = new URL(window.location.href).searchParams;
       const params = new URLSearchParams(currentParams.toString());
       if (value && value.trim().length >= 2) {
@@ -55,7 +55,6 @@ export function ClientSelectorCard({
       } else {
         params.delete("search");
       }
-      // reset pagination when searching
       params.set("page", "1");
       const query = params.toString();
       router.push(query ? `?${query}` : window.location.pathname);
@@ -71,21 +70,22 @@ export function ClientSelectorCard({
   });
   const [isCreating, setIsCreating] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+  const [formErrors, setFormErrors] = useState({
+    fullName: "",
+    phone: "",
+  });
 
-  // Selección automática por clientIdFromUrl SOLO al montar
   useEffect(() => {
     if (clientIdFromUrl && !selectedClient) {
       const found = clients.find((c) => c.id === clientIdFromUrl);
       if (found) onSelect(found);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredClients = clients.filter((client) =>
     client.fullName.toLowerCase().includes((searchTerm || "").toLowerCase())
   );
 
-  // Helper: obtiene solo los dígitos locales (sin prefijo de país)
   const getLocalDigits = (phone: string, countryCode: string) => {
     const digitsOnly = (phone || "").replace(/\D/g, "");
     const countryDigits = (countryCode || "").replace("+", "");
@@ -95,7 +95,6 @@ export function ClientSelectorCard({
     return digitsOnly;
   };
 
-  // Preparar teléfono para enviar: asegura que venga con +prefijo y solo dígitos después
   const preparePhoneToSend = (phone: string, countryCode: string) => {
     const digitsOnly = (phone || "").replace(/\D/g, "");
     if (!digitsOnly) return "";
@@ -106,7 +105,6 @@ export function ClientSelectorCard({
     return `${countryCode}${digitsOnly}`;
   };
 
-  // Validar número de teléfono (ahora valida únicamente los dígitos locales)
   const validatePhone = (phone: string, countryCode: string): boolean => {
     const localDigits = getLocalDigits(phone, countryCode);
 
@@ -116,31 +114,26 @@ export function ClientSelectorCard({
     }
 
     if (countryCode === "+502") {
-      // Guatemala: 8 dígitos locales
       if (localDigits.length !== 8) {
         setPhoneError("El número de Guatemala debe tener 8 dígitos");
         return false;
       }
     } else if (countryCode === "+1") {
-      // USA: 10 dígitos locales
       if (localDigits.length !== 10) {
         setPhoneError("El número de USA debe tener 10 dígitos");
         return false;
       }
     } else if (countryCode === "+52") {
-      // Mexico: 10 dígitos locales
       if (localDigits.length !== 10) {
         setPhoneError("El número de México debe tener 10 dígitos");
         return false;
       }
     } else if (countryCode === "+503" || countryCode === "+504") {
-      // El Salvador / Honduras: 8 dígitos locales
       if (localDigits.length !== 8) {
         setPhoneError("El número debe tener 8 dígitos");
         return false;
       }
     } else {
-      // Fallback: aceptar entre 7 y 15 dígitos locales
       if (localDigits.length < 7 || localDigits.length > 15) {
         setPhoneError("El número debe tener entre 7 y 15 dígitos");
         return false;
@@ -151,13 +144,19 @@ export function ClientSelectorCard({
     return true;
   };
 
-  // Crear paciente y seleccionarlo automáticamente
   const handleCreateClient = async () => {
+    // Validar nombre
     if (!form.fullName.trim()) {
-      setPhoneError("El nombre es requerido");
+      setFormErrors((prev) => ({
+        ...prev,
+        fullName: "El nombre es requerido",
+      }));
       return;
+    } else {
+      setFormErrors((prev) => ({ ...prev, fullName: "" }));
     }
 
+    // Validar teléfono
     if (!validatePhone(form.phone, form.countryCode)) {
       return;
     }
@@ -171,12 +170,11 @@ export function ClientSelectorCard({
         email: form.email,
       });
       if ("data" in result) {
-        // Selecciona el paciente recién creado
         onSelect(result.data);
         setShowNewClientForm(false);
         setForm({ fullName: "", phone: "", email: "", countryCode: "+502" });
         setPhoneError("");
-        // Opcional: agregar clientId al URL para deep-link y limpiar search
+        setFormErrors({ fullName: "", phone: "" });
         const currentParams = new URL(window.location.href).searchParams;
         const params = new URLSearchParams(currentParams.toString());
         params.set("clientId", result.data.id);
@@ -193,17 +191,15 @@ export function ClientSelectorCard({
 
   const handlePhoneChange = (phone: string, countryCode: string) => {
     setForm({ ...form, phone, countryCode });
-    setPhoneError(""); // Limpiar error cuando el usuario escribe
+    setPhoneError("");
   };
 
-  // Si quieres que al seleccionar un cliente existente también se agregue clientId al URL,
-  // puedes hacerlo aquí para facilitar deep-linking.
   const handleSelectExisting = (client: Client) => {
     onSelect(client);
     const currentParams = new URL(window.location.href).searchParams;
     const params = new URLSearchParams(currentParams.toString());
     params.set("clientId", client.id);
-    params.delete("search"); // clear the text search since user selected a client
+    params.delete("search");
     params.set("page", "1");
     router.push(
       params.toString() ? `?${params.toString()}` : window.location.pathname
@@ -211,17 +207,31 @@ export function ClientSelectorCard({
   };
 
   return (
-    <Card>
+    <Card
+      className={showError && !selectedClient ? "border-red-500 border-2" : ""}
+    >
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <span>Seleccionar paciente</span>
+          {showError && !selectedClient && (
+            <AlertCircle className="h-5 w-5 text-red-500" />
+          )}
         </CardTitle>
         <CardDescription>
           Busca un paciente existente o crea uno nuevo
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Selección o formulario */}
+        {/* Alerta de error cuando no se ha seleccionado paciente */}
+        {showError && !selectedClient && !showNewClientForm && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Debes seleccionar un paciente o crear uno nuevo para continuar
+            </AlertDescription>
+          </Alert>
+        )}
+
         {!selectedClient && !showNewClientForm && (
           <>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -231,7 +241,7 @@ export function ClientSelectorCard({
                   placeholder="Buscar paciente por nombre..."
                   value={searchTerm || ""}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className={`pl-10 ${showError && !selectedClient ? "border-red-500" : ""}`}
                 />
               </div>
               <Button
@@ -249,7 +259,7 @@ export function ClientSelectorCard({
                 {filteredClients.map((client) => (
                   <div
                     key={client.id}
-                    className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                    className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all"
                     onClick={() => handleSelectExisting(client)}
                   >
                     <Avatar>
@@ -273,15 +283,23 @@ export function ClientSelectorCard({
                   </div>
                 ))}
                 {filteredClients.length === 0 && (
-                  <p className="text-center text-gray-500 py-4">
-                    No se encontraron pacientes
-                  </p>
+                  <div className="text-center py-4">
+                    <p className="text-gray-500">No se encontraron pacientes</p>
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={() => setShowNewClientForm(true)}
+                      className="mt-2"
+                    >
+                      ¿Crear nuevo paciente?
+                    </Button>
+                  </div>
                 )}
               </div>
             )}
           </>
         )}
-        {/* paciente seleccionado */}
+
         {selectedClient && (
           <div className="flex items-start sm:items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <Avatar className="flex-shrink-0">
@@ -312,7 +330,6 @@ export function ClientSelectorCard({
                 size="sm"
                 onClick={() => {
                   onSelect(null);
-                  // also remove clientId from url when clearing selection but preserve other params (including tab)
                   const currentParams = new URL(window.location.href)
                     .searchParams;
                   const params = new URLSearchParams(currentParams.toString());
@@ -330,7 +347,7 @@ export function ClientSelectorCard({
             </div>
           </div>
         )}
-        {/* Formulario nuevo paciente */}
+
         {showNewClientForm && (
           <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
             <h4 className="font-medium text-gray-900 dark:text-white">
@@ -338,16 +355,27 @@ export function ClientSelectorCard({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="clientName">Nombre completo *</Label>
+                <Label htmlFor="clientName">
+                  Nombre completo <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="clientName"
                   value={form.fullName}
-                  onChange={(e) =>
-                    setForm({ ...form, fullName: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, fullName: e.target.value });
+                    if (e.target.value.trim()) {
+                      setFormErrors((prev) => ({ ...prev, fullName: "" }));
+                    }
+                  }}
                   placeholder="Nombre del paciente"
                   required
+                  className={formErrors.fullName ? "border-red-500" : ""}
                 />
+                {formErrors.fullName && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {formErrors.fullName}
+                  </p>
+                )}
               </div>
               <div>
                 <PhoneInput
@@ -362,7 +390,7 @@ export function ClientSelectorCard({
               </div>
             </div>
             <div>
-              <Label htmlFor="pacientemail">Email</Label>
+              <Label htmlFor="pacientemail">Email (opcional)</Label>
               <Input
                 id="pacientemail"
                 type="email"
@@ -378,6 +406,7 @@ export function ClientSelectorCard({
                 onClick={() => {
                   setShowNewClientForm(false);
                   setPhoneError("");
+                  setFormErrors({ fullName: "", phone: "" });
                 }}
               >
                 Cancelar
@@ -389,7 +418,7 @@ export function ClientSelectorCard({
                   !form.fullName.trim() || !form.phone.trim() || isCreating
                 }
               >
-                {isCreating ? "Creando..." : "Seleccionar paciente"}
+                {isCreating ? "Creando..." : "Crear y seleccionar"}
               </Button>
             </div>
           </div>
