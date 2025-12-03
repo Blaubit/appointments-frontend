@@ -35,7 +35,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Ban,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
@@ -62,17 +61,6 @@ type PreviewResponse = {
   appointments: AffectedAppointment[];
 };
 
-type DayStatus =
-  | "working"
-  | "non-working"
-  | "restricted-full"
-  | "restricted-partial";
-
-interface DayInfo {
-  status: DayStatus;
-  reason?: string;
-}
-
 export default function RestrictionPreviewModal({
   professionals,
   open,
@@ -91,11 +79,11 @@ export default function RestrictionPreviewModal({
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
 
-  const [daysInfo, setDaysInfo] = useState<Map<string, DayInfo>>(new Map());
+  const [nonWorkingDays, setNonWorkingDays] = useState<Set<string>>(new Set());
   const [isLoadingMonth, setIsLoadingMonth] = useState<boolean>(false);
-  const [cachedMonths, setCachedMonths] = useState<
-    Map<string, Map<string, DayInfo>>
-  >(new Map());
+  const [cachedMonths, setCachedMonths] = useState<Map<string, Set<string>>>(
+    new Map()
+  );
 
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCreate, setLoadingCreate] = useState(false);
@@ -103,11 +91,13 @@ export default function RestrictionPreviewModal({
   const [previewData, setPreviewData] = useState<PreviewResponse | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Estado para el dialog de detalles
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
   >(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
+  // Convertir Date a string YYYY-MM-DD
   const dateToString = useCallback((date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -115,6 +105,7 @@ export default function RestrictionPreviewModal({
     return `${year}-${month}-${day}`;
   }, []);
 
+  // Genera "slots" del mes actual
   const getCalendarSlots = useCallback((date: Date): (Date | null)[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -140,10 +131,10 @@ export default function RestrictionPreviewModal({
     return slots;
   }, []);
 
-  // Cargar datos del mes completo incluyendo restricciones existentes
+  // Cargar datos del mes completo cuando cambian profesional o mes
   useEffect(() => {
     if (!formData.professionalId) {
-      setDaysInfo(new Map());
+      setNonWorkingDays(new Set());
       return;
     }
 
@@ -151,9 +142,10 @@ export default function RestrictionPreviewModal({
       const monthStr = currentMonth.toISOString().slice(0, 7);
       const monthKey = `${formData.professionalId}:${monthStr}`;
 
+      // Verificar caché sin incluirlo en dependencias
       if (cachedMonths.has(monthKey)) {
         const cached = cachedMonths.get(monthKey)!;
-        setDaysInfo(cached);
+        setNonWorkingDays(cached);
         return;
       }
 
@@ -167,7 +159,7 @@ export default function RestrictionPreviewModal({
 
         if (result && "data" in result && result.data) {
           const monthSchedule = result.data as PeriodResponse;
-          const newDaysInfo = new Map<string, DayInfo>();
+          const nonWorking = new Set<string>();
 
           if (monthSchedule.schedule && Array.isArray(monthSchedule.schedule)) {
             monthSchedule.schedule.forEach((day: any) => {
@@ -177,54 +169,33 @@ export default function RestrictionPreviewModal({
                 day.workingHours.end !== null;
 
               if (!hasWorkingHours) {
-                newDaysInfo.set(day.date, {
-                  status: "non-working",
-                });
-              } else if (
-                day.isRestricted &&
-                day.restrictionType === "full-day"
-              ) {
-                const reason = day.restrictions?.[0]?.reason || "Día bloqueado";
-                newDaysInfo.set(day.date, {
-                  status: "restricted-full",
-                  reason,
-                });
-              } else if (
-                day.isRestricted &&
-                day.restrictionType === "partial"
-              ) {
-                const restrictionCount = day.restrictions?.length || 0;
-                const reason = `${restrictionCount} horario${restrictionCount > 1 ? "s" : ""} bloqueado${restrictionCount > 1 ? "s" : ""}`;
-                newDaysInfo.set(day.date, {
-                  status: "restricted-partial",
-                  reason,
-                });
-              } else {
-                newDaysInfo.set(day.date, {
-                  status: "working",
-                });
+                nonWorking.add(day.date);
               }
             });
           }
 
-          setDaysInfo(newDaysInfo);
+          setNonWorkingDays(nonWorking);
+
+          // Actualizar caché
           setCachedMonths((prev) => {
             const next = new Map(prev);
-            next.set(monthKey, newDaysInfo);
+            next.set(monthKey, nonWorking);
             return next;
           });
         }
       } catch (error) {
         console.error("Error loading month data:", error);
-        setDaysInfo(new Map());
+        setNonWorkingDays(new Set());
       } finally {
         setIsLoadingMonth(false);
       }
     };
 
     loadMonthData();
+    // Eliminamos cachedMonths de las dependencias para evitar el loop
   }, [formData.professionalId, currentMonth]);
 
+  // Manejar selección/deselección de fechas
   const handleDateToggle = useCallback(
     (date: Date) => {
       if (isNaN(date.getTime())) return;
@@ -234,16 +205,11 @@ export default function RestrictionPreviewModal({
       today.setHours(0, 0, 0, 0);
 
       const isPast = date.getTime() < today.getTime();
-      const dayInfo = daysInfo.get(dateStr);
 
       setSelectedDates((prevDates) => {
-        // No permitir selección de días pasados, no laborales o completamente restringidos
-        const isDisabled =
-          isPast ||
-          dayInfo?.status === "non-working" ||
-          dayInfo?.status === "restricted-full";
+        const isNonWorking = nonWorkingDays.has(dateStr);
 
-        if (isDisabled) return prevDates;
+        if (isPast || isNonWorking) return prevDates;
 
         const isAlreadySelected = prevDates.some(
           (d) => dateToString(d) === dateStr
@@ -256,8 +222,10 @@ export default function RestrictionPreviewModal({
           newDates = [...prevDates, date];
         }
 
+        // Ordenar fechas
         const sortedDates = newDates.sort((a, b) => a.getTime() - b.getTime());
 
+        // Actualizar formData
         setFormData((prev) => ({
           ...prev,
           restrictionDate: sortedDates.map(dateToString),
@@ -266,7 +234,7 @@ export default function RestrictionPreviewModal({
         return sortedDates;
       });
     },
-    [dateToString, daysInfo]
+    [dateToString, nonWorkingDays]
   );
 
   const handleRemoveDate = useCallback(
@@ -374,7 +342,7 @@ export default function RestrictionPreviewModal({
     setError(null);
     setPreviewData(null);
     setSuccessMessage(null);
-    setDaysInfo(new Map());
+    setNonWorkingDays(new Set());
     setCachedMonths(new Map());
   }, []);
 
@@ -451,7 +419,7 @@ export default function RestrictionPreviewModal({
                     restrictionDate: [],
                   }));
                   setSelectedDates([]);
-                  setDaysInfo(new Map());
+                  setNonWorkingDays(new Set());
                 }}
                 disabled={loadingPreview || loadingCreate}
               >
@@ -557,65 +525,8 @@ export default function RestrictionPreviewModal({
                               );
                               const isToday = dateStr === todayStr;
                               const isPast = date.getTime() < today.getTime();
-                              const dayInfo = daysInfo.get(dateStr);
-
-                              let buttonClasses =
-                                "p-2 text-sm rounded-lg transition-colors relative group";
-                              let isDisabled = false;
-                              let tooltipText = "";
-                              let icon: React.ReactNode = null;
-
-                              if (isPast) {
-                                buttonClasses +=
-                                  " text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800";
-                                isDisabled = true;
-                                tooltipText = "Fecha pasada";
-                              } else if (dayInfo?.status === "non-working") {
-                                buttonClasses +=
-                                  " text-red-400 dark:text-red-500 cursor-not-allowed bg-red-50 dark:bg-red-950/30 line-through";
-                                isDisabled = true;
-                                tooltipText = "Día no laboral";
-                              } else if (
-                                dayInfo?.status === "restricted-full"
-                              ) {
-                                buttonClasses +=
-                                  " text-orange-500 dark:text-orange-400 cursor-not-allowed bg-orange-50 dark:bg-orange-950/30";
-                                isDisabled = true;
-                                tooltipText =
-                                  dayInfo.reason ||
-                                  "Día bloqueado completamente";
-                                icon = (
-                                  <Ban className="w-3 h-3 absolute top-0.5 right-0.5 text-orange-500" />
-                                );
-                              } else if (
-                                dayInfo?.status === "restricted-partial"
-                              ) {
-                                if (isSelected) {
-                                  buttonClasses +=
-                                    " bg-blue-500 text-white font-semibold ring-2 ring-blue-300";
-                                } else {
-                                  buttonClasses +=
-                                    " bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 border border-yellow-300";
-                                }
-                                tooltipText =
-                                  dayInfo.reason ||
-                                  "Ya tiene restricciones parciales";
-                                icon = (
-                                  <Clock className="w-3 h-3 absolute top-0.5 right-0.5 text-yellow-600 dark:text-yellow-500" />
-                                );
-                              } else {
-                                // Día laboral normal
-                                if (isSelected) {
-                                  buttonClasses +=
-                                    " bg-blue-500 text-white font-semibold ring-2 ring-blue-300";
-                                } else if (isToday) {
-                                  buttonClasses +=
-                                    " bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 ring-2 ring-blue-400";
-                                } else {
-                                  buttonClasses +=
-                                    " hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100";
-                                }
-                              }
+                              const isNonWorking = nonWorkingDays.has(dateStr);
+                              const isDisabled = isPast || isNonWorking;
 
                               return (
                                 <button
@@ -626,23 +537,32 @@ export default function RestrictionPreviewModal({
                                     loadingPreview ||
                                     loadingCreate
                                   }
-                                  className={buttonClasses}
+                                  title={
+                                    isPast
+                                      ? "Fecha pasada"
+                                      : isNonWorking
+                                        ? "Día no laboral"
+                                        : isSelected
+                                          ? "Click para deseleccionar"
+                                          : "Click para seleccionar"
+                                  }
+                                  className={`p-2 text-sm rounded-lg transition-colors relative ${
+                                    isDisabled
+                                      ? "text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800"
+                                      : isSelected
+                                        ? "bg-blue-500 text-white font-semibold ring-2 ring-blue-300"
+                                        : isToday
+                                          ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
+                                          : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  }`}
                                   onClick={() => handleDateToggle(date)}
                                 >
                                   {date.getDate()}
-                                  {icon}
-                                  {isSelected && !icon && (
+                                  {isSelected && (
                                     <span className="absolute top-0 right-0 flex h-2 w-2">
                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                       <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                     </span>
-                                  )}
-
-                                  {/* Tooltip */}
-                                  {tooltipText && (
-                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                      {tooltipText}
-                                    </div>
                                   )}
                                 </button>
                               );
@@ -657,39 +577,19 @@ export default function RestrictionPreviewModal({
                       </div>
                     )}
 
-                    {/* Leyenda actualizada */}
-                    <div className="mt-4 pt-4 border-t text-xs text-gray-500 dark:text-gray-400 space-y-1. 5">
-                      <div className="font-semibold mb-2">Leyenda:</div>
-
+                    {/* Legend */}
+                    <div className="mt-4 pt-4 border-t text-xs text-gray-500 dark:text-gray-400 space-y-1">
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded flex items-center justify-center">
-                          <span className="text-[8px]">✕</span>
-                        </div>
+                        <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded"></div>
                         <span>Día no laboral / Pasado</span>
                       </div>
-
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-orange-50 dark:bg-orange-950/30 rounded flex items-center justify-center border border-orange-300">
-                          <Ban className="w-2. 5 h-2.5 text-orange-500" />
-                        </div>
-                        <span>Bloqueado completamente (no seleccionable)</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-yellow-50 dark:bg-yellow-950/30 rounded flex items-center justify-center border border-yellow-300">
-                          <Clock className="w-2.5 h-2.5 text-yellow-600" />
-                        </div>
-                        <span>Con restricciones parciales (seleccionable)</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900 rounded ring-2 ring-blue-400"></div>
+                        <div className="w-3 h-3 bg-blue-100 dark:bg-blue-900 rounded"></div>
                         <span>Hoy</span>
                       </div>
-
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                        <span>Fecha seleccionada</span>
+                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                        <span>Seleccionado</span>
                       </div>
                     </div>
                   </CardContent>
@@ -746,9 +646,6 @@ export default function RestrictionPreviewModal({
                   }
                   disabled={loadingPreview || loadingCreate}
                 />
-                <p className="text-xs text-gray-500">
-                  Si no se especifica, bloqueará todo el día
-                </p>
               </div>
 
               <div className="space-y-2">
@@ -768,31 +665,8 @@ export default function RestrictionPreviewModal({
                   }
                   disabled={loadingPreview || loadingCreate}
                 />
-                <p className="text-xs text-gray-500">
-                  Requerido para restricción parcial
-                </p>
               </div>
             </div>
-
-            {/* Info sobre tipo de restricción */}
-            {formData.startTime || formData.endTime ? (
-              <Alert>
-                <Clock className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Restricción Parcial:</strong> Se bloqueará el horario
-                  especificado. Las citas fuera de este rango seguirán
-                  disponibles.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Alert>
-                <Ban className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Restricción de Día Completo:</strong> Los días
-                  seleccionados quedarán completamente bloqueados.
-                </AlertDescription>
-              </Alert>
-            )}
 
             {error && (
               <Alert variant="destructive">

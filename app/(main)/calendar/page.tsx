@@ -6,7 +6,6 @@ import { User } from "@/types";
 import { findAllProfessionals } from "@/actions/user/findAllProfessionals";
 import { getUserId } from "@/actions/user/getUserId";
 import { getUser } from "@/actions/auth"; // <- agregado para fallback al usuario actual
-import { redirect } from "next/dist/client/components/navigation";
 // Forzar renderizado dinámico
 export const dynamic = "force-dynamic";
 
@@ -24,9 +23,6 @@ export default async function CalendarPage() {
   let professionals: User[] = [];
   try {
     const profResult = await findAllProfessionals();
-    if (profResult.status === 401) {
-      redirect("/api/logout");
-    }
     professionals = profResult?.data || [];
 
     if (!Array.isArray(professionals) || professionals.length === 0) {

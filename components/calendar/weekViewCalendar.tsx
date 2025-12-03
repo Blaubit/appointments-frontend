@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { OccupiedSlot, PeriodResponse } from "@/types";
-import { CircleAlert, Ban, Clock } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 
 type SlotWithDate = OccupiedSlot & { date: string };
 
@@ -14,9 +14,14 @@ interface WeekViewCalendarProps {
 
 const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
+/* 
+  getWeekDays:
+  - Calcula los 7 días de la semana empezando en LUNES.
+  - Normaliza cada Date a las 00:00 (hora local) para evitar desajustes por zonas horarias.
+*/
 function getWeekDays(weekDate: Date) {
   const startOfWeek = new Date(weekDate);
-  const day = (weekDate.getDay() + 6) % 7;
+  const day = (weekDate.getDay() + 6) % 7; // transforma getDay(): 0..6 -> 6..5 para restar y obtener lunes
   startOfWeek.setDate(weekDate.getDate() - day);
   startOfWeek.setHours(0, 0, 0, 0);
   return Array.from({ length: 7 }, (_, i) => {
@@ -27,11 +32,13 @@ function getWeekDays(weekDate: Date) {
   });
 }
 
+/* Convierte "HH:MM(:SS)?" a minutos desde medianoche */
 function timeStringToMinutes(timeString: string): number {
   const [hours, minutes] = timeString.split(":").map(Number);
   return hours * 60 + (minutes || 0);
 }
 
+/* Genera líneas de hora con paso (p.ej. 30 minutos) */
 function generateHourLines(start: number, end: number, stepMinutes = 30) {
   const lines: string[] = [];
   for (let h = start; h < end; h++) {
@@ -45,14 +52,16 @@ function generateHourLines(start: number, end: number, stepMinutes = 30) {
   return lines;
 }
 
+/* Calcula posición vertical (px) relativa a startHour */
 function timeToPosition(time: string, startHour: number) {
   const [h, m] = time.split(":").map(Number);
-  const totalMinutes = (h - startHour) * 60 + m - 5;
+  const totalMinutes = (h - startHour) * 60 + m - 5; // ajuste visual de 5 minutos por el padding superior
   const slotHeight = 80;
   const pixelsPerMinute = slotHeight / 60;
   return totalMinutes * pixelsPerMinute;
 }
 
+/* Asigna columnas a slots solapados para evitar superposición visual */
 function assignColumns(slots: SlotWithDate[]) {
   type SlotWithTimes = SlotWithDate & { start: number; end: number };
   const sorted: SlotWithTimes[] = slots
@@ -93,6 +102,7 @@ function assignColumns(slots: SlotWithDate[]) {
   return { slotColumns, totalColumns: columns.length };
 }
 
+/* Formatea Date a 'YYYY-MM-DD' en zona local para buscar en schedule.schedule */
 function formatLocalDate(date: Date) {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -110,6 +120,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
   const [hoveredSlotId, setHoveredSlotId] = useState<string | null>(null);
   const days = getWeekDays(weekDate);
 
+  /* Calcula rango de horas (start/end) recorriendo workingHours de cada día */
   function getWeekHourRange() {
     let earliestStart = 24;
     let latestEnd = 0;
@@ -146,6 +157,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
   const hourLines = generateHourLines(visualStartHour, visualEndHour, 30);
   const containerHeight = Math.max((hourLines.length - 1) * 40, 600);
 
+  /* Devuelve occupiedSlots del día dado (usa formato local para búsqueda) */
   function getSlotsForDate(date: Date): SlotWithDate[] {
     const dateStr = formatLocalDate(date);
     const day = schedule.schedule.find((d) => d.date === dateStr);
@@ -153,11 +165,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
     return day.occupiedSlots.map((slot) => ({ ...slot, date: day.date }));
   }
 
+  /* Devuelve el objeto schedule del día dado */
   function getDaySchedule(date: Date) {
     const dateStr = formatLocalDate(date);
     return schedule.schedule.find((d) => d.date === dateStr);
   }
 
+  /* Determina si el día tiene workingHours definidos */
   function isWorkingDay(date: Date): boolean {
     const daySchedule = getDaySchedule(date);
     return !!(
@@ -173,48 +187,24 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
           {days.map((date, index) => {
             const isToday = date.toDateString() === new Date().toDateString();
             const isWorking = isWorkingDay(date);
-            const daySchedule = getDaySchedule(date);
-            const isRestricted = daySchedule?.isRestricted || false;
-            const restrictionType = daySchedule?.restrictionType || null;
-
             return (
               <div
                 key={index}
                 className={`text-center py-2 ${
                   isToday
                     ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : !isWorking
-                      ? "text-gray-400 dark:text-gray-500"
-                      : isRestricted && restrictionType === "full-day"
-                        ? "text-orange-600 dark:text-orange-400"
-                        : isRestricted && restrictionType === "partial"
-                          ? "text-yellow-700 dark:text-yellow-400"
-                          : "text-gray-700 dark:text-gray-200"
+                    : isWorking
+                      ? "text-gray-700 dark:text-gray-200"
+                      : "text-gray-400 dark:text-gray-500"
                 }`}
               >
-                <div className="text-xs sm:text-base font-semibold flex items-center justify-center gap-1">
+                <div className="text-xs sm:text-base font-semibold">
                   {dayNames[date.getDay()]}
-                  {isRestricted && restrictionType === "full-day" && (
-                    <Ban className="w-3 h-3 sm:w-4 sm:h-4" />
-                  )}
-                  {isRestricted && restrictionType === "partial" && (
-                    <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                  )}
                 </div>
                 <div className="text-sm sm:text-xl">{date.getDate()}</div>
                 {!isWorking && (
                   <div className="text-xs text-red-500 dark:text-red-400 mt-1 hidden sm:block">
                     Cerrado
-                  </div>
-                )}
-                {isRestricted && restrictionType === "full-day" && (
-                  <div className="text-xs text-orange-500 dark:text-orange-400 mt-1 hidden sm:block">
-                    Bloqueado
-                  </div>
-                )}
-                {isRestricted && restrictionType === "partial" && (
-                  <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1 hidden sm:block">
-                    Parcial
                   </div>
                 )}
               </div>
@@ -260,34 +250,22 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
             const slots = getSlotsForDate(date);
             const { slotColumns, totalColumns } = assignColumns(slots);
             const daySchedule = getDaySchedule(date);
-            const isRestricted = daySchedule?.isRestricted || false;
-            const restrictionType = daySchedule?.restrictionType || null;
 
             return (
               <div
                 key={dayIdx}
                 className={`relative h-full border-l border-gray-200 dark:border-gray-700 ${
-                  isWorking && !(isRestricted && restrictionType === "full-day")
-                    ? "cursor-pointer"
-                    : ""
+                  isWorking ? "cursor-pointer" : ""
                 }`}
                 style={{
-                  background: !isWorking
-                    ? "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,0,0,0.05) 10px, rgba(255,0,0,0.05) 20px)"
-                    : isRestricted && restrictionType === "full-day"
-                      ? "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(249,115,22,0.05) 10px, rgba(249,115,22,0.05) 20px)"
-                      : "transparent",
+                  background: isWorking
+                    ? "transparent"
+                    : "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,0,0,0.05) 10px, rgba(255,0,0,0.05) 20px)",
                 }}
                 onClick={(e) => {
-                  if (
-                    isWorking &&
-                    !(isRestricted && restrictionType === "full-day") &&
-                    onDayColumnClick
-                  )
-                    onDayColumnClick(date);
+                  if (isWorking && onDayColumnClick) onDayColumnClick(date);
                 }}
               >
-                {/* Overlay para día no laboral */}
                 {!isWorking && (
                   <div className="absolute inset-0 bg-gray-100/80 dark:bg-gray-800/80 flex items-center justify-center z-50">
                     <div className="text-center p-2 sm:p-4">
@@ -306,37 +284,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                   </div>
                 )}
 
-                {/* Overlay para día con restricción completa */}
-                {isWorking &&
-                  isRestricted &&
-                  restrictionType === "full-day" && (
-                    <div className="absolute inset-0 bg-orange-100/80 dark:bg-orange-900/30 flex items-center justify-center z-50">
-                      <div className="text-center p-2 sm:p-4">
-                        <div className="flex justify-center">
-                          <Ban className="bg-orange-500 text-white rounded-full p-1 my-2 sm:my-5 w-6 h-6 sm:w-8 sm:h-8" />
-                        </div>
-                        <div className="hidden sm:block">
-                          <div className="text-sm font-medium text-orange-700 dark:text-orange-400">
-                            Día bloqueado
-                          </div>
-                          <div className="text-xs text-orange-600 dark:text-orange-500 mt-1">
-                            No disponible
-                          </div>
-                          {daySchedule?.restrictions?.[0]?.reason && (
-                            <div className="text-xs text-orange-600 dark:text-orange-400 mt-2 italic">
-                              {daySchedule.restrictions[0].reason}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                {/* Horarios de trabajo */}
                 {isWorking &&
                   daySchedule?.workingHours?.start &&
                   daySchedule?.workingHours?.end && (
-                    <div className="absolute top-2 left-0. 5 right-0.5 sm:left-1 sm:right-1 z-20 pointer-events-none hidden sm:block">
+                    <div className="absolute top-2 left-0.5 right-0.5 sm:left-1 sm:right-1 z-20 pointer-events-none hidden sm:block">
                       <div className="text-xs text-center bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 shadow-sm">
                         {daySchedule.workingHours.start.slice(0, 5)} -{" "}
                         {daySchedule.workingHours.end.slice(0, 5)}
@@ -344,64 +295,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
                     </div>
                   )}
 
-                {/* Restricciones parciales */}
-                {isWorking &&
-                  isRestricted &&
-                  restrictionType === "partial" &&
-                  daySchedule?.restrictions && (
-                    <>
-                      {daySchedule.restrictions.map((restriction, idx) => {
-                        if (!restriction.startTime || !restriction.endTime)
-                          return null;
-
-                        const top = timeToPosition(
-                          restriction.startTime.slice(0, 5),
-                          visualStartHour
-                        );
-                        const endTime = restriction.endTime.slice(0, 5);
-                        const startTime = restriction.startTime.slice(0, 5);
-                        const durationMinutes =
-                          parseInt(endTime.split(":")[0]) * 60 +
-                          parseInt(endTime.split(":")[1]) -
-                          (parseInt(startTime.split(":")[0]) * 60 +
-                            parseInt(startTime.split(":")[1]));
-                        const height = Math.max(
-                          (durationMinutes / 60) * 80,
-                          40
-                        );
-
-                        return (
-                          <div
-                            key={idx}
-                            style={{
-                              position: "absolute",
-                              left: "2px",
-                              right: "2px",
-                              top: `${top + 30}px`,
-                              height: `${height}px`,
-                              zIndex: 25,
-                            }}
-                            className="bg-yellow-100/80 dark:bg-yellow-900/40 border-2 border-yellow-500 dark:border-yellow-600 rounded-lg flex flex-col items-center justify-center pointer-events-none"
-                          >
-                            <Ban className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-700 dark:text-yellow-400 mb-1" />
-                            <div className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 hidden sm:block">
-                              Bloqueado
-                            </div>
-                            <div className="text-xs text-yellow-700 dark:text-yellow-400">
-                              {startTime} - {endTime}
-                            </div>
-                            {restriction.reason && (
-                              <div className="text-xs italic text-yellow-700 dark:text-yellow-400 px-2 text-center hidden sm:block">
-                                {restriction.reason}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </>
-                  )}
-
-                {/* Citas ocupadas */}
                 {isWorking &&
                   slots.map((slot) => {
                     const top = timeToPosition(

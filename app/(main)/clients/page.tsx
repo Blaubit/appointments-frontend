@@ -2,7 +2,6 @@
 import { Header } from "@/components/header";
 import ClientsPageClient from "./page.client";
 import { findAll } from "@/actions/clients/findAll";
-import { redirect } from "next/navigation";
 
 export default async function ClientsPage({
   searchParams,
@@ -32,9 +31,6 @@ export default async function ClientsPage({
   if (search && search.length >= 2) params.set("q", search);
 
   const clients = await findAll({ searchParams: params });
-  if (clients.status === 401) {
-    redirect("/api/logout");
-  }
   // Calcular estadísticas basadas en pacientes filtrados
 
   return (
