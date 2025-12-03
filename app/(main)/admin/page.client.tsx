@@ -5,17 +5,13 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Subscription, Payment } from "@/types";
 import { CompaniesTab } from "@/components/admin/companies-tab";
 import { PaymentsTab } from "@/components/admin/payments-tab";
+import { PaymentDialog } from "@/components/admin/payment-dialog";
+import { create as createPayment } from "@/actions/subscription/createPayment";
 
 import { findAll as findAllSubscriptions } from "@/actions/subscription/findAll";
 import { findAllPayments } from "@/actions/payments/findAllPayments";
@@ -51,15 +47,14 @@ export default function AdminPageClient({
   const [selectedSubscription, setSelectedSubscription] =
     useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Control de races: requestId
   const latestRequestId = useRef(0);
 
-  // Llamada a la action usando exactamente URLSearchParams o string
   const fetchWithUrlSearchParams = async (
     urlParams: URLSearchParams | string
   ) => {
@@ -69,20 +64,12 @@ export default function AdminPageClient({
     setIsLoading(true);
 
     try {
-      // Pasamos siempre un string para evitar problemas de serialización
       const [subscriptionsResult, paymentsResult] = await Promise.all([
         findAllSubscriptions({ searchParams: paramsString }),
         findAllPayments(),
       ]);
 
-      // Si ya hay una petición más reciente, ignoramos esta respuesta
       if (requestId !== latestRequestId.current) {
-        console.warn(
-          "[adminPage] Ignoring stale response id:",
-          requestId,
-          "current:",
-          latestRequestId.current
-        );
         return;
       }
 
@@ -96,8 +83,6 @@ export default function AdminPageClient({
 
       if (paymentsResult && paymentsResult.data) {
         setPayments(paymentsResult.data);
-      } else {
-        // No es crítico para companies tab
       }
     } catch (error) {
       console.error("[adminPage] fetch error:", error);
@@ -110,7 +95,6 @@ export default function AdminPageClient({
     }
   };
 
-  // refreshData: si no vienen options, usa exactamente los searchParams actuales de la URL
   const refreshData = async (options?: {
     page?: number;
     limit?: number;
@@ -137,7 +121,6 @@ export default function AdminPageClient({
     await fetchWithUrlSearchParams(params);
   };
 
-  // Escucha cambios en la URL y llama a la action con los mismos params
   useEffect(() => {
     const paramsString = searchParams.toString();
     const params = new URLSearchParams(paramsString);
@@ -145,7 +128,6 @@ export default function AdminPageClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams?.toString()]);
 
-  // cuando CompaniesTab pide cambiar página/filtros actualizamos la URL -> la effect disparará fetch
   const handleCompaniesPageChange = (newPage: number, filters?: any) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(newPage));
@@ -156,6 +138,60 @@ export default function AdminPageClient({
       params.set("status", filters.status);
     else params.delete("status");
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleOpenPaymentModal = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    if (isSubmittingPayment) {
+      return;
+    }
+    setIsPaymentModalOpen(false);
+    setSelectedSubscription(null);
+  };
+
+  const handleSubmitPayment = async (paymentDto: any): Promise<boolean> => {
+    if (!selectedSubscription?.id) {
+      toast.error("No se ha seleccionado una suscripción");
+      return false;
+    }
+
+    if (isSubmittingPayment) {
+      return false;
+    }
+
+    setIsSubmittingPayment(true);
+
+    try {
+      const result = await createPayment({
+        ...paymentDto,
+        subscriptionId: selectedSubscription.id,
+      });
+
+      if (result.status === 200 || result.status === 201) {
+        toast.success("Pago registrado exitosamente");
+
+        setIsSubmittingPayment(false);
+        setIsPaymentModalOpen(false);
+        setSelectedSubscription(null);
+
+        refreshData();
+
+        return true;
+      } else {
+        toast.error((result as any).message || "Error al registrar el pago");
+        setIsSubmittingPayment(false);
+        return false;
+      }
+    } catch (error) {
+      console.error("[adminPage] payment submit error:", error);
+      toast.error("Error inesperado al registrar el pago");
+      setIsSubmittingPayment(false);
+      return false;
+    }
   };
 
   return (
@@ -196,10 +232,7 @@ export default function AdminPageClient({
           <TabsContent value="companies" className="space-y-6">
             <CompaniesTab
               subscriptions={subscriptions}
-              onOpenPaymentModal={(s) => {
-                setSelectedSubscription(s);
-                setIsPaymentModalOpen(true);
-              }}
+              onOpenPaymentModal={handleOpenPaymentModal}
               pagination={subscriptionsMeta}
               onPageChange={handleCompaniesPageChange}
               isLoading={isLoading}
@@ -211,14 +244,17 @@ export default function AdminPageClient({
           </TabsContent>
         </Tabs>
 
-        <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Registrar Pago</DialogTitle>
-            </DialogHeader>
-            {/* Formulario de pago aquí */}
-          </DialogContent>
-        </Dialog>
+        {isPaymentModalOpen && selectedSubscription && (
+          <PaymentDialog
+            key={`payment-dialog-${selectedSubscription.id}`}
+            open={isPaymentModalOpen}
+            onClose={handleClosePaymentModal}
+            onSubmit={handleSubmitPayment}
+            subscriptionId={selectedSubscription.id}
+            defaultAmount={selectedSubscription.plan?.price}
+            isSubmitting={isSubmittingPayment}
+          />
+        )}
       </main>
     </div>
   );
