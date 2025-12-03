@@ -23,10 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Building2, Search, CreditCard, Eye, Edit } from "lucide-react";
 import type { Subscription } from "@/types";
-import { PaymentDialog } from "@/components/admin/payment-dialog";
 import { ViewDialog } from "./viewSubscriptionDialog";
-import { create } from "@/actions/subscription/createPayment";
-import { PaymentDto } from "@/types/dto/subscription/payment.dto";
 import formatCurrency from "@/utils/functions/formatCurrency";
 
 interface CompaniesTabProps {
@@ -56,18 +53,12 @@ export function CompaniesTab({
   );
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [selectedViewRow, setSelectedViewRow] = useState<string | null>(null);
-  const [selectedPaymentRow, setSelectedPaymentRow] = useState<string | null>(
-    null
-  );
 
-  // sincronizar inputs cuando cambia la URL (p.ej. navegacion o back/forward)
   useEffect(() => {
     setSearchTerm(searchParams.get("q") ?? "");
     setStatusFilter(searchParams.get("status") ?? "all");
-    // planFilter could be synced too if you use it in the URL
   }, [searchParams?.toString()]);
 
-  // Debounce: al cambiar filtros, actualizamos la URL después de 500ms
   useEffect(() => {
     const handler = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
@@ -80,7 +71,6 @@ export function CompaniesTab({
       if (planFilter && planFilter !== "all") params.set("plan", planFilter);
       else params.delete("plan");
 
-      // reset page a 1 cuando cambian filtros
       params.set("page", "1");
       params.set("limit", String(pagination?.itemsPerPage ?? 10));
 
@@ -91,7 +81,6 @@ export function CompaniesTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, planFilter]);
 
-  // Handlers prev/next que actualizan la URL (adminPage escucha la URL y hace fetch)
   const handlePrev = () => {
     if (!pagination) return;
     const prev =
@@ -99,7 +88,6 @@ export function CompaniesTab({
       (pagination.currentPage > 1 ? pagination.currentPage - 1 : null);
     if (!prev) return;
 
-    // If parent provided onPageChange, prefer that (parent will update URL)
     if (onPageChange) {
       onPageChange(prev, {
         q: searchParams.get("q") ?? undefined,
@@ -137,11 +125,6 @@ export function CompaniesTab({
     params.set("page", String(next));
     params.set("limit", String(pagination?.itemsPerPage ?? 10));
     router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const handleSubmitPayment = (payment: PaymentDto) => {
-    create(payment);
-    setSelectedPaymentRow(null);
   };
 
   const selectedViewSubscription =
@@ -232,7 +215,7 @@ export function CompaniesTab({
                             {subscription.company.name}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {subscription.company.phones?.[0] || "N/A"}
+                            {String(subscription.company.phones?.[0]) || "N/A"}
                           </p>
                         </div>
                       </div>
@@ -291,21 +274,14 @@ export function CompaniesTab({
                         <Button
                           size="sm"
                           onClick={() => {
-                            if (onOpenPaymentModal)
+                            if (onOpenPaymentModal) {
                               onOpenPaymentModal(subscription);
-                            setSelectedPaymentRow(subscription.id);
+                            }
                           }}
                           className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <CreditCard className="h-4 w-4" />
                         </Button>
-                        <PaymentDialog
-                          open={selectedPaymentRow === subscription.id}
-                          onClose={() => setSelectedPaymentRow(null)}
-                          onSubmit={handleSubmitPayment}
-                          subscriptionId={subscription.id}
-                          defaultAmount={subscription.plan.price}
-                        />
                         <Button variant="outline" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>

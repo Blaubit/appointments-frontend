@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,6 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -16,14 +24,16 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CreditCard } from "lucide-react";
+import { CalendarIcon, CreditCard, Loader2 } from "lucide-react";
 import { PaymentDto } from "@/types/dto/subscription/payment.dto";
+
 interface PaymentDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (payment: PaymentDto) => void;
+  onSubmit: (payment: PaymentDto) => Promise<boolean>;
   subscriptionId: string;
   defaultAmount?: number;
+  isSubmitting?: boolean;
 }
 
 export function PaymentDialog({
@@ -32,15 +42,26 @@ export function PaymentDialog({
   onSubmit,
   subscriptionId,
   defaultAmount = 9.99,
+  isSubmitting = false,
 }: PaymentDialogProps) {
   const [paymentDate, setPaymentDate] = useState<Date | undefined>();
   const [paymentMethod, setPaymentMethod] = useState<string>("card");
   const [amount, setAmount] = useState<number>(defaultAmount);
   const [reference, setReference] = useState<string | undefined>();
 
-  const handleSubmit = () => {
-    if (!paymentDate) return;
-    onSubmit({
+  useEffect(() => {
+    if (open) {
+      setPaymentDate(undefined);
+      setPaymentMethod("card");
+      setAmount(defaultAmount);
+      setReference(undefined);
+    }
+  }, [open, defaultAmount]);
+
+  const handleSubmit = async () => {
+    if (!paymentDate || isSubmitting) return;
+
+    await onSubmit({
       subscriptionId,
       amount,
       paymentDate: format(paymentDate, "yyyy-MM-dd"),
@@ -48,39 +69,62 @@ export function PaymentDialog({
       status: "completed",
       reference,
     });
+  };
+
+  const handleCancel = () => {
+    if (isSubmitting) return;
     onClose();
-    setPaymentDate(undefined);
-    setPaymentMethod("card");
-    setAmount(defaultAmount);
-    setReference(undefined);
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && !isSubmitting) {
+      onClose();
+    }
   };
 
   return (
-    <Popover open={open} onOpenChange={onClose}>
-      <PopoverTrigger asChild>
-        <span />
-      </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="space-y-4">
-          <h4 className="text-lg font-medium mb-2 flex items-center gap-2">
-            <CreditCard className="h-5 w-5" /> Registrar pago
-          </h4>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Fecha de pago
-            </label>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-[425px]"
+        onInteractOutside={(e) => {
+          if (isSubmitting) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isSubmitting) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Registrar Pago
+          </DialogTitle>
+          <DialogDescription>
+            Complete los datos del pago para registrarlo en el sistema.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Fecha de pago</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`w-full justify-start text-left ${paymentDate ? "" : "text-muted-foreground"}`}
+                  className={`w-full justify-start text-left font-normal ${
+                    !paymentDate && "text-muted-foreground"
+                  }`}
+                  disabled={isSubmitting}
                 >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {paymentDate
                     ? format(paymentDate, "PPP", { locale: es })
                     : "Selecciona una fecha"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="p-0">
+              <PopoverContent align="start" className="w-auto p-0">
                 <Calendar
                   mode="single"
                   locale={es}
@@ -91,11 +135,14 @@ export function PaymentDialog({
               </PopoverContent>
             </Popover>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Método de pago
-            </label>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Método de pago</label>
+            <Select
+              value={paymentMethod}
+              onValueChange={setPaymentMethod}
+              disabled={isSubmitting}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Método de pago" />
               </SelectTrigger>
@@ -106,39 +153,54 @@ export function PaymentDialog({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Monto</label>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Monto</label>
             <Input
               type="number"
               min={0}
-              step="0.01"
+              step="0. 01"
               value={amount}
               onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+              disabled={isSubmitting}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Referencia</label>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Referencia (opcional)</label>
             <Input
               type="text"
-              value={reference}
+              value={reference || ""}
               onChange={(e) => setReference(e.target.value)}
               placeholder="Referencia del pago"
+              disabled={isSubmitting}
             />
           </div>
-          <div className="flex gap-2 justify-end pt-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button
-              className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={handleSubmit}
-              disabled={!paymentDate}
-            >
-              Registrar pago
-            </Button>
-          </div>
         </div>
-      </PopoverContent>
-    </Popover>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            className="bg-green-600 hover:bg-green-700 text-white"
+            onClick={handleSubmit}
+            disabled={!paymentDate || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              "Registrar pago"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

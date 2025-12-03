@@ -37,7 +37,6 @@ import { Loader2 } from "lucide-react";
 import formatCurrencyUtil from "@/utils/functions/formatCurrency";
 
 interface PaymentsTabProps {
-  // initial payments passed from server render while client-side fetch runs
   payments: Payment[];
   initialMeta?: any;
 }
@@ -78,11 +77,18 @@ export function PaymentsTab({
   );
 
   const [isLoading, setIsLoading] = useState(false);
-
-  // Control de races
   const latestRequestId = useRef(0);
+  const isInitialMount = useRef(true);
 
-  // Fetch helper: always pass params as string to server action
+  // Sincronizar filtros cuando cambia la URL
+  useEffect(() => {
+    setSearchTerm(searchParams.get("q") ?? "");
+    setStatusFilter(searchParams.get("status") ?? "all");
+    setMethodFilter(searchParams.get("method") ?? "all");
+    setDateRange(searchParams.get("dateRange") ?? "all");
+  }, [searchParams]);
+
+  // Fetch helper
   const fetchWithParams = async (params: URLSearchParams | string) => {
     const requestId = ++latestRequestId.current;
     const paramsString =
@@ -91,13 +97,11 @@ export function PaymentsTab({
     setIsLoading(true);
     try {
       const result = await findAllPayments({ searchParams: paramsString });
+
       if (requestId !== latestRequestId.current) {
-        console.warn(
-          "[PaymentsTab] Ignoring stale payments response id:",
-          requestId
-        );
         return;
       }
+
       if (result && result.status === 200) {
         setPayments(result.data || []);
         setMeta(result.meta || meta);
@@ -109,30 +113,46 @@ export function PaymentsTab({
       console.error("[PaymentsTab] fetch error:", err);
       setPayments([]);
     } finally {
-      if (requestId === latestRequestId.current) setIsLoading(false);
+      if (requestId === latestRequestId.current) {
+        setIsLoading(false);
+      }
     }
   };
 
-  // Debounce local filter inputs -> update URL
+  // Debounce filtros locales -> actualizar URL
   useEffect(() => {
+    // Skip en el primer render para evitar fetch duplicado
+    if (isInitialMount.current) {
+      return;
+    }
+
     const handler = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
-      if (searchTerm && searchTerm.trim().length > 0)
+
+      if (searchTerm && searchTerm.trim().length > 0) {
         params.set("q", searchTerm.trim());
-      else params.delete("q");
+      } else {
+        params.delete("q");
+      }
 
-      if (statusFilter && statusFilter !== "all")
+      if (statusFilter && statusFilter !== "all") {
         params.set("status", statusFilter);
-      else params.delete("status");
+      } else {
+        params.delete("status");
+      }
 
-      if (methodFilter && methodFilter !== "all")
+      if (methodFilter && methodFilter !== "all") {
         params.set("method", methodFilter);
-      else params.delete("method");
+      } else {
+        params.delete("method");
+      }
 
-      if (dateRange && dateRange !== "all") params.set("dateRange", dateRange);
-      else params.delete("dateRange");
+      if (dateRange && dateRange !== "all") {
+        params.set("dateRange", dateRange);
+      } else {
+        params.delete("dateRange");
+      }
 
-      // reset to first page when filters change
       params.set("page", "1");
       params.set("limit", String(meta?.itemsPerPage ?? 7));
 
@@ -143,25 +163,33 @@ export function PaymentsTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, methodFilter, dateRange]);
 
-  // When URL search params change, call server action with the same params
+  // Cuando cambian los searchParams de la URL, hacer fetch
   useEffect(() => {
+    // Marcar que ya no es el mount inicial después del primer render
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const paramsString = searchParams.toString();
     const params = new URLSearchParams(paramsString);
 
-    // ensure page/limit defaults
-    if (!params.get("page")) params.set("page", String(meta?.currentPage ?? 1));
-    if (!params.get("limit"))
+    if (!params.get("page")) {
+      params.set("page", String(meta?.currentPage ?? 1));
+    }
+    if (!params.get("limit")) {
       params.set("limit", String(meta?.itemsPerPage ?? 7));
+    }
 
     fetchWithParams(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams?.toString()]);
+  }, [searchParams]);
 
-  // Pagination handlers: update URL (parent/router will trigger fetch)
   const handlePrev = () => {
     const prev =
       meta.previousPage ?? (meta.currentPage > 1 ? meta.currentPage - 1 : null);
     if (!prev) return;
+
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(prev));
     params.set("limit", String(meta.itemsPerPage ?? 7));
@@ -173,19 +201,18 @@ export function PaymentsTab({
       meta.nextPage ??
       (meta.currentPage < meta.totalPages ? meta.currentPage + 1 : null);
     if (!next) return;
+
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(next));
     params.set("limit", String(meta.itemsPerPage ?? 7));
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  // derive unique methods from current payments (server returns filtered set)
   const uniqueMethods = Array.from(
     new Set(payments.map((p) => p.paymentMethod))
   ).filter(Boolean);
 
   const formatCurrency = (amount: number) => {
-    // Use util if available, fallback to Intl
     try {
       return formatCurrencyUtil(amount);
     } catch {
@@ -205,7 +232,6 @@ export function PaymentsTab({
     });
   };
 
-  // statistics
   const totalAmount = payments.reduce(
     (sum, p) => sum + (Number(p.amount) || 0),
     0
@@ -454,7 +480,6 @@ export function PaymentsTab({
             </Table>
           </div>
 
-          {/* Pagination */}
           {meta && (
             <div className="mt-4 flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
