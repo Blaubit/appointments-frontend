@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban, Clock } from "lucide-react";
 import type { User, PeriodResponse } from "@/types";
 import { findPeriod } from "@/actions/calendar/findPeriod";
 
@@ -17,17 +17,26 @@ interface CalendarCardProps {
   selectedProfessional?: User | null;
 }
 
+type DayStatus =
+  | "working"
+  | "non-working"
+  | "restricted-full"
+  | "restricted-partial";
+
+interface DayInfo {
+  status: DayStatus;
+  reason?: string;
+}
+
 export const CalendarCard: React.FC<CalendarCardProps> = ({
   onDateSelect,
   initialDate,
   workingDays = new Set(),
   selectedProfessional,
 }) => {
-  // Valida initialDate para evitar NaN/Invalid Date
   const validInitialDate =
     initialDate && !isNaN(initialDate.getTime()) ? initialDate : undefined;
 
-  // Estado para fecha seleccionada y mes actual
   const [selectedDate, setSelectedDate] = useState<string>(
     validInitialDate ? validInitialDate.toISOString().split("T")[0] : ""
   );
@@ -37,13 +46,13 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
       : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
 
-  const [nonWorkingDays, setNonWorkingDays] = useState<Set<string>>(new Set());
+  // NUEVO: Estado más completo que incluye restricciones
+  const [daysInfo, setDaysInfo] = useState<Map<string, DayInfo>>(new Map());
   const [isLoadingMonth, setIsLoadingMonth] = useState<boolean>(false);
-  const [cachedMonths, setCachedMonths] = useState<Map<string, Set<string>>>(
-    new Map()
-  );
+  const [cachedMonths, setCachedMonths] = useState<
+    Map<string, Map<string, DayInfo>>
+  >(new Map());
 
-  // Sincroniza selectedDate y currentMonth si initialDate cambia
   useEffect(() => {
     if (validInitialDate) {
       const dateStr = validInitialDate.toISOString().split("T")[0];
@@ -54,17 +63,15 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
     }
   }, [validInitialDate]);
 
-  // Si no hay profesional seleccionado, limpiar estados relevantes (evita que queden días del profesional anterior)
   useEffect(() => {
     if (!selectedProfessional) {
-      setNonWorkingDays(new Set());
+      setDaysInfo(new Map());
       setCachedMonths(new Map());
       return;
     }
-    // No hacemos nada aquí si sí hay profesional: la carga del mes se maneja abajo.
   }, [selectedProfessional]);
 
-  // Cargar datos del mes completo cuando cambian profesional o mes
+  // Cargar datos del mes completo incluyendo restricciones
   useEffect(() => {
     if (!selectedProfessional) return;
 
@@ -73,9 +80,8 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
       const profId = selectedProfessional.id?.toString() ?? "unknown";
       const monthKey = `${profId}:${monthStr}`;
 
-      // Verificar si ya está en caché (ahora la clave incluye el profesional)
       if (cachedMonths.has(monthKey)) {
-        setNonWorkingDays(cachedMonths.get(monthKey)!);
+        setDaysInfo(cachedMonths.get(monthKey)!);
         return;
       }
 
@@ -86,14 +92,12 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
           monthStr,
           "month"
         );
+
         if (result && "data" in result && result.data) {
           const monthSchedule = result.data as PeriodResponse;
-
-          // Procesar todos los días del mes
-          const nonWorking = new Set<string>();
+          const newDaysInfo = new Map<string, DayInfo>();
 
           if (monthSchedule.schedule && Array.isArray(monthSchedule.schedule)) {
-            // Un día es NO laboral si workingHours es null o no tiene start/end
             monthSchedule.schedule.forEach((day: any) => {
               const hasWorkingHours =
                 day.workingHours &&
@@ -101,32 +105,58 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
                 day.workingHours.end !== null;
 
               if (!hasWorkingHours) {
-                nonWorking.add(day.date);
+                // Día no laboral
+                newDaysInfo.set(day.date, {
+                  status: "non-working",
+                });
+              } else if (
+                day.isRestricted &&
+                day.restrictionType === "full-day"
+              ) {
+                // Día con restricción completa
+                const reason = day.restrictions?.[0]?.reason || "Día bloqueado";
+                newDaysInfo.set(day.date, {
+                  status: "restricted-full",
+                  reason,
+                });
+              } else if (
+                day.isRestricted &&
+                day.restrictionType === "partial"
+              ) {
+                // Día con restricción parcial
+                const restrictionCount = day.restrictions?.length || 0;
+                const reason = `${restrictionCount} horario${restrictionCount > 1 ? "s" : ""} bloqueado${restrictionCount > 1 ? "s" : ""}`;
+                newDaysInfo.set(day.date, {
+                  status: "restricted-partial",
+                  reason,
+                });
+              } else {
+                // Día laboral normal
+                newDaysInfo.set(day.date, {
+                  status: "working",
+                });
               }
             });
           }
 
-          setNonWorkingDays(nonWorking);
-          // Guardar en caché usando la clave con profesional
+          setDaysInfo(newDaysInfo);
           setCachedMonths((prev) => {
             const next = new Map(prev);
-            next.set(monthKey, nonWorking);
+            next.set(monthKey, newDaysInfo);
             return next;
           });
         }
       } catch (error) {
         console.error("Error loading month data:", error);
-        setNonWorkingDays(new Set());
+        setDaysInfo(new Map());
       } finally {
         setIsLoadingMonth(false);
       }
     };
 
     loadMonthData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProfessional, currentMonth]);
 
-  // Genera "slots" del mes actual (incluye celdas vacías hasta el primer día)
   const getCalendarSlots = (date: Date): (Date | null)[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -134,23 +164,17 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
     const lastDayOfMonth = new Date(year, month + 1, 0);
     const totalDays = lastDayOfMonth.getDate();
 
-    // JS getDay(): 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    // Queremos que la semana empiece en Lunes => calcular offset:
-    const leadingBlanks = (firstDayOfMonth.getDay() + 6) % 7; // Monday -> 0, Sunday -> 6
-
+    const leadingBlanks = (firstDayOfMonth.getDay() + 6) % 7;
     const slots: (Date | null)[] = [];
 
-    // Agregar celdas vacías antes del 1º del mes
     for (let i = 0; i < leadingBlanks; i++) {
       slots.push(null);
     }
 
-    // Agregar los días reales
     for (let day = 1; day <= totalDays; day++) {
       slots.push(new Date(year, month, day));
     }
 
-    // Completar la última semana con celdas vacías si es necesario (opcional, para cuadrícula completa)
     while (slots.length % 7 !== 0) {
       slots.push(null);
     }
@@ -173,12 +197,17 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
     if (isNaN(date.getTime())) return;
 
     const dateStr = date.toISOString().split("T")[0];
+    const dayInfo = daysInfo.get(dateStr);
+    const isPast = date.getTime() < today.getTime();
+
+    // Solo permitir selección si no es pasado, no es no-laboral y no está completamente restringido
     const isDisabled =
-      date.getTime() < today.getTime() || nonWorkingDays.has(dateStr);
+      isPast ||
+      dayInfo?.status === "non-working" ||
+      dayInfo?.status === "restricted-full";
 
     if (!isDisabled) {
       setSelectedDate(dateStr);
-      // Asegurar que currentMonth se actualiza correctamente
       const newCurrentMonth = new Date(date.getFullYear(), date.getMonth(), 1);
       setCurrentMonth(newCurrentMonth);
       if (onDateSelect) onDateSelect(dateStr);
@@ -235,7 +264,6 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
                 .slice(weekIndex * 7, (weekIndex + 1) * 7)
                 .map((slot, slotIndex) => {
                   if (!slot) {
-                    // Celda vacía (antes o después del mes)
                     return <div key={slotIndex} className="p-2" />;
                   }
 
@@ -246,33 +274,75 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
                   const isSelected = selectedDate === dateStr;
                   const isToday = dateStr === todayStr;
                   const isPast = date.getTime() < today.getTime();
-                  const isNonWorking = nonWorkingDays.has(dateStr);
-                  const isDisabled = isPast || isNonWorking;
+                  const dayInfo = daysInfo.get(dateStr);
+
+                  let buttonClasses =
+                    "p-2 text-sm rounded-lg transition-colors relative group";
+                  let isDisabled = false;
+                  let tooltipText = "";
+                  let icon: React.ReactNode = null;
+
+                  if (isPast) {
+                    buttonClasses +=
+                      " text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800";
+                    isDisabled = true;
+                    tooltipText = "Fecha pasada";
+                  } else if (dayInfo?.status === "non-working") {
+                    buttonClasses +=
+                      " text-red-400 dark:text-red-500 cursor-not-allowed bg-red-50 dark:bg-red-950/30 line-through";
+                    isDisabled = true;
+                    tooltipText = "Día no laboral";
+                  } else if (dayInfo?.status === "restricted-full") {
+                    buttonClasses +=
+                      " text-orange-500 dark:text-orange-400 cursor-not-allowed bg-orange-50 dark:bg-orange-950/30";
+                    isDisabled = true;
+                    tooltipText =
+                      dayInfo.reason || "Día bloqueado completamente";
+                    icon = (
+                      <Ban className="w-3 h-3 absolute top-0. 5 right-0.5 text-orange-500" />
+                    );
+                  } else if (dayInfo?.status === "restricted-partial") {
+                    if (isSelected) {
+                      buttonClasses +=
+                        " bg-yellow-500 text-white ring-2 ring-yellow-600";
+                    } else {
+                      buttonClasses +=
+                        " bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/40";
+                    }
+                    tooltipText = dayInfo.reason || "Restricciones parciales";
+                    icon = (
+                      <Clock className="w-3 h-3 absolute top-0.5 right-0. 5 text-yellow-600 dark:text-yellow-500" />
+                    );
+                  } else {
+                    // Día laboral normal
+                    if (isSelected) {
+                      buttonClasses += " bg-blue-500 text-white";
+                    } else if (isToday) {
+                      buttonClasses +=
+                        " bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 ring-2 ring-blue-400";
+                    } else {
+                      buttonClasses +=
+                        " hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100";
+                    }
+                  }
 
                   return (
                     <button
                       key={slotIndex}
                       type="button"
                       disabled={isDisabled}
-                      title={
-                        isPast
-                          ? "Fecha pasada"
-                          : isNonWorking
-                            ? "Día no laboral"
-                            : undefined
-                      }
-                      className={`p-2 text-sm rounded-lg transition-colors ${
-                        isDisabled
-                          ? "text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-100 dark:bg-gray-800"
-                          : isSelected
-                            ? "bg-blue-500 text-white"
-                            : isToday
-                              ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
+                      className={buttonClasses}
                       onClick={() => handleDateSelect(date)}
                     >
                       {date.getDate()}
+                      {icon}
+
+                      {/* Tooltip */}
+                      {tooltipText && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                          {tooltipText}
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -286,14 +356,39 @@ export const CalendarCard: React.FC<CalendarCardProps> = ({
           </div>
         )}
 
-        <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+        {/* Leyenda actualizada */}
+        <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 space-y-1. 5">
+          <div className="font-semibold mb-2">Leyenda:</div>
+
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded flex items-center justify-center">
+              <span className="text-[8px]">✕</span>
+            </div>
             <span>Día no laboral / Pasado</span>
           </div>
+
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-100 dark:bg-blue-900 rounded"></div>
+            <div className="w-4 h-4 bg-orange-50 dark:bg-orange-950/30 rounded flex items-center justify-center border border-orange-300">
+              <Ban className="w-2. 5 h-2.5 text-orange-500" />
+            </div>
+            <span>Día bloqueado (sin disponibilidad)</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-yellow-50 dark:bg-yellow-950/30 rounded flex items-center justify-center border border-yellow-300">
+              <Clock className="w-2.5 h-2.5 text-yellow-600" />
+            </div>
+            <span>Restricciones parciales (disponibilidad limitada)</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900 rounded ring-2 ring-blue-400"></div>
             <span>Hoy</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-blue-500 rounded"></div>
+            <span>Fecha seleccionada</span>
           </div>
         </div>
       </CardContent>
