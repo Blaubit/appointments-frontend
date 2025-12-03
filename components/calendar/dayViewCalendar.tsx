@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { OccupiedSlot, PeriodResponse } from "@/types";
+import { Ban } from "lucide-react";
 
 type SlotWithDate = OccupiedSlot & { date: string };
 
@@ -59,7 +60,6 @@ function getFreeAreas(
     return [{ start: 0, end: totalEnd }];
   }
 
-  // Ordenar slots por hora de inicio
   const sortedSlots = slots
     .map((slot) => ({
       start: timeToPosition(slot.startTime.slice(0, 5), visualStartHour),
@@ -71,7 +71,6 @@ function getFreeAreas(
   let lastEnd = 0;
 
   for (const slot of sortedSlots) {
-    // Solo agregar área libre si hay espacio significativo (más de 30px = ~23 minutos)
     if (slot.start > lastEnd + 30) {
       freeAreas.push({ start: lastEnd, end: slot.start });
     }
@@ -83,7 +82,6 @@ function getFreeAreas(
     visualStartHour
   );
 
-  // Agregar área libre al final si hay espacio significativo
   if (lastEnd + 30 < totalEnd) {
     freeAreas.push({ start: lastEnd, end: totalEnd });
   }
@@ -92,12 +90,11 @@ function getFreeAreas(
 }
 
 function positionToTime(position: number, visualStartHour: number): string {
-  const pixelsPerMinute = 80 / 60; // 80px por hora
+  const pixelsPerMinute = 80 / 60;
   const totalMinutes = Math.round(position / pixelsPerMinute);
   const hours = Math.floor(totalMinutes / 60) + visualStartHour;
   const minutes = totalMinutes % 60;
 
-  // Redondear a intervalos de 15 minutos
   const roundedMinutes = Math.round(minutes / 15) * 15;
   const finalHours = roundedMinutes >= 60 ? hours + 1 : hours;
   const finalMinutes = roundedMinutes >= 60 ? 0 : roundedMinutes;
@@ -131,7 +128,6 @@ function computeSlotLayouts(
 > {
   if (!slots || slots.length === 0) return [];
 
-  // Convertir y ordenar por inicio en minutos
   const normalized = slots
     .map((s) => {
       const start = s.startTime.slice(0, 5);
@@ -142,7 +138,6 @@ function computeSlotLayouts(
     })
     .sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
 
-  // Construir clusters (grupos de solapamiento)
   const groups: any[][] = [];
   let currentGroup: any[] = [];
   let currentGroupEnd = -Infinity;
@@ -153,11 +148,9 @@ function computeSlotLayouts(
       currentGroupEnd = slot.endMin;
     } else {
       if (slot.startMin < currentGroupEnd) {
-        // Solapa -> agregamos al grupo
         currentGroup.push(slot);
         currentGroupEnd = Math.max(currentGroupEnd, slot.endMin);
       } else {
-        // No solapa -> cerrar grupo y empezar nuevo
         groups.push(currentGroup);
         currentGroup = [slot];
         currentGroupEnd = slot.endMin;
@@ -168,14 +161,10 @@ function computeSlotLayouts(
 
   const layouts: any[] = [];
 
-  // Para cada grupo asignar columnas
   for (const group of groups) {
-    // columnsEndTimes almacena el endMin de cada columna
     const columnsEndTimes: number[] = [];
 
-    // recorremos los slots por startMin asc
     for (const slot of group) {
-      // buscar columna libre
       let assignedCol = -1;
       for (let ci = 0; ci < columnsEndTimes.length; ci++) {
         if (columnsEndTimes[ci] <= slot.startMin) {
@@ -184,14 +173,12 @@ function computeSlotLayouts(
         }
       }
       if (assignedCol === -1) {
-        // crear nueva columna
         columnsEndTimes.push(slot.endMin);
         assignedCol = columnsEndTimes.length - 1;
       } else {
         columnsEndTimes[assignedCol] = slot.endMin;
       }
 
-      // top y height en px usando funciones existentes
       const top = timeToPosition(slot.start, visualStartHour);
       const durationMinutes = slot.endMin - slot.startMin;
       const height = Math.max((durationMinutes / 60) * 80, 40);
@@ -205,7 +192,6 @@ function computeSlotLayouts(
       });
     }
 
-    // Ajustar columnsCount de todos los slots del grupo al máximo final del grupo.
     const maxCols = Math.max(
       ...layouts
         .filter((l) => group.some((g) => g.appointmentId === l.appointmentId))
@@ -235,6 +221,9 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
 
   const hasWorkingHours =
     daySchedule?.workingHours?.start && daySchedule?.workingHours?.end;
+
+  const isRestricted = daySchedule?.isRestricted || false;
+  const restrictionType = daySchedule?.restrictionType || null;
 
   let visualStartHour = 9;
   let visualEndHour = 18;
@@ -279,13 +268,11 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
       }))
     : [];
 
-  // Pre-computar layouts que dividen visualmente las citas que se solapan
   const slotLayouts = computeSlotLayouts(slots, visualStartHour);
 
   const freeAreas = getFreeAreas(slots, visualStartHour, visualEndHour);
 
   function handleMouseMoveCalendar(e: React.MouseEvent<HTMLDivElement>) {
-    // Verificar que no estamos sobre un slot ocupado
     const target = e.target as HTMLElement;
     const slotElement = target.closest('[data-slot="true"]');
     if (slotElement) {
@@ -293,11 +280,9 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
       return;
     }
 
-    // Obtener la posición Y relativa al contenedor del calendario
     const calendarRect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - calendarRect.top;
 
-    // Verificar si estamos en un área libre
     const currentArea = freeAreas.find(
       (area) => y >= area.start && y <= area.end
     );
@@ -306,10 +291,8 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
       return;
     }
 
-    // Convertir posición Y a hora
     const timeAtPosition = positionToTime(y, visualStartHour);
 
-    // Buscar la hora disponible más cercana
     if (filteredAvailableHours.length > 0) {
       let closestHour = filteredAvailableHours[0];
       let minDiff = Infinity;
@@ -319,7 +302,6 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
           availableHour,
           visualStartHour
         );
-        // Solo considerar horas que están dentro del área libre actual
         if (
           availablePosition >= currentArea.start &&
           availablePosition <= currentArea.end
@@ -332,7 +314,6 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
         }
       }
 
-      // Solo mostrar hover si encontramos una hora válida en esta área (dentro de 40px)
       if (minDiff < 40) {
         setHoverHour(closestHour);
       } else {
@@ -348,11 +329,15 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
   }
 
   function handleCalendarClick(e: React.MouseEvent<HTMLDivElement>) {
-    // Verificar que no estamos clickeando sobre un slot
     const target = e.target as HTMLElement;
     const slotElement = target.closest('[data-slot="true"]');
     if (slotElement) {
-      return; // Dejar que el slot maneje su propio click
+      return;
+    }
+
+    // No permitir click si el día está bloqueado completamente
+    if (isRestricted && restrictionType === "full-day") {
+      return;
     }
 
     if (hoverHour && onHourClick) {
@@ -360,8 +345,87 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
     }
   }
 
-  // Mostrar overlay de "No hay horarios" sólo cuando no hay availableHours *y* no hay citas ocupadas.
-  // Esto evita bloquear la vista cuando el backend no devuelve availableHours pero sí hay citas (por ejemplo cuando allowOverlap = false).
+  // Mostrar overlay cuando día está bloqueado completamente
+  if (isRestricted && restrictionType === "full-day") {
+    return (
+      <div className="overflow-hidden">
+        <div
+          className="relative rounded-xl border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/30 shadow-sm mx-auto"
+          style={{ height: `${Math.max(hourLines.length * 40, 600)}px` }}
+        >
+          {/* Líneas de hora */}
+          <div className="absolute left-0 w-full z-0 pointer-events-none">
+            {hourLines.map((hour, i) => (
+              <div
+                key={hour}
+                style={{
+                  position: "absolute",
+                  top: `${i * 40}px`,
+                  width: "100%",
+                  height: "40px",
+                  left: 0,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <div className="flex items-center w-full">
+                  <span
+                    className="pl-2 pr-2 text-base text-gray-400 dark:text-gray-500"
+                    style={{ width: 56 }}
+                  >
+                    {hour}
+                  </span>
+                  <div
+                    className="flex-1 border-t border-dashed border-orange-200 dark:border-orange-800"
+                    style={{ marginLeft: 4 }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Patrón de líneas diagonales */}
+          <div
+            className="absolute inset-0 rounded-xl pointer-events-none"
+            style={{
+              background:
+                "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(249, 115, 22, 0.1) 10px, rgba(249, 115, 22, 0.1) 20px)",
+            }}
+          />
+
+          {/* Mensaje superpuesto */}
+          <div className="absolute inset-0 flex items-center justify-center z-30 bg-orange-50/90 dark:bg-orange-950/80 backdrop-blur-sm">
+            <div className="text-center p-8">
+              <div className="flex justify-center mb-4">
+                <Ban className="w-16 h-16 text-orange-500 dark:text-orange-400" />
+              </div>
+              <h3 className="text-xl font-bold text-orange-700 dark:text-orange-400 mb-2">
+                Día Bloqueado
+              </h3>
+              <p className="text-base text-orange-600 dark:text-orange-500">
+                Este día no está disponible para agendar citas
+              </p>
+              {daySchedule?.restrictions?.[0]?.reason && (
+                <p className="text-sm text-orange-600 dark:text-orange-400 mt-3 italic">
+                  Motivo: {daySchedule.restrictions[0].reason}
+                </p>
+              )}
+              {daySchedule?.workingHours?.start &&
+                daySchedule?.workingHours?.end && (
+                  <p className="text-xs text-orange-500 dark:text-orange-500 mt-4">
+                    Horario laboral habitual:{" "}
+                    {daySchedule.workingHours.start.slice(0, 5)} -{" "}
+                    {daySchedule.workingHours.end.slice(0, 5)}
+                  </p>
+                )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar overlay cuando no hay horarios disponibles y tampoco hay citas
   if (filteredAvailableHours.length === 0 && slots.length === 0) {
     return (
       <div className="overflow-hidden">
@@ -430,7 +494,7 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
     );
   }
 
-  // Renderizado normal cuando hay horas disponibles o cuando hay citas ocupadas (aunque availableHours esté vacío).
+  // Renderizado normal cuando hay horas disponibles o cuando hay citas ocupadas
   return (
     <div className="overflow-hidden">
       <div
@@ -471,7 +535,70 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
           ))}
         </div>
 
-        {/* Slots ocupados: inner container para layout por columnas */}
+        {/* Restricciones parciales - Renderizadas DEBAJO de las citas */}
+        {isRestricted &&
+          restrictionType === "partial" &&
+          daySchedule?.restrictions && (
+            <div className="relative w-full h-full z-15">
+              <div
+                style={{
+                  position: "absolute",
+                  left: "70px",
+                  width: "calc(100% - 80px)",
+                  height: "100%",
+                  top: 0,
+                }}
+              >
+                {daySchedule.restrictions.map((restriction, idx) => {
+                  if (!restriction.startTime || !restriction.endTime)
+                    return null;
+
+                  const top = timeToPosition(
+                    restriction.startTime.slice(0, 5),
+                    visualStartHour
+                  );
+                  const endTime = restriction.endTime.slice(0, 5);
+                  const startTime = restriction.startTime.slice(0, 5);
+                  const durationMinutes =
+                    parseInt(endTime.split(":")[0]) * 60 +
+                    parseInt(endTime.split(":")[1]) -
+                    (parseInt(startTime.split(":")[0]) * 60 +
+                      parseInt(startTime.split(":")[1]));
+                  const height = Math.max((durationMinutes / 60) * 80, 60);
+
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        position: "absolute",
+                        top: `${top}px`,
+                        left: 0,
+                        width: "100%",
+                        height: `${height}px`,
+                        zIndex: 15,
+                      }}
+                      className="bg-yellow-100/80 dark:bg-yellow-900/40 border-2 border-yellow-500 dark:border-yellow-600 rounded-xl px-4 py-3 flex flex-col items-center justify-center pointer-events-none"
+                    >
+                      <Ban className="w-8 h-8 text-yellow-700 dark:text-yellow-400 mb-2" />
+                      <div className="font-bold text-lg text-yellow-800 dark:text-yellow-300">
+                        Horario Bloqueado
+                      </div>
+                      <div className="text-base font-semibold text-yellow-700 dark:text-yellow-400 mt-1">
+                        {startTime} - {endTime}
+                      </div>
+                      {restriction.reason && (
+                        <div className="text-sm italic text-yellow-700 dark:text-yellow-400 mt-2 text-center">
+                          {restriction.reason}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        {/* Slots ocupados - Renderizados ENCIMA de las restricciones */}
         <div className="relative w-full h-full z-20">
           <div
             style={{
@@ -496,7 +623,7 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
                     position: "absolute",
                     top: `${slot.top}px`,
                     left: `${leftPercent}%`,
-                    width: `calc(${widthPercent}% - 8px)`, // pequeño gap
+                    width: `calc(${widthPercent}% - 8px)`,
                     height: `${slot.height}px`,
                     zIndex: isHovered ? 40 : 25,
                     overflow: "hidden",
@@ -541,37 +668,39 @@ export const DayViewCalendar: React.FC<DayViewCalendarProps> = ({
           </div>
         </div>
 
-        {/* Indicador flotante azul */}
-        {hoverHour && filteredAvailableHours.length > 0 && (
-          <div
-            className="absolute left-[70px] w-[calc(100%-80px)] z-30 pointer-events-none"
-            style={{
-              top: `${timeToPosition(hoverHour, visualStartHour) - 18}px`,
-              height: "36px",
-            }}
-          >
+        {/* Indicador flotante azul - Solo si NO hay restricción full-day */}
+        {hoverHour &&
+          filteredAvailableHours.length > 0 &&
+          !(isRestricted && restrictionType === "full-day") && (
             <div
-              className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded px-3 py-1 text-sm font-bold shadow-lg border border-blue-300 dark:border-blue-700"
+              className="absolute left-[70px] w-[calc(100%-80px)] z-30 pointer-events-none"
               style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                transform: "translateY(0)",
+                top: `${timeToPosition(hoverHour, visualStartHour) - 18}px`,
+                height: "36px",
               }}
             >
-              {hoverHour}
+              <div
+                className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded px-3 py-1 text-sm font-bold shadow-lg border border-blue-300 dark:border-blue-700"
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  transform: "translateY(0)",
+                }}
+              >
+                {hoverHour}
+              </div>
+              <div
+                className="w-full border-t-2 border-dashed border-blue-400 dark:border-blue-500"
+                style={{
+                  position: "absolute",
+                  top: "18px",
+                  left: 0,
+                  opacity: 0.7,
+                }}
+              />
             </div>
-            <div
-              className="w-full border-t-2 border-dashed border-blue-400 dark:border-blue-500"
-              style={{
-                position: "absolute",
-                top: "18px",
-                left: 0,
-                opacity: 0.7,
-              }}
-            />
-          </div>
-        )}
+          )}
       </div>
     </div>
   );

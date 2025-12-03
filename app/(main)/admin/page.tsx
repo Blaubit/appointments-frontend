@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import AdminPageClient from "./page.client";
 import { findAll as findAllSubscriptions } from "@/actions/subscription/findAll";
 import { findAllPayments } from "@/actions/payments/findAllPayments";
+import { sub } from "date-fns";
+import { redirect } from "next/navigation";
 
 async function AdminPageServer() {
   // Obtener solo las suscripciones del servidor (página inicial)
@@ -17,6 +19,12 @@ async function AdminPageServer() {
   ]);
 
   // Manejar errores si es necesario (forma simple)
+  // manejo de 401
+  if (subscriptionsResult?.status === 401) {
+    redirect("/api/logout");
+    throw new Error("No autorizado. Por favor, inicia sesión.");
+  }
+
   if (!subscriptionsResult || subscriptionsResult.status !== 200) {
     throw new Error("Error cargando suscripciones");
   }
