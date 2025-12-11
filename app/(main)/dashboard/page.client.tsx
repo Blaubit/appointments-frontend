@@ -51,6 +51,8 @@ import { useRouter } from "next/navigation";
  * - No se importan/llaman server-actions directamente desde cliente
  * - Se agregó handleLogout que llama a /api/logout y luego router.replace("/login")
  * - La detección de error 401 ahora dispara el logout dentro de useEffect (no en render)
+ * - formatDate usa FECHAS LOCALES del usuario, NO UTC
+ * - Ajustes responsive para los botones de acción en la card (evita overflow en XS)
  */
 
 type Props = {
@@ -123,49 +125,62 @@ export default function DashboardClient({
       .slice(0, 2);
   };
 
+  // Ahora usa FECHAS LOCALES del usuario:
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
 
     try {
       let date: Date;
 
+      // Si viene con "T" (ISO con hora), dejamos que Date lo parseé e interprete la zona.
+      // Si viene solo "YYYY-MM-DD" lo creamos con new Date(year, month-1, day) para tratarlo como LOCAL.
       if (typeof dateString === "string" && dateString.includes("T")) {
-        const datePart = dateString.split("T")[0];
-        const [year, month, day] = datePart.split("-").map(Number);
-        date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+        date = new Date(dateString);
       } else if (typeof dateString === "string") {
         const [year, month, day] = dateString.split("-").map(Number);
-        date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+        if (
+          Number.isFinite(year) &&
+          Number.isFinite(month) &&
+          Number.isFinite(day)
+        ) {
+          // Crear en local timezone al inicio del día
+          date = new Date(year, month - 1, day);
+        } else {
+          date = new Date(dateString);
+        }
       } else {
         date = new Date(dateString as any);
       }
 
+      // Fecha de hoy en locale (00:00 local)
       const today = new Date();
-      const todayUTC = new Date(
-        Date.UTC(
-          today.getUTCFullYear(),
-          today.getUTCMonth(),
-          today.getUTCDate()
-        )
+      const todayLocal = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
       );
 
-      const tomorrow = new Date(todayUTC);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Mañana en locale
+      const tomorrowLocal = new Date(todayLocal);
+      tomorrowLocal.setDate(tomorrowLocal.getDate() + 1);
 
-      const appointmentDateUTC = new Date(
-        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+      // Fecha de la cita normalizada a 00:00 local
+      const appointmentLocal = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
       );
 
-      if (appointmentDateUTC.getTime() === todayUTC.getTime()) {
+      if (appointmentLocal.getTime() === todayLocal.getTime()) {
         return "Hoy";
-      } else if (appointmentDateUTC.getTime() === tomorrow.getTime()) {
+      } else if (appointmentLocal.getTime() === tomorrowLocal.getTime()) {
         return "Mañana";
       } else {
         return new Intl.DateTimeFormat("es-ES", {
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
-        }).format(appointmentDateUTC);
+        }).format(appointmentLocal);
       }
     } catch (error) {
       console.error("Error formatting date:", error);
@@ -558,24 +573,24 @@ export default function DashboardClient({
                           </div>
                         </div>
 
-                        <div className="flex space-x-2 sm:flex-shrink-0">
+                        <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:space-x-2 sm:flex-shrink-0 items-center">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs"
+                            className="text-xs min-w-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleViewAppointment(appointment);
                             }}
                           >
                             <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="ml-1 sm:hidden">Ver</span>
+                            <span className="ml-1 hidden sm:inline">Ver</span>
                           </Button>
 
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs"
+                            className="text-xs min-w-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               if (appointment?.client?.phone) {
@@ -584,13 +599,15 @@ export default function DashboardClient({
                             }}
                           >
                             <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="ml-1 sm:hidden">Llamar</span>
+                            <span className="ml-1 hidden sm:inline">
+                              Llamar
+                            </span>
                           </Button>
 
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs"
+                            className="text-xs min-w-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               if (
@@ -609,7 +626,9 @@ export default function DashboardClient({
                               width={16}
                               height={16}
                             />
-                            <span className="sm:hidden">WhatsApp</span>
+                            <span className="ml-1 hidden sm:inline">
+                              WhatsApp
+                            </span>
                           </Button>
                         </div>
                       </div>
